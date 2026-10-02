@@ -41,7 +41,7 @@ internal object NativeBatchProtocol {
         return NativeProtocolJson.encode(root)
     }
 
-    fun results(bytes: ByteArray, batch: NativeBatchDescriptor): List<Outcome> {
+    fun results(bytes: ByteArray, batch: NativeBatchDescriptor, preErrors: List<Outcome> = emptyList()): List<Outcome> {
         val result = if (batch.json) {
             val root = NativeProtocolJson.parse(bytes)
             require(root.keys == setOf("signs"))
@@ -54,13 +54,28 @@ internal object NativeBatchProtocol {
                 val id = when { item.hasAttribute("id") -> item.getAttribute("id"); item.hasAttribute("Id") -> item.getAttribute("Id"); else -> error("Missing result ID") }
                 val fields = NativeSigningXml.children(item)
                 require(fields.all { it.nodeName in setOf("result", "reason", "description") && NativeSigningXml.children(it).isEmpty() })
+                require(fields.map { it.nodeName }.toSet().size == fields.size) { "Ambiguous batch result fields" }
                 val status = fields.single { it.nodeName == "result" }.textContent.trim()
                 require(status in statuses)
-                Outcome(id, status)
+                val description = fields.filter { it.nodeName != "result" }.map { it.textContent.trim() }
+                    .filter { it.isNotEmpty() }.distinct().joinToString("\n").ifEmpty { null }
+                require(description == null || description.length <= 4096)
+                Outcome(id, status, description)
             }
         }
-        require(result.size == batch.items.size && result.map { it.id }.toSet() == batch.items.map { it.id }.toSet())
-        return result
+        val approved = batch.items.map { it.id }.toSet()
+        require(result.size == batch.items.size && result.map { it.id }.toSet() == approved)
+        require(preErrors.map { it.id }.toSet().size == preErrors.size && preErrors.all {
+            it.id in approved && it.status in setOf("ERROR_PRE", "SKIPPED", "NOT_STARTED")
+        })
+        // A document rejected before PK1 was never signed by this client. A
+        // subsequent response cannot silently promote it to a completed item.
+        val failures = preErrors.associateBy { it.id }
+        return result.map { entry ->
+            val before = failures[entry.id]
+            require(before == null || entry.status == before.status) { "POST contradicts an existing PRE outcome" }
+            if (entry.description == null && before?.description != null) entry.copy(description = before.description) else entry
+        }
     }
     fun jsonReport(results: List<Outcome>): ByteArray = NativeProtocolJson.encode(mapOf("signs" to results.map {
         linkedMapOf<String, Any?>("id" to it.id, "result" to it.status).apply { it.description?.let { message -> put("description", message) } }

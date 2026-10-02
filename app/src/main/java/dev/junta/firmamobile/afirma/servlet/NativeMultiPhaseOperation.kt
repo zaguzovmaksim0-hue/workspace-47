@@ -28,6 +28,15 @@ internal class NativeMultiPhaseOperation(
     @Volatile private var closed = false
     override var resultSummary: String? = null
         private set
+    @Volatile override var batchReceipt: NativeBatchReceipt? = null
+        private set
+
+    private fun recordBatch(outcomes: List<NativeBatchProtocol.Outcome>, origin: NativeBatchReceipt.Origin) {
+        val snapshot = NativeBatchReceipt.from(checkNotNull(remote.batch), outcomes, origin)
+        batchReceipt = snapshot
+        resultSummary = NativeBatchProtocol.summary(outcomes)
+    }
+
     override val details: AfirmaConsentDetails = invocation.payloadCopy().let { bytes ->
         try { AfirmaConsentDetails(invocation.sourceOrigin, destination(invocation.storageUrl),
             invocation.operation.name.lowercase(), if (remote.batch != null) "Batch · ${if (remote.localBatch) "local" else "trifásico"}" else "${remote.format} · trifásico",
@@ -74,7 +83,7 @@ internal class NativeMultiPhaseOperation(
                     if (pre.session == null || batch.stopOnError && pre.errors.isNotEmpty()) {
                         val outcomes = batch.items.map { item -> pre.errors.singleOrNull { it.id == item.id } ?: NativeBatchProtocol.Outcome(item.id, "SKIPPED") }
                         result = NativeBatchProtocol.jsonReport(outcomes)
-                        resultSummary = NativeBatchProtocol.summary(outcomes)
+                        recordBatch(outcomes, NativeBatchReceipt.Origin.SERVICE)
                         checkOwner(); authorizeUpload()
                     } else {
                         val signed = NativeTriphaseCodec.sign(pre.session, identity, algorithm, ::checkOwner)
@@ -84,8 +93,13 @@ internal class NativeMultiPhaseOperation(
                             checkOwner(); authorizeUpload(); checkOwner(); postStarted = true
                             result = services.exchange(checkNotNull(remote.postUrl), mapOf(label to url64(postDescriptor), "certs" to certs, "tridata" to url64(td))).use { it.take() }
                         } finally { td.fill(0); postDescriptor.fill(0) }
-                        val outcomes = NativeBatchProtocol.results(result, batch)
-                        resultSummary = NativeBatchProtocol.summary(outcomes)
+                        try {
+                            val outcomes = NativeBatchProtocol.results(result, batch, pre.errors)
+                            recordBatch(outcomes, NativeBatchReceipt.Origin.SERVICE)
+                        } catch (error: Exception) {
+                            result.fill(0)
+                            throw error
+                        }
                     }
                 } else {
                     val operation = when (invocation.operation) {
@@ -161,7 +175,7 @@ internal class NativeMultiPhaseOperation(
             } finally { bytes?.fill(0) }
         }
         val result = NativeProtocolJson.encode(mapOf("signs" to rows)); require(result.size <= 2_097_152)
-        resultSummary = NativeBatchProtocol.summary(NativeBatchProtocol.results(result, batch))
+        recordBatch(NativeBatchProtocol.results(result, batch), NativeBatchReceipt.Origin.LOCAL)
         return result
     }
     private fun signLocal(bytes: ByteArray, item: NativeBatchItem, identity: UnlockedIdentity,
@@ -182,7 +196,7 @@ internal class NativeMultiPhaseOperation(
         invocation.close(); authorizeUpload(); currentCoroutineContext().ensureActive(); check(!closed)
         return storage.store(endpoint, id, "CANCEL")
     }
-    override fun close() { closed = true; invocation.close() }
+    override fun close() { closed = true; invocation.close(); batchReceipt = null }
     private fun url64(bytes: ByteArray) = Base64.getUrlEncoder().encodeToString(bytes)
     private fun destination(uri: URI) = URI("https", null, uri.host, uri.port, uri.path, null, null).toASCIIString()
 }

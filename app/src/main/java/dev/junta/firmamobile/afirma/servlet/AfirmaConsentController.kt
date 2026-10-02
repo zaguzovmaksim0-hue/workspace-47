@@ -34,6 +34,7 @@ internal data class AfirmaConsentDetails(
 internal interface PreparedAfirmaOperation : Closeable {
     val details: AfirmaConsentDetails
     val resultSummary: String? get() = null
+    val batchReceipt: NativeBatchReceipt? get() = null
     fun certificateCompatible(identity: UnlockedIdentity): Boolean
     /** Implementations call authorizeUpload immediately before the one upload.
      * It must return to the caller's UI dispatcher and revalidate ownership. */
@@ -60,6 +61,7 @@ internal data class AfirmaConsentPrompt(
     val certificateOwner: String?,
     val problem: AfirmaConsentProblem?,
     val resultSummary: String? = null,
+    val batchReceipt: NativeBatchReceipt? = null,
 ) {
     val canConfirm: Boolean get() = phase == AfirmaConsentPhase.REVIEW && problem == null && certificateOwner != null
 }
@@ -85,6 +87,7 @@ internal class AfirmaConsentController<Owner : Any>(
         var job: Job? = null
         var started = false
         var cancellationOutcome: AfirmaCancellationOutcome? = null
+        var terminalBatchReceipt: NativeBatchReceipt? = null
         var released = false
         fun release() { if (!released) { released = true; operation.close() } }
     }
@@ -317,13 +320,15 @@ internal class AfirmaConsentController<Owner : Any>(
         if (pending.phase == AfirmaConsentPhase.FINISHED) return
         pending.phase = AfirmaConsentPhase.FINISHED
         pending.problem = result
+        pending.terminalBatchReceipt = pending.operation.batchReceipt
         pending.release()
         publish(pending)
     }
 
     private fun publish(pending: Pending<Owner>) {
         if (current === pending) onPrompt(AfirmaConsentPrompt(pending.token, pending.details,
-            pending.phase, pending.certificateOwner, pending.problem, pending.operation.resultSummary))
+            pending.phase, pending.certificateOwner, pending.problem, pending.operation.resultSummary,
+            if (pending.phase == AfirmaConsentPhase.FINISHED) pending.terminalBatchReceipt else null))
     }
 
     private fun fingerprint(identity: UnlockedIdentity?): String? = runCatching {

@@ -66,6 +66,32 @@ class NativeBatchProtocolContractTest {
             assertNull(NativeBatchDescriptor.parse(NativeProtocolJson.encode(value), true))
         }
     }
+    @Test fun preFailureCannotBecomeSuccessOrChangeItsStatusAfterPost() {
+        val batch = checkNotNull(NativeBatchDescriptor.parse(descriptorBytes(), true))
+        for (status in listOf("DONE_AND_SAVED", "OK", "ERROR_POST", "SKIPPED")) {
+            assertThrows(IllegalArgumentException::class.java) {
+                NativeBatchProtocol.results(NativeProtocolJson.encode(mapOf("signs" to listOf(row("one"), row("two", status)))),
+                    batch, listOf(NativeBatchProtocol.Outcome("two", "ERROR_PRE", "Prior failure")))
+            }
+        }
+    }
+    @Test fun preservedPreFailureKeepsItsDescriptionWhenPostOmitsIt() {
+        val batch = checkNotNull(NativeBatchDescriptor.parse(descriptorBytes(), true))
+        val result = NativeBatchProtocol.results(NativeProtocolJson.encode(mapOf("signs" to listOf(row("one"), row("two", "ERROR_PRE")))),
+            batch, listOf(NativeBatchProtocol.Outcome("two", "ERROR_PRE", "Prior failure")))
+        assertEquals("Prior failure", result[1].description)
+        assertEquals(listOf("DONE_AND_SAVED", "ERROR_PRE"), result.map { it.status })
+    }
+    @Test fun xmlFailureReasonIsRetainedAndDuplicateReasonsAreNotSilentlyChosen() {
+        val descriptor = "<signbatch algorithm='SHA256withRSA'><singlesign id='one'><datasource>YWJj</datasource><format>XAdES</format><suboperation>sign</suboperation></singlesign></signbatch>"
+        val batch = checkNotNull(NativeBatchDescriptor.parse(descriptor.toByteArray(), false))
+        val xml = "<signs><sign id='one'><result>KO</result><reason>Cannot save</reason><description>Storage unavailable</description></sign></signs>"
+        assertEquals("Cannot save\nStorage unavailable", NativeBatchProtocol.results(xml.toByteArray(), batch).single().description)
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeBatchProtocol.results(xml.replace("</reason>", "</reason><reason>Contradictory reason</reason>").toByteArray(), batch)
+        }
+    }
+
     private fun row(id: String, status: String = "DONE_AND_SAVED"): Map<String, Any?> = mapOf("id" to id, "result" to status)
     private fun td(vararg ids: String) = mapOf("format" to "XAdES", "signinfo" to ids.map { mapOf("id" to it, "params" to mapOf("PRE" to "YWJj")) })
     private fun descriptorBytes() = NativeProtocolJson.encode(mapOf("algorithm" to "SHA256withRSA", "format" to "XAdES",

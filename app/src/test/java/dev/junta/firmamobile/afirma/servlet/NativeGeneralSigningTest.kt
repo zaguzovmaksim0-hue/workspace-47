@@ -88,6 +88,9 @@ class NativeGeneralSigningTest {
         }, AfirmaResultTransport { _, _, value -> wire = value; AfirmaDeliveryResult.ACKNOWLEDGED }, generalClockFor(key.identity))
         assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.executeWithCheckpoints(key.identity, {}, {}))
         assertEquals(2, calls); assertTrue(operation.resultSummary!!.contains("otros resultados: 1"))
+        assertEquals(NativeBatchReceipt.Origin.SERVICE, operation.batchReceipt!!.origin)
+        assertEquals(listOf("DONE_AND_SAVED", "ERROR_PRE"), operation.batchReceipt!!.entries.map { it.statusCode })
+        assertEquals("Synthetic failure", operation.batchReceipt!!.entries[1].description)
         assertEquals(2, (NativeProtocolJson.parse(AfirmaIntermediateCipher.decode(wire, null))["signs"] as List<*>).size)
         operation.close()
     }
@@ -162,7 +165,9 @@ class NativeGeneralSigningTest {
             }
             assertTrue("Locally reverify $index", good)
         }
-        assertEquals(0, key.encodedReads.get()); operation.close()
+        assertEquals(NativeBatchReceipt.Origin.LOCAL, operation.batchReceipt!!.origin)
+        assertEquals(listOf("item0", "item1", "item2"), operation.batchReceipt!!.entries.map { it.documentLabel })
+        assertEquals(0, key.encodedReads.get()); operation.close(); assertNull(operation.batchReceipt)
     }
 
     @Test fun localBatchFailureProducesExplicitRollbackAndSkippedStatuses() = runBlocking<Unit> {
@@ -174,6 +179,23 @@ class NativeGeneralSigningTest {
         operation.executeWithCheckpoints(id, {}, {})
         val rows = (NativeProtocolJson.parse(AfirmaIntermediateCipher.decode(wire, null))["signs"] as List<*>).map(NativeTriphaseCodec::objectValue)
         assertEquals(listOf("SKIPPED", "ERROR_PRE", "SKIPPED"), rows.map { it["result"] }); assertTrue(rows.none { "signature" in it })
+        operation.close()
+    }
+
+    @Test fun postCannotRewriteAPreFailedDocumentAsSuccessfullySaved() = runBlocking<Unit> {
+        val key = nonExportableSyntheticIdentity(); var calls = 0; var stores = 0
+        val operation = NativeMultiPhaseOperation(acceptedGeneral("batch", batchFields(jsonBatch(), true)),
+            NativeSigningServiceTransport { _, _ ->
+                calls++
+                if (calls == 1) AfirmaRetrievedBytes(NativeProtocolJson.encode(mapOf(
+                    "td" to NativeProtocolJson.parse(NativeTriphaseCodec.encodeJson(session("XAdES"))),
+                    "results" to listOf(mapOf("id" to "failed", "result" to "ERROR_PRE")))))
+                else AfirmaRetrievedBytes("""{"signs":[{"id":"doc","result":"DONE_AND_SAVED"},{"id":"failed","result":"DONE_AND_SAVED"}]}""".toByteArray())
+            }, AfirmaResultTransport { _, _, _ -> stores++; AfirmaDeliveryResult.ACKNOWLEDGED }, generalClockFor(key.identity))
+        assertEquals("A completed POST may have side effects, but its contradicted report must not be accepted",
+            AfirmaDeliveryResult.UNCERTAIN, operation.executeWithCheckpoints(key.identity, {}, {}))
+        assertEquals(2, calls); assertEquals(0, stores); assertNull(operation.resultSummary); assertNull(operation.batchReceipt)
+        assertThrows(IllegalStateException::class.java) { runBlocking { operation.execute(key.identity) {} } }
         operation.close()
     }
 
