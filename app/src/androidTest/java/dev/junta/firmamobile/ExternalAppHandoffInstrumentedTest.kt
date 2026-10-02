@@ -74,7 +74,23 @@ class ExternalAppHandoffInstrumentedTest {
     }
 
     private fun offer(scenario: ActivityScenario<MainActivity>, view: WebView, raw: String) {
+        // Removing a Compose dialog is not proof that WindowManager has
+        // returned focus to the page. A real user click needs that focus;
+        // await it BEFORE injecting the single synthetic navigation callback.
+        var firstObservation = true
+        var focusedInitially = false
+        rule.waitUntil(timeoutMillis = 5_000) {
+            var ready = false
+            scenario.onActivity { activity ->
+                ready = findWebView(activity.window.decorView) === view && view.isShown && view.hasWindowFocus() &&
+                    activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+            }
+            if (firstObservation) { focusedInitially = ready; firstObservation = false }
+            ready
+        }
         scenario.onActivity {
+            assertTrue("Do not manufacture a user gesture in an unfocused window", view.hasWindowFocus())
+            android.util.Log.i("FirmaSyntheticExternal", "pageFocusedOnFirstObservation=$focusedInitially")
             assertTrue(view.webViewClient.shouldOverrideUrlLoading(view, object : WebResourceRequest {
                 override fun getUrl() = Uri.parse(raw)
                 override fun isForMainFrame() = true
