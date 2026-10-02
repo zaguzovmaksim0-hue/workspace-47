@@ -404,7 +404,7 @@ class MainActivity : ComponentActivity() {
                 if (browserDestination != null) {
                     val app = application as JuntaFirmaApplication
                     key(
-                        browserDestination.profileId.value,
+                        browserDestination.profileId?.value,
                         browserDestination.entryUrl.toASCIIString(),
                     ) {
                         BrowserScreen(
@@ -514,10 +514,24 @@ class MainActivity : ComponentActivity() {
                                         entryUrl = target.launch.entryUrl,
                                     )
                                 }
+                                is PortalOpenTarget.PublicWeb -> {
+                                    cancelSigning(SigningCancelReason.NAVIGATION)
+                                    currentWebView = null
+                                    catalogViewModel.recordOpened(item.portalId)
+                                    destination = AppDestination.Browser(profileId = null, entryUrl = target.entryUrl)
+                                }
                                 null -> catalogViewModel.onOpenFailed()
                             }
                         },
                         onUserMessageShown = catalogViewModel::onUserMessageShown,
+                        onOpenPublicWeb = { uri ->
+                            val accepted = dev.junta.firmamobile.browser.PublicBrowserAddress.parse(uri.toASCIIString())
+                            if (accepted == null) catalogViewModel.onOpenFailed() else {
+                                cancelSigning(SigningCancelReason.NAVIGATION)
+                                currentWebView = null
+                                destination = AppDestination.Browser(profileId = null, entryUrl = accepted)
+                            }
+                        },
                     )
                 } else {
                     AppRoot(
@@ -862,7 +876,7 @@ private sealed interface AppDestination {
     data object Catalog : AppDestination
 
     data class Browser(
-        val profileId: ProfileId,
+        val profileId: ProfileId?,
         val entryUrl: URI,
     ) : AppDestination
 }

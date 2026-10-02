@@ -39,13 +39,13 @@ sealed interface NavigationDecision {
 }
 
 class JuntaNavigationPolicy(
-    private val selectedProfileId: ProfileId,
+    private val selectedProfileId: ProfileId?,
     private val registry: SiteProfileRegistry = BuiltInSiteProfiles.runtimeRegistry,
     private val afirmaUriParser: AfirmaUriParser = AfirmaUriParser(),
 ) {
     init {
-        require(registry.profile(selectedProfileId) != null) {
-            "Selected navigation profile is not active: ${selectedProfileId.value}"
+        require(selectedProfileId == null || registry.profile(selectedProfileId) != null) {
+            "Selected navigation profile is not active: ${selectedProfileId?.value}"
         }
     }
 
@@ -87,6 +87,7 @@ class JuntaNavigationPolicy(
         if (BrowserUrlPolicy(registry, selectedProfileId).resolve(rawUrl).uri == null) {
             return NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
+        if (selectedProfileId == null) return NavigationDecision.AllowInWebView
         val targetUri = runCatching { java.net.URI(rawUrl) }.getOrNull()
         if (targetUri != null && registry.isClientAuthBrowseUrl(selectedProfileId, targetUri)) {
             return NavigationDecision.AllowInWebView
@@ -112,7 +113,7 @@ class JuntaNavigationPolicy(
     }
 
     private fun isClientAuthRequestOrigin(target: Uri): Boolean {
-        val profile = registry.profile(selectedProfileId) ?: return false
+        val profile = selectedProfileId?.let(registry::profile) ?: return false
         val requestOrigins = profile.clientAuthPolicy?.requestOrigins ?: return false
         if (requestOrigins.isEmpty()) return false
         val targetOrigin = exactOriginOf(target) ?: return false
@@ -143,6 +144,7 @@ class JuntaNavigationPolicy(
         currentPageUrl: String?,
     ): NavigationDecision {
         val blocked = NavigationDecision.Block(NavigationBlockReason.INSECURE_HTTP)
+        val selectedProfileId = selectedProfileId ?: return blocked
         if (selectedProfileId != OFVIRTUAL_PROFILE_ID || target.isOpaque ||
             target.encodedUserInfo != null || target.port !in setOf(-1, 80) ||
             !target.host.equals(OFVIRTUAL_HOST, ignoreCase = true) ||
@@ -186,6 +188,7 @@ class JuntaNavigationPolicy(
     }
 
     private fun decideAfirma(rawUrl: String, currentPageUrl: String?): NavigationDecision {
+        val selectedProfileId = selectedProfileId ?: return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
         val origin = currentPageUrl?.let { current ->
             try {
                 JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)
@@ -336,6 +339,7 @@ class JuntaNavigationPolicy(
     }
 
     private fun decideIntent(rawUrl: String, currentPageUrl: String?): NavigationDecision {
+        val selectedProfileId = selectedProfileId ?: return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
         val trustedOrigin = currentPageUrl?.let { current ->
             try {
                 JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)

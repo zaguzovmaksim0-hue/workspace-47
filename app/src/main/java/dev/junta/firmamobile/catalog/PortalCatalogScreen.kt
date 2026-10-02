@@ -81,8 +81,10 @@ fun PortalCatalogScreen(
     onOpenPortal: (PortalCatalogItem) -> Unit,
     onBackToCertificate: () -> Unit,
     onUserMessageShown: () -> Unit,
+    onOpenPublicWeb: ((java.net.URI) -> Unit)? = null,
 ) {
     var regionPickerVisible by rememberSaveable { mutableStateOf(false) }
+    var publicWebDialog by remember { mutableStateOf(false) }
     var expandedRegionalSectionKey by rememberSaveable(
         state.selectedRegion.wireValue,
         state.searchText.isNotBlank(),
@@ -92,6 +94,13 @@ fun PortalCatalogScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val openFailureMessage = stringResource(R.string.catalog_open_failed)
     val locationDetectedMessage = stringResource(R.string.catalog_location_detected)
+
+    if (publicWebDialog && onOpenPublicWeb != null) {
+        dev.junta.firmamobile.ui.PublicWebOpenDialog(
+            onOpen = { uri -> publicWebDialog = false; onOpenPublicWeb(uri) },
+            onDismiss = { publicWebDialog = false },
+        )
+    }
 
     BackHandler(onBack = onBackToCertificate)
 
@@ -130,6 +139,7 @@ fun PortalCatalogScreen(
                 )
             }
             item(key = "catalog-search") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.searchText,
                     onValueChange = onSearchTextChange,
@@ -138,6 +148,13 @@ fun PortalCatalogScreen(
                     shape = CatalogShape,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                if (onOpenPublicWeb != null) {
+                    OutlinedButton(onClick = { publicWebDialog = true },
+                        modifier = Modifier.fillMaxWidth().testTag("catalog-open-public-web")) {
+                        Text(stringResource(R.string.public_web_open_title))
+                    }
+                }
+                }
             }
 
             if (state.sections.isEmpty()) {
@@ -424,6 +441,7 @@ private fun PortalCard(
             }
             Button(
                 onClick = { onOpenPortal(portal) },
+                enabled = portal.canOpen,
                 modifier = Modifier.weight(1.15f).heightIn(min = 48.dp)
                     .testTag("catalog-open-${portal.portalId.value}"),
                 shape = CatalogShape,
@@ -432,7 +450,7 @@ private fun PortalCard(
                     contentColor = JuntaPaperElevated,
                 ),
             ) {
-                Text(stringResource(R.string.catalog_open))
+                Text(stringResource(if (portal.opensWithoutProfile) R.string.public_browsing_open else R.string.catalog_open))
             }
         }
     }

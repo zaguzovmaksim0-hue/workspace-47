@@ -247,4 +247,11 @@
     <string name="native_afirma_cancel_not_sent">La operación se ha cancelado solo en este dispositivo. No se ha enviado ninguna notificación al servidor.</string>
     <string name="native_afirma_cancel_rejected">El servidor de almacenamiento no aceptó la notificación de cancelación. Comprueba el estado del trámite en la web.</string>
     <string name="native_afirma_cancel_uncertain">No se sabe si el servidor de almacenamiento recibió la notificación de cancelación. Comprueba el estado del trámite en la web antes de repetir la operación. La notificación no se enviará de nuevo automáticamente.</string>
+    <string name="public_browsing_title">Navegador sin perfil específico</string>
+    <string name="public_browsing_explanation">Puedes navegar por esta web. El uso del certificado o de AutoFirma requiere una confirmación independiente; no se garantiza la compatibilidad de todos los trámites.</string>
+    <string name="public_browsing_open">Abrir web</string>
+    <string name="public_browsing_clear_copy">Se intentarán borrar los datos del sitio mostrado y se bloqueará el certificado. La aplicación indicará si Android no permite borrar todas las cookies de ese sitio. No se garantiza el cierre de la sesión en el servidor.</string>
+    <string name="public_web_open_title">Abrir otra web</string>
+    <string name="public_web_address">Dirección HTTPS</string>
+    <string name="public_web_open_hint">Abre una dirección HTTPS pública sin crear un perfil ni guardar nuevos permisos. La firma y el acceso con certificado requieren su propio consentimiento.</string>
 </resources>

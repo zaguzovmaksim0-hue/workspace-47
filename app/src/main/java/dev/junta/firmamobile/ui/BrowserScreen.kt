@@ -184,7 +184,7 @@ internal fun certificateEligibleForSelection(
 
 @Composable
 fun BrowserScreen(
-    profileId: ProfileId,
+    profileId: ProfileId?,
     entryUrl: URI,
     certificateState: CertificateUiState.Unlocked?,
     logger: SanitizedLogger,
@@ -223,7 +223,7 @@ fun BrowserScreen(
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
     val webViewCapabilities = remember(context) { WebViewProfileCapabilities.current(context) }
     val siteDataCleaner = remember { SiteDataCleaner() }
-    val sessionDataClearLease = remember { BrowserDataClearCompletionLease<ProfileId>() }
+    val sessionDataClearLease = remember { BrowserDataClearCompletionLease<ProfileId?>() }
     val globalDataClearLease = remember { BrowserDataClearCompletionLease<WebView>() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val validatedEntryUrl = remember(selectedServiceId, entryUrl) {
@@ -235,7 +235,7 @@ fun BrowserScreen(
             ),
         ) { "Browser entry URL does not belong to the selected profile" }
     }
-    val selectedProfile = BuiltInSiteProfiles.runtimeRegistry.profile(selectedServiceId)
+    val selectedProfile = selectedServiceId?.let(BuiltInSiteProfiles.runtimeRegistry::profile)
     val requiresClientAuthSessionPreparation = requiresFreshJuntaBrowserSession(selectedProfile)
     val trustController = remember(selectedServiceId, validatedEntryUrl) {
         BrowserTrustController(
@@ -418,7 +418,7 @@ fun BrowserScreen(
         reply: CertificateSelectionReplyChannel,
     ) {
         if (pendingCertificateSelection != null ||
-            request.context.profileId != selectedServiceId.value ||
+            request.context.profileId != selectedServiceId?.value ||
             request.context.navigationEpoch != navigationEpoch.longValue
         ) {
             reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
@@ -901,6 +901,7 @@ fun BrowserScreen(
         else -> stringResource(R.string.browser_trust_browse_only)
     }
     BrowserLayout(
+        publicBrowsing = selectedServiceId == null,
         currentUrl = currentUrl,
         profileName = effectiveProfile?.displayName
             ?: selectedProfile?.displayName
@@ -992,8 +993,19 @@ fun BrowserScreen(
             }
             val profile = selectedProfile
             if (profile == null) {
-                browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-                pageProgress = 100
+                // No fabricated profile: clear only the displayed public site's
+                // data and report any platform cookie limitation accurately.
+                siteClearResult = runCatching {
+                    siteDataCleaner.clearOrigin(URI(currentUrl), webViewCapabilities)
+                }.getOrDefault(SiteClearResult.FAILED)
+                val clearRequest = sessionDataClearLease.begin(null)
+                clientCertPreferenceCoordinator.requestClear { _, result ->
+                    mainHandler.post {
+                        if (!sessionDataClearLease.consume(clearRequest)) return@post
+                        if (result == ClientCertPreferenceClearResult.CLEARED) onClearSession()
+                        else browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                    }
+                }
             } else {
                 clientAuthPreparing = true
                 val sessionClearRequest = sessionDataClearLease.begin(selectedServiceId)
@@ -1086,8 +1098,7 @@ fun BrowserScreen(
                                 browserError = null
                                 pageProgress = 0
                                 if (clientAuthGrant != null) {
-                                    val activeStartUrl = BuiltInSiteProfiles.runtimeRegistry
-                                        .profile(selectedServiceId)
+                                    val activeStartUrl = selectedServiceId?.let(BuiltInSiteProfiles.runtimeRegistry::profile)
                                         ?.startUrl
                                         ?.toASCIIString()
                                         ?: validatedEntryUrl
@@ -1309,7 +1320,7 @@ fun BrowserScreen(
                             )
                             normalClientRef.set(client)
                             webView.webViewClient = client
-                            if (profileRequiresWebMessageBridge(selectedProfile)) {
+                            if (selectedServiceId != null && profileRequiresWebMessageBridge(selectedProfile)) {
                                 val attachment = WebMessageBridge(
                                     profileId = selectedServiceId,
                                     logger = logger,
@@ -1743,6 +1754,7 @@ internal fun BrowserLayout(
     onDeleteAllBrowserData: () -> Unit,
     onOpenInBrowser: (() -> Unit)? = null,
     certificateAvailable: Boolean = true,
+    publicBrowsing: Boolean = false,
     content: @Composable (Modifier) -> Unit,
 ) {
     var confirmClearCurrentSite by remember { mutableStateOf(false) }
@@ -1752,6 +1764,7 @@ internal fun BrowserLayout(
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
+            Column {
             IndustrialBrowserTopBar(
                 profileName = profileName,
                 host = BrowserAddressPresentation.hostOf(currentUrl),
@@ -1770,6 +1783,8 @@ internal fun BrowserLayout(
                 ),
                 modifier = Modifier.testTag(BROWSER_TOOLBAR_TAG),
             )
+            if (publicBrowsing) PublicBrowsingNotice()
+            }
         },
         bottomBar = {
             BrowserCertificateStrip(
@@ -1819,7 +1834,7 @@ internal fun BrowserLayout(
         AlertDialog(
             onDismissRequest = { confirmClearSession = false },
             title = { Text(stringResource(R.string.browser_clear_session_title)) },
-            text = { Text(stringResource(R.string.browser_clear_session_copy)) },
+            text = { Text(stringResource(if (publicBrowsing) R.string.public_browsing_clear_copy else R.string.browser_clear_session_copy)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmClearSession = false

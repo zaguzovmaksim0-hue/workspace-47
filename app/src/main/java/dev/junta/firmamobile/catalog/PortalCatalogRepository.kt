@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.catalog
 
 import dev.junta.firmamobile.profile.Capability
+import dev.junta.firmamobile.browser.PublicBrowserAddress
 import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.ProtocolOperation
@@ -56,7 +57,7 @@ class PortalCatalogRepository(
     fun resolveLaunch(portalId: PortalId, entryUrl: java.net.URI): PortalLaunchTarget? {
         val metadata = publicCatalog.entries.singleOrNull { it.portalId == portalId } ?: return null
         val item = resolve(metadata)
-        if (!item.isEnabled || item.entryUrl.toASCIIString() != entryUrl.toASCIIString()) return null
+        if (!item.isEnabled || item.opensWithoutProfile || item.entryUrl.toASCIIString() != entryUrl.toASCIIString()) return null
 
         val profileId = metadata.profileId ?: return null
         val activeProfile = registry.profile(profileId) ?: return null
@@ -72,14 +73,15 @@ class PortalCatalogRepository(
         resolveLaunch(item.portalId, item.entryUrl)
 
     /**
-     * Returns an in-app launch only for an active exact profile binding.
-     * Unbound public catalog entries stay fail-closed instead of leaving the application.
+     * Prefer the exact active profile binding. Otherwise open the bundled public
+     * entry in ordinary browsing mode, without inheriting any profile authority.
      */
     fun resolveOpenTarget(item: PortalCatalogItem): PortalOpenTarget? {
         val metadata = publicCatalog.entries.singleOrNull { it.portalId == item.portalId }
             ?: return null
         if (item.entryUrl.toASCIIString() != metadata.entryUrl.toASCIIString()) return null
-        return resolveLaunch(item)?.let(PortalOpenTarget::InApp)
+        resolveLaunch(item)?.let { return PortalOpenTarget.InApp(it) }
+        return PublicBrowserAddress.parse(metadata.entryUrl.toASCIIString())?.let(PortalOpenTarget::PublicWeb)
     }
 
     private fun resolve(metadata: PublicPortalEntry): PortalCatalogItem {
@@ -100,6 +102,7 @@ class PortalCatalogRepository(
             metadata.metadataSupportStatus()
         }
         val isOpenable = bindingMatches && isImplemented && supportStatus in OPENABLE_SUPPORT_STATUSES
+        val isPubliclyOpenable = PublicBrowserAddress.parse(metadata.entryUrl.toASCIIString()) != null
 
         return PortalCatalogItem(
             portalId = metadata.portalId,
@@ -125,6 +128,7 @@ class PortalCatalogRepository(
             entryUrl = metadata.entryUrl,
             isEnabled = isOpenable,
             regionCode = metadata.regionCode,
+            opensWithoutProfile = !isOpenable && isPubliclyOpenable,
         )
     }
 

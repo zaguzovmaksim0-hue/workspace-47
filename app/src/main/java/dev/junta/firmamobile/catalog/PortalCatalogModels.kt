@@ -171,7 +171,10 @@ data class PortalCatalogItem(
     val isEnabled: Boolean,
     val regionCode: PortalRegionCode = PortalRegionCode.SPAIN,
     val opensWithoutProfile: Boolean = false,
-)
+) {
+    /** Opening a public page is independent of active profile capabilities. */
+    val canOpen: Boolean get() = isEnabled || opensWithoutProfile
+}
 
 /** Canonical, registry-validated launch input. */
 data class PortalLaunchTarget(
