@@ -29,6 +29,7 @@ internal data class AfirmaConsentDetails(
     val serviceDestinations: List<String> = emptyList(),
     val batchItems: Int? = null,
     val delegatedSigning: Boolean = false,
+    val requiresExactCertificate: Boolean = false,
 )
 
 internal interface PreparedAfirmaOperation : Closeable {

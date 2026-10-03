@@ -39,6 +39,10 @@ internal fun NativeAfirmaConsentDialog(
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.native_afirma_source, prompt.details.sourceOrigin))
                 Text(stringResource(R.string.native_afirma_destination, prompt.details.destination))
+                if (prompt.details.requiresExactCertificate) {
+                    Text(stringResource(R.string.native_afirma_exact_certificate),
+                        Modifier.testTag("native-afirma-exact-certificate"))
+                }
                 prompt.details.serviceDestinations.forEach { endpoint -> Text(stringResource(R.string.native_multiphase_service, endpoint)) }
                 prompt.details.batchItems?.let { Text(stringResource(R.string.native_multiphase_count, it)) }
                 if (prompt.details.delegatedSigning) Text(stringResource(R.string.native_multiphase_delegated))

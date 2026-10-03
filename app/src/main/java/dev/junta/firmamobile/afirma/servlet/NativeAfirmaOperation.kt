@@ -43,11 +43,13 @@ internal class NativeAfirmaOperation(
                 payloadSha256 = if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
                     MessageDigest.getInstance("SHA-256").digest(payload).joinToString("") { "%02x".format(it) }
                 } else null,
+                requiresExactCertificate = invocation.requiresExactCertificate,
             )
         } finally { payload.fill(0) }
     }
 
     override fun certificateCompatible(identity: UnlockedIdentity): Boolean = runCatching {
+        if (!invocation.matchesCertificate(identity.certificate)) return@runCatching false
         identity.certificate.checkValidity(Date.from(clock.instant()))
         if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
             val usage = identity.certificate.keyUsage

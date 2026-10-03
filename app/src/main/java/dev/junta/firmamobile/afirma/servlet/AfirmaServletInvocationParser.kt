@@ -52,6 +52,7 @@ internal object AfirmaServletInvocationParser {
     private fun build(op: AfirmaServletOperation, source: String, values: Map<String, String>, allowIndirect: Boolean): AfirmaServletParseResult {
         var payload: ByteArray? = null
         var advancedCipher: AfirmaAesParameters? = null
+        var certificateConstraint: NativeCertificateConstraint? = null
         return try {
             if (values.keys.any { it !in KNOWN_PARAMETERS }) unsupported("unknown_parameter")
             if (values.keys.any { it in setOf("ksb64", "keystore", "defaultkeystore") }) {
@@ -120,7 +121,22 @@ internal object AfirmaServletInvocationParser {
                 val names = query.split('&').map { decodeComponent(it.substringBefore('=')).lowercase(Locale.ROOT) }
                 if (names.any { it in setOf("op", "v", "id", "dat") }) invalid("ambiguous_storage_parameters")
             }
-            val properties = values["properties"]?.takeIf(String::isNotEmpty)?.let(::properties).orEmpty()
+            val suppliedProperties = values["properties"]?.takeIf(String::isNotEmpty)?.let(::properties).orEmpty()
+            val filterKeys = suppliedProperties.keys.filter { it == "filters" || it == "filter" }
+            if (filterKeys.size > 1) invalid("ambiguous_certificate_filter")
+            if (suppliedProperties.keys.any { it.startsWith("filters.") || it == "mandatoryCertSelection" }) {
+                unsupported("certificate_filter_not_implemented")
+            }
+            suppliedProperties["headless"]?.let {
+                if (!it.equals("true", true) && !it.equals("false", true)) invalid("invalid_headless_flag")
+            }
+            filterKeys.singleOrNull()?.let { name ->
+                certificateConstraint = NativeCertificateConstraint.parse(suppliedProperties.getValue(name))
+                    ?: unsupported("certificate_filter_not_implemented")
+            }
+            // These are client certificate-selection parameters, not document
+            // signature properties. Headless never suppresses native consent.
+            val properties = suppliedProperties.filterKeys { it !in setOf("filter", "filters", "headless") }
             val algorithm: SigningAlgorithm?
             val detached: Boolean
             var padesOptions: NativePadesOptions? = null
@@ -195,8 +211,8 @@ internal object AfirmaServletInvocationParser {
                 payload = ByteArray(0)
             }
             AfirmaServletParseResult.Accepted(AfirmaServletInvocation(op, source, endpoint, sessionId, key,
-                algorithm, detached, checkNotNull(payload), advancedCipher, padesOptions, xadesOptions, remoteOptions))
-        } finally { payload?.fill(0); advancedCipher?.close() }
+                algorithm, detached, checkNotNull(payload), advancedCipher, padesOptions, xadesOptions, remoteOptions, certificateConstraint))
+        } finally { payload?.fill(0); advancedCipher?.close(); certificateConstraint?.close() }
     }
 
     private fun safely(action: () -> AfirmaServletParseResult): AfirmaServletParseResult = try {

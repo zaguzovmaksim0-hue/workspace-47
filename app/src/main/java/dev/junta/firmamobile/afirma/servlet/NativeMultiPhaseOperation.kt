@@ -43,10 +43,12 @@ internal class NativeMultiPhaseOperation(
             checkNotNull(invocation.algorithm).let { with(NativeTriphaseCodec) { it.wireName() } }, bytes.size,
             MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) },
             serviceDestinations = listOfNotNull(remote.preUrl, remote.postUrl).map(::destination).distinct(),
-            batchItems = remote.batch?.items?.size, delegatedSigning = !remote.localBatch)
+            batchItems = remote.batch?.items?.size, delegatedSigning = !remote.localBatch,
+            requiresExactCertificate = invocation.requiresExactCertificate)
         } finally { bytes.fill(0) }
     }
     override fun certificateCompatible(identity: UnlockedIdentity): Boolean = runCatching {
+        if (!invocation.matchesCertificate(identity.certificate)) return@runCatching false
         identity.certificate.checkValidity(Date.from(clock.instant()))
         val usage = identity.certificate.keyUsage
         identity.certificate.publicKey.algorithm.equals("RSA", true) &&

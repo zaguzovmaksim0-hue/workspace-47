@@ -20,14 +20,19 @@ internal class AfirmaServletInvocation(
     val padesOptions: NativePadesOptions? = null,
     val xadesOptions: NativeXadesOptions? = null,
     val remoteOptions: NativeRemoteOptions? = null,
+    certificateConstraint: NativeCertificateConstraint? = null,
 ) : Closeable {
+    private var ownedCertificateConstraint = certificateConstraint?.copy()
+    val requiresExactCertificate: Boolean = certificateConstraint != null
+    @Synchronized fun matchesCertificate(certificate: java.security.cert.X509Certificate): Boolean =
+        ownedPayload != null && (ownedCertificateConstraint?.matches(certificate) ?: true)
     val pdfCoSign: Boolean get() = operation == AfirmaServletOperation.COSIGN
     private var ownedCipher = cipherParameters?.copy()
     @Synchronized fun cipherCopy(): AfirmaAesParameters? = ownedCipher?.copy()
     private var ownedPayload: ByteArray? = payload.copyOf()
     val dataSize: Int = payload.size
     @Synchronized fun payloadCopy(): ByteArray = checkNotNull(ownedPayload) { "Invocation is closed" }.copyOf()
-    @Synchronized override fun close() { ownedPayload?.fill(0); ownedPayload = null; ownedCipher?.close(); ownedCipher = null }
+    @Synchronized override fun close() { ownedPayload?.fill(0); ownedPayload = null; ownedCipher?.close(); ownedCipher = null; ownedCertificateConstraint?.close(); ownedCertificateConstraint = null }
     override fun toString(): String = "AfirmaServletInvocation(operation=$operation, bytes=$dataSize)"
 }
 
