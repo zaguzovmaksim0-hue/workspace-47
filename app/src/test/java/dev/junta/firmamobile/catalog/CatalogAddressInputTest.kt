@@ -81,6 +81,12 @@ class CatalogAddressInputTest {
         assertEquals(maximum, CatalogAddressInput.empty().edit(maximum.removePrefix("https://")).submit().destination!!.toString())
         val extra = CatalogAddressInput.empty().edit(maximum.removePrefix("https://") + "x").submit()
         assertNull(extra.destination); assertEquals(CatalogAddressInput.Error.TOO_LONG, extra.state.error)
+        val expanded = "https://portal.example/" + "Ж".repeat(2000)
+        val rejected = CatalogAddressInput.empty().edit(expanded).submit()
+        assertNull(rejected.destination); assertFalse(rejected.state.opening)
+        val smallUnicode = CatalogAddressInput.empty().edit("portal.example/Ж?return=https://other.example").submit()
+        assertNotNull(smallUnicode.destination)
+        assertNotNull(PublicBrowserAddress.parse(smallUnicode.destination!!.toASCIIString()))
     }
 
     @Test fun buttonAndKeyboardCannotConsumeTheSameSubmissionTwice() {

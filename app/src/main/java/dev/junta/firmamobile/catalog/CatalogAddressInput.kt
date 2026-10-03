@@ -62,7 +62,10 @@ internal class CatalogAddressInput private constructor(
         }
         private fun parse(raw: String): URI? {
             if (raw.isBlank() || raw.length > MAX_INPUT_CHARS) return null
-            return PublicBrowserAddress.parse(candidate(raw))
+            val parsed = PublicBrowserAddress.parse(candidate(raw)) ?: return null
+            // MainActivity rechecks the ASCII request form. Do not consume an
+            // input that would exceed its budget only after Unicode encoding.
+            return parsed.takeIf { PublicBrowserAddress.parse(it.toASCIIString()) != null }
         }
         private fun errorFor(raw: String) = when {
             raw.isBlank() -> Error.EMPTY
