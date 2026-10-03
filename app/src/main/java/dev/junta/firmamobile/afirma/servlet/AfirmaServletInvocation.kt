@@ -26,7 +26,8 @@ internal class AfirmaServletInvocation(
     val requiresExactCertificate: Boolean = certificateConstraint != null
     @Synchronized fun matchesCertificate(certificate: java.security.cert.X509Certificate): Boolean =
         ownedPayload != null && (ownedCertificateConstraint?.matches(certificate) ?: true)
-    val pdfCoSign: Boolean get() = operation == AfirmaServletOperation.COSIGN
+    val pdfCoSign: Boolean get() = operation == AfirmaServletOperation.COSIGN && padesOptions != null
+    val cadesCoSign: Boolean get() = operation == AfirmaServletOperation.COSIGN && padesOptions == null && xadesOptions == null && remoteOptions == null
     private var ownedCipher = cipherParameters?.copy()
     @Synchronized fun cipherCopy(): AfirmaAesParameters? = ownedCipher?.copy()
     private var ownedPayload: ByteArray? = payload.copyOf()

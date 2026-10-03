@@ -50,13 +50,21 @@ internal fun NativeAfirmaConsentDialog(
                 if (finished) prompt.batchReceipt?.let { NativeBatchResultDetails(it) }
                 Text(stringResource(when (prompt.details.operation) {
                     "selectcert" -> R.string.native_afirma_selectcert
-                    "cosign" -> if (prompt.details.format?.startsWith("PDF") == true && !prompt.details.delegatedSigning)
-                        R.string.native_afirma_pdf_cosign else R.string.native_multiphase_cosign
+                    "cosign" -> when {
+                        prompt.details.format?.startsWith("PDF") == true && !prompt.details.delegatedSigning -> R.string.native_afirma_pdf_cosign
+                        prompt.details.format?.startsWith("CAdES") == true && !prompt.details.delegatedSigning -> R.string.native_cades_cosign_action
+                        else -> R.string.native_multiphase_cosign
+                    }
                     "countersign" -> R.string.native_multiphase_countersign
                     "batch" -> R.string.native_multiphase_batch
                     else -> R.string.native_afirma_sign
                 }))
                 if (prompt.details.format?.startsWith("PDF") == true) Text(stringResource(R.string.native_afirma_pdf_prior_signatures))
+                if (!prompt.details.delegatedSigning &&
+                    (prompt.details.operation == "cosign" && prompt.details.format?.startsWith("CAdES") == true ||
+                        prompt.details.operation == "batch" && prompt.details.format?.contains("CAdES co-sign") == true)) {
+                    Text(stringResource(R.string.native_cades_cosign_notice), Modifier.testTag("native-cades-cosign-notice"))
+                }
                 prompt.details.format?.let { Text(stringResource(R.string.native_afirma_format, it)) }
                 prompt.details.algorithm?.let { Text(stringResource(R.string.native_afirma_algorithm, it)) }
                 if (prompt.details.operation != "selectcert") {

@@ -138,7 +138,7 @@ internal object AfirmaServletInvocationParser {
             // signature properties. Headless never suppresses native consent.
             val properties = suppliedProperties.filterKeys { it !in setOf("filter", "filters", "headless") }
             val algorithm: SigningAlgorithm?
-            val detached: Boolean
+            var detached: Boolean
             var padesOptions: NativePadesOptions? = null
             var xadesOptions: NativeXadesOptions? = null
             var remoteOptions: NativeRemoteOptions? = null
@@ -165,7 +165,7 @@ internal object AfirmaServletInvocationParser {
                 val remote = NativeRemoteOptions.isTriphaseFormat(format) || serviceValues.isNotEmpty()
                 val pdf = NativePadesOptions.acceptsFormat(format)
                 val xades = NativeXadesOptions.acceptsFormat(format)
-                if (!remote && pdfCoSign && !pdf) unsupported("local_cosign_only_pdf")
+                if (!remote && pdfCoSign && !pdf && !format.equals("CAdES", true)) unsupported("local_cosign_format_not_implemented")
                 if (!remote && op == AfirmaServletOperation.COUNTERSIGN) unsupported("local_countersign_not_implemented")
                 if (!remote && !pdf && !xades && !format.equals("cades", true)) unsupported("signature_format")
                 algorithm = when (values["algorithm"]?.lowercase(Locale.ROOT)) {
@@ -201,6 +201,11 @@ internal object AfirmaServletInvocationParser {
                 val encoded = values["dat"] ?: unsupported("interactive_file_selection_required")
                 if (encoded.startsWith("http:", true) || encoded.startsWith("https:", true)) unsupported("remote_data")
                 payload = strictBase64(encoded, MAX_PAYLOAD)
+                if (!remote && pdfCoSign && format.equals("CAdES", true)) {
+                    val preservedMode = NativeCadesHistory.isDetached(payload) ?: invalid("cades_signature_expected")
+                    if (properties.containsKey("mode") && detached != preservedMode) unsupported("cosign_packaging_change_not_implemented")
+                    detached = preservedMode
+                }
                 if (pdf && !remote && (payload.size < 5 || !payload.copyOfRange(0, 5).contentEquals(byteArrayOf(37, 80, 68, 70, 45)))) {
                     invalid("pdf_data_expected")
                 }

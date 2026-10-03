@@ -46,17 +46,26 @@ internal class NativeCadesEngine(
         require(maxOutputBytes > 0)
     }
 
-    fun sign(
-        content: ByteArray,
-        identity: UnlockedIdentity,
-        algorithm: SigningAlgorithm,
-        detached: Boolean,
-    ): LocalSignatureResult {
+    fun sign(content: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
+        detached: Boolean): LocalSignatureResult = signInternal(content, identity, algorithm, detached, null)
+
+    /** Only a previously verified detached CAdES digest enters this path.
+     * It does not assert that the original document was supplied or inspected. */
+    internal fun signDigest(digest: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm): LocalSignatureResult {
+        if (digest.size != NativeCadesHistory.digestLength(digestOid(algorithm))) {
+            return LocalSignatureResult.Failure(LocalSignatureError.SIGNATURE_FAILED)
+        }
+        return signInternal(ByteArray(0), identity, algorithm, true, digest)
+    }
+
+    private fun signInternal(content: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
+        detached: Boolean, suppliedDigest: ByteArray?): LocalSignatureResult {
         if (content.size > maxInputBytes) {
             return LocalSignatureResult.Failure(LocalSignatureError.INPUT_TOO_LARGE)
         }
 
         val contentCopy = content.copyOf()
+        val contentDigest = suppliedDigest?.copyOf()
         var certificateBytes: ByteArray? = null
         var certificateHash: ByteArray? = null
         var encodedSignature: ByteArray? = null
@@ -104,9 +113,19 @@ internal class NativeCadesEngine(
                         .build(privateKey)
                 }
             } ?: return LocalSignatureResult.Failure(LocalSignatureError.UNSUPPORTED_KEY)
-            val digestProvider = JcaDigestCalculatorProviderBuilder()
-                .setProvider(provider)
-                .build()
+            val ordinaryDigestProvider = JcaDigestCalculatorProviderBuilder().setProvider(provider).build()
+            val digestProvider = if (contentDigest == null) ordinaryDigestProvider else
+                org.bouncycastle.operator.DigestCalculatorProvider { identifier ->
+                    require(identifier.algorithm.id == digestOid(algorithm))
+                    object : org.bouncycastle.operator.DigestCalculator {
+                        override fun getAlgorithmIdentifier() = identifier
+                        override fun getOutputStream(): java.io.OutputStream = object : java.io.OutputStream() {
+                            override fun write(value: Int) { error("Prehashed signing has no content stream") }
+                            override fun write(bytes: ByteArray, offset: Int, length: Int) { require(length == 0) }
+                        }
+                        override fun getDigest() = contentDigest.copyOf()
+                    }
+                }
             val signerInfo = JcaSignerInfoGeneratorBuilder(digestProvider)
                 .setSignedAttributeGenerator(
                     org.bouncycastle.cms.CMSAttributeTableGenerator { parameters ->
@@ -132,7 +151,7 @@ internal class NativeCadesEngine(
             if (generated.size > maxOutputBytes) {
                 return LocalSignatureResult.Failure(LocalSignatureError.OUTPUT_TOO_LARGE)
             }
-            if (!verify(generated, contentCopy, identity.certificate, algorithm, detached)) {
+            if (!verifyInternal(generated, contentCopy, identity.certificate, algorithm, detached, contentDigest)) {
                 return LocalSignatureResult.Failure(LocalSignatureError.SIGNATURE_FAILED)
             }
             encodedSignature = null
@@ -141,6 +160,7 @@ internal class NativeCadesEngine(
             LocalSignatureResult.Failure(LocalSignatureError.SIGNATURE_FAILED)
         } finally {
             contentCopy.fill(0)
+            contentDigest?.fill(0)
             certificateBytes?.fill(0)
             certificateHash?.fill(0)
             encodedSignature?.fill(0)
@@ -150,7 +170,14 @@ internal class NativeCadesEngine(
     /** Validation is content/certificate/algorithm/mode bound, not merely a
      * parse-success check. No caller-supplied certificate is trusted implicitly. */
     fun verify(encoded: ByteArray, payload: ByteArray, certificate: X509Certificate,
-        algorithm: SigningAlgorithm, detached: Boolean): Boolean = runCatching {
+        algorithm: SigningAlgorithm, detached: Boolean): Boolean = verifyInternal(encoded, payload, certificate, algorithm, detached, null)
+
+    internal fun verifyDigest(encoded: ByteArray, digest: ByteArray, certificate: X509Certificate,
+        algorithm: SigningAlgorithm): Boolean = digest.size == NativeCadesHistory.digestLength(digestOid(algorithm)) &&
+            verifyInternal(encoded, ByteArray(0), certificate, algorithm, true, digest)
+
+    private fun verifyInternal(encoded: ByteArray, payload: ByteArray, certificate: X509Certificate,
+        algorithm: SigningAlgorithm, detached: Boolean, contentDigest: ByteArray?): Boolean = runCatching {
         if (encoded.isEmpty() || encoded.size > maxOutputBytes || payload.size > maxInputBytes) return false
         val envelope = CMSSignedData(encoded)
         if ((envelope.signedContent == null) != detached) return false
@@ -158,7 +185,8 @@ internal class NativeCadesEngine(
             val content = envelope.signedContent.content as? ByteArray ?: return false
             if (!MessageDigest.isEqual(content, payload)) return false
         }
-        val signed = if (detached) CMSSignedData(CMSProcessableByteArray(payload), encoded) else envelope
+        val signed = if (contentDigest != null) CMSSignedData(mapOf(digestOid(algorithm) to contentDigest), encoded)
+            else if (detached) CMSSignedData(CMSProcessableByteArray(payload), encoded) else envelope
         val signer = signed.signerInfos.signers.singleOrNull() ?: return false
         val expectedDigest = when (algorithm) {
             SigningAlgorithm.SHA1_WITH_RSA -> "1.3.14.3.2.26"
@@ -198,6 +226,12 @@ internal class NativeCadesEngine(
     }.getOrDefault(false)
 
     companion object {
+        internal fun digestOid(algorithm: SigningAlgorithm): String = when (algorithm) {
+            SigningAlgorithm.SHA1_WITH_RSA -> "1.3.14.3.2.26"
+            SigningAlgorithm.SHA256_WITH_RSA -> "2.16.840.1.101.3.4.2.1"
+            SigningAlgorithm.SHA384_WITH_RSA -> "2.16.840.1.101.3.4.2.2"
+            SigningAlgorithm.SHA512_WITH_RSA -> "2.16.840.1.101.3.4.2.3"
+        }
         const val MAX_INPUT_BYTES = 524_288
         const val MAX_OUTPUT_BYTES = 2_097_152
         private const val RSA = "RSA"

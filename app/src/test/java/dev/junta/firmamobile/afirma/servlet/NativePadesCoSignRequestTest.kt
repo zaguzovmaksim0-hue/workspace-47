@@ -15,7 +15,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativePadesCoSignRequestTest {
-    @Test fun canonicalCoSignOperationAcceptsOnlySupportedPdfAliases() {
+    @Test fun canonicalPdfCoSignAliasesRejectMislabeledAndUnsupportedFormats() {
         for (format in listOf("PAdES", "PAdES Detached", "Adobe PDF")) {
             val accepted = parse(fields(nativePadesFixture(), format)) as AfirmaServletParseResult.Accepted
             accepted.invocation.use {
@@ -23,9 +23,11 @@ class NativePadesCoSignRequestTest {
                 assertTrue(it.pdfCoSign); assertNotNull(it.padesOptions)
             }
         }
-        for (format in listOf("CAdES", "XAdES", "PAdES-LTA")) {
+        for (format in listOf("XAdES", "PAdES-LTA")) {
             assertTrue(parse(fields(nativePadesFixture(), format)) is AfirmaServletParseResult.Unsupported)
         }
+        // CAdES co-sign is now supported, but raw PDF bytes are not a CMS signature.
+        assertTrue(parse(fields(nativePadesFixture(), "CAdES")) is AfirmaServletParseResult.Invalid)
         assertTrue(parse(fields(nativePadesFixture()), "countersign") is AfirmaServletParseResult.Unsupported)
         assertTrue(parse(fields(nativePadesFixture()), "signandsave") is AfirmaServletParseResult.Unsupported)
     }

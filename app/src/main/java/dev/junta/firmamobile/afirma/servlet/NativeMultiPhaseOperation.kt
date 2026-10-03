@@ -39,7 +39,9 @@ internal class NativeMultiPhaseOperation(
 
     override val details: AfirmaConsentDetails = invocation.payloadCopy().let { bytes ->
         try { AfirmaConsentDetails(invocation.sourceOrigin, destination(invocation.storageUrl),
-            invocation.operation.name.lowercase(), if (remote.batch != null) "Batch · ${if (remote.localBatch) "local" else "trifásico"}" else "${remote.format} · trifásico",
+            invocation.operation.name.lowercase(), if (remote.batch != null) "Batch · ${if (remote.localBatch) "local" else "trifásico"}" +
+                if (remote.localBatch && remote.batch.items.any { it.operation == "cosign" && it.format.equals("CAdES", true) }) " · CAdES co-sign" else ""
+            else "${remote.format} · trifásico",
             checkNotNull(invocation.algorithm).let { with(NativeTriphaseCodec) { it.wireName() } }, bytes.size,
             MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) },
             serviceDestinations = listOfNotNull(remote.preUrl, remote.postUrl).map(::destination).distinct(),
@@ -189,11 +191,16 @@ internal class NativeMultiPhaseOperation(
         NativePadesOptions.parse(item.extraProperties)?.takeIf { NativePadesOptions.acceptsFormat(item.format) }?.let {
             return NativePadesEngine(clock).sign(bytes, identity, algorithm, it, item.operation == "cosign")
         }
-        require(item.operation == "sign")
-        NativeXadesOptions.parse(item.format, item.extraProperties)?.let { return NativeXadesEngine(clock).sign(bytes, identity, algorithm, it) }
+        NativeXadesOptions.parse(item.format, item.extraProperties)?.let {
+            require(item.operation == "sign")
+            return NativeXadesEngine(clock).sign(bytes, identity, algorithm, it)
+        }
         require(item.format.equals("CAdES", true) && item.extraProperties.keys.all { it == "mode" })
-        val mode = item.extraProperties["mode"] ?: "explicit"; require(mode in setOf("explicit", "implicit"))
-        return NativeCadesEngine(clock = clock).sign(bytes, identity, algorithm, mode == "explicit")
+        val mode = item.extraProperties["mode"]
+        require(mode == null || mode in setOf("explicit", "implicit"))
+        if (item.operation == "cosign") return NativeCadesCoSignEngine(clock).cosign(bytes, identity, algorithm, mode?.let { it == "explicit" })
+        require(item.operation == "sign")
+        return NativeCadesEngine(clock = clock).sign(bytes, identity, algorithm, mode != "implicit")
     }
     override suspend fun notifyCancellation(authorizeUpload: suspend () -> Unit): AfirmaDeliveryResult {
         check(started.compareAndSet(false, true) && !closed)
