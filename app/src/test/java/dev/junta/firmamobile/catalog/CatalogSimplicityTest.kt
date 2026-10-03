@@ -23,7 +23,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.unit.Density
@@ -76,9 +75,8 @@ class CatalogSimplicityTest {
 
     @Test fun screenReaderOptionsRetainFavoriteManagementWithoutAPermanentButton() {
         showOne(); scrollToCard()
-        rule.onNodeWithTag(cardTag()).performSemanticsAction(SemanticsActions.CustomActions) { actions ->
-            assertEquals(1, actions.size); assertTrue(actions.single().action())
-        }
+        val actions = rule.onNodeWithTag(cardTag()).fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        rule.runOnIdle { assertEquals(1, actions.size); assertTrue(actions.single().action()) }
         rule.onNodeWithTag("catalog-option-favorite").performClick()
         rule.runOnIdle { assertEquals(listOf(portal.portalId), favorites); assertTrue(opened.isEmpty()) }
         rule.onNodeWithTag("catalog-site-options").assertDoesNotExist()

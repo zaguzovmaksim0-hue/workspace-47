@@ -46,3 +46,5 @@ https://developer.android.com/develop/ui/compose/lists
 https://developer.android.com/develop/ui/compose/performance/stability/strongskipping
 
 These references support precomputation, stable reuse and minimizing recomposition work; they do not establish measured frame performance for this installed application.
+
+The first candidate exposed a test-helper API mismatch: custom accessibility actions are a semantics list, not a single AccessibilityAction accepted by performSemanticsAction. Both component and compile-only instrumentation call sites now read the real action list and invoke it on the Compose test UI thread. The action-count/menu behavior assertions remain; no production accessibility behavior was weakened. The failed compiler log is retained.

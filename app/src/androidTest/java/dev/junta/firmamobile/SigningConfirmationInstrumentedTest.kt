@@ -22,7 +22,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -182,9 +181,8 @@ class SigningConfirmationInstrumentedTest {
                     val openTag = "catalog-open-profile-$OVORION_PORTAL_ID"
                     val cardTag = "catalog-card-$OVORION_PORTAL_ID"
                     rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag(cardTag))
-                    rule.onNodeWithTag(cardTag).performSemanticsAction(SemanticsActions.CustomActions) { actions ->
-                        check(actions.single().action())
-                    }
+                    val options = rule.onNodeWithTag(cardTag).fetchSemanticsNode().config[SemanticsActions.CustomActions]
+                    rule.runOnIdle { check(options.single().action()) }
                     rule.waitUntil(timeoutMillis = 10_000) {
                         rule.onAllNodesWithTag(openTag).fetchSemanticsNodes().size == 1
                     }
@@ -338,9 +336,8 @@ class SigningConfirmationInstrumentedTest {
                     val openTag = "catalog-open-profile-$OVORION_PORTAL_ID"
                     val cardTag = "catalog-card-$OVORION_PORTAL_ID"
                     rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag(cardTag))
-                    rule.onNodeWithTag(cardTag).performSemanticsAction(SemanticsActions.CustomActions) { actions ->
-                        check(actions.single().action())
-                    }
+                    val options = rule.onNodeWithTag(cardTag).fetchSemanticsNode().config[SemanticsActions.CustomActions]
+                    rule.runOnIdle { check(options.single().action()) }
                     rule.waitUntil(timeoutMillis = 10_000) {
                         rule.onAllNodesWithTag(openTag).fetchSemanticsNodes().size == 1
                     }
