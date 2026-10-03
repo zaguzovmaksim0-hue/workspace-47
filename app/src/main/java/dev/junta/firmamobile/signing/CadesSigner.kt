@@ -89,7 +89,12 @@ class BouncyCastleCadesSigner internal constructor(
                     null
                 } else {
                     JcaContentSignerBuilder(algorithm.jcaName())
-                        .setProvider(provider)
+                        .apply {
+                            // Software keys use the isolated bundled provider.
+                            // Opaque KeyChain/Keystore handles must stay with
+                            // their JCA provider; never export or retry them.
+                            if (privateKey is java.security.interfaces.RSAPrivateKey) setProvider(provider)
+                        }
                         .setSecureRandom(secureRandom)
                         .build(privateKey)
                 }

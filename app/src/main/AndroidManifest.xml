@@ -26,6 +26,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".browser.download.DocumentDownloadActivity"
+            android:exported="false"
+            android:excludeFromRecents="true" />
     </application>
 
 </manifest>

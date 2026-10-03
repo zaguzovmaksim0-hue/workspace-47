@@ -5,13 +5,42 @@ import android.content.Context
 import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import dev.junta.firmamobile.BuildConfig
 
 @SuppressLint("SetJavaScriptEnabled")
 class TrustedJuntaWebView(context: Context) : WebView(context) {
+    private val chrome = JuntaWebChromeClient()
+    private val downloads = dev.junta.firmamobile.browser.download.BrowserDownloadCapture(this)
+    private var httpAuthClient: HttpAuthWebViewClient? = null
+    internal var webAuthnEngineState: WebAuthnEngineState = WebAuthnEngineState.UNSUPPORTED
+        private set
+    internal var isNativeReleased: Boolean = false
+        private set
+
+    override fun setWebViewClient(client: WebViewClient) {
+        httpAuthClient?.close()
+        downloads.clear()
+        val wrapped = HttpAuthWebViewClient(client, downloads::observe, downloads::navigationStarted)
+        httpAuthClient = wrapped
+        super.setWebViewClient(wrapped)
+    }
+
+    override fun destroy() {
+        if (isNativeReleased) return
+        isNativeReleased = true
+        downloads.close()
+        chrome.createWindow = null
+        chrome.closeWindow = null
+        httpAuthClient?.close()
+        httpAuthClient = null
+        super.destroy()
+    }
+
     init {
         configureSettings()
-        webChromeClient = JuntaWebChromeClient()
+        webAuthnEngineState = NativeWebAuthnSupport.configure(settings)
+        webChromeClient = chrome
         CookieManager.getInstance().apply {
             setAcceptCookie(true)
             setAcceptThirdPartyCookies(this@TrustedJuntaWebView, false)
@@ -19,8 +48,26 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
         setWebContentsDebuggingEnabled(BuildConfig.ENABLE_WEBVIEW_CONTENTS_DEBUGGING)
     }
 
+    /** Window requests are handled only when an owning browser host opts in. */
+    fun setPopupListeners(
+        create: ((WebView, Boolean, Boolean, android.os.Message) -> Boolean)?,
+        close: ((WebView) -> Unit)?,
+    ) {
+        chrome.createWindow = create
+        chrome.closeWindow = close
+        settings.setSupportMultipleWindows(create != null)
+    }
+
+    fun setDocumentDownloadLauncher(canRespond: () -> Boolean, launch: ((WebView, android.content.Intent) -> Boolean)?) {
+        downloads.configure(canRespond, launch)
+    }
+
     fun setPageProgressListener(listener: (Int) -> Unit) {
-        webChromeClient = JuntaWebChromeClient(listener)
+        chrome.progressListener = listener
+    }
+
+    fun setFileChooserListener(listener: (WebView, android.webkit.ValueCallback<Array<android.net.Uri>>, android.webkit.WebChromeClient.FileChooserParams) -> Boolean) {
+        chrome.fileChooser = listener
     }
 
     @Suppress("DEPRECATION")

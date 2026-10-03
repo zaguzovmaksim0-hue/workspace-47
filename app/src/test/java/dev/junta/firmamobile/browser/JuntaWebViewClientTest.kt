@@ -71,8 +71,8 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun crossProfileAndHttpNavigationAreBlocked() {
-        assertTrue(
+    fun crossProfileBrowsingAllowedButHttpStillBlocked() {
+        assertFalse(
             client.shouldOverrideUrlLoading(
                 webView,
                 request("https://reg.redsara.es/es/"),
@@ -87,7 +87,6 @@ class JuntaWebViewClientTest {
 
         assertEquals(
             listOf(
-                "blocked:CROSS_PROFILE_NAVIGATION",
                 "blocked:INSECURE_HTTP",
             ),
             callbacks.events,
@@ -167,15 +166,15 @@ class JuntaWebViewClientTest {
         val legacy = "https://reg.redsara.es/es/?token=legacy-frame-secret"
 
         assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(insecure)))
-        assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(crossProfile)))
+        assertFalse(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(crossProfile)))
         assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(unsupported)))
-        assertTrue(frameClient.shouldOverrideUrlLoading(webView, legacy))
+        assertFalse(frameClient.shouldOverrideUrlLoading(webView, legacy))
 
         assertEquals(emptyList<String>(), frameCallbacks.events)
         assertTrue(shadowOf(webView).lastLoadedUrl.isNullOrEmpty())
         val exported = frameLogger.exportText()
         assertTrue(exported.contains("reason=INSECURE_HTTP"))
-        assertTrue(exported.contains("reason=CROSS_PROFILE_NAVIGATION"))
+        assertFalse(exported.contains("reason=CROSS_PROFILE_NAVIGATION"))
         assertTrue(exported.contains("reason=UNSUPPORTED_SCHEME"))
         assertTrue(exported.contains("main_frame=false"))
         assertFalse(exported.contains("frame-secret"))
@@ -355,7 +354,7 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun seguridadSocialOfficialAutoFirmaHandoffIsBlockedInsideTheApp() {
+    fun seguridadSocialValidatedHandoffReachesUserConfirmation() {
         val sedessCallbacks = RecordingBrowserCallbacks()
         val sedessClient = JuntaWebViewClient(
             callbacks = sedessCallbacks,
@@ -370,7 +369,7 @@ class JuntaWebViewClientTest {
         assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target)))
 
         assertEquals(
-            listOf("blocked:UNSUPPORTED_EXTERNAL_INTENT"),
+            listOf("official-autofirma:sign"),
             sedessCallbacks.events,
         )
     }
@@ -391,14 +390,14 @@ class JuntaWebViewClientTest {
 
         assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
         assertEquals(
-            listOf("blocked:UNSUPPORTED_EXTERNAL_INTENT"),
+            emptyList<String>(),
             sedessCallbacks.events,
         )
     }
 
     @Test
-    fun externalHttpsIsBlockedWhileInAppAfirmaNavigationUsesNativeBridge() {
-        assertTrue(
+    fun externalHttpsBrowsesWhileTrustedAfirmaUsesNativeBridge() {
+        assertFalse(
             client.shouldOverrideUrlLoading(webView, request("https://example.org/help")),
         )
         assertTrue(
@@ -417,9 +416,7 @@ class JuntaWebViewClientTest {
             ),
         )
 
-        assertEquals("blocked:UNTRUSTED_EXTERNAL_NAVIGATION", callbacks.events[0])
-        assertEquals("afirma:sign", callbacks.events[1])
-        assertEquals("afirma:sign", callbacks.events[2])
+        assertEquals(listOf("afirma:sign", "afirma:sign"), callbacks.events)
     }
 
     @Test
@@ -437,13 +434,12 @@ class JuntaWebViewClientTest {
         )
         val external = "https://example.org/help?token=external-frame-secret#fragment"
 
-        assertTrue(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(external)))
-        assertTrue(frameClient.shouldOverrideUrlLoading(webView, external))
+        assertFalse(frameClient.shouldOverrideUrlLoading(webView, subframeRequest(external)))
+        assertFalse(frameClient.shouldOverrideUrlLoading(webView, external))
 
         assertEquals(emptyList<String>(), frameCallbacks.events)
         val exported = frameLogger.exportText()
-        assertTrue(exported.contains("reason=UNTRUSTED_EXTERNAL_NAVIGATION"))
-        assertTrue(exported.contains("main_frame=false"))
+        assertFalse(exported.contains("reason=UNTRUSTED_EXTERNAL_NAVIGATION"))
         assertFalse(exported.contains("event=EXTERNAL_NAVIGATION"))
         assertFalse(exported.contains("external-frame-secret"))
     }
@@ -546,12 +542,12 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun blockedAndMainFramePostRequestsRecordSafeNavigationMetadata() {
+    fun ordinaryHttpsPostIsNotConvertedToGetAndLogsNoSensitiveData() {
         val secret = "certificate-secret-canary"
         val target =
             "https://reg.redsara.es/es/continue?certificate=$secret#fragment"
 
-        assertTrue(client.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+        assertFalse(client.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
         client.shouldInterceptRequest(
             webView,
             request(
@@ -561,8 +557,8 @@ class JuntaWebViewClientTest {
         )
 
         val exported = logger.exportText()
-        assertTrue(exported.contains("event=NAVIGATION_BLOCKED"))
-        assertTrue(exported.contains("reason=CROSS_PROFILE_NAVIGATION"))
+        assertTrue(exported.contains("event=NAVIGATION_ALLOWED"))
+        assertFalse(exported.contains("reason=CROSS_PROFILE_NAVIGATION"))
         assertTrue(exported.contains("event=NETWORK_REQUEST"))
         assertTrue(exported.contains("host=ws072.juntadeandalucia.es"))
         assertTrue(exported.contains("method=POST"))
@@ -879,7 +875,7 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun euskadiClientAuthTargetCannotBypassPostBridgeAsNormalNavigation() {
+    fun euskadiNavigationDoesNotImplicitlyAuthorizeCertificateUse() {
         listOf("GET", "POST").forEach { method ->
             var capturedAuthorizedTarget: AuthorizedClientAuthTarget? = null
             val euskadiCallbacks = RecordingBrowserCallbacks()
@@ -901,17 +897,17 @@ class JuntaWebViewClientTest {
                 request(EuskadiClientAuthPostBridgeAdapter.TARGET_URL, method),
             )
 
-            assertTrue(overridden)
+            assertFalse(overridden)
             assertEquals(null, capturedAuthorizedTarget)
             assertEquals(
-                listOf("blocked:CROSS_PROFILE_NAVIGATION"),
+                emptyList<String>(),
                 euskadiCallbacks.events,
             )
         }
     }
 
     @Test
-    fun carneJovenAuthorizedTransitionStaysInWebViewAndUnauthorizedWs235IsBlockedFailClosed() {
+    fun carneJovenCertificateGrantRemainsSeparateFromOrdinaryNavigation() {
         var capturedAuthorizedTarget: AuthorizedClientAuthTarget? = null
         val carneJovenCallbacks = RecordingBrowserCallbacks()
         val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
@@ -958,12 +954,12 @@ class JuntaWebViewClientTest {
         )
         val unauthorizedResult = unauthorizedClient.shouldOverrideUrlLoading(webView, request(ws235Target))
 
-        assertTrue(unauthorizedResult)
-        assertEquals(listOf("blocked:CROSS_PROFILE_NAVIGATION"), unauthorizedCallbacks.events)
+        assertFalse(unauthorizedResult)
+        assertEquals(emptyList<String>(), unauthorizedCallbacks.events)
     }
 
     @Test
-    fun subframeAndLegacyRequestsDoNotTriggerClientAuthAndUnauthorizedWs235IsBlockedFailClosed() {
+    fun subframeAndLegacyNavigationDoNotCreateCertificateAuthorization() {
         var capturedAuthorizedTarget: AuthorizedClientAuthTarget? = null
         val carneJovenCallbacks = RecordingBrowserCallbacks()
         val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
@@ -994,7 +990,7 @@ class JuntaWebViewClientTest {
             "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&appId=IAJ.CARNETJOVEN&ticketId=synthetic-ticket&webSessionId=synthetic-session&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
 
         val subframeResult = carneJovenClient.shouldOverrideUrlLoading(webView, subframeRequest(ws235Target))
-        assertTrue(subframeResult)
+        assertFalse(subframeResult)
         assertEquals(null, capturedAuthorizedTarget)
         assertEquals(emptyList<String>(), carneJovenCallbacks.events)
 
@@ -1011,7 +1007,7 @@ class JuntaWebViewClientTest {
 
         @Suppress("DEPRECATION")
         val legacyResult = legacyClient.shouldOverrideUrlLoading(webView, ws235Target)
-        assertTrue(legacyResult)
+        assertFalse(legacyResult)
         assertEquals(emptyList<String>(), legacyCallbacks.events)
     }
 
@@ -1432,7 +1428,7 @@ class JuntaWebViewClientTest {
     }
 
     @Test
-    fun veaObservedReturnLoginShapeRequiresLiveConfirmedClientAuthFlow() {
+    fun veaReturnPageLoadsWithoutGrantingUnconfirmedClientAuth() {
         val profileId = ProfileId("junta-andalucia-vea-peg")
         val returnUrl = "$VEA_API_RETURN?appId=CHIE.VEA&resCode=synthetic-result" +
             "&ticketId=synthetic-ticket&webSessionId=synthetic-session"
@@ -1442,7 +1438,10 @@ class JuntaWebViewClientTest {
             navigationPolicy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry),
             activeProfileId = { profileId },
         )
-        assertTrue(staticClient.shouldOverrideUrlLoading(webView, request(returnUrl)))
+        assertFalse(staticClient.shouldOverrideUrlLoading(webView, request(returnUrl)))
+        val unconfirmedCert = RecordingClientCertRequest()
+        staticClient.onReceivedClientCertRequest(webView, unconfirmedCert)
+        assertEquals(1, unconfirmedCert.ignores)
 
         val liveClient = JuntaWebViewClient(
             callbacks = RecordingBrowserCallbacks(),
@@ -1466,7 +1465,10 @@ class JuntaWebViewClientTest {
             activeProfileId = { profileId },
             currentNavigationEpoch = { 70L },
         )
-        assertTrue(staticClient.shouldOverrideUrlLoading(webView, request(veaClusterContinuationUrl())))
+        assertFalse(staticClient.shouldOverrideUrlLoading(webView, request(veaClusterContinuationUrl())))
+        val unconfirmedCert = RecordingClientCertRequest(requestHost = "ws235-4.juntadeandalucia.es")
+        staticClient.onReceivedClientCertRequest(webView, unconfirmedCert)
+        assertEquals(1, unconfirmedCert.ignores)
 
         var challenge: AuthorizedClientAuthTarget? = null
         val liveClient = JuntaWebViewClient(
@@ -1489,7 +1491,12 @@ class JuntaWebViewClientTest {
 
         val nearMiss = veaClusterContinuationUrl()
             .replace("ticketId=synthetic-ticket", "ticketId=other-ticket")
-        assertTrue(liveClient.shouldOverrideUrlLoading(webView, request(nearMiss)))
+        challenge = null
+        assertFalse(liveClient.shouldOverrideUrlLoading(webView, request(nearMiss)))
+        val nearMissCert = RecordingClientCertRequest(requestHost = "ws235-4.juntadeandalucia.es")
+        liveClient.onReceivedClientCertRequest(webView, nearMissCert)
+        assertEquals(1, nearMissCert.ignores)
+        assertNull(challenge)
     }
 
     @Test
@@ -1508,7 +1515,7 @@ class JuntaWebViewClientTest {
         )
         val directTarget = veaTargetUrl()
 
-        assertTrue(veaClient.shouldOverrideUrlLoading(webView, request(directTarget)))
+        assertFalse(veaClient.shouldOverrideUrlLoading(webView, request(directTarget)))
         veaClient.shouldInterceptRequest(webView, request(directTarget))
         val request = RecordingClientCertRequest()
         veaClient.onReceivedClientCertRequest(webView, request)

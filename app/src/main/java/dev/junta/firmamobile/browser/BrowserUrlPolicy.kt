@@ -15,12 +15,12 @@ data class BrowserUrlResolution(
 
 class BrowserUrlPolicy(
     private val registry: SiteProfileRegistry,
-    private val selectedProfileId: ProfileId,
+    private val selectedProfileId: ProfileId?,
     private val externalOnlyOrigins: Set<ExactOrigin> = emptySet(),
 ) {
     init {
-        require(registry.profile(selectedProfileId) != null) {
-            "Selected browser profile is not active: ${selectedProfileId.value}"
+        require(selectedProfileId == null || registry.profile(selectedProfileId) != null) {
+            "Selected browser profile is not active: ${selectedProfileId?.value}"
         }
     }
 
@@ -32,12 +32,20 @@ class BrowserUrlPolicy(
         }
         val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return blocked()
         if (uri.isOpaque || !uri.scheme.equals("https", ignoreCase = true) || uri.host == null || uri.userInfo != null ||
-            uri.port !in setOf(-1, 443) || uri.rawFragment != null
+            uri.port !in setOf(-1, 443)
         ) {
             return blocked()
         }
         if (runCatching { ExactOrigin.parse("https://${uri.host}") }.isFailure) return blocked()
 
+        if (selectedProfileId == null) {
+            // A public session never adopts a registered profile, even if the
+            // page redirects to a known signing host or supplies an active ID.
+            val admitted = PublicBrowserAddress.parse(rawUrl) ?: return blocked()
+            val origin = ExactOrigin.parse("https://${admitted.host}")
+            return BrowserUrlResolution(admitted, null,
+                if (origin in externalOnlyOrigins) TrustMode.EXTERNAL_ONLY else TrustMode.BROWSE_ONLY)
+        }
         val activeSelectedProfile = activeProfileId?.takeIf { it == selectedProfileId }
         if (activeProfileId == null) {
             val selectedProfile = registry.profile(selectedProfileId)
@@ -60,7 +68,8 @@ class BrowserUrlPolicy(
 
         val direct = registry.resolve(uri)
         if (direct != null && direct.profile.profileId != selectedProfileId) {
-            return blocked()
+            // Crossing a profile is ordinary browsing, never inherited signing trust.
+            return BrowserUrlResolution(uri, null, TrustMode.BROWSE_ONLY)
         }
         if (direct != null) {
             return BrowserUrlResolution(uri, direct, direct.trustMode)

@@ -143,7 +143,8 @@ class BrowserSecurityRegressionTest {
         val crossProfile = controller.navigate(redSara.startUrl.toASCIIString())
 
         assertEquals(junta.profileId, initial.activeProfileId)
-        assertEquals(TrustMode.BLOCKED, crossProfile.resolution.trustMode)
+        assertEquals(TrustMode.BROWSE_ONLY, crossProfile.resolution.trustMode)
+        assertEquals(null, crossProfile.resolution.site)
         assertEquals(null, crossProfile.activeProfileId)
         assertEquals(2L, crossProfile.epoch)
         assertEquals(
@@ -335,8 +336,16 @@ class BrowserSecurityRegressionTest {
         assertTrue("Clear-session handler must be present", sessionBlock.isNotEmpty())
         val epochIndex = sessionBlock.indexOf("advanceNavigationEpoch()")
         val clearIndex = sessionBlock.indexOf("siteDataCleaner.clearProfileSession")
-        val preferenceIndex = sessionBlock.indexOf("clientCertPreferenceCoordinator.requestClear")
-        val exitIndex = sessionBlock.indexOf("onClearSession()")
+        val profileBranchIndex = sessionBlock.indexOf("            } else {")
+        assertTrue("Profile cleanup must follow navigation invalidation", profileBranchIndex > epochIndex)
+        val preferenceIndex = sessionBlock.indexOf("clientCertPreferenceCoordinator.requestClear", profileBranchIndex)
+        val exitIndex = sessionBlock.indexOf("onClearSession()", profileBranchIndex)
+        val publicBranch = sessionBlock.substringBefore("            } else {")
+        val publicClear = publicBranch.indexOf("siteDataCleaner.clearOrigin")
+        val publicPreferences = publicBranch.indexOf("clientCertPreferenceCoordinator.requestClear")
+        val publicLock = publicBranch.indexOf("onClearSession()")
+        assertTrue("Public cleanup must invalidate before clearing and lock after preference cleanup",
+            publicClear > epochIndex && publicPreferences > publicClear && publicLock > publicPreferences)
         assertTrue(
             "Closing the certificate session must invalidate the active navigation before deleting profile session state",
             epochIndex >= 0 && clearIndex in (epochIndex + 1) until preferenceIndex,
@@ -527,6 +536,19 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
+    fun legacyUriBridgeCannotBypassTheNativePreparationInterlock() {
+        val source = projectSource("app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt")
+        val handler = source.substringAfter("val handleAfirmaRequest: (AfirmaRequest) -> Unit =")
+            .substringBefore("val callbacks = remember(")
+        for (flag in listOf("nativeAfirma.hasPending", "nativeFallback.hasPending", "nativeRetrieval.hasPending")) {
+            assertTrue("Legacy URI notifications must respect $flag", flag in handler)
+        }
+        assertTrue("Pending URI dialog assignment must be guarded", "if (!busy) pendingRequest = request" in handler)
+        assertTrue("The validated WebMessageBridge URI path must use the guarded handler", "onAfirmaRequest = handleAfirmaRequest" in source)
+        assertTrue("Preparation is canceled on background, not silently restarted", "nativeRetrieval.onBackground()" in source)
+    }
+
+    @Test
     fun clientTlsWebViewWaitsForGenerationBoundPreferenceBarrier() {
         val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
@@ -565,7 +587,7 @@ class BrowserSecurityRegressionTest {
         assertTrue(
             "Renderer, disposal, profile and background paths must use process cleanup",
             "DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator)" in screenSource &&
-                "DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator)" in screenSource &&
+                "DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator, nativeRetrieval, nativeAfirma)" in screenSource &&
                 "Lifecycle.Event.ON_STOP" in screenSource &&
                 "abandonClientAuth" in screenSource,
         )
@@ -902,47 +924,20 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
-    fun javascriptDialogsNeverUsePlatformDefaultWindows() {
+    fun javascriptDialogsLeaveTheDecisionToTheUserInsteadOfAutoAnswering() {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/browser/JuntaWebChromeClient.kt",
         )
-
-        fun callbackBlock(name: String): String = source
-            .substringAfter("override fun $name(", missingDelimiterValue = "")
-            .substringBefore("\n    override fun ")
-
-        val alertBlock = callbackBlock("onJsAlert")
-        val beforeUnloadBlock = callbackBlock("onJsBeforeUnload")
-        val confirmBlock = callbackBlock("onJsConfirm")
-        val promptBlock = callbackBlock("onJsPrompt")
-
-        assertTrue(
-            "JavaScript alert must be resolved without the platform default dialog",
-            alertBlock.contains("result.confirm()") && alertBlock.contains("return true"),
-        )
-        assertTrue(
-            "JavaScript before-unload must resume without the platform default dialog",
-            beforeUnloadBlock.contains("result.confirm()") && beforeUnloadBlock.contains("return true"),
-        )
-        assertTrue(
-            "JavaScript confirm must fail closed without the platform default dialog",
-            confirmBlock.contains("result.cancel()") && confirmBlock.contains("return true"),
-        )
-        assertTrue(
-            "JavaScript prompt must fail closed without the platform default dialog",
-            promptBlock.contains("result.cancel()") && promptBlock.contains("return true"),
-        )
-        assertFalse(
-            "The hardened chrome client must not create or delegate JavaScript dialog UI",
-            listOf(
-                "AlertDialog",
-                "Dialog(",
-                "super.onJsAlert",
-                "super.onJsBeforeUnload",
-                "super.onJsConfirm",
-                "super.onJsPrompt",
-            ).any(source::contains),
-        )
+        for (name in listOf("onJsAlert", "onJsBeforeUnload", "onJsConfirm", "onJsPrompt")) {
+            val block = source.substringAfter("override fun $name(", missingDelimiterValue = "")
+                .substringBefore("\n    override fun ")
+            assertTrue("$name must delegate the visible decision to WebView", block.contains("): Boolean = false"))
+            assertFalse("$name must not accept for the user", block.contains("result.confirm()"))
+            assertFalse("$name must not cancel for the user", block.contains("result.cancel()"))
+        }
+        // Dialog behavior does not grant camera, microphone, or location access.
+        assertTrue(source.contains("request.deny()"))
+        assertTrue(source.contains("callback.invoke(origin, false, false)"))
     }
 
     private fun profile(id: String) = BuiltInSiteProfiles.catalog.profiles.single {

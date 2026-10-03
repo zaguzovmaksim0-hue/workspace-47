@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_multiphase_service">Servicio de firma: %1$s</string>
+    <string name="native_multiphase_count">Documentos en el lote: %1$d</string>
+    <string name="native_multiphase_delegated">Firma delegada: al confirmar se enviarán el certificado público y los datos o referencias al servicio indicado. El servicio prepara los datos PRE que firmará tu clave; el teléfono no puede demostrar que un PRE opaco corresponde al documento mostrado. Continúa solo si confías en ese servicio. Un lote puede terminar parcialmente o ser guardado por el servicio antes de que vuelva la respuesta.</string>
+    <string name="native_multiphase_cosign">Añadir firma al documento</string>
+    <string name="native_multiphase_countersign">Contrafirma mediante el servicio</string>
+    <string name="native_multiphase_batch">Firma por lotes</string>
+    <string name="webauthn_status_label">Passkeys / WebAuthn</string>
+    <string name="webauthn_unsupported">Este WebView no anuncia soporte nativo de WebAuthn. Puedes continuar en el navegador externo.</string>
+    <string name="webauthn_configuration_failed">No se pudo activar el motor WebAuthn. La navegación normal continúa disponible.</string>
+    <string name="webauthn_provider_unknown">Motor WebAuthn nativo activado para navegador. La autorización del proveedor de credenciales para esta aplicación todavía no está confirmada; algunas passkeys pueden no estar disponibles.</string>
+    <string name="webauthn_no_success_claim">Activar el motor no equivale a completar un acceso ni a recibir aprobación de Google Password Manager. No se imita el origen de la web mediante JavaScript.</string>
+    <string name="webauthn_external_browser">Continuar en navegador externo</string>
+    <string name="webauthn_close">Cerrar</string>
+</resources>

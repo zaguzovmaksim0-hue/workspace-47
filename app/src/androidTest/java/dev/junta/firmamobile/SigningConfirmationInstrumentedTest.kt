@@ -8,14 +8,24 @@ import android.util.Base64
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
+import android.webkit.ClientCertRequest
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -115,6 +125,307 @@ class SigningConfirmationInstrumentedTest {
         } finally {
             bytes.fill(0)
         }
+    }
+
+    @Test
+    fun unknownTlsRequestCanUnlockWithoutReplacingTheBrowserOrAutoApproving() {
+        val uri = Uri.parse("content://dev.junta.firmamobile.tests/interactive-tls-identity.p12")
+        val bytes = syntheticPkcs12()
+        try {
+            val repository = CertificateRepository(
+                documentAccess = SyntheticDocumentAccess(uri, bytes),
+                referenceStore = MemoryReferenceStore(StoredCertificateReference(
+                    uri = uri, displayName = "synthetic-identity.p12",
+                    mimeType = CertificateRepository.MIME_X_PKCS12,
+                    size = bytes.size.toLong(), summary = null,
+                )),
+                loader = Pkcs12Loader(),
+            )
+            TestCertificateDependencies.install(repository, CertificateSession()).use {
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    waitForText("Explorar sedes sin desbloquear el certificado")
+                    rule.onNodeWithText("Explorar sedes sin desbloquear el certificado")
+                        .performScrollTo().performClick()
+                    waitForText("SERVICIOS PÚBLICOS")
+                    // The QA smoke OPEN command deliberately requires an
+                    // unlocked identity. Exercise the real catalog UI here.
+                    rule.onNode(hasScrollToIndexAction()).performScrollToIndex(2)
+                    rule.onNodeWithText("Buscar organismo o servicio").performTextReplacement("Ovorion")
+                    // Catalog search combines DataStore preferences with input
+                    // asynchronously. Await the resolved state, not only the
+                    // editable text; opening an empty transitional list races it.
+                    var observedSearch = ""
+                    var resolvedItems = 0
+                    try {
+                        rule.waitUntil(timeoutMillis = 15_000) {
+                            var ready = false
+                            scenario.onActivity { activity ->
+                                val state = androidx.lifecycle.ViewModelProvider(activity)
+                                    .get(dev.junta.firmamobile.catalog.PortalCatalogViewModel::class.java).state.value
+                                observedSearch = state.searchText
+                                resolvedItems = state.sections.sumOf { it.items.size }
+                                ready = state.searchText == "Ovorion" && state.sections.any { section ->
+                                    section.items.any { it.portalId.value == OVORION_PORTAL_ID }
+                                }
+                            }
+                            ready
+                        }
+                    } catch (_: androidx.compose.ui.test.ComposeTimeoutException) {
+                        fail("Synthetic catalog query not resolved: query=$observedSearch itemCount=$resolvedItems")
+                    }
+                    rule.waitForIdle()
+                    // Hide the search IME before scrolling; text-node index 0
+                    // was unstable while insets and merged semantics changed.
+                    androidx.test.espresso.Espresso.closeSoftKeyboard()
+                    rule.waitForIdle()
+                    val openTag = "catalog-open-profile-$OVORION_PORTAL_ID"
+                    val cardTag = "catalog-card-$OVORION_PORTAL_ID"
+                    rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag(cardTag))
+                    val options = rule.onNodeWithTag(cardTag).fetchSemanticsNode().config[SemanticsActions.CustomActions]
+                    rule.runOnIdle { check(options.single().action()) }
+                    rule.waitUntil(timeoutMillis = 10_000) {
+                        rule.onAllNodesWithTag(openTag).fetchSemanticsNodes().size == 1
+                    }
+                    rule.onNodeWithTag(openTag).assertIsDisplayed().performClick()
+                    waitForWebView(scenario)
+                    var original: WebView? = null
+                    val fixtureFinished = java.util.concurrent.atomic.AtomicBoolean(false)
+                    val fixtureIntercepted = java.util.concurrent.atomic.AtomicBoolean(false)
+                    val fixtureUrl = checkNotNull(dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+                        .profile(dev.junta.firmamobile.profile.ProfileId("junta-andalucia")))
+                        .startUrl.resolve("/__firmamobile_tls_fixture__").toASCIIString()
+                    scenario.onActivity { activity ->
+                        original = checkNotNull(findWebView(activity.window.decorView)).apply {
+                            stopLoading()
+                            // Same-origin HTTPS interception avoids a renderer
+                            // site swap just to inject local test HTML. Real
+                            // navigation, mTLS and error callbacks stay delegated.
+                            webViewClient = PublicBrowserInstrumentedTest.LocalResponseClient(
+                                webViewClient, fixtureUrl, fixtureFinished, fixtureIntercepted,
+                                "<html><head><title>TLS_FIXTURE_READY</title></head><body><input value=retained-draft></body></html>",
+                            )
+                            loadUrl(fixtureUrl)
+                        }
+                    }
+                    try {
+                        rule.waitUntil(timeoutMillis = 15_000) {
+                            var ready = false
+                            scenario.onActivity { activity ->
+                                val view = findWebView(activity.window.decorView)
+                                ready = view === original && view?.url == fixtureUrl &&
+                                    view?.title == "TLS_FIXTURE_READY" && view?.progress == 100 &&
+                                    activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+                            }
+                            ready && fixtureFinished.get() && fixtureIntercepted.get()
+                        }
+                    } catch (failure: Throwable) {
+                        var state = ""
+                        scenario.onActivity { activity ->
+                            val view = findWebView(activity.window.decorView)
+                            state = "sameView=${view === original};localUrl=${view?.url == fixtureUrl};" +
+                                "titleMatches=${view?.title == "TLS_FIXTURE_READY"};progress=${view?.progress}"
+                        }
+                        throw AssertionError("Local TLS fixture failed before issuing any certificate callback: " +
+                            "$state;intercepted=${fixtureIntercepted.get()};finished=${fixtureFinished.get()}", failure)
+                    }
+                    var proceeded = 0
+                    var ignored = 0
+                    val request = object : ClientCertRequest() {
+                        override fun getHost() = "auth.synthetic.example"
+                        override fun getPort() = 443
+                        override fun getKeyTypes() = arrayOf("RSA")
+                        override fun getPrincipals(): Array<java.security.Principal> = emptyArray()
+                        override fun proceed(key: java.security.PrivateKey, chain: Array<java.security.cert.X509Certificate>) { proceeded++ }
+                        override fun ignore() { ignored++ }
+                        override fun cancel() { error("No sticky cancellation in this flow") }
+                    }
+                    scenario.onActivity {
+                        val view = checkNotNull(original)
+                        view.webViewClient.onReceivedClientCertRequest(view, request)
+                    }
+                    // Observe the one issued Chromium callback; do not invoke it again.
+                    try {
+                        rule.waitUntil(timeoutMillis = 5_000) {
+                            runCatching { rule.onNodeWithTag("interactive-client-auth-unlock").assertIsDisplayed() }.isSuccess
+                        }
+                    } catch (failure: Throwable) {
+                        var state = ""
+                        scenario.onActivity { activity ->
+                            val view = findWebView(activity.window.decorView)
+                            state = "lifecycle=${activity.lifecycle.currentState};sameView=${original === view};" +
+                                "progress=${view?.progress};localTitle=${view?.title == "TLS_FIXTURE_READY"};" +
+                                "ignored=$ignored;proceeded=$proceeded"
+                        }
+                        throw AssertionError("TLS consent missing after the original callback: $state", failure)
+                    }
+                    rule.onNodeWithTag("interactive-client-auth-unlock").assertIsDisplayed().performClick()
+                    rule.onNodeWithContentDescription("Contraseña del certificado")
+                        .performScrollTo().performTextInput(TEST_PASSPHRASE)
+                    rule.onNodeWithText("Desbloquear certificado").performScrollTo().performClick()
+                    waitForText("Certificado encontrado")
+                    scenario.onActivity { activity ->
+                        assertTrue(original === findWebView(activity.window.decorView))
+                        assertEquals("TLS_FIXTURE_READY", original?.title)
+                        assertEquals(0, proceeded)
+                        assertEquals(0, ignored)
+                    }
+                    rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    rule.onNodeWithTag("interactive-client-auth-confirm").assertIsDisplayed().performClick()
+                    scenario.onActivity { activity ->
+                        assertEquals(1, proceeded)
+                        assertEquals(0, ignored)
+                        assertTrue(original === findWebView(activity.window.decorView))
+                        assertEquals("TLS_FIXTURE_READY", original?.title)
+                    }
+                }
+            }
+        } finally { bytes.fill(0) }
+    }
+
+    @Test
+    fun inlineNativeAfirmaRequestUnlocksInTheRealBrowserAndBackgroundCancelsWithoutSending() {
+        val uri = Uri.parse("content://dev.junta.firmamobile.tests/native-afirma-identity.p12")
+        val bytes = syntheticPkcs12()
+        try {
+            val repository = CertificateRepository(
+                documentAccess = SyntheticDocumentAccess(uri, bytes),
+                referenceStore = MemoryReferenceStore(StoredCertificateReference(
+                    uri = uri, displayName = "synthetic-identity.p12",
+                    mimeType = CertificateRepository.MIME_X_PKCS12,
+                    size = bytes.size.toLong(), summary = null,
+                )),
+                loader = Pkcs12Loader(),
+            )
+            TestCertificateDependencies.install(repository, CertificateSession()).use {
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    waitForText("Explorar sedes sin desbloquear el certificado")
+                    rule.onNodeWithText("Explorar sedes sin desbloquear el certificado")
+                        .performScrollTo().performClick()
+                    waitForText("SERVICIOS PÚBLICOS")
+                    // The QA smoke OPEN command deliberately requires an
+                    // unlocked identity. Exercise the real catalog UI here.
+                    rule.onNode(hasScrollToIndexAction()).performScrollToIndex(2)
+                    rule.onNodeWithText("Buscar organismo o servicio").performTextReplacement("Ovorion")
+                    // Catalog search combines DataStore preferences with input
+                    // asynchronously. Await the resolved state, not only the
+                    // editable text; opening an empty transitional list races it.
+                    var observedSearch = ""
+                    var resolvedItems = 0
+                    try {
+                        rule.waitUntil(timeoutMillis = 15_000) {
+                            var ready = false
+                            scenario.onActivity { activity ->
+                                val state = androidx.lifecycle.ViewModelProvider(activity)
+                                    .get(dev.junta.firmamobile.catalog.PortalCatalogViewModel::class.java).state.value
+                                observedSearch = state.searchText
+                                resolvedItems = state.sections.sumOf { it.items.size }
+                                ready = state.searchText == "Ovorion" && state.sections.any { section ->
+                                    section.items.any { it.portalId.value == OVORION_PORTAL_ID }
+                                }
+                            }
+                            ready
+                        }
+                    } catch (_: androidx.compose.ui.test.ComposeTimeoutException) {
+                        fail("Synthetic catalog query not resolved: query=$observedSearch itemCount=$resolvedItems")
+                    }
+                    rule.waitForIdle()
+                    // Hide the search IME before scrolling; text-node index 0
+                    // was unstable while insets and merged semantics changed.
+                    androidx.test.espresso.Espresso.closeSoftKeyboard()
+                    rule.waitForIdle()
+                    val openTag = "catalog-open-profile-$OVORION_PORTAL_ID"
+                    val cardTag = "catalog-card-$OVORION_PORTAL_ID"
+                    rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag(cardTag))
+                    val options = rule.onNodeWithTag(cardTag).fetchSemanticsNode().config[SemanticsActions.CustomActions]
+                    rule.runOnIdle { check(options.single().action()) }
+                    rule.waitUntil(timeoutMillis = 10_000) {
+                        rule.onAllNodesWithTag(openTag).fetchSemanticsNodes().size == 1
+                    }
+                    rule.onNodeWithTag(openTag).assertIsDisplayed().performClick()
+                    waitForWebView(scenario)
+                    var original: WebView? = null
+                    val fixtureFinished = java.util.concurrent.atomic.AtomicBoolean(false)
+                    val fixtureIntercepted = java.util.concurrent.atomic.AtomicBoolean(false)
+                    val fixtureUrl = checkNotNull(dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+                        .profile(dev.junta.firmamobile.profile.ProfileId("junta-andalucia")))
+                        .startUrl.resolve("/__firmamobile_afirma_fixture__").toASCIIString()
+                    scenario.onActivity { activity ->
+                        original = checkNotNull(findWebView(activity.window.decorView)).apply {
+                            stopLoading()
+                            // Same-origin HTTPS interception avoids a renderer
+                            // site swap just to inject local test HTML. Real
+                            // navigation, mTLS and error callbacks stay delegated.
+                            webViewClient = PublicBrowserInstrumentedTest.LocalResponseClient(
+                                webViewClient, fixtureUrl, fixtureFinished, fixtureIntercepted,
+                                "<html><head><title>NATIVE_AFIRMA_READY</title></head><body><input value=retained-draft></body></html>",
+                            )
+                            loadUrl(fixtureUrl)
+                        }
+                    }
+                    try {
+                        rule.waitUntil(timeoutMillis = 15_000) {
+                            var ready = false
+                            scenario.onActivity { activity ->
+                                val view = findWebView(activity.window.decorView)
+                                ready = view === original && view?.url == fixtureUrl &&
+                                    view?.title == "NATIVE_AFIRMA_READY" && view?.progress == 100 &&
+                                    activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+                            }
+                            ready && fixtureFinished.get() && fixtureIntercepted.get()
+                        }
+                    } catch (failure: Throwable) {
+                        var state = ""
+                        scenario.onActivity { activity ->
+                            val view = findWebView(activity.window.decorView)
+                            state = "sameView=${view === original};localUrl=${view?.url == fixtureUrl};" +
+                                "titleMatches=${view?.title == "NATIVE_AFIRMA_READY"};progress=${view?.progress}"
+                        }
+                        throw AssertionError("Local AutoFirma fixture failed before issuing any protocol callback: " +
+                            "$state;intercepted=${fixtureIntercepted.get()};finished=${fixtureFinished.get()}", failure)
+                    }
+                    val invocation = Uri.parse(
+                        "afirma://sign?id=Synthetic-123&stservlet=https%3A%2F%2Fstore.synthetic.example%2Fput" +
+                            "&format=CAdES&algorithm=SHA256withRSA&dat=c3ludGhldGlj",
+                    )
+                    val request = object : android.webkit.WebResourceRequest {
+                        override fun getUrl() = invocation
+                        override fun isForMainFrame() = true
+                        override fun isRedirect() = false
+                        override fun hasGesture() = true
+                        override fun getMethod() = "GET"
+                        override fun getRequestHeaders(): MutableMap<String, String> = mutableMapOf()
+                    }
+                    scenario.onActivity {
+                        val view = checkNotNull(original)
+                        assertTrue(view.webViewClient.shouldOverrideUrlLoading(view, request))
+                    }
+                    rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed().performClick()
+                    rule.onNodeWithContentDescription("Contraseña del certificado")
+                        .performScrollTo().performTextInput(TEST_PASSPHRASE)
+                    rule.onNodeWithText("Desbloquear certificado").performScrollTo().performClick()
+                    waitForText("Certificado encontrado")
+                    scenario.onActivity { activity ->
+                        assertTrue(original === findWebView(activity.window.decorView))
+                        assertEquals("NATIVE_AFIRMA_READY", original?.title)
+                    }
+                    rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    rule.onNodeWithTag("native-afirma-confirm").assertIsDisplayed()
+                    // Explicit REVIEW cancellation now notifies storage. This
+                    // lifecycle test intentionally exercises the purely local
+                    // path: no CANCEL POST, no signing, no remote endpoint.
+                    scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+                    scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+                    rule.waitForIdle()
+                    rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
+                    rule.onNodeWithTag("native-afirma-close").assertIsDisplayed().performClick()
+                    rule.onNodeWithTag("native-afirma-consent").assertDoesNotExist()
+                    scenario.onActivity { activity ->
+                        assertTrue(original === findWebView(activity.window.decorView))
+                        assertEquals("NATIVE_AFIRMA_READY", original?.title)
+                    }
+                }
+            }
+        } finally { bytes.fill(0) }
     }
 
     @Test
@@ -341,11 +652,14 @@ class SigningConfirmationInstrumentedTest {
         expected: String,
     ) {
         rule.waitUntil(timeoutMillis = 15_000) {
-            var title: String? = null
+            var ready = false
             scenario.onActivity { activity ->
-                title = findWebView(activity.window.decorView)?.title
+                ready = findWebView(activity.window.decorView)?.let { view ->
+                    view.title == expected && view.progress == 100 &&
+                        activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+                } == true
             }
-            title == expected
+            ready
         }
     }
 

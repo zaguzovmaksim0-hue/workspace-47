@@ -170,7 +170,11 @@ data class PortalCatalogItem(
     val entryUrl: URI,
     val isEnabled: Boolean,
     val regionCode: PortalRegionCode = PortalRegionCode.SPAIN,
-)
+    val opensWithoutProfile: Boolean = false,
+) {
+    /** Opening a public page is independent of active profile capabilities. */
+    val canOpen: Boolean get() = isEnabled || opensWithoutProfile
+}
 
 /** Canonical, registry-validated launch input. */
 data class PortalLaunchTarget(
@@ -180,6 +184,8 @@ data class PortalLaunchTarget(
 
 sealed interface PortalOpenTarget {
     data class InApp(val launch: PortalLaunchTarget) : PortalOpenTarget
+    /** Ordinary browsing only; never carries a signing/TLS profile grant. */
+    data class PublicWeb(val entryUrl: URI) : PortalOpenTarget
 }
 
 data class PortalCatalogQuery(

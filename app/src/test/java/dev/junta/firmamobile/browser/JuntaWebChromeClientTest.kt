@@ -5,7 +5,7 @@ import android.webkit.JsPromptResult
 import android.webkit.JsResult
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.lang.reflect.Proxy
@@ -24,11 +24,11 @@ import org.robolectric.shadows.ShadowJsResult
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class JuntaWebChromeClientTest {
     @Test
-    fun alertIsHandledWithoutPlatformDefaultDialog() {
+    fun alertDelegatesToUserDialogWithoutAutoConfirmation() {
         withWebView { webView ->
             val result = newJsResult()
 
-            assertTrue(
+            assertFalse(
                 JuntaWebChromeClient().onJsAlert(
                     webView,
                     "https://example.invalid/",
@@ -40,11 +40,11 @@ class JuntaWebChromeClientTest {
     }
 
     @Test
-    fun beforeUnloadIsHandledWithoutPlatformDefaultDialog() {
+    fun beforeUnloadDelegatesToUserDialog() {
         withWebView { webView ->
             val result = newJsResult()
 
-            assertTrue(
+            assertFalse(
                 JuntaWebChromeClient().onJsBeforeUnload(
                     webView,
                     "https://example.invalid/",
@@ -56,11 +56,11 @@ class JuntaWebChromeClientTest {
     }
 
     @Test
-    fun confirmIsHandledAndDenied() {
+    fun confirmDoesNotAnswerOnBehalfOfUser() {
         withWebView { webView ->
             val result = newJsResult()
 
-            assertTrue(
+            assertFalse(
                 JuntaWebChromeClient().onJsConfirm(
                     webView,
                     "https://example.invalid/",
@@ -68,16 +68,16 @@ class JuntaWebChromeClientTest {
                     result,
                 ),
             )
-            assertTrue(Shadow.extract<ShadowJsResult>(result).wasCancelled())
+            assertFalse(Shadow.extract<ShadowJsResult>(result).wasCancelled())
         }
     }
 
     @Test
-    fun promptIsHandledAndDenied() {
+    fun promptDoesNotCancelOnBehalfOfUser() {
         withWebView { webView ->
             val result = newJsPromptResult()
 
-            assertTrue(
+            assertFalse(
                 JuntaWebChromeClient().onJsPrompt(
                     webView,
                     "https://example.invalid/",
@@ -86,7 +86,7 @@ class JuntaWebChromeClientTest {
                     result,
                 ),
             )
-            assertTrue(Shadow.extract<ShadowJsResult>(result).wasCancelled())
+            assertFalse(Shadow.extract<ShadowJsResult>(result).wasCancelled())
         }
     }
 

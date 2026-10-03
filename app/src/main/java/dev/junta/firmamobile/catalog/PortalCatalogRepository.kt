@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.catalog
 
 import dev.junta.firmamobile.profile.Capability
+import dev.junta.firmamobile.browser.PublicBrowserAddress
 import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.ProtocolOperation
@@ -9,9 +10,6 @@ import dev.junta.firmamobile.profile.SiteProfileCatalog
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import java.net.URI
-import java.text.Collator
-import java.text.Normalizer
-import java.util.Locale
 
 /**
  * Public, non-security metadata for the native portal picker.
@@ -26,16 +24,20 @@ class PortalCatalogRepository(
 ) {
     val bundledCatalogVersion: Int = publicCatalog.catalogVersion
     val portalIds: Set<PortalId> = publicCatalog.entries.mapTo(linkedSetOf()) { it.portalId }
-    private val resolvedItems by lazy(LazyThreadSafetyMode.NONE) {
-        publicCatalog.entries.map(::resolve)
+    // Precomputation contains only bundled public metadata, not user queries.
+    // Synchronised lazy initialization also permits the view-model worker path.
+    private val resolvedItems by lazy { publicCatalog.entries.map(::resolve) }
+    private val searchIndex by lazy {
+        val aliases = publicCatalog.entries.associate { it.portalId to it.displayName }
+        CatalogSearchIndex(resolvedItems.map { item ->
+            CatalogSearchIndex.Row(item.portalId.value, item.regionCode.ordinal, item.displayName,
+                listOf(aliases[item.portalId].orEmpty(), item.displayName, item.organization, item.territory, item.purpose), item)
+        })
     }
 
     fun portals(query: PortalCatalogQuery = PortalCatalogQuery()): List<PortalCatalogItem> {
-        val filtered = resolvedItems.filter { it.matches(query) }
-        if (query.filter != PortalCatalogFilter.RECENT) {
-            return filtered.sortedWith(portalComparator(query.selectedRegion))
-        }
-
+        val filtered = searchIndex.find(query.searchText, query.selectedRegion?.ordinal) { it.matchesFilter(query) }
+        if (query.filter != PortalCatalogFilter.RECENT) return filtered
         val recentOrder = query.recentPortalIds.withIndex().associate { (index, id) -> id to index }
         return filtered.sortedBy { recentOrder.getValue(it.portalId) }
     }
@@ -54,7 +56,7 @@ class PortalCatalogRepository(
     fun resolveLaunch(portalId: PortalId, entryUrl: java.net.URI): PortalLaunchTarget? {
         val metadata = publicCatalog.entries.singleOrNull { it.portalId == portalId } ?: return null
         val item = resolve(metadata)
-        if (!item.isEnabled || item.entryUrl.toASCIIString() != entryUrl.toASCIIString()) return null
+        if (!item.isEnabled || item.opensWithoutProfile || item.entryUrl.toASCIIString() != entryUrl.toASCIIString()) return null
 
         val profileId = metadata.profileId ?: return null
         val activeProfile = registry.profile(profileId) ?: return null
@@ -70,14 +72,25 @@ class PortalCatalogRepository(
         resolveLaunch(item.portalId, item.entryUrl)
 
     /**
-     * Returns an in-app launch only for an active exact profile binding.
-     * Unbound public catalog entries stay fail-closed instead of leaving the application.
+     * Prefer the exact active profile binding. Otherwise open the bundled public
+     * entry in ordinary browsing mode, without inheriting any profile authority.
      */
     fun resolveOpenTarget(item: PortalCatalogItem): PortalOpenTarget? {
         val metadata = publicCatalog.entries.singleOrNull { it.portalId == item.portalId }
             ?: return null
         if (item.entryUrl.toASCIIString() != metadata.entryUrl.toASCIIString()) return null
-        return resolveLaunch(item)?.let(PortalOpenTarget::InApp)
+        resolveLaunch(item)?.let { return PortalOpenTarget.InApp(it) }
+        return PublicBrowserAddress.parse(metadata.entryUrl.toASCIIString())?.let(PortalOpenTarget::PublicWeb)
+    }
+
+    /** The primary catalog route uses the same ordinary AutoFirma engine for
+     * every entry, independently of technical-profile availability or build.
+     * A reviewed profile remains an explicit compatibility action. */
+    fun resolveUniversalOpenTarget(item: PortalCatalogItem): PortalOpenTarget.PublicWeb? {
+        val metadata = publicCatalog.entries.singleOrNull { it.portalId == item.portalId } ?: return null
+        if (item.entryUrl.toASCIIString() != metadata.entryUrl.toASCIIString()) return null
+        val destination = metadata.launchUrl ?: metadata.entryUrl
+        return PublicBrowserAddress.parse(destination.toASCIIString())?.let(PortalOpenTarget::PublicWeb)
     }
 
     private fun resolve(metadata: PublicPortalEntry): PortalCatalogItem {
@@ -98,6 +111,7 @@ class PortalCatalogRepository(
             metadata.metadataSupportStatus()
         }
         val isOpenable = bindingMatches && isImplemented && supportStatus in OPENABLE_SUPPORT_STATUSES
+        val isPubliclyOpenable = PublicBrowserAddress.parse(metadata.entryUrl.toASCIIString()) != null
 
         return PortalCatalogItem(
             portalId = metadata.portalId,
@@ -123,10 +137,11 @@ class PortalCatalogRepository(
             entryUrl = metadata.entryUrl,
             isEnabled = isOpenable,
             regionCode = metadata.regionCode,
+            opensWithoutProfile = !isOpenable && isPubliclyOpenable,
         )
     }
 
-    private fun PortalCatalogItem.matches(query: PortalCatalogQuery): Boolean {
+    private fun PortalCatalogItem.matchesFilter(query: PortalCatalogQuery): Boolean {
         val matchesFilter = when (query.filter) {
             PortalCatalogFilter.ALL -> true
             PortalCatalogFilter.STATE -> governmentLevel == PortalGovernmentLevel.STATE
@@ -154,10 +169,7 @@ class PortalCatalogRepository(
             if (regionCode !in allowedRegions) return false
         }
 
-        val needle = query.searchText.searchKey()
-        if (needle.isEmpty()) return true
-        return sequenceOf(displayName, organization, territory, purpose)
-            .any { needle in it.searchKey() }
+        return true
     }
 
     private fun SiteProfile.toPublicCapabilities(): Set<PortalServiceCapability> = buildSet {
@@ -188,33 +200,7 @@ class PortalCatalogRepository(
         return true
     }
 
-    private fun String.searchKey(): String = Normalizer.normalize(this, Normalizer.Form.NFD)
-        .replace(COMBINING_MARKS, "")
-        .lowercase(Locale.ROOT)
-        .trim()
-
-    private fun portalComparator(selectedRegion: PortalRegionCode?): Comparator<PortalCatalogItem> {
-        val collator = Collator.getInstance(Locale.forLanguageTag("es-ES")).apply {
-            strength = Collator.PRIMARY
-        }
-        return Comparator { left, right ->
-            val rank = regionRank(left.regionCode, selectedRegion)
-                .compareTo(regionRank(right.regionCode, selectedRegion))
-            if (rank != 0) return@Comparator rank
-            val name = collator.compare(left.displayName, right.displayName)
-            if (name != 0) return@Comparator name
-            left.portalId.value.compareTo(right.portalId.value)
-        }
-    }
-
-    private fun regionRank(region: PortalRegionCode, selected: PortalRegionCode?): Int = when {
-        selected != null && selected != PortalRegionCode.SPAIN && region == selected -> 0
-        region == PortalRegionCode.SPAIN -> if (selected == null) 0 else 1
-        else -> 2 + region.ordinal
-    }
-
     private companion object {
-        val COMBINING_MARKS = Regex("\\p{M}+")
         val OPENABLE_SUPPORT_STATUSES = setOf(
             PortalSupportStatus.VERIFIED_E2E,
             PortalSupportStatus.IMPLEMENTED_NOT_E2E,

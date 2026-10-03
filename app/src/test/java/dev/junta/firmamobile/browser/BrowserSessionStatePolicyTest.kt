@@ -62,13 +62,12 @@ class BrowserSessionStatePolicyTest {
     }
 
     @Test
-    fun rejectsNonHttpsUserInfoNonDefaultPortAndFragmentEntries() {
+    fun rejectsNonHttpsUserInfoAndNonDefaultPortEntries() {
         val junta = ProfileId("junta-andalucia")
         listOf(
             "http://www.juntadeandalucia.es/path",
             "https://user@www.juntadeandalucia.es/path",
             "https://www.juntadeandalucia.es:8443/path",
-            "https://www.juntadeandalucia.es/path#fragment",
         ).forEach { rawUrl ->
             assertNull(
                 BrowserSessionStatePolicy.validatedEntryUrl(
@@ -78,6 +77,14 @@ class BrowserSessionStatePolicyTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun permitsFragmentOnSelectedProfileEntryWithoutChangingOrigin() {
+        val url = URI("https://www.juntadeandalucia.es/path#fragment")
+        assertEquals(url.toASCIIString(), BrowserSessionStatePolicy.validatedEntryUrl(
+            BuiltInSiteProfiles.qaRegistry, ProfileId("junta-andalucia"), url,
+        ))
     }
 
     @Test

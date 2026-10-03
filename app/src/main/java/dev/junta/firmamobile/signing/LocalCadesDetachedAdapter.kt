@@ -444,22 +444,26 @@ internal object CadesDetachedCodec {
     private fun SigningAlgorithm.cadesJcaName(): String = when (this) {
         SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
         SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+        SigningAlgorithm.SHA384_WITH_RSA -> "SHA384withRSA"
         SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
     }
 
     private fun SigningAlgorithm.digestOid(): String = when (this) {
         SigningAlgorithm.SHA1_WITH_RSA -> OID_SHA_1
         SigningAlgorithm.SHA256_WITH_RSA -> OID_SHA_256
+        SigningAlgorithm.SHA384_WITH_RSA -> OID_SHA_384
         SigningAlgorithm.SHA512_WITH_RSA -> OID_SHA_512
     }
 
     private fun SigningAlgorithm.signatureOid(): String = when (this) {
         SigningAlgorithm.SHA1_WITH_RSA -> "1.2.840.113549.1.1.5"
         SigningAlgorithm.SHA256_WITH_RSA -> "1.2.840.113549.1.1.11"
+        SigningAlgorithm.SHA384_WITH_RSA -> "1.2.840.113549.1.1.12"
         SigningAlgorithm.SHA512_WITH_RSA -> "1.2.840.113549.1.1.13"
     }
 
     private const val OID_SHA_1 = "1.3.14.3.2.26"
     private const val OID_SHA_256 = "2.16.840.1.101.3.4.2.1"
+    private const val OID_SHA_384 = "2.16.840.1.101.3.4.2.2"
     private const val OID_SHA_512 = "2.16.840.1.101.3.4.2.3"
 }

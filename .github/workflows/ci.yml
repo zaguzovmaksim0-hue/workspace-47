@@ -40,6 +40,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - name: Set up Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
@@ -64,9 +67,40 @@ jobs:
         run: scripts/ci/verify-android-artifacts.sh
       - name: Verify release signing fails closed without secrets
         run: scripts/ci/verify-release-fail-closed.sh
+      - name: Record QA artifact provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$VERIFY_REF" > app/build/outputs/apk/qa/SOURCE_COMMIT.txt
+          (cd app/build/outputs/apk/qa && sha256sum app-qa.apk > SHA256SUMS)
+      - name: Retain verified QA candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: firmamobile-qa-${{ env.VERIFY_REF }}
+          path: |
+            app/build/outputs/apk/qa/app-qa.apk
+            app/build/outputs/apk/qa/SOURCE_COMMIT.txt
+            app/build/outputs/apk/qa/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 3
+      - name: Retain Android unit and lint reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-unit-lint-${{ env.VERIFY_REF }}
+          path: |
+            app/build/test-results/testDebugUnitTest/
+            app/build/test-results/testQaUnitTest/
+            app/build/reports/lint-results-debug.xml
+            app/build/reports/lint-results-qa.xml
+          if-no-files-found: warn
+          retention-days: 3
 
   android-instrumented:
     name: Android emulator instrumentation
+    # The operator explicitly requested no E2E for this ongoing PR. This
+    # exception is label-gated and does not disable default main/other-PR runs.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.number != 338 || !contains(github.event.pull_request.labels.*.name, 'verification:no-e2e') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -82,6 +116,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - name: Set up Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
@@ -110,7 +147,7 @@ jobs:
           profile: pixel_7_pro
           disable-animations: true
           emulator-boot-timeout: 600
-          script: ./gradlew connectedQaAndroidTest --no-daemon --console=plain
+          script: bash scripts/run-android-instrumentation-ci.sh
       - name: Upload instrumentation failure report
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -120,6 +157,15 @@ jobs:
             app/build/reports/androidTests/connected/qa/
             app/build/outputs/androidTest-results/connected/qa/
           if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload emulator precondition and window diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-emulator-state-${{ env.VERIFY_REF }}
+          path: app/build/outputs/instrumentation-device-state/
+          if-no-files-found: warn
           retention-days: 1
 
   python:
@@ -138,6 +184,8 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install Python test dependencies
         run: python -m pip install --disable-pip-version-check --requirement tools/requirements.txt
+      - name: Test AutoFirma JavaScript interoperability
+        run: node --test scripts/tests/afirma-interoperability.test.mjs scripts/tests/android-instrumentation-harness.test.mjs
       - name: Run Python tests
         run: python -m unittest discover -s tools/tests -p 'test_*.py' -v
 

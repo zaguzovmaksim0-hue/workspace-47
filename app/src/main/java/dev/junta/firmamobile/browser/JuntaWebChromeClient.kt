@@ -8,48 +8,52 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 
 class JuntaWebChromeClient(
-    private val onProgressChanged: (Int) -> Unit = {},
+    var progressListener: (Int) -> Unit = {},
 ) : WebChromeClient() {
+    var fileChooser: ((WebView, android.webkit.ValueCallback<Array<android.net.Uri>>, FileChooserParams) -> Boolean)? = null
+
+    override fun onShowFileChooser(
+        webView: WebView,
+        filePathCallback: android.webkit.ValueCallback<Array<android.net.Uri>>,
+        fileChooserParams: FileChooserParams,
+    ): Boolean = fileChooser?.invoke(webView, filePathCallback, fileChooserParams) ?: false
+
     override fun onProgressChanged(view: WebView, newProgress: Int) {
-        onProgressChanged(newProgress.coerceIn(0, 100))
+        progressListener(newProgress.coerceIn(0, 100))
     }
+
+    var createWindow: ((WebView, Boolean, Boolean, android.os.Message) -> Boolean)? = null
+    var closeWindow: ((WebView) -> Unit)? = null
+
+    override fun onCloseWindow(window: WebView) { closeWindow?.invoke(window) }
 
     override fun onCreateWindow(
         view: WebView,
         isDialog: Boolean,
         isUserGesture: Boolean,
         resultMsg: android.os.Message,
-    ): Boolean = false
+    ): Boolean = createWindow?.invoke(view, isDialog, isUserGesture, resultMsg) ?: false
 
     override fun onJsAlert(
         view: WebView,
         url: String,
         message: String,
         result: JsResult,
-    ): Boolean {
-        result.confirm()
-        return true
-    }
+    ): Boolean = false
 
     override fun onJsBeforeUnload(
         view: WebView,
         url: String,
         message: String,
         result: JsResult,
-    ): Boolean {
-        result.confirm()
-        return true
-    }
+    ): Boolean = false
 
     override fun onJsConfirm(
         view: WebView,
         url: String,
         message: String,
         result: JsResult,
-    ): Boolean {
-        result.cancel()
-        return true
-    }
+    ): Boolean = false
 
     override fun onJsPrompt(
         view: WebView,
@@ -57,10 +61,7 @@ class JuntaWebChromeClient(
         message: String,
         defaultValue: String,
         result: JsPromptResult,
-    ): Boolean {
-        result.cancel()
-        return true
-    }
+    ): Boolean = false
 
     override fun onPermissionRequest(request: PermissionRequest) {
         request.deny()

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_batch_details_show">Ver resultados por documento</string>
+    <string name="native_batch_details_hide">Ocultar resultados por documento</string>
+    <string name="native_batch_origin_local">Resultados de la operación local. Una firma generada no demuestra que el sitio la haya recibido o guardado. La entrega de la respuesta se indica por separado; no confirma aceptación administrativa.</string>
+    <string name="native_batch_origin_service">Lote con servicio remoto: estados comunicados por el servicio y posibles omisiones realizadas por este cliente. La entrega al sitio se indica por separado. No acredita aceptación administrativa ni revierte efectos parciales.</string>
+    <string name="native_batch_id">%1$d. Documento: %2$s</string>
+    <string name="native_batch_status">Código de resultado: %1$s</string>
+    <string name="native_batch_description">Descripción recibida: %1$s</string>
+    <string name="native_batch_status_done">Firma terminada; estado de guardado según el origen indicado.</string>
+    <string name="native_batch_status_pending_save">Firma producida; guardado no confirmado.</string>
+    <string name="native_batch_status_save_skipped">Firma producida; guardado omitido.</string>
+    <string name="native_batch_status_save_failed">Error al guardar el resultado.</string>
+    <string name="native_batch_status_pre_failed">Error en la preparación o firma local.</string>
+    <string name="native_batch_status_post_failed">Error en la finalización del servicio.</string>
+    <string name="native_batch_status_skipped">Documento omitido.</string>
+    <string name="native_batch_status_not_started">Documento no iniciado.</string>
+    <string name="native_batch_status_rollback">El servicio declara una reversión del guardado.</string>
+    <string name="native_batch_status_failed">Resultado negativo declarado por el servicio.</string>
+    <string name="native_batch_status_other">Consulte el código comunicado por el origen del resultado.</string>
+</resources>

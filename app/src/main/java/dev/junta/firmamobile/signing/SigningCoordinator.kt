@@ -404,6 +404,7 @@ class SigningCoordinator internal constructor(
         val expectedAlgorithm = when (request.algorithm) {
             SigningAlgorithm.SHA1_WITH_RSA -> ProfileSignatureAlgorithm.SHA1_WITH_RSA
             SigningAlgorithm.SHA256_WITH_RSA -> ProfileSignatureAlgorithm.SHA256_WITH_RSA
+            SigningAlgorithm.SHA384_WITH_RSA -> return SigningErrorCode.UNSUPPORTED_PROTOCOL
             SigningAlgorithm.SHA512_WITH_RSA -> ProfileSignatureAlgorithm.SHA512_WITH_RSA
         }
         val expectedFormat = when (request.format) {
@@ -548,6 +549,7 @@ class SigningCoordinator internal constructor(
     private fun SigningAlgorithm.displayName(): String = when (this) {
         SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
         SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+        SigningAlgorithm.SHA384_WITH_RSA -> "SHA384withRSA"
         SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
     }
 

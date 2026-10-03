@@ -535,6 +535,7 @@ internal class AutoFirmaCadesTriPhaseCodec(
     private fun SigningAlgorithm.wireName(): String = when (this) {
         SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
         SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+        SigningAlgorithm.SHA384_WITH_RSA -> fail(TriPhaseCodecError.INVALID_REQUEST)
         SigningAlgorithm.SHA512_WITH_RSA -> fail(TriPhaseCodecError.INVALID_REQUEST)
     }
 

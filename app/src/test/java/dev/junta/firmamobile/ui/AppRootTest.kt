@@ -34,6 +34,23 @@ class AppRootTest {
     val rule = createComposeRule()
 
     @Test
+    fun browsingDoesNotRequireImportingOrUnlockingACertificate() {
+        var continued = false
+        var selected = false
+        rule.setContent {
+            JuntaFirmaTheme {
+                AppRoot(
+                    state = CertificateUiState.NoCertificate(),
+                    onSelectCertificate = { selected = true },
+                    onContinue = { continued = true },
+                )
+            }
+        }
+        rule.onNodeWithTag("browse-without-certificate").performScrollTo().performClick()
+        rule.runOnIdle { check(continued); check(!selected) }
+    }
+
+    @Test
     fun noCertificateInvokesSafSelection() {
         var selected = false
         rule.setContent {

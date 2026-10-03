@@ -118,8 +118,53 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private class PendingExternalApp(
+        val token: UUID,
+        val sourceHost: String,
+        val target: dev.junta.firmamobile.browser.ExternalAppLink,
+    )
+    private var pendingExternalApp by mutableStateOf<PendingExternalApp?>(null)
+    private val externalAppConsent by lazy {
+        dev.junta.firmamobile.browser.ExternalAppConsentLease<WebView>(
+            isCurrent = { view, epoch -> view === currentWebView && epoch == currentNavigationEpoch },
+            canRespond = { lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) &&
+                !certificatePanelVisible && currentWebView?.isShown == true && !isFinishing && !isDestroyed },
+        )
+    }
+
+    private var pendingExternalHandoff by mutableStateOf<dev.junta.firmamobile.browser.ExternalHandoff.Request?>(null)
+    private var externalHandoffFailed by mutableStateOf(false)
+    private val browserExternalReturn = dev.junta.firmamobile.browser.BrowserExternalReturnLease<WebView>()
+    private var browserFileReturnToken: UUID? = null
+    private var documentDownloadReturnToken: UUID? = null
+    private val documentDownloadLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        documentDownloadReturnToken?.let(browserExternalReturn::finish)
+        documentDownloadReturnToken = null
+    }
+    private var certificateReturnToken: UUID? = null
+    private val browserFilePicker: androidx.activity.result.ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        browserFileReturnToken?.let(browserExternalReturn::finish)
+        browserFileReturnToken = null
+        browserFileChooser.deliver(result.resultCode, result.data)
+    }
+    private val browserFileChooser: dev.junta.firmamobile.browser.BrowserFileChooser by lazy {
+        dev.junta.firmamobile.browser.BrowserFileChooser(
+            navigationEpoch = { currentNavigationEpoch },
+            isCurrentView = { it === currentWebView },
+            canRead = { uri ->
+                // Only a picker-granted content URI, not app-private files or a
+                // forged file:// path, is returned to a website.
+                checkUriPermission(uri, android.os.Process.myPid(), android.os.Process.myUid(),
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED
+            },
+            launch = { intent -> withBrowserExternalReturn(onToken = { browserFileReturnToken = it }) { browserFilePicker.launch(intent) } },
+        )
+    }
+
     private var currentWebView: WebView? = null
     private var destination by mutableStateOf<AppDestination>(AppDestination.Certificate)
+    private var certificatePanelVisible by mutableStateOf(false)
     private lateinit var signingCoordinator: SigningCoordinator
     private lateinit var batchSigningCoordinator: BatchSigningCoordinator
     private lateinit var melillaBatchSigningAdapter: MelillaBatchSigningAdapter
@@ -148,6 +193,8 @@ class MainActivity : ComponentActivity() {
     private val certificatePicker = registerForActivityResult(
         OpenableDocumentContract,
     ) { uri ->
+        certificateReturnToken?.let(browserExternalReturn::finish)
+        certificateReturnToken = null
         uri?.let(certificateViewModel::onCertificateSelected)
     }
 
@@ -370,24 +417,26 @@ class MainActivity : ComponentActivity() {
                 ),
                 updateSecure = updateSecureWindow,
             )
-            LaunchedEffect(certificateState.value) {
-                if (certificateState.value !is CertificateUiState.Unlocked) {
-                    destination = AppDestination.Certificate
-                }
-            }
             JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
                 val browserDestination = destination as? AppDestination.Browser
-                if (browserDestination != null && unlocked != null) {
+                if (browserDestination != null) {
                     val app = application as JuntaFirmaApplication
                     key(
-                        browserDestination.profileId.value,
+                        browserDestination.profileId?.value,
                         browserDestination.entryUrl.toASCIIString(),
                     ) {
                         BrowserScreen(
                         profileId = browserDestination.profileId,
                         entryUrl = browserDestination.entryUrl,
                         certificateState = unlocked,
+                        certificatePanelVisible = certificatePanelVisible,
+                        mayRetainExternalReturn = {
+                            currentWebView?.let { browserExternalReturn.markDeparture(it, currentNavigationEpoch) } == true
+                        },
+                        consumeExternalReturn = {
+                            currentWebView?.let { browserExternalReturn.consume(it, currentNavigationEpoch) } == true
+                        },
                         logger = app.sanitizedLogger,
                         signingState = signingState,
                         onMiniAppletRequest = ::prepareMiniAppletSigning,
@@ -405,38 +454,50 @@ class MainActivity : ComponentActivity() {
                             cancelSigning(SigningCancelReason.NAVIGATION)
                             destination = AppDestination.Catalog
                         },
-                        onOpenExternal = {
-                            // External browser handoffs are intentionally disabled application-wide.
-                            cancelSigning(SigningCancelReason.NAVIGATION)
-                        },
-                        onOpenOfficialAutoFirma = {
-                            // External AutoFirma handoffs are intentionally disabled application-wide.
-                            cancelSigning(SigningCancelReason.NAVIGATION)
-                        },
+                        onOpenExternal = { uri -> requestExternalHandoff(dev.junta.firmamobile.browser.ExternalHandoff.Kind.BROWSER, uri) },
+                        onOpenOfficialAutoFirma = { uri -> requestExternalHandoff(dev.junta.firmamobile.browser.ExternalHandoff.Kind.AUTOFIRMA, uri) },
+                        onExternalAppRequest = ::requestExternalApp,
                         onChangeCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            destination = AppDestination.Certificate
-                            launchCertificatePicker()
+                            certificatePanelVisible = true
                         },
                         onLockCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            destination = AppDestination.Certificate
                             certificateViewModel.lock()
                         },
                         onClearSession = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            destination = AppDestination.Certificate
                             certificateViewModel.lock()
                         },
                         clientCertificateIdentityProvider = {
                             app.certificateSession.identityForSigning()
                         },
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
-                        onWebViewChanged = { currentWebView = it },
-                            onNavigationEpochChanged = { currentNavigationEpoch = it },
+                        onShowFileChooser = { view, callback, params -> browserFileChooser.open(view, callback, params) },
+                        onDocumentDownload = { view, request ->
+                            if (currentWebView !== view || certificatePanelVisible || request.component?.packageName != packageName ||
+                                request.component?.className != dev.junta.firmamobile.browser.download.DocumentDownloadActivity::class.java.name
+                            ) false else try {
+                                withBrowserExternalReturn(onToken = { documentDownloadReturnToken = it }) {
+                                    documentDownloadLauncher.launch(request)
+                                }
+                                true
+                            } catch (_: Exception) { false }
+                        },
+                        onWebViewChanged = {
+                            if (currentWebView !== it) { clearExternalApp(); browserFileChooser.cancel(); pendingExternalHandoff = null; browserExternalReturn.invalidate() }
+                            currentWebView = it
+                        },
+                        onNavigationEpochChanged = {
+                            clearExternalApp()
+                            browserExternalReturn.invalidate()
+                            browserFileChooser.cancel()
+                            pendingExternalHandoff = null
+                            currentNavigationEpoch = it
+                        },
                         )
                     }
-                } else if (destination == AppDestination.Catalog && unlocked != null) {
+                } else if (destination == AppDestination.Catalog) {
                     PortalCatalogScreen(
                         state = catalogState.value,
                         onSearchTextChange = catalogViewModel::updateSearchText,
@@ -474,6 +535,17 @@ class MainActivity : ComponentActivity() {
                         onToggleFavorite = catalogViewModel::toggleFavorite,
                         onBackToCertificate = { destination = AppDestination.Certificate },
                         onOpenPortal = { item ->
+                            val target = catalogRepository.resolveUniversalOpenTarget(item)
+                            if (target == null) catalogViewModel.onOpenFailed() else {
+                                cancelSigning(SigningCancelReason.NAVIGATION)
+                                currentWebView = null
+                                catalogViewModel.recordOpened(item.portalId)
+                                destination = AppDestination.Browser(profileId = null, entryUrl = target.entryUrl)
+                            }
+                        },
+                        // Opt-in only: preserves reviewed proprietary flows
+                        // without silently routing the default through them.
+                        onOpenCompatibilityPortal = { item ->
                             when (val target = catalogRepository.resolveOpenTarget(item)) {
                                 is PortalOpenTarget.InApp -> {
                                     cancelSigning(SigningCancelReason.NAVIGATION)
@@ -484,10 +556,24 @@ class MainActivity : ComponentActivity() {
                                         entryUrl = target.launch.entryUrl,
                                     )
                                 }
+                                is PortalOpenTarget.PublicWeb -> {
+                                    cancelSigning(SigningCancelReason.NAVIGATION)
+                                    currentWebView = null
+                                    catalogViewModel.recordOpened(item.portalId)
+                                    destination = AppDestination.Browser(profileId = null, entryUrl = target.entryUrl)
+                                }
                                 null -> catalogViewModel.onOpenFailed()
                             }
                         },
                         onUserMessageShown = catalogViewModel::onUserMessageShown,
+                        onOpenPublicWeb = { uri ->
+                            val accepted = dev.junta.firmamobile.browser.PublicBrowserAddress.parse(uri.toASCIIString())
+                            if (accepted == null) catalogViewModel.onOpenFailed() else {
+                                cancelSigning(SigningCancelReason.NAVIGATION)
+                                currentWebView = null
+                                destination = AppDestination.Browser(profileId = null, entryUrl = accepted)
+                            }
+                        },
                     )
                 } else {
                     AppRoot(
@@ -498,6 +584,75 @@ class MainActivity : ComponentActivity() {
                         onForget = certificateViewModel::forget,
                         onContinue = { destination = AppDestination.Catalog },
                     )
+                }
+                pendingExternalApp?.let { request ->
+                    LaunchedEffect(request.token) {
+                        kotlinx.coroutines.delay(120_000)
+                        if (pendingExternalApp === request) clearExternalApp()
+                    }
+                    dev.junta.firmamobile.ui.ExternalAppConsentDialog(
+                        sourceHost = request.sourceHost,
+                        scheme = request.target.scheme,
+                        requestedPackage = request.target.packageName,
+                        fallbackHost = request.target.webFallback?.host,
+                        onOpenApp = { launchExternalApp(request, fallback = false) },
+                        onOpenWeb = { launchExternalApp(request, fallback = true) },
+                        onCancel = ::clearExternalApp,
+                    )
+                }
+                pendingExternalHandoff?.let { request ->
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { pendingExternalHandoff = null },
+                        title = { androidx.compose.material3.Text(getString(R.string.external_handoff_title)) },
+                        text = {
+                            androidx.compose.material3.Text(getString(
+                                if (request.kind == dev.junta.firmamobile.browser.ExternalHandoff.Kind.BROWSER)
+                                    R.string.external_browser_copy else R.string.external_autofirma_copy,
+                                request.sourceHost.orEmpty(),
+                            ))
+                        },
+                        confirmButton = {
+                            androidx.compose.material3.TextButton(onClick = {
+                                pendingExternalHandoff = null
+                                if (request.navigationEpoch == currentNavigationEpoch) launchExternalHandoff(request)
+                            }) { androidx.compose.material3.Text(getString(R.string.external_handoff_continue)) }
+                        },
+                        dismissButton = {
+                            androidx.compose.material3.TextButton(onClick = { pendingExternalHandoff = null }) {
+                                androidx.compose.material3.Text(getString(R.string.cancel))
+                            }
+                        },
+                    )
+                }
+                if (externalHandoffFailed) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { externalHandoffFailed = false },
+                        title = { androidx.compose.material3.Text(getString(R.string.external_handoff_unavailable_title)) },
+                        text = { androidx.compose.material3.Text(getString(R.string.external_handoff_unavailable_copy)) },
+                        confirmButton = {
+                            androidx.compose.material3.TextButton(onClick = { externalHandoffFailed = false }) {
+                                androidx.compose.material3.Text(getString(R.string.close))
+                            }
+                        },
+                    )
+                }
+                if (certificatePanelVisible) {
+                    androidx.compose.ui.window.Dialog(
+                        onDismissRequest = { certificatePanelVisible = false },
+                        properties = androidx.compose.ui.window.DialogProperties(
+                            usePlatformDefaultWidth = false,
+                            securePolicy = androidx.compose.ui.window.SecureFlagPolicy.SecureOn,
+                        ),
+                    ) {
+                        AppRoot(
+                            state = certificateState.value,
+                            onSelectCertificate = ::launchCertificatePicker,
+                            onUnlock = certificateViewModel::unlock,
+                            onLock = certificateViewModel::lock,
+                            onForget = certificateViewModel::forget,
+                            onContinue = { certificatePanelVisible = false },
+                        )
+                    }
                 }
             }
         }
@@ -510,6 +665,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        clearExternalApp()
         catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
         certificateViewModel.onAppBackgrounded()
@@ -522,13 +678,80 @@ class MainActivity : ComponentActivity() {
         super.onLowMemory()
     }
 
+    private fun requestExternalApp(view: WebView, target: dev.junta.firmamobile.browser.ExternalAppLink): Boolean {
+        if (view !== currentWebView || pendingExternalApp != null || pendingExternalHandoff != null ||
+            externalHandoffFailed || certificatePanelVisible || !view.hasWindowFocus()
+        ) return false
+        val source = dev.junta.firmamobile.browser.PublicBrowserAddress.parse(view.url ?: "") ?: return false
+        val token = externalAppConsent.reserve(view, currentNavigationEpoch) ?: return false
+        pendingExternalApp = PendingExternalApp(token, source.host, target)
+        return true
+    }
+
+    private fun clearExternalApp() {
+        pendingExternalApp = null
+        externalAppConsent.invalidate()
+    }
+
+    private fun launchExternalApp(request: PendingExternalApp, fallback: Boolean) {
+        if (pendingExternalApp !== request) return
+        // Consume the exact owner/epoch ticket before the external side effect.
+        if (!externalAppConsent.consume(request.token)) { clearExternalApp(); return }
+        pendingExternalApp = null
+        val intent = if (fallback) request.target.fallbackIntent() else request.target.minimalIntent()
+        if (intent == null) return
+        cancelSigning(SigningCancelReason.NAVIGATION)
+        try {
+            withBrowserExternalReturn { startActivity(intent) }
+        } catch (_: android.content.ActivityNotFoundException) {
+            externalHandoffFailed = true
+        } catch (_: SecurityException) {
+            externalHandoffFailed = true
+        }
+    }
+
+    private fun requestExternalHandoff(kind: dev.junta.firmamobile.browser.ExternalHandoff.Kind, uri: Uri) {
+        if (pendingExternalHandoff != null || pendingExternalApp != null) return
+        val request = dev.junta.firmamobile.browser.ExternalHandoff.Request(
+            kind, uri, currentNavigationEpoch,
+            if (kind == dev.junta.firmamobile.browser.ExternalHandoff.Kind.BROWSER) uri.host else currentWebView?.url?.let { Uri.parse(it).host },
+        )
+        if (dev.junta.firmamobile.browser.ExternalHandoff.intentFor(request) == null) {
+            externalHandoffFailed = true
+        } else pendingExternalHandoff = request
+    }
+
+    private fun launchExternalHandoff(request: dev.junta.firmamobile.browser.ExternalHandoff.Request) {
+        val intent = dev.junta.firmamobile.browser.ExternalHandoff.intentFor(request) ?: return
+        cancelSigning(SigningCancelReason.NAVIGATION)
+        try {
+            withBrowserExternalReturn { startActivity(intent) }
+        } catch (_: android.content.ActivityNotFoundException) {
+            externalHandoffFailed = true
+        } catch (_: SecurityException) {
+            externalHandoffFailed = true
+        }
+    }
+
+    private fun <T> withBrowserExternalReturn(onToken: (UUID?) -> Unit = {}, action: () -> T): T {
+        val token = currentWebView?.let { browserExternalReturn.begin(it, currentNavigationEpoch) }
+        onToken(token)
+        return try {
+            action()
+        } catch (error: Exception) {
+            token?.let(browserExternalReturn::cancel)
+            throw error
+        }
+    }
+
     private fun launchCertificatePicker() {
         cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
         certificateViewModel.prepareForCertificateSelection()
-        certificatePicker.launch(PKCS12_MIME_TYPES)
+        withBrowserExternalReturn(onToken = { certificateReturnToken = it }) { certificatePicker.launch(PKCS12_MIME_TYPES) }
     }
 
     override fun onDestroy() {
+        browserFileChooser.cancel()
         catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
         signingCoordinator.close()
@@ -743,7 +966,7 @@ private sealed interface AppDestination {
     data object Catalog : AppDestination
 
     data class Browser(
-        val profileId: ProfileId,
+        val profileId: ProfileId?,
         val entryUrl: URI,
     ) : AppDestination
 }

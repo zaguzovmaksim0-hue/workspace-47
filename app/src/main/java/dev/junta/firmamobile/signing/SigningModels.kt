@@ -23,6 +23,7 @@ enum class SigningAlgorithm {
     SHA1_WITH_RSA,
     SHA256_WITH_RSA,
     SHA512_WITH_RSA,
+    SHA384_WITH_RSA,
 }
 
 enum class SigningFormat {

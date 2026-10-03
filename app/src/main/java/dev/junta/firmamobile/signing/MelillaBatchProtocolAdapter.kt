@@ -639,6 +639,7 @@ private fun BatchSigningFormat.extraParams(): String? = when (this) {
 private fun SigningAlgorithm.wireName(): String = when (this) {
     SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
     SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+    SigningAlgorithm.SHA384_WITH_RSA -> "SHA384withRSA"
     SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
 }
 
