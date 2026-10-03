@@ -112,6 +112,7 @@ class CatalogAddressInputTest {
             assertFalse(description.contains("secret-value")); assertFalse(description.contains("portal.example"))
         }
         assertEquals("portal.example", state.hostPreview)
+        assertSame(state.destination, state.destination)
         assertNotNull(PublicBrowserAddress.parse(checkNotNull(state.destination).toASCIIString()))
     }
 }

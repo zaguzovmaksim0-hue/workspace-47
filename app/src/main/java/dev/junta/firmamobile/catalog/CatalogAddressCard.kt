@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,9 +22,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -70,6 +69,22 @@ internal fun CatalogAddressCard(
                 autoCorrectEnabled = false, keyboardType = KeyboardType.Uri, imeAction = ImeAction.Go),
             keyboardActions = KeyboardActions(onGo = { onSubmit() }),
             modifier = Modifier.fillMaxWidth().testTag("public-web-address"),
+            trailingIcon = {
+                Row {
+                    if (state.text.isEmpty()) {
+                        TextButton(onClick = onPaste, enabled = !state.opening,
+                            modifier = Modifier.heightIn(min = 48.dp).testTag("catalog-address-paste")) {
+                            Text(stringResource(R.string.catalog_address_paste), style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                    if (state.text.isNotEmpty() || state.error != null) {
+                        val clearLabel = stringResource(R.string.catalog_address_clear)
+                        TextButton(onClick = onClear, enabled = !state.opening,
+                            modifier = Modifier.heightIn(min = 48.dp).testTag("catalog-address-clear")
+                                .semantics { contentDescription = clearLabel }) { Text("×") }
+                    }
+                }
+            },
             supportingText = {
                 val error = state.error
                 if (error != null) {
@@ -85,23 +100,7 @@ internal fun CatalogAddressCard(
                 }
             },
         )
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val stacked = maxWidth < 300.dp || LocalDensity.current.fontScale > 1.2f
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                    TextButton(onClick = onPaste, enabled = !state.opening,
-                        modifier = Modifier.heightIn(min = 48.dp).testTag("catalog-address-paste")) {
-                        Text(stringResource(R.string.catalog_address_paste))
-                    }
-                    TextButton(onClick = onClear, enabled = !state.opening && (state.text.isNotEmpty() || state.error != null),
-                        modifier = Modifier.heightIn(min = 48.dp).testTag("catalog-address-clear")) {
-                        Text(stringResource(R.string.catalog_address_clear))
-                    }
-                    if (!stacked) AddressOpenButton(state, onSubmit, Modifier.weight(1f))
-                }
-                if (stacked) AddressOpenButton(state, onSubmit, Modifier.fillMaxWidth())
-            }
-        }
+        AddressOpenButton(state, onSubmit, Modifier.fillMaxWidth())
     }
 }
 
@@ -110,7 +109,7 @@ private fun AddressOpenButton(state: CatalogAddressInput, onSubmit: () -> Unit, 
     Button(onClick = onSubmit, enabled = state.canSubmit,
         colors = ButtonDefaults.buttonColors(containerColor = JuntaTeal, contentColor = JuntaPaperElevated),
         modifier = modifier.heightIn(min = 48.dp).testTag("public-web-open-confirm"), shape = CutCornerShape(8.dp)) {
-        Text(stringResource(if (state.opening) R.string.catalog_address_opening else R.string.catalog_address_open))
+        Text(stringResource(if (state.opening) R.string.catalog_address_opening else R.string.catalog_open_site))
     }
 }
 

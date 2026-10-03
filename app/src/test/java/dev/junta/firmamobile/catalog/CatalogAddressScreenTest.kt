@@ -163,9 +163,10 @@ class CatalogAddressScreenTest {
                 }
             }
         }
+        rule.onNodeWithTag("catalog-address-paste").assertDoesNotExist()
         rule.onNodeWithTag("public-web-open-confirm").performScrollTo().assertIsDisplayed()
         val card = rule.onNodeWithTag("narrow-card").fetchSemanticsNode().boundsInRoot
-        for (tag in listOf("public-web-address", "catalog-address-paste", "catalog-address-clear", "public-web-open-confirm")) {
+        for (tag in listOf("public-web-address", "catalog-address-clear", "public-web-open-confirm")) {
             val rect = rule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
             assertTrue(tag, rect.left >= card.left && rect.right <= card.right + 1f)
         }

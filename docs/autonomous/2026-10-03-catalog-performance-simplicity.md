@@ -28,7 +28,7 @@ Favorite management and reviewed profile compatibility are retained as rare expl
 
 The region selector is a compact name/change row. “Usar mi ubicación” moves into the region picker, where it still requires an explicit tap. No extra location request is made. Existing location-denial/settings behavior is preserved.
 
-The own-address entry remains above the catalog with its previous paste/clear/keyboard/privacy behavior. Browser/profile callbacks, signature algorithms, permissions, endpoints and user data are not modified.
+The own-address entry remains above the catalog. It also has one full-width Open-site action; paste is a small field action while empty, and clear is a field action when needed. Its additional BoxWithConstraints subcomposition is removed. Immutable address drafts reuse their parsed URI for preview and submission instead of reparsing it on each read. Existing paste/clear/keyboard/privacy behavior is retained. Browser/profile callbacks, signature algorithms, permissions, endpoints and user data are not modified.
 
 ## Verification
 

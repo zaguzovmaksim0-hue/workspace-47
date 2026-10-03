@@ -12,8 +12,11 @@ internal class CatalogAddressInput private constructor(
 ) {
     enum class Error { EMPTY, INVALID, TOO_LONG, CLIPBOARD_EMPTY }
 
+    // The draft is immutable. Reuse its parsed URI for preview, validation and
+    // submit instead of reparsing the same string during each recomposition.
+    private val parsedDestination: URI? by lazy { parse(text) }
     val destination: URI?
-        get() = if (opening || error == Error.TOO_LONG || error == Error.CLIPBOARD_EMPTY) null else parse(text)
+        get() = if (opening || error == Error.TOO_LONG || error == Error.CLIPBOARD_EMPTY) null else parsedDestination
     val canSubmit: Boolean get() = !opening && text.isNotBlank() && error != Error.TOO_LONG && error != Error.CLIPBOARD_EMPTY
     val hostPreview: String? get() = destination?.host
 
