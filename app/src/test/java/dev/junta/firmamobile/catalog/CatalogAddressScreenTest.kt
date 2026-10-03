@@ -22,6 +22,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
@@ -74,7 +75,7 @@ class CatalogAddressScreenTest {
         showCatalog()
         val raw = "portal.example/a%2Fb?token=not-logged+x&v=%252F#section"
         rule.onNodeWithTag("public-web-address").performTextReplacement(raw)
-        rule.onNodeWithTag("catalog-address-host").assertTextContains("Destino: portal.example")
+        rule.onNodeWithTag("catalog-address-host", useUnmergedTree = true).assertTextContains("Destino: portal.example")
         rule.onNodeWithTag("public-web-address").performImeAction()
         rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
         rule.onNodeWithTag("public-web-address").assertIsNotEnabled()
@@ -85,10 +86,10 @@ class CatalogAddressScreenTest {
         showCatalog()
         rule.onNodeWithTag("public-web-address").performTextReplacement("http://portal.example")
         rule.onNodeWithTag("public-web-open-confirm").performClick()
-        rule.onNodeWithTag("catalog-address-error").assertIsDisplayed()
+        rule.onNodeWithTag("catalog-address-error", useUnmergedTree = true).assertIsDisplayed()
         rule.runOnIdle { assertTrue(opened.isEmpty()) }
         rule.onNodeWithTag("public-web-address").performTextReplacement("portal.example/correct")
-        rule.onNodeWithTag("catalog-address-error").assertDoesNotExist()
+        rule.onNodeWithTag("catalog-address-error", useUnmergedTree = true).assertDoesNotExist()
         rule.onNodeWithTag("public-web-open-confirm").performClick()
         rule.runOnIdle { assertEquals(URI("https://portal.example/correct"), opened.single()) }
     }
@@ -110,13 +111,13 @@ class CatalogAddressScreenTest {
         showCatalog()
         clipboard().setPrimaryClip(ClipData.newRawUri("synthetic", Uri.parse("content://unreachable.synthetic.example/secret")))
         rule.onNodeWithTag("catalog-address-paste").performClick()
-        rule.onNodeWithTag("catalog-address-error").assertIsDisplayed()
+        rule.onNodeWithTag("catalog-address-error", useUnmergedTree = true).assertIsDisplayed()
         rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
         clipboard().setPrimaryClip(ClipData.newPlainText("synthetic", "https://portal.example/" + "a".repeat(9000)))
         rule.onNodeWithTag("catalog-address-paste").performClick()
         rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
         rule.onNodeWithTag("catalog-address-clear").performClick()
-        rule.onNodeWithTag("catalog-address-error").assertDoesNotExist()
+        rule.onNodeWithTag("catalog-address-error", useUnmergedTree = true).assertDoesNotExist()
         rule.runOnIdle { assertTrue(opened.isEmpty()) }
     }
 
@@ -128,6 +129,9 @@ class CatalogAddressScreenTest {
         rule.onNodeWithTag("public-web-address").performTextReplacement("retained.example/form")
         rule.onNodeWithTag("catalog-search-field").performTextReplacement("search query")
         rule.onNodeWithTag("catalog-search-clear").performClick()
+        // Clearing a search restores the catalog's normal collapsed sections.
+        // Expand the real section before testing its scroll/return behavior.
+        rule.onNodeWithText("Servicios estatales").performClick()
         rule.onNodeWithTag("catalog-list").performScrollToNode(hasTestTag("catalog-open-${items.last().portalId.value}"))
         rule.onNodeWithTag("catalog-return-to-address").assertIsDisplayed().performClick()
         rule.waitForIdle()
@@ -141,7 +145,7 @@ class CatalogAddressScreenTest {
         rule.runOnIdle { visible.value = false }
         rule.runOnIdle { visible.value = true }
         rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
-        rule.onNodeWithTag("catalog-address-host").assertDoesNotExist()
+        rule.onNodeWithTag("catalog-address-host", useUnmergedTree = true).assertDoesNotExist()
         rule.runOnIdle { assertTrue(opened.isEmpty()) }
     }
 

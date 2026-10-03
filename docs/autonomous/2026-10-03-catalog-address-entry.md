@@ -38,3 +38,5 @@ https://developer.android.com/develop/ui/compose/text/user-input
 https://developer.android.com/develop/ui/compose/state
 
 No external implementation is copied; no dependencies, signing permissions or new network endpoints are introduced.
+
+The first isolated component run exposed two test setup mistakes: TextField supporting text belongs to the unmerged semantics tree, and clearing catalog search restores collapsed sections. The tests now select the actual supporting nodes and expand the real section before scrolling. Their display, input, error and retention assertions remain; production UI is unchanged by this correction. The first failed XML report is retained.
