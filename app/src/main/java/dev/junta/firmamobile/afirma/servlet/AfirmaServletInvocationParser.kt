@@ -251,18 +251,17 @@ internal object AfirmaServletInvocationParser {
     }
 
     internal fun properties(encoded: String): Map<String, String> {
-        val bytes = strictBase64(encoded, 16_384)
-        val text = try { decodeUtf8(bytes) } finally { bytes.fill(0) }
-        if (text.any { it == '\\' || (it.isISOControl() && it !in "\r\n\t") }) unsupported("escaped_or_binary_properties")
-        val result = linkedMapOf<String, String>()
-        for (line in text.replace("\r\n", "\n").replace('\r', '\n').split('\n')) {
-            val clean = line.trim()
-            if (clean.isEmpty() || clean.startsWith('#') || clean.startsWith('!')) continue
-            val match = PROPERTY.matchEntire(clean) ?: unsupported("property_syntax")
-            val key = match.groupValues[1]
-            if (result.put(key, match.groupValues[2].trim()) != null) invalid("duplicate_property")
-        }
-        return result
+        val bytes = strictBase64(encoded, NativeJavaProperties.MAX_TEXT_CHARS)
+        return try {
+            NativeJavaProperties.decode(decodeUtf8(bytes))
+        } catch (error: NativeJavaProperties.Invalid) {
+            when (error.failure) {
+                NativeJavaProperties.Failure.DUPLICATE -> invalid("duplicate_property")
+                NativeJavaProperties.Failure.SIZE -> invalid("property_limits")
+                NativeJavaProperties.Failure.SYNTAX -> invalid("property_syntax")
+                NativeJavaProperties.Failure.CHARACTERS -> invalid("property_characters")
+            }
+        } finally { bytes.fill(0) }
     }
 
     private fun decodeComponent(value: String): String {
@@ -310,7 +309,6 @@ internal object AfirmaServletInvocationParser {
     private val NAME = Regex("[A-Za-z][A-Za-z0-9_-]{0,63}")
     private val SESSION_ID = Regex("[A-Za-z0-9_-]{1,128}")
     private val BASE64 = Regex("[A-Za-z0-9+/_-]*={0,2}")
-    private val PROPERTY = Regex("([^\\s=:]+)\\s*(?:=|:|\\s)\\s*(.*)")
     private val KNOWN_PARAMETERS = setOf("id", "key", "dat", "properties", "algorithm", "format", "stservlet",
         "fileid", "rid", "cipher", "rtservlet", "serverurl", "op", "cop", "jvc", "ver", "v", "appname", "dlgload", "aw",
         "batchpresignerurl", "batchpostsignerurl", "jsonbatch", "localBatchProcess", "needcert",

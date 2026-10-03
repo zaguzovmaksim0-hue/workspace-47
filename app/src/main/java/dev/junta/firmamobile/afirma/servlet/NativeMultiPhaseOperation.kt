@@ -112,7 +112,7 @@ internal class NativeMultiPhaseOperation(
                         AfirmaServletOperation.COUNTERSIGN -> "countersign"; else -> error("Invalid single operation")
                     }
                     val certs = identity.chain.ifEmpty { listOf(identity.certificate) }.joinToString(",") { url64(it.encoded) }
-                    val parameters = remote.properties.entries.joinToString("\n") { "${it.key}=${it.value}" }.toByteArray(Charsets.UTF_8)
+                    val parameters = NativeJavaProperties.encode(remote.properties)
                     val common = linkedMapOf("cop" to operation, "format" to remote.format,
                         "algo" to with(NativeTriphaseCodec) { algorithm.wireName() }, "cert" to certs,
                         "doc" to url64(payload), "params" to url64(parameters))

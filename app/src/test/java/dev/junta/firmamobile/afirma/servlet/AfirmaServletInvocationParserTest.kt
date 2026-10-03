@@ -23,6 +23,8 @@ class AfirmaServletInvocationParserTest {
             accepted(sign(mapOf("format" to "CaDeS", "properties" to b64(props)))).use { assertFalse(it.detached) }
         }
         accepted(sign(mapOf("properties" to b64("mode=explicit")))).use { assertTrue(it.detached) }
+        // Java Properties drops an escape before a non-special letter.
+        accepted(sign(mapOf("properties" to b64("mode=imp\\licit")))).use { assertFalse(it.detached) }
     }
 
     @Test fun realCallerMetadataAndParameterOrderAreAccepted() {
@@ -52,7 +54,7 @@ class AfirmaServletInvocationParserTest {
     }
 
     @Test fun requestConstraintsAreNotSilentlyDropped() {
-        for (props in listOf("policyIdentifier=1.2.3", "precalculatedHashAlgorithm=SHA-256", "mode=unknown", "mode=implicit\ncontentTypeOid=1.2.3", "mode=imp\\licit")) {
+        for (props in listOf("policyIdentifier=1.2.3", "precalculatedHashAlgorithm=SHA-256", "mode=unknown", "mode=implicit\ncontentTypeOid=1.2.3")) {
             unsupported(sign(mapOf("properties" to b64(props))))
         }
         unsupported(sign(mapOf("mcv" to "99.0")))
