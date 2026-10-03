@@ -94,7 +94,12 @@ internal class NativeCadesEngine(
                         SigningAlgorithm.SHA384_WITH_RSA -> "SHA384withRSA"
                         SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
                     })
-                        .setProvider(provider)
+                        .apply {
+                            // Software keys use the isolated bundled provider.
+                            // Opaque KeyChain/Keystore handles must stay with
+                            // their JCA provider; never export or retry them.
+                            if (privateKey is java.security.interfaces.RSAPrivateKey) setProvider(provider)
+                        }
                         .setSecureRandom(secureRandom)
                         .build(privateKey)
                 }
