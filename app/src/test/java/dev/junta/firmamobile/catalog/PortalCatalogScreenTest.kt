@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
@@ -290,7 +291,8 @@ class PortalCatalogScreenTest {
 
         rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Favoritos"))
         rule.onNodeWithText("Favoritos").assertIsDisplayed()
-        rule.onNodeWithText("Recientes").performScrollTo().assertIsDisplayed()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Recientes"))
+        rule.onNodeWithText("Recientes").assertIsDisplayed()
         assertEquals(PortalCatalogSectionKind.FAVORITES, state.sections[0].kind)
         assertEquals(PortalCatalogSectionKind.RECENT, state.sections[1].kind)
     }
@@ -325,8 +327,14 @@ class PortalCatalogScreenTest {
         rule.onNode(hasScrollToIndexAction())
             .performScrollToNode(hasText("Carné Joven Europeo de Andalucía"))
         rule.onNodeWithText("Carné Joven Europeo de Andalucía").assertIsDisplayed()
-        rule.onNodeWithText("Favorito").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Favorito").assertDoesNotExist()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Abrir sitio"))
         rule.onNodeWithText("Abrir sitio").assertIsDisplayed()
+        val portal = state.sections.flatMap { it.items }.single()
+        val options = rule.onNodeWithTag("catalog-card-${portal.portalId.value}")
+            .fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        rule.runOnIdle { assertTrue(options.single().action()) }
+        rule.onNodeWithTag("catalog-option-favorite").assertIsDisplayed()
     }
 
     private fun stateFor(
