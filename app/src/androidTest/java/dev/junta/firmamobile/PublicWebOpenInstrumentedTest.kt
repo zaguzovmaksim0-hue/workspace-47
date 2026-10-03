@@ -49,8 +49,7 @@ class PublicWebOpenInstrumentedTest {
                 rule.onAllNodes(androidx.compose.ui.test.hasText("Explorar sedes sin desbloquear el certificado")).fetchSemanticsNodes().isNotEmpty()
             }
             rule.onNodeWithText("Explorar sedes sin desbloquear el certificado").performScrollTo().performClick()
-            rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-open-public-web"))
-            rule.onNodeWithTag("catalog-open-public-web").assertIsDisplayed().performClick()
+            rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("public-web-address"))
             rule.onNodeWithTag("public-web-address").performTextReplacement("https://unlisted.synthetic.example/form")
             rule.onNodeWithTag("public-web-open-confirm").assertIsEnabled().performClick()
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()

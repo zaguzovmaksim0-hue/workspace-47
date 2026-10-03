@@ -122,8 +122,7 @@ class ExternalAppHandoffInstrumentedTest {
                     rule.onAllNodes(androidx.compose.ui.test.hasText("Explorar sedes sin desbloquear el certificado")).fetchSemanticsNodes().isNotEmpty()
                 }
                 rule.onNodeWithText("Explorar sedes sin desbloquear el certificado").performScrollTo().performClick()
-                rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-open-public-web"))
-                rule.onNodeWithTag("catalog-open-public-web").performClick()
+                rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("public-web-address"))
                 rule.onNodeWithTag("public-web-address").performTextReplacement("https://external.synthetic.example/")
                 rule.onNodeWithTag("public-web-open-confirm").performClick()
                 var current: WebView? = null

@@ -16,11 +16,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -40,6 +42,8 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -47,6 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -68,6 +74,7 @@ import dev.junta.firmamobile.ui.theme.JuntaTeal
 import dev.junta.firmamobile.ui.theme.JuntaTealDark
 import java.text.Normalizer
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @Composable
 fun PortalCatalogScreen(
@@ -86,7 +93,22 @@ fun PortalCatalogScreen(
     onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)? = null,
 ) {
     var regionPickerVisible by rememberSaveable { mutableStateOf(false) }
-    var publicWebDialog by remember { mutableStateOf(false) }
+    // Hoisted outside lazy items, deliberately not saved to a state bundle.
+    var addressInput by remember { mutableStateOf(CatalogAddressInput.empty()) }
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val showAddressShortcut by remember { derivedStateOf { listState.firstVisibleItemIndex > 2 } }
+    fun openTypedAddress() {
+        if (onOpenPublicWeb == null) return
+        val submission = addressInput.submit()
+        addressInput = submission.state
+        submission.destination?.let { destination ->
+            focusManager.clearFocus()
+            onOpenPublicWeb(destination)
+        }
+    }
     var expandedRegionalSectionKey by rememberSaveable(
         state.selectedRegion.wireValue,
         state.searchText.isNotBlank(),
@@ -96,13 +118,6 @@ fun PortalCatalogScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val openFailureMessage = stringResource(R.string.catalog_open_failed)
     val locationDetectedMessage = stringResource(R.string.catalog_location_detected)
-
-    if (publicWebDialog && onOpenPublicWeb != null) {
-        dev.junta.firmamobile.ui.PublicWebOpenDialog(
-            onOpen = { uri -> publicWebDialog = false; onOpenPublicWeb(uri) },
-            onDismiss = { publicWebDialog = false },
-        )
-    }
 
     BackHandler(onBack = onBackToCertificate)
 
@@ -120,9 +135,10 @@ fun PortalCatalogScreen(
 
     Box(modifier = Modifier.fillMaxSize().background(JuntaPaper)) {
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding(),
+                .safeDrawingPadding().imePadding().testTag("catalog-list"),
             contentPadding = PaddingValues(
                 start = 18.dp,
                 top = 16.dp,
@@ -132,6 +148,17 @@ fun PortalCatalogScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "catalog-header") { CatalogHeader(onBackToCertificate) }
+            if (onOpenPublicWeb != null) {
+                item(key = "catalog-address") {
+                    CatalogAddressCard(
+                        state = addressInput,
+                        onEdit = { addressInput = addressInput.edit(it) },
+                        onPaste = { addressInput = addressInput.paste(readCatalogClipboardText(context)) },
+                        onClear = { addressInput = addressInput.clear() },
+                        onSubmit = ::openTypedAddress,
+                    )
+                }
+            }
             if (onOpenCompatibilityPortal != null) {
                 item(key = "catalog-universal-afirma") {
                     Text(
@@ -158,14 +185,17 @@ fun PortalCatalogScreen(
                     label = { Text(stringResource(R.string.catalog_search_label)) },
                     singleLine = true,
                     shape = CatalogShape,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("catalog-search-field"),
+                    trailingIcon = if (state.searchText.isNotEmpty()) {
+                        {
+                            val label = stringResource(R.string.catalog_search_clear)
+                            TextButton(onClick = { onSearchTextChange("") },
+                                modifier = Modifier.testTag("catalog-search-clear").semantics { contentDescription = label }) {
+                                Text("×")
+                            }
+                        }
+                    } else null,
                 )
-                if (onOpenPublicWeb != null) {
-                    OutlinedButton(onClick = { publicWebDialog = true },
-                        modifier = Modifier.fillMaxWidth().testTag("catalog-open-public-web")) {
-                        Text(stringResource(R.string.public_web_open_title))
-                    }
-                }
                 }
             }
 
@@ -210,6 +240,15 @@ fun PortalCatalogScreen(
                     }
                 }
             }
+        }
+
+        if (onOpenPublicWeb != null && showAddressShortcut && snackbarHostState.currentSnackbarData == null) {
+            OutlinedButton(
+                onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = JuntaPaperElevated),
+                modifier = Modifier.align(Alignment.BottomEnd).safeDrawingPadding().imePadding()
+                    .padding(end = 18.dp, bottom = 16.dp).heightIn(min = 48.dp).testTag("catalog-return-to-address"),
+            ) { Text(stringResource(R.string.catalog_address_back_to_top)) }
         }
 
         SnackbarHost(
