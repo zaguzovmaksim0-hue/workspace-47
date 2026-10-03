@@ -80,7 +80,7 @@ class PortalCatalogScreenTest {
 
         rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(uned.displayName))
         rule.onNodeWithText(uned.displayName).assertIsDisplayed()
-        rule.onNodeWithText("Abrir").performClick()
+        rule.onNodeWithText("Abrir sitio").performClick()
         rule.onAllNodesWithText("E2E", substring = true).assertCountEquals(0)
         rule.onAllNodesWithText("CATÁLOGO LOCAL", substring = true).assertCountEquals(0)
         rule.onAllNodesWithText("IMPLEMENTADO", substring = true).assertCountEquals(0)
@@ -258,6 +258,8 @@ class PortalCatalogScreenTest {
         )
 
         rule.runOnIdle { assertEquals(0, requests) }
+        rule.onNodeWithText("Usar mi ubicación").assertDoesNotExist()
+        rule.onNodeWithText("Cambiar región").performClick()
         rule.onNodeWithText("Usar mi ubicación").performClick()
         rule.runOnIdle { assertEquals(1, requests) }
     }
@@ -324,7 +326,7 @@ class PortalCatalogScreenTest {
             .performScrollToNode(hasText("Carné Joven Europeo de Andalucía"))
         rule.onNodeWithText("Carné Joven Europeo de Andalucía").assertIsDisplayed()
         rule.onNodeWithText("Favorito").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("Abrir").assertIsDisplayed()
+        rule.onNodeWithText("Abrir sitio").assertIsDisplayed()
     }
 
     private fun stateFor(

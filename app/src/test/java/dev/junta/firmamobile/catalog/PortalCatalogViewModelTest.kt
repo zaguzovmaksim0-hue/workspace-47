@@ -48,6 +48,7 @@ class PortalCatalogViewModelTest {
                 repository,
                 store,
                 RegionDetector { RegionDetectionResult.Success(PortalRegionCode.GALICIA) },
+                computationDispatcher = StandardTestDispatcher(testScheduler),
             )
             val collection = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.state.collect()
@@ -75,6 +76,7 @@ class PortalCatalogViewModelTest {
                 repository,
                 store,
                 RegionDetector { RegionDetectionResult.PermissionDenied },
+                computationDispatcher = StandardTestDispatcher(testScheduler),
             )
             val collection = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.state.collect()

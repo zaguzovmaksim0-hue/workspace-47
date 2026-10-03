@@ -62,8 +62,9 @@ class UniversalCatalogBrowserInstrumentedTest {
             rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-universal-afirma"))
             rule.onNodeWithTag("catalog-universal-afirma").assertIsDisplayed()
             rule.onNodeWithText(searchLabel).performTextReplacement(searchName)
-            rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-open-profile-$portalId"))
-            rule.onNodeWithTag("catalog-open-profile-$portalId").assertIsDisplayed()
+            // A reviewed profile exists in metadata, but is no longer another
+            // visible primary action on every user-facing card.
+            rule.onNodeWithTag("catalog-open-profile-$portalId").assertDoesNotExist()
             rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-open-$portalId"))
             rule.onNodeWithTag("catalog-open-$portalId").performClick()
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
