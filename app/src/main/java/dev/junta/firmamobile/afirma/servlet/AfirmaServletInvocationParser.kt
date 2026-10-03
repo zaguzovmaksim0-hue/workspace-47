@@ -171,6 +171,7 @@ internal object AfirmaServletInvocationParser {
                 algorithm = when (values["algorithm"]?.lowercase(Locale.ROOT)) {
                     "sha1withrsa" -> SigningAlgorithm.SHA1_WITH_RSA
                     "sha256withrsa" -> SigningAlgorithm.SHA256_WITH_RSA
+                    "sha384withrsa" -> SigningAlgorithm.SHA384_WITH_RSA
                     "sha512withrsa" -> SigningAlgorithm.SHA512_WITH_RSA
                     null, "" -> invalid("missing_algorithm")
                     else -> unsupported("signature_algorithm")

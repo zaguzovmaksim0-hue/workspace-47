@@ -10,11 +10,12 @@ class NativePdfSignerAlgorithmsTest {
     private val cases = listOf(
         Triple("1.3.14.3.2.26", "1.2.840.113549.1.1.5", SigningAlgorithm.SHA1_WITH_RSA),
         Triple("2.16.840.1.101.3.4.2.1", "1.2.840.113549.1.1.11", SigningAlgorithm.SHA256_WITH_RSA),
+        Triple("2.16.840.1.101.3.4.2.2", "1.2.840.113549.1.1.12", SigningAlgorithm.SHA384_WITH_RSA),
         Triple("2.16.840.1.101.3.4.2.3", "1.2.840.113549.1.1.13", SigningAlgorithm.SHA512_WITH_RSA)
     )
 
     @Test
-    fun allSixValidPairs() {
+    fun allEightValidPairs() {
         for ((digest, signature, expected) in cases) {
             assertEquals("$digest / $rsa", expected, NativePdfSignerAlgorithms.fromOids(digest, rsa))
             assertEquals("$digest / $signature", expected, NativePdfSignerAlgorithms.fromOids(digest, signature))
@@ -22,7 +23,7 @@ class NativePdfSignerAlgorithmsTest {
     }
 
     @Test
-    fun allSixCrossDigestPairsReject() {
+    fun allTwelveCrossDigestPairsReject() {
         for ((digest, _, _) in cases) {
             for ((otherDigest, signature, _) in cases) {
                 if (digest != otherDigest) {
@@ -38,7 +39,7 @@ class NativePdfSignerAlgorithmsTest {
             "1.2.840.113549.1.1.10",
             "1.2.840.10045.2.1",
             "1.2.840.10045.4.3.2",
-            "1.2.840.113549.1.1.12",
+            "1.2.840.113549.1.1.14",
             ""
         )
         for ((digest, _, _) in cases) {
@@ -47,7 +48,7 @@ class NativePdfSignerAlgorithmsTest {
             }
         }
         val signatures = listOf(rsa) + cases.map { it.second } + unsupportedSignatures
-        for (digest in listOf("2.16.840.1.101.3.4.2.2", "")) {
+        for (digest in listOf("2.16.840.1.101.3.4.2.4", "")) {
             for (signature in signatures) {
                 assertNull("$digest / $signature", NativePdfSignerAlgorithms.fromOids(digest, signature))
             }

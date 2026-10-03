@@ -91,6 +91,7 @@ internal class NativeCadesEngine(
                     JcaContentSignerBuilder(when (algorithm) {
                         SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
                         SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+                        SigningAlgorithm.SHA384_WITH_RSA -> "SHA384withRSA"
                         SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
                     })
                         .setProvider(provider)
@@ -157,6 +158,7 @@ internal class NativeCadesEngine(
         val expectedDigest = when (algorithm) {
             SigningAlgorithm.SHA1_WITH_RSA -> "1.3.14.3.2.26"
             SigningAlgorithm.SHA256_WITH_RSA -> "2.16.840.1.101.3.4.2.1"
+            SigningAlgorithm.SHA384_WITH_RSA -> "2.16.840.1.101.3.4.2.2"
             SigningAlgorithm.SHA512_WITH_RSA -> "2.16.840.1.101.3.4.2.3"
         }
         // BC 1.85 emits digest-specific rsa signature identifiers for SHA-2;
@@ -165,6 +167,7 @@ internal class NativeCadesEngine(
         val expectedRsaSignature = when (algorithm) {
             SigningAlgorithm.SHA1_WITH_RSA -> "1.2.840.113549.1.1.5"
             SigningAlgorithm.SHA256_WITH_RSA -> "1.2.840.113549.1.1.11"
+            SigningAlgorithm.SHA384_WITH_RSA -> "1.2.840.113549.1.1.12"
             SigningAlgorithm.SHA512_WITH_RSA -> "1.2.840.113549.1.1.13"
         }
         if (signer.digestAlgOID != expectedDigest ||

@@ -67,6 +67,7 @@ class NativeRsaProviderInstrumentedTest {
         val algorithms = listOf(
             SigningAlgorithm.SHA1_WITH_RSA to "SHA1withRSA",
             SigningAlgorithm.SHA256_WITH_RSA to "SHA256withRSA",
+            SigningAlgorithm.SHA384_WITH_RSA to "SHA384withRSA",
             SigningAlgorithm.SHA512_WITH_RSA to "SHA512withRSA"
         )
         for ((algorithm, jcaName) in algorithms) {
@@ -93,7 +94,7 @@ class NativeRsaProviderInstrumentedTest {
                         alias, KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
                     )
                         .setKeySize(2048)
-                        .setDigests(KeyProperties.DIGEST_SHA256)
+                        .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384)
                         .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
                         .setUserAuthenticationRequired(false)
                         .build()
@@ -107,6 +108,10 @@ class NativeRsaProviderInstrumentedTest {
             assertValidSignature(
                 identity(pair.private, certificate), certificate,
                 SigningAlgorithm.SHA256_WITH_RSA, "SHA256withRSA"
+            )
+            assertValidSignature(
+                identity(privateKey, certificate), certificate,
+                SigningAlgorithm.SHA384_WITH_RSA, "SHA384withRSA"
             )
         } finally {
             if (keyStore.containsAlias(alias)) keyStore.deleteEntry(alias)

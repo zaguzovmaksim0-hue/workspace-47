@@ -66,6 +66,7 @@ internal class NativeBatchDescriptor(val json: Boolean, val algorithm: SigningAl
         internal fun algorithm(name: String): SigningAlgorithm = when (name.lowercase(Locale.ROOT)) {
             "sha1", "sha1withrsa" -> SigningAlgorithm.SHA1_WITH_RSA
             "sha256", "sha256withrsa" -> SigningAlgorithm.SHA256_WITH_RSA
+            "sha384", "sha384withrsa" -> SigningAlgorithm.SHA384_WITH_RSA
             "sha512", "sha512withrsa" -> SigningAlgorithm.SHA512_WITH_RSA
             else -> error("Unsupported algorithm")
         }

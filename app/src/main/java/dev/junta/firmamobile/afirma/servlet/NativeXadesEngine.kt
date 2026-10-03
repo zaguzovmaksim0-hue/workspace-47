@@ -214,17 +214,17 @@ internal class NativeXadesEngine(private val clock: Clock = Clock.systemUTC()) {
     private fun b64(value: ByteArray) = Base64.getEncoder().encodeToString(value)
     private fun decode(value: String, limit: Int) = AfirmaServletInvocationParser.strictBase64(value, limit)
     private fun digest(value: ByteArray, alg: SigningAlgorithm) = MessageDigest.getInstance(when (alg) {
-        SigningAlgorithm.SHA1_WITH_RSA -> "SHA-1"; SigningAlgorithm.SHA256_WITH_RSA -> "SHA-256"; SigningAlgorithm.SHA512_WITH_RSA -> "SHA-512"
+        SigningAlgorithm.SHA1_WITH_RSA -> "SHA-1"; SigningAlgorithm.SHA256_WITH_RSA -> "SHA-256"; SigningAlgorithm.SHA384_WITH_RSA -> "SHA-384"; SigningAlgorithm.SHA512_WITH_RSA -> "SHA-512"
     }).digest(value)
     private fun externalId(payload: ByteArray) = "urn:sha256:" + MessageDigest.getInstance("SHA-256").digest(payload).joinToString("") { "%02x".format(it) }
     private fun digestUri(alg: SigningAlgorithm) = when (alg) {
-        SigningAlgorithm.SHA1_WITH_RSA -> DS + "sha1"; SigningAlgorithm.SHA256_WITH_RSA -> SHA256_URI; SigningAlgorithm.SHA512_WITH_RSA -> "http://www.w3.org/2001/04/xmlenc#sha512"
+        SigningAlgorithm.SHA1_WITH_RSA -> DS + "sha1"; SigningAlgorithm.SHA256_WITH_RSA -> SHA256_URI; SigningAlgorithm.SHA384_WITH_RSA -> "http://www.w3.org/2001/04/xmldsig-more#sha384"; SigningAlgorithm.SHA512_WITH_RSA -> "http://www.w3.org/2001/04/xmlenc#sha512"
     }
     private fun signatureUri(alg: SigningAlgorithm) = when (alg) {
-        SigningAlgorithm.SHA1_WITH_RSA -> DS + "rsa-sha1"; SigningAlgorithm.SHA256_WITH_RSA -> "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"; SigningAlgorithm.SHA512_WITH_RSA -> "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
+        SigningAlgorithm.SHA1_WITH_RSA -> DS + "rsa-sha1"; SigningAlgorithm.SHA256_WITH_RSA -> "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"; SigningAlgorithm.SHA384_WITH_RSA -> "http://www.w3.org/2001/04/xmldsig-more#rsa-sha384"; SigningAlgorithm.SHA512_WITH_RSA -> "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
     }
     private fun SigningAlgorithm.jcaName() = when (this) {
-        SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"; SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"; SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
+        SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"; SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"; SigningAlgorithm.SHA384_WITH_RSA -> "SHA384withRSA"; SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
     }
     companion object {
         private const val DS = NativeSigningXml.DS
