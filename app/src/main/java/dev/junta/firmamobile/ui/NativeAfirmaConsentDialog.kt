@@ -65,11 +65,21 @@ internal fun NativeAfirmaConsentDialog(
                         prompt.details.operation == "batch" && prompt.details.format?.contains("CAdES co-sign") == true)) {
                     Text(stringResource(R.string.native_cades_cosign_notice), Modifier.testTag("native-cades-cosign-notice"))
                 }
+                if (prompt.details.providedDigestAlgorithm != null) {
+                    Text(stringResource(R.string.native_cades_provided_hash_notice, prompt.details.providedDigestAlgorithm),
+                        Modifier.testTag("native-cades-provided-hash-notice"))
+                }
+                if (prompt.details.providedDigestItems > 0) {
+                    Text(stringResource(R.string.native_cades_provided_hash_batch, prompt.details.providedDigestItems),
+                        Modifier.testTag("native-cades-provided-hash-batch"))
+                }
                 prompt.details.format?.let { Text(stringResource(R.string.native_afirma_format, it)) }
                 prompt.details.algorithm?.let { Text(stringResource(R.string.native_afirma_algorithm, it)) }
                 if (prompt.details.operation != "selectcert") {
-                    Text(stringResource(R.string.native_afirma_size, prompt.details.payloadBytes))
-                    prompt.details.payloadSha256?.let { Text(stringResource(R.string.native_afirma_digest, it)) }
+                    Text(stringResource(if (prompt.details.providedDigestAlgorithm == null) R.string.native_afirma_size
+                        else R.string.native_cades_provided_hash_size, prompt.details.payloadBytes))
+                    prompt.details.payloadSha256?.let { Text(stringResource(if (prompt.details.providedDigestAlgorithm == null)
+                        R.string.native_afirma_digest else R.string.native_cades_received_hash_fingerprint, it)) }
                 }
                 prompt.certificateOwner?.let { Text(stringResource(R.string.native_afirma_certificate, it)) }
                 if (review) Text(stringResource(R.string.native_afirma_cancel_notice))

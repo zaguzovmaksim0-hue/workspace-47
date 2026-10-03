@@ -54,9 +54,13 @@ class AfirmaServletInvocationParserTest {
     }
 
     @Test fun requestConstraintsAreNotSilentlyDropped() {
-        for (props in listOf("policyIdentifier=1.2.3", "precalculatedHashAlgorithm=SHA-256", "mode=unknown", "mode=implicit\ncontentTypeOid=1.2.3")) {
+        for (props in listOf("policyIdentifier=1.2.3", "mode=unknown", "mode=implicit\ncontentTypeOid=1.2.3")) {
             unsupported(sign(mapOf("properties" to b64(props))))
         }
+        // The hash-only form is now implemented; the original short payload
+        // still must fail as malformed, not fall back to ordinary signing.
+        assertEquals(AfirmaServletParseResult.Invalid("precalculated_hash_length"),
+            AfirmaServletInvocationParser.parse(sign(mapOf("properties" to b64("precalculatedHashAlgorithm=SHA-256"))), "https://sede.example/form"))
         unsupported(sign(mapOf("mcv" to "99.0")))
         unsupported(sign(mapOf("sticky" to "true")))
         unsupported(sign(mapOf("unknown" to "value")))

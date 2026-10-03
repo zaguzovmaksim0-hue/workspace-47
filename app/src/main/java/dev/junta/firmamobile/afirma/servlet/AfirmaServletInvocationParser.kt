@@ -53,6 +53,7 @@ internal object AfirmaServletInvocationParser {
         var payload: ByteArray? = null
         var advancedCipher: AfirmaAesParameters? = null
         var certificateConstraint: NativeCertificateConstraint? = null
+        var precalculatedHash: NativePrecalculatedHash? = null
         return try {
             if (values.keys.any { it !in KNOWN_PARAMETERS }) unsupported("unknown_parameter")
             if (values.keys.any { it in setOf("ksb64", "keystore", "defaultkeystore") }) {
@@ -191,7 +192,12 @@ internal object AfirmaServletInvocationParser {
                     // This must never produce a raw CAdES response to a PDF request.
                     detached = true
                 } else {
-                    if (properties.keys.any { it != "mode" }) unsupported("signature_property_not_implemented")
+                    if (properties.keys.any { it !in setOf("mode", NativePrecalculatedHash.PROPERTY) }) unsupported("signature_property_not_implemented")
+                    properties[NativePrecalculatedHash.PROPERTY]?.let { digest ->
+                        if (op != AfirmaServletOperation.SIGN) unsupported("precalculated_hash_operation")
+                        precalculatedHash = NativePrecalculatedHash.parse(digest) ?: unsupported("precalculated_hash_algorithm")
+                        if (precalculatedHash!!.signingAlgorithm != algorithm) unsupported("precalculated_hash_algorithm_mismatch")
+                    }
                     detached = when (properties["mode"]?.lowercase(Locale.ROOT) ?: "explicit") {
                         "explicit" -> true
                         "implicit" -> false
@@ -201,6 +207,12 @@ internal object AfirmaServletInvocationParser {
                 val encoded = values["dat"] ?: unsupported("interactive_file_selection_required")
                 if (encoded.startsWith("http:", true) || encoded.startsWith("https:", true)) unsupported("remote_data")
                 payload = strictBase64(encoded, MAX_PAYLOAD)
+                precalculatedHash?.let { hash ->
+                    if (!hash.accepts(payload, algorithm)) invalid("precalculated_hash_length")
+                    // The official CAdES precomputed-hash form always omits
+                    // content, including when mode=implicit was supplied.
+                    detached = true
+                }
                 if (!remote && pdfCoSign && format.equals("CAdES", true)) {
                     val preservedMode = NativeCadesHistory.isDetached(payload) ?: invalid("cades_signature_expected")
                     if (properties.containsKey("mode") && detached != preservedMode) unsupported("cosign_packaging_change_not_implemented")
@@ -217,7 +229,7 @@ internal object AfirmaServletInvocationParser {
                 payload = ByteArray(0)
             }
             AfirmaServletParseResult.Accepted(AfirmaServletInvocation(op, source, endpoint, sessionId, key,
-                algorithm, detached, checkNotNull(payload), advancedCipher, padesOptions, xadesOptions, remoteOptions, certificateConstraint))
+                algorithm, detached, checkNotNull(payload), advancedCipher, padesOptions, xadesOptions, remoteOptions, certificateConstraint, precalculatedHash))
         } finally { payload?.fill(0); advancedCipher?.close(); certificateConstraint?.close() }
     }
 

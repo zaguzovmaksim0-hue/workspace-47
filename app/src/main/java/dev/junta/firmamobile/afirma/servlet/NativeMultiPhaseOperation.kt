@@ -46,7 +46,11 @@ internal class NativeMultiPhaseOperation(
             MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) },
             serviceDestinations = listOfNotNull(remote.preUrl, remote.postUrl).map(::destination).distinct(),
             batchItems = remote.batch?.items?.size, delegatedSigning = !remote.localBatch,
-            requiresExactCertificate = invocation.requiresExactCertificate)
+            requiresExactCertificate = invocation.requiresExactCertificate,
+            providedDigestItems = if (remote.localBatch) remote.batch?.items?.count {
+                it.operation == "sign" && it.format.equals("CAdES", true) &&
+                    it.extraProperties.containsKey(NativePrecalculatedHash.PROPERTY)
+            } ?: 0 else 0)
         } finally { bytes.fill(0) }
     }
     override fun certificateCompatible(identity: UnlockedIdentity): Boolean = runCatching {
@@ -195,9 +199,15 @@ internal class NativeMultiPhaseOperation(
             require(item.operation == "sign")
             return NativeXadesEngine(clock).sign(bytes, identity, algorithm, it)
         }
-        require(item.format.equals("CAdES", true) && item.extraProperties.keys.all { it == "mode" })
+        require(item.format.equals("CAdES", true) && item.extraProperties.keys.all { it in setOf("mode", NativePrecalculatedHash.PROPERTY) })
         val mode = item.extraProperties["mode"]
         require(mode == null || mode in setOf("explicit", "implicit"))
+        item.extraProperties[NativePrecalculatedHash.PROPERTY]?.let { digest ->
+            require(item.operation == "sign")
+            val hash = requireNotNull(NativePrecalculatedHash.parse(digest))
+            require(hash.accepts(bytes, algorithm))
+            return NativeCadesEngine(clock = clock).signDigest(bytes, identity, algorithm)
+        }
         if (item.operation == "cosign") return NativeCadesCoSignEngine(clock).cosign(bytes, identity, algorithm, mode?.let { it == "explicit" })
         require(item.operation == "sign")
         return NativeCadesEngine(clock = clock).sign(bytes, identity, algorithm, mode != "implicit")

@@ -49,8 +49,9 @@ internal class NativeCadesEngine(
     fun sign(content: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
         detached: Boolean): LocalSignatureResult = signInternal(content, identity, algorithm, detached, null)
 
-    /** Only a previously verified detached CAdES digest enters this path.
-     * It does not assert that the original document was supplied or inspected. */
+    /** A verified co-sign digest or explicitly requested site-provided digest
+     * enters this path. Request validation and consent distinguish those uses.
+     * Neither use asserts that an absent original document was inspected. */
     internal fun signDigest(digest: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm): LocalSignatureResult {
         if (digest.size != NativeCadesHistory.digestLength(digestOid(algorithm))) {
             return LocalSignatureResult.Failure(LocalSignatureError.SIGNATURE_FAILED)

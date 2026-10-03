@@ -21,7 +21,13 @@ internal class AfirmaServletInvocation(
     val xadesOptions: NativeXadesOptions? = null,
     val remoteOptions: NativeRemoteOptions? = null,
     certificateConstraint: NativeCertificateConstraint? = null,
+    val precalculatedHash: NativePrecalculatedHash? = null,
 ) : Closeable {
+    init {
+        require(precalculatedHash == null || operation == AfirmaServletOperation.SIGN &&
+            padesOptions == null && xadesOptions == null && remoteOptions == null && detached &&
+            precalculatedHash.accepts(payload, algorithm)) { "Invalid precomputed-hash invocation" }
+    }
     private var ownedCertificateConstraint = certificateConstraint?.copy()
     val requiresExactCertificate: Boolean = certificateConstraint != null
     @Synchronized fun matchesCertificate(certificate: java.security.cert.X509Certificate): Boolean =

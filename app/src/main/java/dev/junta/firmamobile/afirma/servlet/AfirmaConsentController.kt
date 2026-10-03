@@ -30,6 +30,8 @@ internal data class AfirmaConsentDetails(
     val batchItems: Int? = null,
     val delegatedSigning: Boolean = false,
     val requiresExactCertificate: Boolean = false,
+    val providedDigestAlgorithm: String? = null,
+    val providedDigestItems: Int = 0,
 )
 
 internal interface PreparedAfirmaOperation : Closeable {

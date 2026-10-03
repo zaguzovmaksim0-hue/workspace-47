@@ -36,6 +36,7 @@ internal class NativeAfirmaOperation(
                 format = if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
                     invocation.padesOptions?.let { "PDF · PAdES · ${it.subFilter}" }
                         ?: invocation.xadesOptions?.let { "XAdES · ${it.packaging}" }
+                        ?: invocation.precalculatedHash?.let { "CAdES · precomputed ${it.digestName} · detached" }
                         ?: if (invocation.cadesCoSign) "CAdES · co-sign · ${if (invocation.detached) "detached" else "attached"}"
                         else if (invocation.detached) "CAdES · detached" else "CAdES · attached"
                 } else null,
@@ -45,6 +46,7 @@ internal class NativeAfirmaOperation(
                     MessageDigest.getInstance("SHA-256").digest(payload).joinToString("") { "%02x".format(it) }
                 } else null,
                 requiresExactCertificate = invocation.requiresExactCertificate,
+                providedDigestAlgorithm = invocation.precalculatedHash?.digestName,
             )
         } finally { payload.fill(0) }
     }
@@ -64,7 +66,7 @@ internal class NativeAfirmaOperation(
         val snapshot = synchronized(lock) {
             check(!closed) { "Operation is closed" }
             Snapshot(invocation.operation, invocation.storageUrl, invocation.sessionId, invocation.key,
-                invocation.algorithm, invocation.detached, invocation.payloadCopy(), invocation.cipherCopy(), invocation.padesOptions, invocation.pdfCoSign, invocation.xadesOptions, invocation.cadesCoSign)
+                invocation.algorithm, invocation.detached, invocation.payloadCopy(), invocation.cipherCopy(), invocation.padesOptions, invocation.pdfCoSign, invocation.xadesOptions, invocation.cadesCoSign, invocation.precalculatedHash)
         }
         try {
             currentCoroutineContext().ensureActive()
@@ -80,7 +82,10 @@ internal class NativeAfirmaOperation(
                         } ?: snapshot.xades?.let { options ->
                             xadesEngine.sign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), options)
                         } ?: if (snapshot.cadesCoSign) NativeCadesCoSignEngine(clock).cosign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), snapshot.detached)
-                        else engine.sign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), snapshot.detached)
+                        else if (snapshot.precalculatedHash != null) {
+                            check(snapshot.precalculatedHash.accepts(snapshot.payload, snapshot.algorithm))
+                            engine.signDigest(snapshot.payload, identity, checkNotNull(snapshot.algorithm))
+                        } else engine.sign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), snapshot.detached)
                         when (val signed = generated) {
                             is LocalSignatureResult.Success -> signed.signature.use { signature ->
                                 currentCoroutineContext().ensureActive()
@@ -126,7 +131,7 @@ internal class NativeAfirmaOperation(
 
     private class Snapshot(val operation: AfirmaServletOperation, val endpoint: URI, val sessionId: String,
         val key: String?, val algorithm: SigningAlgorithm?, val detached: Boolean, val payload: ByteArray,
-        val cipher: AfirmaAesParameters?, val pades: NativePadesOptions?, val pdfCoSign: Boolean, val xades: NativeXadesOptions?, val cadesCoSign: Boolean)
+        val cipher: AfirmaAesParameters?, val pades: NativePadesOptions?, val pdfCoSign: Boolean, val xades: NativeXadesOptions?, val cadesCoSign: Boolean, val precalculatedHash: NativePrecalculatedHash?)
 
     private companion object {
         fun SigningAlgorithm.wireName() = when (this) {

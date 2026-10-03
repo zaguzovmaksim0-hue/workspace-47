@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_cades_provided_hash_notice">La sede ha enviado una huella %1$s, no el documento original. Se firmará esa huella sin volver a calcularla. Esta aplicación no puede comprobar qué documento representa; revisa el trámite en la sede antes de confirmar. El resultado será una firma CAdES separada.</string>
+    <string name="native_cades_provided_hash_batch">Esta solicitud incluye %1$d elemento(s) con una huella calculada por la sede. Sus documentos originales no se han recibido y no se puede comprobar aquí su contenido. Los demás elementos conservan su operación normal.</string>
+    <string name="native_cades_provided_hash_size">Huella recibida: %1$d bytes; tamaño del documento original desconocido.</string>
+    <string name="native_cades_received_hash_fingerprint">SHA-256 de los bytes recibidos, no del documento original: %1$s</string>
+</resources>
