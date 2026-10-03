@@ -3,6 +3,7 @@ package dev.junta.firmamobile
 import android.graphics.Bitmap
 import android.net.Uri
 import android.view.MotionEvent
+import android.view.InputDevice
 import android.webkit.ClientCertRequest
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -26,6 +27,7 @@ import java.security.cert.X509Certificate
 import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONArray
 import org.junit.Assert.*
 import org.junit.Rule
@@ -209,15 +211,52 @@ class BrowserPopupInstrumentedTest {
         return checkNotNull(result.get())
     }
     private fun tapElement(scenario: ActivityScenario<MainActivity>, view: WebView, id: String) {
-        val json = JSONArray(evaluate(view, "(()=>{let r=document.getElementById('$id').getBoundingClientRect();return [r.x+r.width/2,r.y+r.height/2,devicePixelRatio]})()"))
-        val x = (json.getDouble(0) * json.getDouble(2)).toFloat()
-        val y = (json.getDouble(1) * json.getDouble(2)).toFloat()
+        // A ready DOM/title is not proof of a visible compositor frame or a
+        // focused native window. Never inject a fake gesture before either.
+        val visualReady = AtomicBoolean(false)
+        rule.waitUntil(timeoutMillis = 15_000) {
+            var focused = false
+            scenario.onActivity { activity ->
+                focused = view.isAttachedToWindow && view.isShown && view.hasWindowFocus() &&
+                    view.width > 0 && view.height > 0 &&
+                    activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+            }
+            focused
+        }
         scenario.onActivity {
-            val now = android.os.SystemClock.uptimeMillis()
-            val down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, x, y, 0)
-            val up = MotionEvent.obtain(now, now + 60, MotionEvent.ACTION_UP, x, y, 0)
-            try { view.dispatchTouchEvent(down); view.dispatchTouchEvent(up) }
-            finally { down.recycle(); up.recycle() }
+            view.postVisualStateCallback(1L, object : WebView.VisualStateCallback() {
+                override fun onComplete(requestId: Long) { visualReady.set(true) }
+            })
+        }
+        rule.waitUntil(timeoutMillis = 10_000) { visualReady.get() }
+        val coordinates = JSONArray(evaluate(view,
+            "(()=>{const e=document.getElementById('$id'),r=e.getBoundingClientRect();" +
+                "const x=r.x+r.width/2,y=r.y+r.height/2;" +
+                "return [x,y,devicePixelRatio,document.elementFromPoint(x,y)===e]})()"))
+        assertTrue("The intended DOM control must be the visible hit target", coordinates.getBoolean(3))
+        val x = (coordinates.getDouble(0) * coordinates.getDouble(2)).toFloat()
+        val y = (coordinates.getDouble(1) * coordinates.getDouble(2)).toFloat()
+        val released = AtomicBoolean(false)
+        scenario.onActivity {
+            assertTrue("Only a focused page can receive the simulated user touch", view.hasWindowFocus())
+            assertTrue("Touch coordinates must lie within the actual WebView", x >= 0 && y >= 0 && x < view.width && y < view.height)
+            val start = android.os.SystemClock.uptimeMillis()
+            val down = MotionEvent.obtain(start, start, MotionEvent.ACTION_DOWN, x, y, 0)
+            down.source = InputDevice.SOURCE_TOUCHSCREEN
+            try { assertTrue(view.dispatchTouchEvent(down)) } finally { down.recycle() }
+            // Let Chromium process DOWN; the single UP uses its real monotonic
+            // delivery time, not an invented future timestamp on the same call.
+            view.postDelayed({
+                val up = MotionEvent.obtain(start, android.os.SystemClock.uptimeMillis(), MotionEvent.ACTION_UP, x, y, 0)
+                up.source = InputDevice.SOURCE_TOUCHSCREEN
+                try { view.dispatchTouchEvent(up) } finally { up.recycle(); released.set(true) }
+            }, 60L)
+        }
+        rule.waitUntil(timeoutMillis = 5_000) { released.get() }
+        if (id == "open") {
+            // The event is not retried and window.open is never called directly
+            // from evaluateJavascript. Inspect the single original DOM click.
+            assertEquals("\"1:true\"", evaluate(view, "window.fixtureClicks+':'+window.fixtureTrustedClick"))
         }
     }
     private inner class FixtureClient(private val original: WebViewClient) : WebViewClient() {
@@ -225,7 +264,7 @@ class BrowserPopupInstrumentedTest {
             original.shouldInterceptRequest(view, request)?.let { return it }
             val header = "<html><head><meta name='viewport' content='width=device-width,initial-scale=1'>"
             val page = if (request.url.host == "popup.synthetic.example" && request.url.path == "/parent") {
-                header + "<title>PARENT_READY</title></head><body><input id='draft' value='original'><button id='open' style='display:block;margin:20px;padding:20px' onclick=\"window.child=window.open('/child','child')\">Open</button><div id='status'></div><script>addEventListener('message',e=>{if(e.origin===location.origin)document.getElementById('status').textContent=e.data})</script></body></html>"
+                header + "<title>PARENT_READY</title></head><body><input id='draft' value='original'><button id='open' style='display:block;margin:20px;padding:20px' onclick=\"window.child=window.open('/child','child')\">Open</button><div id='status'></div><script>window.fixtureClicks=0;window.fixtureTrustedClick=false;addEventListener('click',e=>{if(e.target.id==='open'){window.fixtureClicks++;window.fixtureTrustedClick=e.isTrusted;}},true);addEventListener('message',e=>{if(e.origin===location.origin)document.getElementById('status').textContent=e.data})</script></body></html>"
             } else if (request.url.host == "popup.synthetic.example" && request.url.path == "/child") {
                 header + "<title>CHILD_READY</title></head><body><button id='return' style='margin:20px;padding:20px' onclick=\"opener.postMessage('returned',location.origin);window.close()\">Return</button></body></html>"
             } else "<html><body>Local empty resource</body></html>"

@@ -36,3 +36,11 @@ Canonical reference sources already pinned for the general-signatures implementa
 - Credential-provider browser approval remains an external condition, not a code flag: https://developer.android.com/identity/sign-in/privileged-apps
 
 WebAuthn provider approval, real passkey login, advanced XAdES policies/TSA/LT/LTA, arbitrary proprietary batch statuses and real government workflows are not claimed by this slice. User keys, accounts, WARP, Codex settings and the original working directory are not changed. The six exact-head gates, same-signer in-place update and installation postcondition checks remain required. Main is not merged.
+
+## Resumed acceptance checks
+
+A third successful GPT-6.1 Sol Max code output adds NativeBatchOutcomeMatrixTest: all36 combinations of the three permitted PRE failures and twelve supported POST statuses, unchanged input bytes/explanation precedence, order-independent exact ID binding and malformed PRE inputs. The agent's complete test file was applied unchanged; the integrator executes the tests.
+
+The old popup fixture had sent its touch immediately after a title/progress check. Readiness is now observed independently for the native focused window and the WebView visual-state callback; hit coordinates must identify the expected visible DOM element. One touchscreen DOWN/UP pair is sent with real monotonic delivery time, and the parent fixture records exactly one trusted click. The test never substitutes a JavaScript call to window.open, retries the click, disables its user-gesture policy or reloads the parent to simulate success. The earlier failed CI attempts remain retained; this readiness correction must pass the full exact-head suite before being described as accepted.
+
+The previous installer-preparation action was blocked by the tool. This continuation does not repeat it or choose another route around it. Source changes, tests and reports remain separate from physical installation, and the installed package is not claimed updated.
