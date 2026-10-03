@@ -84,6 +84,16 @@ class PortalCatalogRepository(
         return PublicBrowserAddress.parse(metadata.entryUrl.toASCIIString())?.let(PortalOpenTarget::PublicWeb)
     }
 
+    /** The primary catalog route uses the same ordinary AutoFirma engine for
+     * every entry, independently of technical-profile availability or build.
+     * A reviewed profile remains an explicit compatibility action. */
+    fun resolveUniversalOpenTarget(item: PortalCatalogItem): PortalOpenTarget.PublicWeb? {
+        val metadata = publicCatalog.entries.singleOrNull { it.portalId == item.portalId } ?: return null
+        if (item.entryUrl.toASCIIString() != metadata.entryUrl.toASCIIString()) return null
+        val destination = metadata.launchUrl ?: metadata.entryUrl
+        return PublicBrowserAddress.parse(destination.toASCIIString())?.let(PortalOpenTarget::PublicWeb)
+    }
+
     private fun resolve(metadata: PublicPortalEntry): PortalCatalogItem {
         val profile = metadata.profileId?.let { profileId ->
             profileCatalog.profiles.singleOrNull { it.profileId == profileId }

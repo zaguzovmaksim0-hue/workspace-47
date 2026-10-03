@@ -177,7 +177,7 @@ class SigningConfirmationInstrumentedTest {
                     // was unstable while insets and merged semantics changed.
                     androidx.test.espresso.Espresso.closeSoftKeyboard()
                     rule.waitForIdle()
-                    val openTag = "catalog-open-$OVORION_PORTAL_ID"
+                    val openTag = "catalog-open-profile-$OVORION_PORTAL_ID"
                     rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag(openTag))
                     rule.waitUntil(timeoutMillis = 10_000) {
                         rule.onAllNodesWithTag(openTag).fetchSemanticsNodes().size == 1
@@ -329,7 +329,7 @@ class SigningConfirmationInstrumentedTest {
                     // was unstable while insets and merged semantics changed.
                     androidx.test.espresso.Espresso.closeSoftKeyboard()
                     rule.waitForIdle()
-                    val openTag = "catalog-open-$OVORION_PORTAL_ID"
+                    val openTag = "catalog-open-profile-$OVORION_PORTAL_ID"
                     rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag(openTag))
                     rule.waitUntil(timeoutMillis = 10_000) {
                         rule.onAllNodesWithTag(openTag).fetchSemanticsNodes().size == 1

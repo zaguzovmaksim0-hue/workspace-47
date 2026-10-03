@@ -35,6 +35,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,6 +83,7 @@ fun PortalCatalogScreen(
     onBackToCertificate: () -> Unit,
     onUserMessageShown: () -> Unit,
     onOpenPublicWeb: ((java.net.URI) -> Unit)? = null,
+    onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)? = null,
 ) {
     var regionPickerVisible by rememberSaveable { mutableStateOf(false) }
     var publicWebDialog by remember { mutableStateOf(false) }
@@ -130,6 +132,16 @@ fun PortalCatalogScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "catalog-header") { CatalogHeader(onBackToCertificate) }
+            if (onOpenCompatibilityPortal != null) {
+                item(key = "catalog-universal-afirma") {
+                    Text(
+                        text = stringResource(R.string.catalog_universal_afirma_copy),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = JuntaMutedInk,
+                        modifier = Modifier.fillMaxWidth().testTag("catalog-universal-afirma"),
+                    )
+                }
+            }
             item(key = "catalog-region") {
                 RegionSelectorCard(
                     selectedRegion = state.selectedRegion,
@@ -192,6 +204,7 @@ fun PortalCatalogScreen(
                                 isFavorite = portal.portalId in state.favoritePortalIds,
                                 onToggleFavorite = onToggleFavorite,
                                 onOpenPortal = onOpenPortal,
+                                onOpenCompatibilityPortal = onOpenCompatibilityPortal,
                             )
                         }
                     }
@@ -403,6 +416,7 @@ private fun PortalCard(
     isFavorite: Boolean,
     onToggleFavorite: (PortalId) -> Unit,
     onOpenPortal: (PortalCatalogItem) -> Unit,
+    onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)? = null,
 ) {
     ShadowedCatalogSurface {
         Text(
@@ -450,7 +464,17 @@ private fun PortalCard(
                     contentColor = JuntaPaperElevated,
                 ),
             ) {
-                Text(stringResource(if (portal.opensWithoutProfile) R.string.public_browsing_open else R.string.catalog_open))
+                Text(stringResource(if (onOpenCompatibilityPortal != null) R.string.catalog_open_universal_afirma
+                    else if (portal.opensWithoutProfile) R.string.public_browsing_open else R.string.catalog_open))
+            }
+        }
+        if (onOpenCompatibilityPortal != null && portal.isEnabled) {
+            TextButton(
+                onClick = { onOpenCompatibilityPortal(portal) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    .testTag("catalog-open-profile-${portal.portalId.value}"),
+            ) {
+                Text(stringResource(R.string.catalog_open_profile_compatibility))
             }
         }
     }

@@ -535,6 +535,17 @@ class MainActivity : ComponentActivity() {
                         onToggleFavorite = catalogViewModel::toggleFavorite,
                         onBackToCertificate = { destination = AppDestination.Certificate },
                         onOpenPortal = { item ->
+                            val target = catalogRepository.resolveUniversalOpenTarget(item)
+                            if (target == null) catalogViewModel.onOpenFailed() else {
+                                cancelSigning(SigningCancelReason.NAVIGATION)
+                                currentWebView = null
+                                catalogViewModel.recordOpened(item.portalId)
+                                destination = AppDestination.Browser(profileId = null, entryUrl = target.entryUrl)
+                            }
+                        },
+                        // Opt-in only: preserves reviewed proprietary flows
+                        // without silently routing the default through them.
+                        onOpenCompatibilityPortal = { item ->
                             when (val target = catalogRepository.resolveOpenTarget(item)) {
                                 is PortalOpenTarget.InApp -> {
                                     cancelSigning(SigningCancelReason.NAVIGATION)
