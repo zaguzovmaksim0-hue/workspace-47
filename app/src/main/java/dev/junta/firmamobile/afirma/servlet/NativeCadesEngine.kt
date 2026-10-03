@@ -47,7 +47,10 @@ internal class NativeCadesEngine(
     }
 
     fun sign(content: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
-        detached: Boolean): LocalSignatureResult = signInternal(content, identity, algorithm, detached, null)
+        detached: Boolean): LocalSignatureResult = signInternal(content, identity, algorithm, detached, null, null)
+
+    fun signWithPolicy(content: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
+        detached: Boolean, policy: NativeCadesPolicy?): LocalSignatureResult = signInternal(content, identity, algorithm, detached, null, policy)
 
     /** A verified co-sign digest or explicitly requested site-provided digest
      * enters this path. Request validation and consent distinguish those uses.
@@ -56,11 +59,17 @@ internal class NativeCadesEngine(
         if (digest.size != NativeCadesHistory.digestLength(digestOid(algorithm))) {
             return LocalSignatureResult.Failure(LocalSignatureError.SIGNATURE_FAILED)
         }
-        return signInternal(ByteArray(0), identity, algorithm, true, digest)
+        return signInternal(ByteArray(0), identity, algorithm, true, digest, null)
+    }
+
+    internal fun signDigestWithPolicy(digest: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
+        policy: NativeCadesPolicy?): LocalSignatureResult {
+        if (digest.size != NativeCadesHistory.digestLength(digestOid(algorithm))) return LocalSignatureResult.Failure(LocalSignatureError.SIGNATURE_FAILED)
+        return signInternal(ByteArray(0), identity, algorithm, true, digest, policy)
     }
 
     private fun signInternal(content: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
-        detached: Boolean, suppliedDigest: ByteArray?): LocalSignatureResult {
+        detached: Boolean, suppliedDigest: ByteArray?, policy: NativeCadesPolicy?): LocalSignatureResult {
         if (content.size > maxInputBytes) {
             return LocalSignatureResult.Failure(LocalSignatureError.INPUT_TOO_LARGE)
         }
@@ -94,6 +103,7 @@ internal class NativeCadesEngine(
                     ),
                 )
             }
+            policy?.let { suppliedAttributes[NativeCadesPolicy.ATTRIBUTE_OID] = it.attribute() }
             val contentSigner = identity.withPrivateKey { privateKey ->
                 if (!privateKey.algorithm.equals(RSA, ignoreCase = true)) {
                     null
@@ -152,7 +162,7 @@ internal class NativeCadesEngine(
             if (generated.size > maxOutputBytes) {
                 return LocalSignatureResult.Failure(LocalSignatureError.OUTPUT_TOO_LARGE)
             }
-            if (!verifyInternal(generated, contentCopy, identity.certificate, algorithm, detached, contentDigest)) {
+            if (!verifyInternal(generated, contentCopy, identity.certificate, algorithm, detached, contentDigest, policy)) {
                 return LocalSignatureResult.Failure(LocalSignatureError.SIGNATURE_FAILED)
             }
             encodedSignature = null
@@ -171,14 +181,23 @@ internal class NativeCadesEngine(
     /** Validation is content/certificate/algorithm/mode bound, not merely a
      * parse-success check. No caller-supplied certificate is trusted implicitly. */
     fun verify(encoded: ByteArray, payload: ByteArray, certificate: X509Certificate,
-        algorithm: SigningAlgorithm, detached: Boolean): Boolean = verifyInternal(encoded, payload, certificate, algorithm, detached, null)
+        algorithm: SigningAlgorithm, detached: Boolean): Boolean = verifyInternal(encoded, payload, certificate, algorithm, detached, null, null)
 
     internal fun verifyDigest(encoded: ByteArray, digest: ByteArray, certificate: X509Certificate,
         algorithm: SigningAlgorithm): Boolean = digest.size == NativeCadesHistory.digestLength(digestOid(algorithm)) &&
-            verifyInternal(encoded, ByteArray(0), certificate, algorithm, true, digest)
+            verifyInternal(encoded, ByteArray(0), certificate, algorithm, true, digest, null)
+
+    fun verifyWithPolicy(encoded: ByteArray, payload: ByteArray, certificate: X509Certificate,
+        algorithm: SigningAlgorithm, detached: Boolean, policy: NativeCadesPolicy?): Boolean =
+        verifyInternal(encoded, payload, certificate, algorithm, detached, null, policy)
+
+    fun verifyDigestWithPolicy(encoded: ByteArray, digest: ByteArray, certificate: X509Certificate,
+        algorithm: SigningAlgorithm, policy: NativeCadesPolicy?): Boolean =
+        digest.size == NativeCadesHistory.digestLength(digestOid(algorithm)) &&
+            verifyInternal(encoded, ByteArray(0), certificate, algorithm, true, digest, policy)
 
     private fun verifyInternal(encoded: ByteArray, payload: ByteArray, certificate: X509Certificate,
-        algorithm: SigningAlgorithm, detached: Boolean, contentDigest: ByteArray?): Boolean = runCatching {
+        algorithm: SigningAlgorithm, detached: Boolean, contentDigest: ByteArray?, policy: NativeCadesPolicy?): Boolean = runCatching {
         if (encoded.isEmpty() || encoded.size > maxOutputBytes || payload.size > maxInputBytes) return false
         val envelope = CMSSignedData(encoded)
         if ((envelope.signedContent == null) != detached) return false
@@ -212,6 +231,7 @@ internal class NativeCadesEngine(
         val included = signed.certificates.getMatches(null).filter(signer.sid::match)
         if (included.size != 1 || included.single() != expectedCertificate) return false
         val attrs = signer.signedAttributes ?: return false
+        if (!NativeCadesPolicy.matches(attrs, policy)) return false
         if (!includeSigningTime && attrs.getAll(CMSAttributes.signingTime).size() != 0) return false
         val references = attrs.getAll(PKCSObjectIdentifiers.id_aa_signingCertificateV2)
         if (references.size() != 1) return false

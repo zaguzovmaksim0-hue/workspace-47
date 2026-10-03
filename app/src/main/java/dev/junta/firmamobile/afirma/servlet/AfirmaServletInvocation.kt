@@ -22,8 +22,11 @@ internal class AfirmaServletInvocation(
     val remoteOptions: NativeRemoteOptions? = null,
     certificateConstraint: NativeCertificateConstraint? = null,
     val precalculatedHash: NativePrecalculatedHash? = null,
+    val cadesPolicy: NativeCadesPolicy? = null,
 ) : Closeable {
     init {
+        require(cadesPolicy == null || operation in setOf(AfirmaServletOperation.SIGN, AfirmaServletOperation.COSIGN) &&
+            padesOptions == null && xadesOptions == null && remoteOptions == null) { "Invalid local policy invocation" }
         require(precalculatedHash == null || operation == AfirmaServletOperation.SIGN &&
             padesOptions == null && xadesOptions == null && remoteOptions == null && detached &&
             precalculatedHash.accepts(payload, algorithm)) { "Invalid precomputed-hash invocation" }

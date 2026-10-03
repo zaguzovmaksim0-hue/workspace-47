@@ -65,6 +65,12 @@ internal fun NativeAfirmaConsentDialog(
                         prompt.details.operation == "batch" && prompt.details.format?.contains("CAdES co-sign") == true)) {
                     Text(stringResource(R.string.native_cades_cosign_notice), Modifier.testTag("native-cades-cosign-notice"))
                 }
+                prompt.details.signaturePolicySummary?.let { policy ->
+                    Text(stringResource(R.string.native_cades_policy_notice, policy), Modifier.testTag("native-cades-policy-notice"))
+                }
+                if (prompt.details.signaturePolicyItems > 0) {
+                    Text(stringResource(R.string.native_cades_policy_batch, prompt.details.signaturePolicyItems), Modifier.testTag("native-cades-policy-batch"))
+                }
                 if (prompt.details.providedDigestAlgorithm != null) {
                     Text(stringResource(R.string.native_cades_provided_hash_notice, prompt.details.providedDigestAlgorithm),
                         Modifier.testTag("native-cades-provided-hash-notice"))

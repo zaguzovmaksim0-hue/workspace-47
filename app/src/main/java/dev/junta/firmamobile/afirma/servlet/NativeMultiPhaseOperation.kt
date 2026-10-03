@@ -50,6 +50,10 @@ internal class NativeMultiPhaseOperation(
             providedDigestItems = if (remote.localBatch) remote.batch?.items?.count {
                 it.operation == "sign" && it.format.equals("CAdES", true) &&
                     it.extraProperties.containsKey(NativePrecalculatedHash.PROPERTY)
+            } ?: 0 else 0,
+            signaturePolicyItems = if (remote.localBatch) remote.batch?.items?.count {
+                it.format.equals("CAdES", true) && it.operation in setOf("sign", "cosign") &&
+                    it.extraProperties.keys.any { name -> name in NativeCadesPolicy.PROPERTY_NAMES }
             } ?: 0 else 0)
         } finally { bytes.fill(0) }
     }
@@ -199,18 +203,19 @@ internal class NativeMultiPhaseOperation(
             require(item.operation == "sign")
             return NativeXadesEngine(clock).sign(bytes, identity, algorithm, it)
         }
-        require(item.format.equals("CAdES", true) && item.extraProperties.keys.all { it in setOf("mode", NativePrecalculatedHash.PROPERTY) })
+        require(item.format.equals("CAdES", true) && item.extraProperties.keys.all { it in setOf("mode", NativePrecalculatedHash.PROPERTY) + NativeCadesPolicy.PROPERTY_NAMES })
+        val policy = NativeCadesPolicy.parse(item.extraProperties)
         val mode = item.extraProperties["mode"]
         require(mode == null || mode in setOf("explicit", "implicit"))
         item.extraProperties[NativePrecalculatedHash.PROPERTY]?.let { digest ->
             require(item.operation == "sign")
             val hash = requireNotNull(NativePrecalculatedHash.parse(digest))
             require(hash.accepts(bytes, algorithm))
-            return NativeCadesEngine(clock = clock).signDigest(bytes, identity, algorithm)
+            return NativeCadesEngine(clock = clock).signDigestWithPolicy(bytes, identity, algorithm, policy)
         }
-        if (item.operation == "cosign") return NativeCadesCoSignEngine(clock).cosign(bytes, identity, algorithm, mode?.let { it == "explicit" })
+        if (item.operation == "cosign") return NativeCadesCoSignEngine(clock).cosignWithPolicy(bytes, identity, algorithm, mode?.let { it == "explicit" }, policy)
         require(item.operation == "sign")
-        return NativeCadesEngine(clock = clock).sign(bytes, identity, algorithm, mode != "implicit")
+        return NativeCadesEngine(clock = clock).signWithPolicy(bytes, identity, algorithm, mode != "implicit", policy)
     }
     override suspend fun notifyCancellation(authorizeUpload: suspend () -> Unit): AfirmaDeliveryResult {
         check(started.compareAndSet(false, true) && !closed)

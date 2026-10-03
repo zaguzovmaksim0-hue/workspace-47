@@ -32,6 +32,8 @@ internal data class AfirmaConsentDetails(
     val requiresExactCertificate: Boolean = false,
     val providedDigestAlgorithm: String? = null,
     val providedDigestItems: Int = 0,
+    val signaturePolicySummary: String? = null,
+    val signaturePolicyItems: Int = 0,
 )
 
 internal interface PreparedAfirmaOperation : Closeable {

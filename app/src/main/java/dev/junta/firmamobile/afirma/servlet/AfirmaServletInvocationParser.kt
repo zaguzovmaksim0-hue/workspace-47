@@ -54,6 +54,7 @@ internal object AfirmaServletInvocationParser {
         var advancedCipher: AfirmaAesParameters? = null
         var certificateConstraint: NativeCertificateConstraint? = null
         var precalculatedHash: NativePrecalculatedHash? = null
+        var cadesPolicy: NativeCadesPolicy? = null
         return try {
             if (values.keys.any { it !in KNOWN_PARAMETERS }) unsupported("unknown_parameter")
             if (values.keys.any { it in setOf("ksb64", "keystore", "defaultkeystore") }) {
@@ -192,7 +193,9 @@ internal object AfirmaServletInvocationParser {
                     // This must never produce a raw CAdES response to a PDF request.
                     detached = true
                 } else {
-                    if (properties.keys.any { it !in setOf("mode", NativePrecalculatedHash.PROPERTY) }) unsupported("signature_property_not_implemented")
+                    if (properties.keys.any { it !in setOf("mode", NativePrecalculatedHash.PROPERTY) + NativeCadesPolicy.PROPERTY_NAMES }) unsupported("signature_property_not_implemented")
+                    cadesPolicy = try { NativeCadesPolicy.parse(properties) }
+                        catch (_: Exception) { unsupported("cades_policy_parameters_not_supported") }
                     properties[NativePrecalculatedHash.PROPERTY]?.let { digest ->
                         if (op != AfirmaServletOperation.SIGN) unsupported("precalculated_hash_operation")
                         precalculatedHash = NativePrecalculatedHash.parse(digest) ?: unsupported("precalculated_hash_algorithm")
@@ -229,7 +232,7 @@ internal object AfirmaServletInvocationParser {
                 payload = ByteArray(0)
             }
             AfirmaServletParseResult.Accepted(AfirmaServletInvocation(op, source, endpoint, sessionId, key,
-                algorithm, detached, checkNotNull(payload), advancedCipher, padesOptions, xadesOptions, remoteOptions, certificateConstraint, precalculatedHash))
+                algorithm, detached, checkNotNull(payload), advancedCipher, padesOptions, xadesOptions, remoteOptions, certificateConstraint, precalculatedHash, cadesPolicy))
         } finally { payload?.fill(0); advancedCipher?.close(); certificateConstraint?.close() }
     }
 

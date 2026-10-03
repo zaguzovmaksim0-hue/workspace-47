@@ -25,7 +25,10 @@ internal class NativeCadesCoSignEngine(
     init { require(maxInputBytes > 0 && maxOutputBytes > 0) }
 
     fun cosign(encoded: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
-        requestedDetached: Boolean? = null): LocalSignatureResult {
+        requestedDetached: Boolean? = null): LocalSignatureResult = cosignWithPolicy(encoded, identity, algorithm, requestedDetached, null)
+
+    fun cosignWithPolicy(encoded: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
+        requestedDetached: Boolean?, policy: NativeCadesPolicy?): LocalSignatureResult {
         if (encoded.size > maxInputBytes) return LocalSignatureResult.Failure(LocalSignatureError.INPUT_TOO_LARGE)
         val input = encoded.copyOf()
         var output: ByteArray? = null
@@ -43,8 +46,8 @@ internal class NativeCadesCoSignEngine(
                 val prospectiveCerts = previous.certificates.map { it.encoded } +
                     identity.chain.ifEmpty { listOf(identity.certificate) }.map { it.encoded }
                 require(prospectiveCerts.distinctBy(NativeCadesHistory::digest).size <= NativeCadesHistory.MAX_CERTIFICATES)
-                val newSignature = if (previous.detached) engine.signDigest(checkNotNull(digest), identity, algorithm)
-                    else engine.sign(checkNotNull(previous.content), identity, algorithm, false)
+                val newSignature = if (previous.detached) engine.signDigestWithPolicy(checkNotNull(digest), identity, algorithm, policy)
+                    else engine.signWithPolicy(checkNotNull(previous.content), identity, algorithm, false, policy)
                 if (newSignature !is LocalSignatureResult.Success) return newSignature
                 newSignature.signature.use { fresh ->
                     fresh.withBytes { bytes ->
