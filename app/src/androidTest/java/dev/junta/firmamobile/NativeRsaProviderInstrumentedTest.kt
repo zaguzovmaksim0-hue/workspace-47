@@ -81,7 +81,7 @@ class NativeRsaProviderInstrumentedTest {
     }
 
     @Test
-    fun opaqueAndroidKeyStoreRsaSignsSha256() {
+    fun opaqueAndroidKeyStoreRsaSignsSha256AndSha384() {
         val alias = "firmamobile-test-rsa-" + UUID.randomUUID()
         val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         assertFalse("Test alias must be unused", keyStore.containsAlias(alias))
@@ -110,7 +110,7 @@ class NativeRsaProviderInstrumentedTest {
                 SigningAlgorithm.SHA256_WITH_RSA, "SHA256withRSA"
             )
             assertValidSignature(
-                identity(privateKey, certificate), certificate,
+                identity(pair.private, certificate), certificate,
                 SigningAlgorithm.SHA384_WITH_RSA, "SHA384withRSA"
             )
         } finally {
