@@ -14,7 +14,7 @@ class CatalogAddressInputTest {
     }
 
     @Test fun bareDomainGetsHttpsWithoutChangingPathQueryOrFragment() {
-        for (text in listOf("portal.example", "portal.example:443/a%2Fb?token=a+b&x=%252F#part", "xn--bcher-kva.example/path")) {
+        for (text in listOf("portal.example", "portal.example:443/a%2Fb?token=a+b&x=%252F#part", "xn--bcher-kva.example/path", "portal.example/path?return=https://another.example/form#done", "portal.example:443/path#https://another.example/")) {
             val input = CatalogAddressInput.empty().edit(text)
             assertEquals("https://$text", input.submit().destination!!.toASCIIString())
             assertEquals(text, input.text)

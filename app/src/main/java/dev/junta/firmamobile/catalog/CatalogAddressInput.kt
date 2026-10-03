@@ -52,12 +52,13 @@ internal class CatalogAddressInput private constructor(
 
     companion object {
         const val MAX_INPUT_CHARS = 8192
+        private val explicitScheme = Regex("^[A-Za-z][A-Za-z0-9+.-]*://")
         fun empty() = CatalogAddressInput("", null, false)
         private fun candidate(raw: String): String {
             val text = raw.trim()
             // Do not upgrade an explicit http:// URL, decode query tokens or
             // treat pasted text as a search query. Bare public hosts use HTTPS.
-            return if (text.contains("://")) text else "https://$text"
+            return if (explicitScheme.containsMatchIn(text)) text else "https://$text"
         }
         private fun parse(raw: String): URI? {
             if (raw.isBlank() || raw.length > MAX_INPUT_CHARS) return null

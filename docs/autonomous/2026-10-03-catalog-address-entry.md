@@ -40,3 +40,5 @@ https://developer.android.com/develop/ui/compose/state
 No external implementation is copied; no dependencies, signing permissions or new network endpoints are introduced.
 
 The first isolated component run exposed two test setup mistakes: TextField supporting text belongs to the unmerged semantics tree, and clearing catalog search restores collapsed sections. The tests now select the actual supporting nodes and expand the real section before scrolling. Their display, input, error and retention assertions remain; production UI is unchanged by this correction. The first failed XML report is retained.
+
+A focused negative regression also caught bare-host URLs whose query or fragment contains another https:// link. Prefix recognition is now anchored to the start of the input, so an embedded redirect URL is not mistaken for the outer scheme. The original query/fragment bytes remain unchanged and explicit unsupported schemes remain rejected. The same19 input/validator tests are rerun after this correction.
