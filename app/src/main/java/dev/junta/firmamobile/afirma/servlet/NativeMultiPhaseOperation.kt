@@ -87,6 +87,9 @@ internal class NativeMultiPhaseOperation(
                         checkOwner(); authorizeUpload()
                     } else {
                         val signed = NativeTriphaseCodec.sign(pre.session, identity, algorithm, ::checkOwner)
+                        // Capture actual completed local contributions before
+                        // POST. Repeated counter-signature targets share an ID.
+                        val signedIds = signed.signs.map { it.id }.toSet()
                         val td = if (batch.json) NativeTriphaseCodec.encodeJson(signed) else checkNotNull(NativeTriphaseXml.encode(signed))
                         val postDescriptor = if (batch.json) NativeBatchProtocol.descriptorForPost(payload, pre.errors) else payload.copyOf()
                         try {
@@ -94,7 +97,7 @@ internal class NativeMultiPhaseOperation(
                             result = services.exchange(checkNotNull(remote.postUrl), mapOf(label to url64(postDescriptor), "certs" to certs, "tridata" to url64(td))).use { it.take() }
                         } finally { td.fill(0); postDescriptor.fill(0) }
                         try {
-                            val outcomes = NativeBatchProtocol.results(result, batch, pre.errors)
+                            val outcomes = NativeBatchProtocol.results(result, batch, pre.errors, signedIds)
                             recordBatch(outcomes, NativeBatchReceipt.Origin.SERVICE)
                         } catch (error: Exception) {
                             result.fill(0)

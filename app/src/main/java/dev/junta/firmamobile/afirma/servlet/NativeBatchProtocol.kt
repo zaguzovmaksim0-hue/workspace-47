@@ -41,7 +41,11 @@ internal object NativeBatchProtocol {
         return NativeProtocolJson.encode(root)
     }
 
-    fun results(bytes: ByteArray, batch: NativeBatchDescriptor, preErrors: List<Outcome> = emptyList()): List<Outcome> {
+    /** A signed ID means that this operation produced its PK1, not that a
+     * server-supplied document reference or saved signature was independently
+     * verified. Null is reserved for context-free/local result parsing. */
+    fun results(bytes: ByteArray, batch: NativeBatchDescriptor, preErrors: List<Outcome> = emptyList(),
+        signedIds: Set<String>? = null): List<Outcome> {
         val result = if (batch.json) {
             val root = NativeProtocolJson.parse(bytes)
             require(root.keys == setOf("signs"))
@@ -71,7 +75,19 @@ internal object NativeBatchProtocol {
         // A document rejected before PK1 was never signed by this client. A
         // subsequent response cannot silently promote it to a completed item.
         val failures = preErrors.associateBy { it.id }
+        val signedDocuments = signedIds?.toSet()
+        if (signedDocuments != null) {
+            require(signedDocuments.all { it in approved } && failures.keys.none { it in signedDocuments }) {
+                "Signed-document evidence does not match the approved batch"
+            }
+        }
         return result.map { entry ->
+            // XML PRE can omit a document without reporting an explicit PRE
+            // error. Preserve its actual negative result, but never accept a
+            // claim that its signature was made when no PK1 was produced.
+            require(signedDocuments == null || entry.id in signedDocuments || entry.status !in signatureCreatedStatuses) {
+                "POST claims a signature without local signing evidence"
+            }
             val before = failures[entry.id]
             require(before == null || entry.status == before.status) { "POST contradicts an existing PRE outcome" }
             if (entry.description == null && before?.description != null) entry.copy(description = before.description) else entry
@@ -80,6 +96,9 @@ internal object NativeBatchProtocol {
     fun jsonReport(results: List<Outcome>): ByteArray = NativeProtocolJson.encode(mapOf("signs" to results.map {
         linkedMapOf<String, Any?>("id" to it.id, "result" to it.status).apply { it.description?.let { message -> put("description", message) } }
     }))
+    private val signatureCreatedStatuses = setOf("OK", "DONE_AND_SAVED", "DONE_BUT_NOT_SAVED_YET",
+        "DONE_BUT_SAVED_SKIPPED", "DONE_BUT_ERROR_SAVING", "SAVE_ROLLBACKED")
+
     fun summary(results: List<Outcome>): String {
         val success = results.count { it.status in setOf("DONE_AND_SAVED", "OK") }
         return "Documentos: ${results.size}; resultado positivo: $success; otros resultados: ${results.size - success}."
