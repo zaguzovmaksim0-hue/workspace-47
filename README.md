@@ -92,9 +92,9 @@ Third-party public-service names, domains, marks and software are referenced des
 
 ## License
 
-Project-origin source and documentation are licensed under the **Apache License 2.0**. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`docs/license-selection.md`](docs/license-selection.md).
+The current root license text is the **MIT License**. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`docs/license-selection.md`](docs/license-selection.md).
 
-Separately licensed third-party material remains under its own terms and is not relicensed by the repository-wide Apache-2.0 license.
+Separately licensed third-party material remains under its own terms and is not relicensed by the root license.
 
 The existing author/committer email metadata was explicitly accepted for publication. The maintainer also explicitly confirmed the five source-rights/no-unlicensed-copy statements in [`docs/maintainer-source-attestation.md`](docs/maintainer-source-attestation.md) on 2026-08-12.
 

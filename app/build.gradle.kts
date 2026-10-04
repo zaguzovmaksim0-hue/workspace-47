@@ -287,6 +287,8 @@ android {
     }
 
     sourceSets {
+        getByName("testDebug") { kotlin.directories.add("src/testDevelopment/java") }
+        getByName("testQa") { kotlin.directories.add("src/testDevelopment/java") }
         getByName("optimized") {
             kotlin.directories.add("src/release/java")
         }
@@ -329,6 +331,11 @@ tasks.withType<Test>().configureEach {
 }
 
 androidComponents {
+    beforeVariants(selector().withBuildType("optimized")) { variantBuilder ->
+        variantBuilder.hostTests[
+            com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE
+        ]?.enable = true
+    }
     // testBuildType selects QA for device tests. Explicitly keep both JVM
     // security-test variants available.
     beforeVariants(selector().withBuildType("debug")) { variantBuilder ->

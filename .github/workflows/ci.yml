@@ -66,9 +66,9 @@ jobs:
       - name: Build optimized daily-use APK
         run: ./gradlew assembleOptimized --no-daemon
       - name: Run Android unit tests
-        run: ./gradlew testDebugUnitTest testQaUnitTest --no-daemon
+        run: ./gradlew testDebugUnitTest testQaUnitTest testOptimizedUnitTest --no-daemon
       - name: Run Android lint
-        run: ./gradlew lintDebug lintQa --no-daemon
+        run: ./gradlew lintDebug lintQa lintOptimized --no-daemon
       - name: Build Android APKs
         run: ./gradlew assembleDebug assembleQa assembleQaAndroidTest --no-daemon
       - name: Verify Android artifacts
@@ -106,9 +106,11 @@ jobs:
           path: |
             app/build/test-results/testDebugUnitTest/
             app/build/test-results/testQaUnitTest/
+            app/build/test-results/testOptimizedUnitTest/
             app/build/test-results/consent-preview/
             app/build/reports/lint-results-debug.xml
             app/build/reports/lint-results-qa.xml
+            app/build/reports/lint-results-optimized.xml
           if-no-files-found: warn
           retention-days: 3
 

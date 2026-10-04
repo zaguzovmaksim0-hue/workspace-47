@@ -127,11 +127,12 @@ class CertificateViewModel(
 
     fun lock() {
         cancelCurrentOperation()
-        unlockCache.clear()
+        val revoked = runCatching { unlockCache.clearAndReport() }.getOrDefault(false)
         session.lock()
         val current = mutableState.value
         val reference = current.referenceOrNull() ?: return
-        mutableState.value = reference.toLockedState(current.summaryOrNull())
+        mutableState.value = if (revoked) reference.toLockedState(current.summaryOrNull())
+        else reference.toLockedState(CertificateUiError.STORAGE_FAILURE)
     }
 
     fun onAppForegrounded() {

@@ -157,6 +157,12 @@ internal object TestCertificateFactory {
         return identityStore("future", identity)
     }
 
+    fun nonRepudiationOnly(): ByteArray = identityStore("commitment-only", identity(
+        commonName = "Commitment only synthetic",
+        algorithm = "RSA", notBefore = defaultNotBefore, notAfter = defaultNotAfter,
+        keyUsage = KeyUsage.nonRepudiation,
+    ))
+
     fun withoutDigitalSignatureUsage(): ByteArray {
         val identity = identity(
             commonName = "Sin Firma Digital",

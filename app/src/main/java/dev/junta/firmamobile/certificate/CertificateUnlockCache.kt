@@ -43,6 +43,9 @@ interface CertificateUnlockCache {
     ): CachedCertificateUnlock?
 
     fun clear()
+
+    /** False means durable revocation could not be verified. */
+    fun clearAndReport(): Boolean { clear(); return true }
 }
 
 object NoOpCertificateUnlockCache : CertificateUnlockCache {
@@ -67,11 +70,14 @@ interface CertificateUnlockRecordStorage {
 
     fun write(record: ByteArray): Boolean
 
-    fun clear()
+    fun clear(): Boolean
 }
 
 fun interface CertificateUnlockKeyProvider {
     fun getOrCreate(): SecretKey
+    fun getExisting(): SecretKey? = getOrCreate()
+    /** Production providers revoke even when a record cannot be removed. */
+    fun revoke(): Boolean = false
 }
 
 internal data class CertificateUnlockBootTime(
@@ -96,6 +102,9 @@ class EncryptedCertificateUnlockCache internal constructor(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : CertificateUnlockCache {
     private val invalidationGeneration = AtomicLong(0)
+    private val stateLock = Any()
+    private var restoreBlocked = false
+    private var clearsInProgress = 0
 
     override suspend fun store(
         reference: StoredCertificateReference,
@@ -104,7 +113,10 @@ class EncryptedCertificateUnlockCache internal constructor(
         expiresAt: Instant,
         observedAtMonotonicNanos: Long,
     ): Boolean {
-        val storeGeneration = invalidationGeneration.get()
+        val storeGeneration = synchronized(stateLock) {
+            if (clearsInProgress != 0) return false
+            invalidationGeneration.get()
+        }
         return withContext(ioDispatcher) {
             storeOnIo(
                 reference,
@@ -121,15 +133,30 @@ class EncryptedCertificateUnlockCache internal constructor(
         reference: StoredCertificateReference,
         now: Instant,
     ): CachedCertificateUnlock? {
-        val restoreGeneration = invalidationGeneration.get()
+        val restoreGeneration = synchronized(stateLock) {
+            if (restoreBlocked || clearsInProgress != 0) return null
+            invalidationGeneration.get()
+        }
         return withContext(ioDispatcher) {
             restoreOnIo(reference, now, restoreGeneration)
         }
     }
 
-    override fun clear() {
-        invalidationGeneration.incrementAndGet()
-        runCatching(storage::clear)
+    override fun clear() { clearAndReport() }
+
+    override fun clearAndReport(): Boolean {
+        synchronized(stateLock) {
+            invalidationGeneration.incrementAndGet()
+            restoreBlocked = true
+            clearsInProgress++
+        }
+        return try {
+            val revoked = runCatching { keyProvider.revoke() }.getOrDefault(false)
+            val removed = runCatching { storage.clear() }.getOrDefault(false)
+            revoked || removed
+        } finally {
+            synchronized(stateLock) { clearsInProgress-- }
+        }
     }
 
     private fun storeOnIo(
@@ -199,7 +226,10 @@ class EncryptedCertificateUnlockCache internal constructor(
                     clear()
                     false
                 }
-                else -> true
+                else -> synchronized(stateLock) {
+                    if (invalidationGeneration.get() != storeGeneration || clearsInProgress != 0) false
+                    else { restoreBlocked = false; true }
+                }
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
@@ -232,7 +262,7 @@ class EncryptedCertificateUnlockCache internal constructor(
         var expectedDigest: ByteArray? = null
         var plainBytes: ByteArray? = null
         return try {
-            if (invalidationGeneration.get() != restoreGeneration) return null
+            if (synchronized(stateLock) { restoreBlocked || invalidationGeneration.get() != restoreGeneration }) return null
             val sessionLeaseObservedAtNanos = sessionMonotonicNanos()
             parsed = parseRecord(rawRecord)
             val issuedAt = Instant.ofEpochMilli(parsed.issuedAtEpochMillis)
@@ -274,7 +304,7 @@ class EncryptedCertificateUnlockCache internal constructor(
             val cipher = Cipher.getInstance(TRANSFORMATION)
             cipher.init(
                 Cipher.DECRYPT_MODE,
-                keyProvider.getOrCreate(),
+                keyProvider.getExisting() ?: return null,
                 GCMParameterSpec(GCM_TAG_BITS, parsed.iv),
             )
             cipher.updateAAD(parsed.authenticatedHeader)
@@ -289,7 +319,7 @@ class EncryptedCertificateUnlockCache internal constructor(
                 clear()
                 return null
             }
-            if (invalidationGeneration.get() != restoreGeneration) {
+            if (synchronized(stateLock) { restoreBlocked || invalidationGeneration.get() != restoreGeneration }) {
                 password.fill('\u0000')
                 return null
             }
@@ -501,6 +531,7 @@ class AndroidKeystoreCertificateUnlockCache(
     ): CachedCertificateUnlock? = delegate.restore(reference, now)
 
     override fun clear() = delegate.clear()
+    override fun clearAndReport(): Boolean = delegate.clearAndReport()
 
     private companion object {
         const val RECORD_FILE_NAME = "certificate_unlock_v1.bin"
@@ -564,8 +595,10 @@ internal class AtomicCertificateUnlockRecordStorage(
         }
     }
 
-    override fun clear() {
+    override fun clear(): Boolean {
         atomicFile.delete()
+        return !file.exists() && !java.io.File(file.path + ".bak").exists() &&
+            !java.io.File(file.path + ".new").exists()
     }
 
     private fun restrictToOwner(target: java.io.File) {
@@ -582,6 +615,20 @@ internal class AtomicCertificateUnlockRecordStorage(
 }
 
 internal class AndroidKeystoreCertificateUnlockKeyProvider : CertificateUnlockKeyProvider {
+    @Synchronized
+    override fun getExisting(): SecretKey? {
+        val store = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+        return store.getKey(KEY_ALIAS, null) as? SecretKey
+    }
+
+    @Synchronized
+    override fun revoke(): Boolean {
+        val store = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+        if (store.containsAlias(KEY_ALIAS)) store.deleteEntry(KEY_ALIAS)
+        return !store.containsAlias(KEY_ALIAS)
+    }
+
+    @Synchronized
     override fun getOrCreate(): SecretKey {
         val keyStore = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         val existing = runCatching { keyStore.getKey(KEY_ALIAS, null) as? SecretKey }.getOrNull()

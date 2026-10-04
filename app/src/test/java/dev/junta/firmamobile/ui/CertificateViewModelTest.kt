@@ -387,6 +387,20 @@ class CertificateViewModelTest {
         assertTrue(cache.clearCalls >= 1)
     }
 
+    @Test
+    fun explicitLockReportsUnverifiedRevocationAndStillLocksIdentity() = runTest(dispatcher) {
+        val selected = reference()
+        val gateway = FakeCertificateGateway().apply { current = selected }
+        val session = CertificateSession()
+        val cache = FakeCertificateUnlockCache().apply { clearVerified = false }
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle()
+        model.lock()
+        assertNull(session.identityForSigning())
+        val state = model.state.value as CertificateUiState.Locked
+        assertEquals(CertificateUiError.STORAGE_FAILURE, state.error)
+    }
+
     private fun viewModel(
         gateway: FakeCertificateGateway,
         session: CertificateSession = CertificateSession(),
@@ -450,6 +464,8 @@ class CertificateViewModelTest {
     }
 
     private class FakeCertificateUnlockCache : CertificateUnlockCache {
+        var clearVerified = true
+        override fun clearAndReport(): Boolean { clear(); return clearVerified }
         var restoredPassword: CharArray? = null
         var restoredExpiry: Instant? = null
         var restoredLease: CertificateUnlockLease? = null

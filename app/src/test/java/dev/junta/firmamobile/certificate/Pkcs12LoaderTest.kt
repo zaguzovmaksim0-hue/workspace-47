@@ -116,6 +116,13 @@ class Pkcs12LoaderTest {
     }
 
     @Test
+    fun importsContentCommitmentOnlyWithoutGrantingTlsUsage() = runTest {
+        val result = load(TestCertificateFactory.nonRepudiationOnly()) as CertificateLoadResult.Success
+        assertTrue(!result.identity.certificate.keyUsage[0])
+        assertTrue(result.identity.certificate.keyUsage[1])
+    }
+
+    @Test
     fun rejectsMultiplePrivateKeyEntries() = runTest {
         assertFailure(
             CertificateErrorCode.MULTIPLE_PRIVATE_KEYS,

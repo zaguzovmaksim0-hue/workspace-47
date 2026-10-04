@@ -359,6 +359,58 @@ class CertificateUnlockCacheTest {
         assertNull(longStorage.bytes)
     }
 
+    @Test
+    fun failedDeletionBlocksRestoreAndReportsFailure() = runTest {
+        for (throwOnClear in listOf(false, true)) {
+            val storage = FailedDeletionStorage(throwOnClear)
+            val cache = cache(storage)
+            assertTrue(cache.store(reference, "synthetic".toCharArray(), now,
+                now.plus(Duration.ofHours(24)), 1_000_000_000L))
+            assertFalse(cache.clearAndReport())
+            assertNull(cache.restore(reference, now.plusSeconds(1)))
+            assertTrue(storage.bytes != null)
+        }
+    }
+
+    @Test
+    fun revokingKeyRejectsLeftoverRecordInNewCacheInstance() = runTest {
+        val storage = FailedDeletionStorage(false)
+        val keys = RevocableKeyProvider()
+        fun fresh() = EncryptedCertificateUnlockCache(storage, keys,
+            { CertificateUnlockBootTime(1, 1_000_000_000L) }, { 1_000_000_000L })
+        val first = fresh()
+        assertTrue(first.store(reference, "synthetic".toCharArray(), now,
+            now.plus(Duration.ofHours(24)), 1_000_000_000L))
+        assertTrue(first.clearAndReport())
+        assertTrue(storage.bytes != null)
+        val restarted = fresh()
+        assertNull(restarted.restore(reference, now.plusSeconds(1)))
+        assertEquals(1, keys.created)
+        // Only a new explicit unlock/store may create a replacement key.
+        assertTrue(restarted.store(reference, "new-synthetic".toCharArray(), now,
+            now.plus(Duration.ofHours(24)), 1_000_000_000L))
+        checkNotNull(restarted.restore(reference, now.plusSeconds(1))).use {
+            assertArrayEquals("new-synthetic".toCharArray(), it.password)
+        }
+        assertEquals(2, keys.created)
+    }
+
+    private class FailedDeletionStorage(private val throwOnClear: Boolean) : CertificateUnlockRecordStorage {
+        var bytes: ByteArray? = null
+        override fun read() = bytes?.copyOf()
+        override fun write(record: ByteArray): Boolean { bytes = record.copyOf(); return true }
+        override fun clear(): Boolean { if (throwOnClear) error("synthetic deletion failure"); return false }
+    }
+
+    private class RevocableKeyProvider : CertificateUnlockKeyProvider {
+        var key: SecretKey? = null
+        var created = 0
+        override fun getOrCreate(): SecretKey = key ?: KeyGenerator.getInstance("AES").apply { init(256) }
+            .generateKey().also { key = it; created++ }
+        override fun getExisting(): SecretKey? = key
+        override fun revoke(): Boolean { key = null; return true }
+    }
+
     private fun cache(
         storage: CertificateUnlockRecordStorage,
         bootTime: MutableBootTimeSource = MutableBootTimeSource(),
@@ -429,9 +481,10 @@ class CertificateUnlockCacheTest {
             return true
         }
 
-        override fun clear() {
+        override fun clear(): Boolean {
             bytes?.fill(0)
             bytes = null
+            return true
         }
 
         fun isEmpty(): Boolean = bytes == null
@@ -453,9 +506,10 @@ class CertificateUnlockCacheTest {
             return true
         }
 
-        override fun clear() {
+        override fun clear(): Boolean {
             bytes?.fill(0)
             bytes = null
+            return true
         }
     }
 
@@ -472,10 +526,11 @@ class CertificateUnlockCacheTest {
             return true
         }
 
-        override fun clear() {
+        override fun clear(): Boolean {
             clearCalls += 1
             bytes?.fill(0)
             bytes = null
+            return true
         }
     }
 }

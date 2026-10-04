@@ -66,7 +66,7 @@
     <string name="browser_clear_current_site_copy">Se intentarán borrar únicamente las cookies y el almacenamiento del sitio actual. Los demás portales no se modificarán.</string>
     <string name="browser_clear_current_site_confirm">Borrar este sitio</string>
     <string name="browser_clear_current_site_success">Se borraron los datos del sitio actual.</string>
-    <string name="browser_clear_current_site_limited">Se borró el almacenamiento del sitio, pero este WebView no permite borrar sus cookies por separado.</string>
+    <string name="browser_clear_current_site_limited">Se borró el almacenamiento del sitio. No se puede garantizar la eliminación de todas sus cookies; pueden quedar cookies de otras rutas.</string>
     <string name="browser_clear_current_site_failed">No se pudieron borrar los datos del sitio actual.</string>
     <string name="browser_clear_session">Cerrar sesión</string>
     <string name="browser_clear_session_title">Cerrar sesión del certificado</string>

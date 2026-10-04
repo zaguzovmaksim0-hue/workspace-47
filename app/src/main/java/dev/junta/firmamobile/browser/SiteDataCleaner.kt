@@ -56,13 +56,15 @@ class SiteDataCleaner(
             expirationHeader(cookie, site.origin.host)
                 ?: return SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE
         }
-        if (expirations.isEmpty()) return SiteClearResult.CLEARED_EXACTLY
+        // GET_COOKIE_INFO enumerates a URL, not all paths of an origin.
+        // Even an empty result cannot prove that every site cookie is gone.
+        if (expirations.isEmpty()) return SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE
         return try {
             expirations.forEach { expiry ->
                 cookieStore.setCookie(site.url.toASCIIString(), expiry)
             }
             cookieStore.flush()
-            SiteClearResult.CLEARED_EXACTLY
+            SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE
         } catch (_: Exception) {
             SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE
         }

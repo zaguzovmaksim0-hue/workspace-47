@@ -44,7 +44,7 @@ class SiteDataCleanerTest {
             capabilities(getCookieInfo = true),
         )
 
-        assertEquals(SiteClearResult.CLEARED_EXACTLY, result)
+        assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE, result)
         assertEquals(listOf("https://tramita.unizar.es"), storage.deletedOrigins)
         assertEquals(
             listOf("https://tramita.unizar.es/private/path"),
@@ -59,6 +59,16 @@ class SiteDataCleanerTest {
         assertEquals(1, cookies.flushCalls)
         assertEquals(0, cookies.removeAllCalls)
         assertEquals(0, storage.deleteAllCalls)
+    }
+
+    @Test
+    fun emptyUrlCookieListCannotProveCookiesAtOtherPathsAreGone() {
+        val cookies = FakeCookieStore(cookieInfo = emptyList())
+        val cleaner = SiteDataCleaner(cookies, FakeSiteWebStorage())
+        assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE,
+            cleaner.clearOrigin(URI("https://example.org/"), capabilities(true)))
+        assertTrue(cookies.writes.isEmpty())
+        assertEquals(0, cookies.removeAllCalls)
     }
 
     @Test
