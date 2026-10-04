@@ -13,6 +13,7 @@ class ApplicationSanitizedLoggerFactoryTest {
         val logger = ApplicationSanitizedLoggerFactory.create(
             filesDirectory = directory,
             qaEnabled = true,
+            executor = java.util.concurrent.Executor { it.run() },
             diagnosticMirror = SanitizedLogSink(mirrored::add),
         )
 
@@ -30,6 +31,7 @@ class ApplicationSanitizedLoggerFactoryTest {
         val logger = ApplicationSanitizedLoggerFactory.create(
             filesDirectory = directory,
             qaEnabled = true,
+            executor = java.util.concurrent.Executor { it.run() },
             diagnosticMirror = SanitizedLogSink {},
         )
         val file = directory.resolve(QaDiagnosticFileSink.FILE_NAME)

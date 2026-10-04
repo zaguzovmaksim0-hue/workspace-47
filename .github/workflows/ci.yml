@@ -69,8 +69,17 @@ jobs:
         run: ./gradlew lintDebug lintQa --no-daemon
       - name: Build Android APKs
         run: ./gradlew assembleDebug assembleQa assembleQaAndroidTest --no-daemon
+      - name: Build optimized daily-use APK
+        run: ./gradlew assembleOptimized --no-daemon
       - name: Verify Android artifacts
         run: scripts/ci/verify-android-artifacts.sh
+      - name: Retain optimized candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: firmamobile-optimized-${{ env.VERIFY_REF }}
+          path: app/build/outputs/apk/optimized/app-optimized.apk
+          if-no-files-found: error
+          retention-days: 3
       - name: Verify release signing fails closed without secrets
         run: scripts/ci/verify-release-fail-closed.sh
       - name: Record QA artifact provenance

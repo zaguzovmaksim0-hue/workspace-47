@@ -43,7 +43,7 @@ internal class CatalogSmokeHook(
     }
 
     fun start() {
-        if (!BuildConfig.ALLOW_QA_PROFILES || registered) return
+        if (!BuildConfig.DEBUG || !BuildConfig.ALLOW_QA_PROFILES || registered) return
         ContextCompat.registerReceiver(
             activity,
             receiver,

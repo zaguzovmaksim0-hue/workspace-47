@@ -348,7 +348,7 @@ fun BrowserScreen(
     var currentUrl by remember(profileId, entryUrl) {
         mutableStateOf(validatedEntryUrl)
     }
-    var pageProgress by remember { mutableIntStateOf(100) }
+    var pageLoading by remember { mutableStateOf(false) }
     var webViewRecreationEpoch by remember { mutableIntStateOf(0) }
     val nativeAfirmaScope = rememberCoroutineScope()
     var nativeAfirmaPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaConsentPrompt?>(null) }
@@ -565,7 +565,7 @@ fun BrowserScreen(
         advanceNavigationEpoch()
         onCancelSigning(SigningCancelReason.NAVIGATION, null)
         browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-        pageProgress = 100
+        pageLoading = false
         webViewRecreationEpoch++
     }
 
@@ -582,7 +582,7 @@ fun BrowserScreen(
                 preserveWebViewDuringClientAuthClear = false
                 if (result == ClientCertPreferenceClearResult.FAILED) {
                     browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-                    pageProgress = 100
+                    pageLoading = false
                 }
             }
         }
@@ -600,7 +600,7 @@ fun BrowserScreen(
             return
         }
         browserError = null
-        pageProgress = 0
+        pageLoading = true
         clientAuthPreparing = true
         preserveWebViewDuringClientAuthClear = true
         webView.isEnabled = false
@@ -640,7 +640,7 @@ fun BrowserScreen(
         cancelClientAuthClearCallback()
         clientAuthGrant = null
         browserError = null
-        pageProgress = 0
+        pageLoading = true
         clientAuthPreparing = true
         val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
             mainHandler.post {
@@ -676,7 +676,7 @@ fun BrowserScreen(
         clientAuthGrant = null
         pendingNormalUrl.set(validatedEntryUrl)
         browserError = null
-        pageProgress = 0
+        pageLoading = true
         clientAuthPreparing = true
         val profile = selectedProfile
         if (profile?.clientAuthPolicy == null) {
@@ -690,7 +690,7 @@ fun BrowserScreen(
                 if (!sessionCleared) {
                     clientAuthPreparing = false
                     browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-                    pageProgress = 100
+                    pageLoading = false
                     return@post
                 }
                 val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
@@ -700,13 +700,13 @@ fun BrowserScreen(
                         when (result) {
                             ClientCertPreferenceClearResult.CLEARED -> {
                                 browserError = null
-                                pageProgress = 0
+                                pageLoading = true
                                 webViewRecreationEpoch++
                             }
 
                             ClientCertPreferenceClearResult.FAILED -> {
                                 browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-                                pageProgress = 100
+                                pageLoading = false
                             }
                         }
                     }
@@ -775,7 +775,7 @@ fun BrowserScreen(
                     interactiveClientAuth.revokeCachedChoice()
                 }
                 browserError = error
-                pageProgress = 100
+                pageLoading = false
             }
 
             override fun onRenderProcessGone(view: WebView) {
@@ -790,7 +790,7 @@ fun BrowserScreen(
                 advanceNavigationEpoch()
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
                 browserError = BrowserErrorCode.RENDER_PROCESS_GONE
-                pageProgress = 100
+                pageLoading = false
                 webViewRecreationEpoch++
             }
 
@@ -799,14 +799,14 @@ fun BrowserScreen(
                 val continuingConfirmedClientAuth =
                     inPlaceHandler?.hasProceeded() == true && inPlaceHandler.isAuthFlowUrl(url)
                 if (continuingConfirmedClientAuth) {
-                    pageProgress = 0
+                    pageLoading = true
                     browserError = null
                     blockedReason = null
                     return
                 }
                 inPlaceClientAuthHandlerRef.getAndSet(null)?.abandon()
                 cancelPendingInPlaceClientAuth()
-                pageProgress = 0
+                pageLoading = true
                 browserError = null
                 blockedReason = null
                 pendingClientAuthPostBody.getAndSet(null)?.fill(0)
@@ -1086,7 +1086,7 @@ fun BrowserScreen(
                         if (!sessionCleared) {
                             clientAuthPreparing = false
                             browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-                            pageProgress = 100
+                            pageLoading = false
                             return@post
                         }
                         val request = clientCertPreferenceCoordinator.requestClear { completedRequest, result ->
@@ -1097,7 +1097,7 @@ fun BrowserScreen(
                                     onClearSession()
                                 } else {
                                     browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-                                    pageProgress = 100
+                                    pageLoading = false
                                 }
                             }
                         }
@@ -1167,7 +1167,7 @@ fun BrowserScreen(
                             {
                                 onCancelSigning(SigningCancelReason.RELOAD, null)
                                 browserError = null
-                                pageProgress = 0
+                                pageLoading = true
                                 if (clientAuthGrant != null) {
                                     val activeStartUrl = selectedServiceId?.let(BuiltInSiteProfiles.runtimeRegistry::profile)
                                         ?.startUrl
@@ -1189,7 +1189,7 @@ fun BrowserScreen(
             }
             BrowserLoadingIndicator(
                 visible = clientCertPreferenceState == ClientCertPreferenceBarrierState.CLEARING ||
-                    clientAuthPreparing || pageProgress in 0..99,
+                    clientAuthPreparing || pageLoading,
             )
             if (!clientCertPreferenceBlocked) key(
                 clientAuthGrant != null,
@@ -1246,7 +1246,7 @@ fun BrowserScreen(
                         )
                         webView.setPageProgressListener { progress ->
                             webView.post {
-                                if (webViewRef.get() === webView) pageProgress = progress
+                                if (webViewRef.get() === webView) pageLoading = browserPageLoading(progress)
                             }
                         }
                         val tlsGrant = clientAuthGrant
@@ -1341,7 +1341,7 @@ fun BrowserScreen(
                                     }
                                     preconfirmedInPlaceClientAuthRef.set(refreshed)
                                     browserError = null
-                                    pageProgress = 0
+                                    pageLoading = true
                                     liveWebView.stopLoading()
                                     liveWebView.loadUrl(retrySource.toASCIIString())
                                     true
@@ -1560,7 +1560,7 @@ fun BrowserScreen(
                                         }
                                         pendingNormalUrl.set(rawUrl)
                                         clientAuthGrant = null
-                                        pageProgress = 0
+                                        pageLoading = true
                                         advanceNavigationEpoch()
                                         onCancelSigning(SigningCancelReason.NAVIGATION, null)
                                     }

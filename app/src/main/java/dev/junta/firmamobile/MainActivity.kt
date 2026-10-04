@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.webkit.WebView
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -175,6 +176,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var caibBatchSigningAdapter: CaibBatchSigningAdapter
     private lateinit var burgosBatchSigningAdapter: BurgosBatchSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
+    private var startupJob: kotlinx.coroutines.Job? = null
     private lateinit var catalogRepository: PortalCatalogRepository
     private lateinit var catalogViewModel: PortalCatalogViewModel
     private lateinit var catalogSmokeHook: CatalogSmokeHook
@@ -201,13 +203,62 @@ class MainActivity : ComponentActivity() {
     private val coarseLocationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
-        if (granted) catalogViewModel.detectRegion()
-        else catalogViewModel.onLocationPermissionDenied()
+        if (::catalogViewModel.isInitialized) {
+            if (granted) catalogViewModel.detectRegion()
+            else catalogViewModel.onLocationPermissionDenied()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         BrowserSessionStatePolicy.discardLegacyWebViewState(savedInstanceState)
         super.onCreate(savedInstanceState)
+        beginCatalogStartup()
+    }
+
+    private fun beginCatalogStartup() {
+        if (startupJob?.isActive == true) return
+        showCatalogStartup(failed = false)
+        startupJob = lifecycleScope.launch {
+            val repository = try {
+                (application as JuntaFirmaApplication).loadCatalogRepository()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                showCatalogStartup(failed = true)
+                return@launch
+            }
+            if (isFinishing || isDestroyed) return@launch
+            initializeReadyContent(repository)
+            if (lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
+                catalogSmokeHook.start()
+            }
+        }
+    }
+
+    private fun showCatalogStartup(failed: Boolean) {
+        setContent {
+            JuntaFirmaTheme {
+                androidx.compose.material3.Surface(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
+                    androidx.compose.foundation.layout.Column(
+                        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                    ) {
+                        if (failed) {
+                            androidx.compose.material3.Text(getString(R.string.catalog_open_failed))
+                            androidx.compose.material3.TextButton(onClick = ::beginCatalogStartup) {
+                                androidx.compose.material3.Text(getString(R.string.browser_retry))
+                            }
+                        } else {
+                            androidx.compose.material3.CircularProgressIndicator()
+                            androidx.compose.material3.Text(getString(R.string.catalog_loading))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun initializeReadyContent(repository: PortalCatalogRepository) {
         val app = application as JuntaFirmaApplication
         val routeObserver = TunnelRouteObserver(::onTunnelRouteEvent)
         val directJuntaTransport = HttpsProfileHttpTransport()
@@ -347,13 +398,7 @@ class MainActivity : ComponentActivity() {
             supportLevel = melillaProfile.compatibilityStatus.name,
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )
-        val publicCatalog = resources.openRawResource(R.raw.public_portal_catalog_v1)
-            .bufferedReader().use { PublicPortalCatalogParser.parse(it.readText()) }
-        catalogRepository = PortalCatalogRepository(
-            registry = BuiltInSiteProfiles.runtimeRegistry,
-            profileCatalog = BuiltInSiteProfiles.catalog,
-            publicCatalog = publicCatalog,
-        )
+        catalogRepository = repository
         catalogViewModel = ViewModelProvider(
             this,
             PortalCatalogViewModel.Factory(
@@ -661,12 +706,12 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         certificateViewModel.onAppForegrounded()
-        catalogSmokeHook.start()
+        if (::catalogSmokeHook.isInitialized) catalogSmokeHook.start()
     }
 
     override fun onStop() {
         clearExternalApp()
-        catalogSmokeHook.stop()
+        if (::catalogSmokeHook.isInitialized) catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
         certificateViewModel.onAppBackgrounded()
         super.onStop()
@@ -752,10 +797,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         browserFileChooser.cancel()
-        catalogSmokeHook.stop()
+        if (::catalogSmokeHook.isInitialized) catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
-        signingCoordinator.close()
-        batchSigningCoordinator.close()
+        if (::signingCoordinator.isInitialized) signingCoordinator.close()
+        if (::batchSigningCoordinator.isInitialized) batchSigningCoordinator.close()
         super.onDestroy()
     }
 

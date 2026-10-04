@@ -38,6 +38,7 @@ APP_RUNTIME_CONFIGURATIONS = {
     "debugRuntimeClasspath",
     "qaRuntimeClasspath",
     "releaseRuntimeClasspath",
+    "optimizedRuntimeClasspath",
 }
 EXPECTED_GITLEAKS_IGNORES = {
     "eaf260815e2acfd285ea09090a7e164614b06f57:docs/compatibility/all-spanish-public-portals-inventory.md:generic-api-key:4306",
@@ -279,8 +280,8 @@ class CiPolicyTest(unittest.TestCase):
         self.assertEqual([], sorted(ROOT.glob("*gradle.lockfile")))
         row_pattern = re.compile(
             r"^[^:=\s]+:[^:=\s]+:[^=\s]+="
-            r"(?:debugRuntimeClasspath|qaRuntimeClasspath|releaseRuntimeClasspath)"
-            r"(?:,(?:debugRuntimeClasspath|qaRuntimeClasspath|releaseRuntimeClasspath))*$"
+            r"(?:debugRuntimeClasspath|optimizedRuntimeClasspath|qaRuntimeClasspath|releaseRuntimeClasspath)"
+            r"(?:,(?:debugRuntimeClasspath|optimizedRuntimeClasspath|qaRuntimeClasspath|releaseRuntimeClasspath))*$"
         )
         seen_configurations: set[str] = set()
         forbidden_versions = ("+", "SNAPSHOT", "latest.", "[", "(")

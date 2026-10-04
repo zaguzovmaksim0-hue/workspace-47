@@ -21,8 +21,9 @@ AAPT2=$(find_build_tool aapt2)
 
 DEBUG_APK=app/build/outputs/apk/debug/app-debug.apk
 QA_APK=app/build/outputs/apk/qa/app-qa.apk
+OPTIMIZED_APK=app/build/outputs/apk/optimized/app-optimized.apk
 TEST_APK=app/build/outputs/apk/androidTest/qa/app-qa-androidTest.apk
-for apk in "$DEBUG_APK" "$QA_APK" "$TEST_APK"; do
+for apk in "$DEBUG_APK" "$QA_APK" "$OPTIMIZED_APK" "$TEST_APK"; do
   [[ -s "$apk" ]] || { echo "Missing APK: $apk" >&2; exit 1; }
   "$ZIPALIGN" -c -p -v 4 "$apk" >/dev/null
   signature_report=$(mktemp)
@@ -42,6 +43,16 @@ if grep -Eq 'android:testOnly.*=true' "$manifest_report"; then
 fi
 rm -f "$manifest_report"
 
+optimized_manifest=$(mktemp)
+"$AAPT2" dump xmltree --file AndroidManifest.xml "$OPTIMIZED_APK" >"$optimized_manifest"
+if grep -Eq 'android:debuggable.*=true|android:testOnly.*=true|ProtocolProbeActivity|E2eControl' "$optimized_manifest"; then
+  echo "Optimized APK must not contain debug flags or debug control components" >&2
+  exit 1
+fi
+grep -Eq 'android:allowBackup.*=false' "$optimized_manifest"
+grep -Eq 'android:usesCleartextTraffic.*=false' "$optimized_manifest"
+rm -f "$optimized_manifest"
+
 forbidden_canaries=(
   'secret-canary'
   'certificate-signature-secret-canary'
@@ -52,7 +63,7 @@ forbidden_canaries=(
   'ws024-double-tls-canary'
   'cookie-value-must-not-escape'
 )
-for apk in "$DEBUG_APK" "$QA_APK"; do
+for apk in "$DEBUG_APK" "$QA_APK" "$OPTIMIZED_APK"; do
   strings_file=$(mktemp)
   unzip -p "$apk" | strings >"$strings_file"
   for canary in "${forbidden_canaries[@]}"; do

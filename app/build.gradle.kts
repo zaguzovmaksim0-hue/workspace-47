@@ -14,6 +14,7 @@ val runtimeDependencyLockConfigurations = setOf(
     "debugRuntimeClasspath",
     "qaRuntimeClasspath",
     "releaseRuntimeClasspath",
+    "optimizedRuntimeClasspath",
 )
 
 dependencyLocking {
@@ -194,8 +195,8 @@ android {
         applicationId = "dev.junta.firmamobile"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.2.7"
+        versionCode = 10
+        versionName = "0.2.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
@@ -265,7 +266,7 @@ android {
             buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))
             buildConfigField("int", "WS024_QA_RELAY_PORT", "443")
             buildConfigField("String", "WS024_QA_RELAY_SPKI_PINS", quotedBuildConfigString(""))
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -273,7 +274,21 @@ android {
         }
     }
 
+    buildTypes.create("optimized") {
+        initWith(buildTypes.getByName("release"))
+        matchingFallbacks += listOf("release")
+        signingConfig = signingConfigs.getByName("debug")
+        versionNameSuffix = "-optimized"
+        isDebuggable = false
+        isMinifyEnabled = true
+        // Retain existing profile availability, without debug receivers or disk logging.
+        buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
+    }
+
     sourceSets {
+        getByName("optimized") {
+            java.srcDir("src/release/java")
+        }
         getByName("qa") {
             manifest.srcFile("src/debug/AndroidManifest.xml")
             kotlin.directories.add("src/debug/java")
