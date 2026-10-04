@@ -55,7 +55,7 @@ import dev.junta.firmamobile.ui.theme.JuntaPaperElevated
 import dev.junta.firmamobile.ui.theme.JuntaTeal
 import dev.junta.firmamobile.ui.theme.JuntaTealDark
 
-internal val BrowserIndustrialToolbarHeight = 72.dp
+internal val BrowserIndustrialToolbarHeight = 56.dp
 internal const val BROWSER_PROFILE_TITLE_TAG = "browser_profile_title"
 internal const val BROWSER_PROFILE_STATUS_TAG = "browser_profile_status"
 internal const val BROWSER_LOADING_TAG = "browser_loading"
@@ -66,9 +66,7 @@ internal const val BROWSER_NOTICE_TAG = "browser_notice"
  */
 @Composable
 internal fun IndustrialBrowserTopBar(
-    profileName: String,
     host: String,
-    trustLabel: String,
     onBack: () -> Unit,
     onHome: () -> Unit,
     onReload: () -> Unit,
@@ -78,6 +76,7 @@ internal fun IndustrialBrowserTopBar(
     onClearSessionRequested: () -> Unit,
     onDeleteAllBrowserDataRequested: () -> Unit,
     onOpenInBrowser: (() -> Unit)? = null,
+    onShowSiteInformation: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets(0, 0, 0, 0),
 ) {
@@ -113,10 +112,12 @@ internal fun IndustrialBrowserTopBar(
                         .weight(1f)
                         .padding(horizontal = 4.dp),
                 ) {
-                    BrowserServiceIdentity(
-                        profileName = profileName,
-                        host = host,
-                        trustLabel = trustLabel,
+                    Text(
+                        text = host,
+                        color = JuntaTealDark,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.testTag(BROWSER_ADDRESS_LABEL_TAG),
                     )
                 }
@@ -138,6 +139,7 @@ internal fun IndustrialBrowserTopBar(
                         onClick = { menuExpanded = true },
                     )
                     BrowserOverflowMenu(
+                        onShowSiteInformation = onShowSiteInformation?.let { show -> { menuExpanded = false; show() } },
                         onOpenInBrowser = onOpenInBrowser?.let { open -> { menuExpanded = false; open() } },
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false },
@@ -226,6 +228,7 @@ internal fun BrowserOverflowMenu(
     onClearSessionRequested: () -> Unit,
     onDeleteAllBrowserDataRequested: () -> Unit,
     onOpenInBrowser: (() -> Unit)? = null,
+    onShowSiteInformation: (() -> Unit)? = null,
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -235,6 +238,13 @@ internal fun BrowserOverflowMenu(
             .background(JuntaPaperElevated, BrowserMenuShape)
             .border(1.5.dp, JuntaInk, BrowserMenuShape),
     ) {
+        onShowSiteInformation?.let { show ->
+            BrowserMenuItem(
+                iconRes = R.drawable.ic_browser_info,
+                text = stringResource(R.string.browser_site_information),
+                onClick = show,
+            )
+        }
         onOpenInBrowser?.let { open ->
             BrowserMenuItem(
                 iconRes = R.drawable.ic_browser_home,

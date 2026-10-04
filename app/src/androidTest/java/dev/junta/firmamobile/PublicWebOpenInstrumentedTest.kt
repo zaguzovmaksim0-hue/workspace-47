@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -52,7 +53,11 @@ class PublicWebOpenInstrumentedTest {
             rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("public-web-address"))
             rule.onNodeWithTag("public-web-address").performTextReplacement("https://unlisted.synthetic.example/form")
             rule.onNodeWithTag("public-web-open-confirm").assertIsEnabled().performClick()
+            rule.onNodeWithTag("public-browsing-notice").assertDoesNotExist()
+            rule.onNodeWithContentDescription("Más opciones").performClick()
+            rule.onNodeWithText("Información del sitio").performClick()
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
+            rule.onNodeWithTag("browser-site-information-close").performClick()
             rule.onNodeWithTag("public-web-open-dialog").assertDoesNotExist()
             rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
             rule.onNodeWithTag("interactive-client-auth-confirm").assertDoesNotExist()

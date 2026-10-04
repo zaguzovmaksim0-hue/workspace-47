@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.compose.ui.test.onNodeWithContentDescription
 import android.net.Uri
 import android.view.View
 import android.view.ViewGroup
@@ -67,7 +68,11 @@ class UniversalCatalogBrowserInstrumentedTest {
             rule.onNodeWithTag("catalog-open-profile-$portalId").assertDoesNotExist()
             rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-open-$portalId"))
             rule.onNodeWithTag("catalog-open-$portalId").performClick()
+            rule.onNodeWithTag("public-browsing-notice").assertDoesNotExist()
+            rule.onNodeWithContentDescription("Más opciones").performClick()
+            rule.onNodeWithText("Información del sitio").performClick()
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
+            rule.onNodeWithTag("browser-site-information-close").performClick()
             var current: WebView? = null
             rule.waitUntil(timeoutMillis = 15_000) { scenario.onActivity { current = findWebView(it.window.decorView) }; current != null }
             val view = checkNotNull(current); val destination = checkNotNull(target)

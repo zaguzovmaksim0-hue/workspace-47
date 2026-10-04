@@ -1955,6 +1955,7 @@ internal fun BrowserLayout(
     webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null,
     content: @Composable (Modifier) -> Unit,
 ) {
+    var showSiteInformation by remember(currentUrl) { mutableStateOf(false) }
     var confirmClearCurrentSite by remember { mutableStateOf(false) }
     var confirmClearSession by remember { mutableStateOf(false) }
     var confirmDeleteAllData by remember { mutableStateOf(false) }
@@ -1962,11 +1963,8 @@ internal fun BrowserLayout(
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            Column {
             IndustrialBrowserTopBar(
-                profileName = profileName,
                 host = BrowserAddressPresentation.hostOf(currentUrl),
-                trustLabel = trustLabel,
                 onBack = onBack,
                 onHome = onHome,
                 onReload = onReload,
@@ -1976,14 +1974,12 @@ internal fun BrowserLayout(
                 onClearSessionRequested = { confirmClearSession = true },
                 onDeleteAllBrowserDataRequested = { confirmDeleteAllData = true },
                 onOpenInBrowser = onOpenInBrowser,
+                onShowSiteInformation = { showSiteInformation = true },
                 windowInsets = browserInsets.only(
                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                 ),
                 modifier = Modifier.testTag(BROWSER_TOOLBAR_TAG),
             )
-            if (publicBrowsing) PublicBrowsingNotice()
-            webAuthnState?.let { WebAuthnStatusButton(it, onOpenInBrowser) }
-            }
         },
         bottomBar = {
             BrowserCertificateStrip(
@@ -2005,6 +2001,20 @@ internal fun BrowserLayout(
                 .windowInsetsPadding(
                     browserInsets.only(WindowInsetsSides.Horizontal),
                 ),
+        )
+    }
+
+    if (showSiteInformation) {
+        BrowserSiteInformationDialog(
+            profileName = profileName,
+            host = BrowserAddressPresentation.hostOf(currentUrl),
+            trustLabel = trustLabel,
+            publicBrowsing = publicBrowsing,
+            webAuthnState = webAuthnState,
+            onOpenInBrowser = onOpenInBrowser?.let { open ->
+                { showSiteInformation = false; open() }
+            },
+            onDismiss = { showSiteInformation = false },
         )
     }
 

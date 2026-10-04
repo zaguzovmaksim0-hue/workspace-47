@@ -77,9 +77,7 @@ class BrowserChromeComponentsTest {
             JuntaFirmaTheme {
                 Column {
                     IndustrialBrowserTopBar(
-                        profileName = "Registro Electrónico General",
                         host = "reg.redsara.es",
-                        trustLabel = "Firma protegida",
                         onBack = { events += "back" },
                         onHome = { events += "home" },
                         onReload = { events += "reload" },
@@ -96,7 +94,7 @@ class BrowserChromeComponentsTest {
             }
         }
 
-        rule.onNodeWithText("Registro Electrónico General").assertIsDisplayed()
+        rule.onNodeWithText("Registro Electrónico General").assertDoesNotExist()
         rule.onNodeWithText("reg.redsara.es", substring = true).assertIsDisplayed()
         rule.onNodeWithTag(BROWSER_LOADING_TAG).assertIsDisplayed()
         rule.onNodeWithTag(BROWSER_NOTICE_TAG).assertIsDisplayed()

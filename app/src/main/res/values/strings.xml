@@ -254,4 +254,5 @@
     <string name="public_web_open_title">Abrir otra web</string>
     <string name="public_web_address">Dirección HTTPS</string>
     <string name="public_web_open_hint">Abre una dirección HTTPS pública sin crear un perfil ni guardar nuevos permisos. La firma y el acceso con certificado requieren su propio consentimiento.</string>
+    <string name="browser_site_information">Información del sitio</string>
 </resources>
