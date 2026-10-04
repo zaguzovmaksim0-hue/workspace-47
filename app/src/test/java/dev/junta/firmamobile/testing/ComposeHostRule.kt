@@ -1,6 +1,5 @@
 package dev.junta.firmamobile.testing
 
-import android.app.Application
 import android.content.ComponentName
 import android.content.Intent
 import android.content.IntentFilter
@@ -20,7 +19,7 @@ fun createComposeRule(): ComposeContentTestRule {
     return object : ComposeContentTestRule by delegate {
         override fun apply(base: Statement, description: Description): Statement = object : Statement() {
             override fun evaluate() {
-                val app = RuntimeEnvironment.getApplication<Application>()
+                val app = RuntimeEnvironment.getApplication()
                 val component = ComponentName(app.packageName, ComponentActivity::class.java.name)
                 val packages = shadowOf(app.packageManager)
                 packages.addActivityIfNotPresent(component)
