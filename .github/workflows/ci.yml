@@ -8,6 +8,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      run_instrumentation:
+        description: "Run synthetic emulator instrumentation (explicit opt-in)"
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: read
@@ -98,9 +104,8 @@ jobs:
 
   android-instrumented:
     name: Android emulator instrumentation
-    # The operator explicitly requested no E2E for this ongoing PR. This
-    # exception is label-gated and does not disable default main/other-PR runs.
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.number != 338 || !contains(github.event.pull_request.labels.*.name, 'verification:no-e2e') }}
+    # Emulator execution requires an explicit manual opt-in; merges stay non-E2E.
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_instrumentation }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:

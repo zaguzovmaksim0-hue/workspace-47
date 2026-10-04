@@ -34,6 +34,10 @@ Evidence and methodology live under:
 
 The runtime catalog is generated from reviewed repository sources with `tools/generate_public_portal_catalog.py`; the generator itself does not fetch external URLs.
 
+## Project navigation
+
+See [the documentation index](docs/README.md) for current engineering guidance, compatibility records, and historical archives. Start new work from current `origin/main`; historical worktrees are not continuation bases.
+
 ## Build
 
 Use the repository Gradle Wrapper. The Android build is configured around Java 17 and the Android/Gradle tooling declared in the repository.
@@ -50,9 +54,9 @@ Release builds intentionally require private signing configuration and must not 
 
 Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024-relay/`.
 
-Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Current broad candidate verification runs on the exact pull-request head through GitHub Actions, including Android unit/lint/APK gates and API 36 emulator instrumentation; see [`docs/agents/github-actions-verification.md`](docs/agents/github-actions-verification.md). Agents may use narrow local tests for development feedback, while Codex Cloud is no longer the default verification route. The former one-shot Termux publication runner is retired.
+Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Current broad candidate verification runs on the exact pull-request head through GitHub Actions, including Android unit/lint/APK gates; API 36 emulator instrumentation is available only through an explicit manual opt-in; see [`docs/agents/github-actions-verification.md`](docs/agents/github-actions-verification.md). Agents may use narrow local tests for development feedback, while Codex Cloud is no longer the default verification route. The former one-shot Termux publication runner is retired.
 
-## Verified publication candidate
+## Historical publication candidate
 
 The source-publication candidate is based on product commit `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`, the last autonomous product checkpoint with recorded Codex Cloud acceptance. Later autonomous TDD RED work was deliberately excluded.
 
