@@ -25,3 +25,9 @@ class RepositoryHygieneTest(unittest.TestCase):
         index = ROOT / "docs/README.md"
         for link in re.findall(r"\]\(([^)]+)\)", index.read_text()):
             self.assertTrue((index.parent / link).exists(), link)
+
+    def test_optimized_variant_uses_release_kotlin_sources_without_debug_controls(self):
+        source = (ROOT / "app/build.gradle.kts").read_text()
+        block = source.split('getByName("optimized") {', 1)[1].split("}", 1)[0]
+        self.assertIn('kotlin.directories.add("src/release/java")', block)
+        self.assertNotIn("src/debug", block)

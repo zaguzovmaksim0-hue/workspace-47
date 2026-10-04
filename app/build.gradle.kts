@@ -287,7 +287,7 @@ android {
 
     sourceSets {
         getByName("optimized") {
-            java.srcDir("src/release/java")
+            kotlin.directories.add("src/release/java")
         }
         getByName("qa") {
             manifest.srcFile("src/debug/AndroidManifest.xml")
