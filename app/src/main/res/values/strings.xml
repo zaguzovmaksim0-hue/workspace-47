@@ -255,4 +255,14 @@
     <string name="public_web_address">Dirección HTTPS</string>
     <string name="public_web_open_hint">Abre una dirección HTTPS pública sin crear un perfil ni guardar nuevos permisos. La firma y el acceso con certificado requieren su propio consentimiento.</string>
     <string name="browser_site_information">Información del sitio</string>
+    <string name="native_consent_review_title">Revisar firma</string>
+    <string name="native_consent_result_title">Resultado</string>
+    <string name="native_consent_progress_title">En curso</string>
+    <string name="native_consent_page_label">Solicitado por</string>
+    <string name="native_consent_recipient_label">Destino del resultado</string>
+    <string name="native_consent_certificate_label">Tu certificado</string>
+    <string name="native_consent_show_details">Ver detalles técnicos</string>
+    <string name="native_consent_hide_details">Ocultar detalles técnicos</string>
+    <string name="native_consent_expanded">Expandido</string>
+    <string name="native_consent_collapsed">Contraído</string>
 </resources>
