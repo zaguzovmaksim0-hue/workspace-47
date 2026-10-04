@@ -51,6 +51,10 @@ if grep -Eq 'android:debuggable.*=true|android:testOnly.*=true|ProtocolProbeActi
 fi
 grep -Eq 'android:allowBackup.*=false' "$optimized_manifest"
 grep -Eq 'android:usesCleartextTraffic.*=false' "$optimized_manifest"
+if grep -Fq 'androidx.activity.ComponentActivity' "$optimized_manifest"; then
+  echo "Optimized APK must not package the Compose test host Activity" >&2
+  exit 1
+fi
 rm -f "$optimized_manifest"
 
 forbidden_canaries=(
