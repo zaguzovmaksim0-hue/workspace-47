@@ -3,6 +3,9 @@ package dev.junta.firmamobile.catalog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -43,23 +46,25 @@ data class PortalCatalogUiState(
     val sections: List<PortalCatalogSection> = emptyList(),
     val locationState: CatalogLocationState = CatalogLocationState.IDLE,
     val userMessage: CatalogUserMessage? = null,
+    val catalogLoading: Boolean = false,
 )
 
 class PortalCatalogViewModel(
     private val repository: PortalCatalogRepository,
     private val preferencesStore: CatalogPreferencesStore,
     private val regionDetector: RegionDetector,
+    computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     private val searchText = MutableStateFlow("")
     private val locationState = MutableStateFlow(CatalogLocationState.IDLE)
     private val userMessage = MutableStateFlow<CatalogUserMessage?>(null)
 
-    val state = combine(
+    // Only actual catalog inputs rebuild/search the catalog. Location progress
+    // and snackbar dismissal must not repeat normalization, sorting or grouping.
+    private val content = combine(
         preferencesStore.preferences(repository.portalIds),
         searchText,
-        locationState,
-        userMessage,
-    ) { preferences, search, location, message ->
+    ) { preferences, search ->
         val items = repository.portals(
             PortalCatalogQuery(
                 searchText = search,
@@ -80,13 +85,15 @@ class PortalCatalogViewModel(
                 recentPortalIds = preferences.recentPortalIds,
                 searching = search.isNotBlank(),
             ),
-            locationState = location,
-            userMessage = message,
         )
+    }.flowOn(computationDispatcher)
+
+    val state = combine(content, locationState, userMessage) { content, location, message ->
+        content.copy(locationState = location, userMessage = message)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = initialState(),
+        initialValue = PortalCatalogUiState(catalogLoading = true),
     )
 
     init {
@@ -155,23 +162,6 @@ class PortalCatalogViewModel(
     fun onUserMessageShown() {
         userMessage.value = null
     }
-
-    private fun initialState(): PortalCatalogUiState {
-        val items = repository.portals(selectedRegionQuery(PortalRegionCode.SPAIN))
-        return PortalCatalogUiState(
-            sections = buildPersonalizedPortalSections(
-                items = items,
-                selectedRegion = PortalRegionCode.SPAIN,
-                favoritePortalIds = emptySet(),
-                recentPortalIds = emptyList(),
-                searching = false,
-            ),
-        )
-    }
-
-    private fun selectedRegionQuery(region: PortalRegionCode) = PortalCatalogQuery(
-        selectedRegion = region,
-    )
 
     class Factory(
         private val repository: PortalCatalogRepository,

@@ -49,9 +49,10 @@ The current CI/security workflows provide the broad candidate gate:
   - `assembleQaAndroidTest`
   - Android artifact verification
   - release-signing fail-closed verification
-- **Android emulator instrumentation**
+- **Android emulator instrumentation (optional explicit manual opt-in)**
   - API 36 x86_64 emulator on a standard GitHub-hosted Ubuntu runner
   - `connectedQaAndroidTest`
+  - Runs only when manually dispatched with `run_instrumentation: true`; skipped on ordinary PRs and pushes. This is not part of the default no-E2E gate.
   - synthetic/local instrumentation only; no real user certificate or administrative submission
 - **Python catalog and policy tests**
 - **Go relay tests, race detector, vet, build and govulncheck**

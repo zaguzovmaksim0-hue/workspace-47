@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_cades_cosign_action">Añadir mi firma al documento ya firmado</string>
+    <string name="native_cades_cosign_notice">Se comprobarán las firmas anteriores y se conservarán al añadir la nueva. Si el archivo CAdES no contiene el documento original, se firmará la misma huella verificada: el contenido del documento no se habrá leído ni comprobado aquí. Esto no acredita la confianza o revocación de los certificados anteriores.</string>
+</resources>

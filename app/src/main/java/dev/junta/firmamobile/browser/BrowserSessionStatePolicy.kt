@@ -19,7 +19,7 @@ internal object BrowserSessionStatePolicy {
 
     fun validatedEntryUrl(
         registry: SiteProfileRegistry,
-        profileId: ProfileId,
+        profileId: ProfileId?,
         entryUrl: URI,
     ): String? {
         val rawUrl = entryUrl.toASCIIString()
@@ -30,6 +30,11 @@ internal object BrowserSessionStatePolicy {
             ).resolve(rawUrl, profileId)
         }.getOrNull() ?: return null
 
+        if (profileId == null) {
+            return resolution.uri?.toASCIIString()?.takeIf {
+                resolution.site == null && resolution.trustMode == TrustMode.BROWSE_ONLY
+            }
+        }
         if (resolution.site?.profile?.profileId != profileId) return null
         if (resolution.trustMode !in SAFE_ENTRY_TRUST_MODES) return null
         return resolution.uri?.toASCIIString()

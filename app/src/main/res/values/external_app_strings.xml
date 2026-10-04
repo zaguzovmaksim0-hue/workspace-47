@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_app_title">Continuar en otra aplicación</string>
+    <string name="external_app_source">Solicitud de la página: %1$s</string>
+    <string name="external_app_scheme">Tipo de enlace: %1$s</string>
+    <string name="external_app_package">Aplicación solicitada: %1$s</string>
+    <string name="external_app_copy">Solo se enviará el enlace a la aplicación elegida por Android. Sus parámetros pueden incluir datos del trámite. No se transfieren el certificado, las cookies ni el contenido de la página. La página quedará abierta; volver no confirma que el acceso o el trámite haya terminado.</string>
+    <string name="external_app_open">Abrir aplicación</string>
+    <string name="external_app_fallback">Abrir alternativa web en navegador: %1$s</string>
+    <string name="external_app_cancel">Permanecer aquí</string>
+</resources>

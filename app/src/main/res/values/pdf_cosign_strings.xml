@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_afirma_pdf_cosign">Añadir una firma al PDF ya firmado</string>
+    <string name="native_afirma_pdf_prior_signatures">Las firmas previas compatibles se comprobarán antes de añadir la nueva. Comprobar su integridad no acredita la identidad ni la confianza de sus certificados. No se sustituye ninguna firma.</string>
+</resources>

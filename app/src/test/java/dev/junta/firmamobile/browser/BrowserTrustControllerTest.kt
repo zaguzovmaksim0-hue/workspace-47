@@ -137,7 +137,7 @@ class BrowserTrustControllerTest {
     }
 
     @Test
-    fun directNavigationToAnotherActiveCatalogProfileFailsClosed() {
+    fun anotherProfileCanBeBrowsedWithoutInheritingSigningTrust() {
         val qaRegistry = SiteProfileRegistry(
             BuiltInSiteProfiles.catalog,
             BuildTrustPolicy.QA,
@@ -152,8 +152,17 @@ class BrowserTrustControllerTest {
 
         val result = isolatedController.navigate(redSara.startUrl.toASCIIString())
 
-        assertEquals(TrustMode.BLOCKED, result.resolution.trustMode)
+        assertEquals(TrustMode.BROWSE_ONLY, result.resolution.trustMode)
         assertNull(result.activeProfileId)
+        assertNull(result.resolution.site)
+    }
+
+    @Test
+    fun fragmentsOnOrdinaryHttpsPagesDoNotGrantSigningTrust() {
+        val result = controller.navigate("https://unlisted.example/login#step-2")
+        assertEquals(TrustMode.BROWSE_ONLY, result.resolution.trustMode)
+        assertNull(result.activeProfileId)
+        assertNull(result.resolution.site)
     }
 
     @Test

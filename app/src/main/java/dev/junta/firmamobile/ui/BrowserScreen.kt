@@ -9,6 +9,12 @@ import android.os.Looper
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.core.view.doOnAttach
+import dev.junta.firmamobile.browser.BrowserPopupTransport
+import dev.junta.firmamobile.browser.PopupOwnerLease
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -23,7 +29,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,7 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -45,6 +53,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.afirma.servlet.AfirmaConsentController
+import dev.junta.firmamobile.afirma.servlet.AfirmaFallbackController
+import dev.junta.firmamobile.afirma.servlet.AfirmaFallbackPrompt
+import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt
+import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
+import dev.junta.firmamobile.afirma.servlet.AfirmaServletInvocationParser
+import dev.junta.firmamobile.afirma.servlet.AfirmaServletParseResult
+import dev.junta.firmamobile.afirma.servlet.NativeAfirmaOperation
+import dev.junta.firmamobile.afirma.servlet.AfirmaDeferredResolver
+import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalController
+import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalPrompt
 import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
@@ -53,6 +72,9 @@ import dev.junta.firmamobile.browser.BrowserUrlPolicy
 import dev.junta.firmamobile.browser.CarneJovenPreTlsRetryController
 import dev.junta.firmamobile.browser.AuthorizedClientAuthTarget
 import dev.junta.firmamobile.browser.ClientAuthGrant
+import dev.junta.firmamobile.browser.InteractiveClientAuthController
+import dev.junta.firmamobile.browser.InteractiveClientAuthPrompt
+import dev.junta.firmamobile.browser.InteractiveClientAuthProblem
 import dev.junta.firmamobile.browser.ClientCertPreferenceClearRequest
 import dev.junta.firmamobile.browser.ClientCertPreferenceClearResult
 import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
@@ -102,6 +124,14 @@ import java.time.Instant
 import java.util.Base64
 import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
+
+private class BrowserPopupState(
+    val token: UUID,
+    val entryOrigin: URI,
+    val transport: BrowserPopupTransport,
+) {
+    var child: WebView? = null
+}
 
 private data class PendingCertificateSelection(
     val request: CertificateSelectionBridgeRequest,
@@ -168,9 +198,9 @@ internal fun certificateEligibleForSelection(
 
 @Composable
 fun BrowserScreen(
-    profileId: ProfileId,
+    profileId: ProfileId?,
     entryUrl: URI,
-    certificateState: CertificateUiState.Unlocked,
+    certificateState: CertificateUiState.Unlocked?,
     logger: SanitizedLogger,
     signingState: SigningUiState,
     onMiniAppletRequest: (MiniAppletBridgeRequest, SigningReplySink) -> Unit,
@@ -190,16 +220,30 @@ fun BrowserScreen(
     onNavigationEpochChanged: (Long) -> Unit = {},
     onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -> Unit)? = null,
     onMelillaBatchCancel: (UUID) -> Unit = {},
+    onShowFileChooser: ((WebView, android.webkit.ValueCallback<Array<Uri>>, android.webkit.WebChromeClient.FileChooserParams) -> Boolean)? = null,
+    certificatePanelVisible: Boolean = false,
+    mayRetainExternalReturn: () -> Boolean = { false },
+    consumeExternalReturn: () -> Boolean = { false },
+    popupTransport: BrowserPopupTransport? = null,
+    onPopupWindowClose: () -> Unit = onExitBrowser,
+    onRelatedClientCertPreferenceClear: (Boolean) -> Unit = {},
+    onDocumentDownload: ((WebView, android.content.Intent) -> Boolean)? = null,
+    onExternalAppRequest: ((WebView, dev.junta.firmamobile.browser.ExternalAppLink) -> Boolean)? = null,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val selectedServiceId = profileId
+    val currentIdentityProvider by rememberUpdatedState(clientCertificateIdentityProvider)
+    val currentMayRetainExternalReturn by rememberUpdatedState(mayRetainExternalReturn)
+    val currentConsumeExternalReturn by rememberUpdatedState(consumeExternalReturn)
+    val currentSigningState by rememberUpdatedState(signingState)
+    val currentExternalAppRequest by rememberUpdatedState(onExternalAppRequest)
     val clientCertPreferenceState by
-        clientCertPreferenceCoordinator.state.collectAsStateWithLifecycle()
+        clientCertPreferenceCoordinator.state.collectAsState()
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
     val webViewCapabilities = remember(context) { WebViewProfileCapabilities.current(context) }
     val siteDataCleaner = remember { SiteDataCleaner() }
-    val sessionDataClearLease = remember { BrowserDataClearCompletionLease<ProfileId>() }
+    val sessionDataClearLease = remember { BrowserDataClearCompletionLease<ProfileId?>() }
     val globalDataClearLease = remember { BrowserDataClearCompletionLease<WebView>() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val validatedEntryUrl = remember(selectedServiceId, entryUrl) {
@@ -211,7 +255,7 @@ fun BrowserScreen(
             ),
         ) { "Browser entry URL does not belong to the selected profile" }
     }
-    val selectedProfile = BuiltInSiteProfiles.runtimeRegistry.profile(selectedServiceId)
+    val selectedProfile = selectedServiceId?.let(BuiltInSiteProfiles.runtimeRegistry::profile)
     val requiresClientAuthSessionPreparation = requiresFreshJuntaBrowserSession(selectedProfile)
     val trustController = remember(selectedServiceId, validatedEntryUrl) {
         BrowserTrustController(
@@ -227,6 +271,7 @@ fun BrowserScreen(
             trustController.navigate(validatedEntryUrl).activeProfileId,
         )
     }
+    var webAuthnState by remember { mutableStateOf<dev.junta.firmamobile.browser.WebAuthnEngineState?>(null) }
     val webViewRef = remember { AtomicReference<WebView?>() }
     val bridgeAttachmentLease = remember {
         BrowserOwnedResourceLease<WebView, WebMessageBridgeAttachment>()
@@ -241,6 +286,32 @@ fun BrowserScreen(
     val pendingNormalUrl = remember { AtomicReference<String?>() }
     val pendingClientAuthPostBody = remember { AtomicReference<ByteArray?>() }
     val navigationEpoch = remember { mutableLongStateOf(0L) }
+    var activePopup by remember(selectedServiceId, entryUrl) { mutableStateOf<BrowserPopupState?>(null) }
+    var popupClearingCertificatePreferences by remember { mutableStateOf<UUID?>(null) }
+    val popupLease = remember(selectedServiceId, entryUrl) {
+        PopupOwnerLease<WebView>({ owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch })
+    }
+    fun closePopup(token: UUID? = activePopup?.token, restoreOwner: Boolean = true) {
+        val popup = activePopup?.takeIf { it.token == token } ?: return
+        activePopup = null
+        popupLease.release(popup.token)
+        popup.transport.cancel()
+        webViewRef.get()?.visibility = android.view.View.VISIBLE
+        if (restoreOwner) {
+            onWebViewChanged(webViewRef.get())
+            onNavigationEpochChanged(navigationEpoch.longValue)
+        }
+    }
+    LaunchedEffect(activePopup?.token) {
+        val popup = activePopup ?: return@LaunchedEffect
+        webViewRef.get()?.visibility = android.view.View.INVISIBLE
+        delay(15_000)
+        if (activePopup === popup && !popup.transport.attached) closePopup(popup.token)
+    }
+    DisposableEffect(popupLease) {
+        onDispose { closePopup(restoreOwner = false); popupLease.invalidate() }
+    }
+
     val navigationPolicy = remember(selectedServiceId) {
         JuntaNavigationPolicy(selectedServiceId)
     }
@@ -279,11 +350,110 @@ fun BrowserScreen(
     }
     var pageProgress by remember { mutableIntStateOf(100) }
     var webViewRecreationEpoch by remember { mutableIntStateOf(0) }
+    val nativeAfirmaScope = rememberCoroutineScope()
+    var nativeAfirmaPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaConsentPrompt?>(null) }
+    var nativeFallbackPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaFallbackPrompt?>(null) }
+    val nativeFallback = remember(selectedServiceId, validatedEntryUrl) {
+        AfirmaFallbackController<WebView>(
+            isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
+            canRespond = { activePopup == null && lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) },
+            onPrompt = { nativeFallbackPrompt = it },
+        )
+    }
+    LaunchedEffect(nativeFallback, nativeFallbackPrompt?.token) {
+        while (nativeFallbackPrompt != null) { delay(1_000); nativeFallback.tick() }
+    }
+    val nativeAfirma = remember(selectedServiceId, validatedEntryUrl) {
+        AfirmaConsentController<WebView>(
+            scope = nativeAfirmaScope,
+            isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
+            identityProvider = { currentIdentityProvider() },
+            canRespond = { activePopup == null && lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) },
+            onPrompt = { nativeAfirmaPrompt = it },
+        )
+    }
+    LaunchedEffect(nativeAfirma, certificateState, certificatePanelVisible) { nativeAfirma.refreshIdentity() }
+    DisposableEffect(nativeAfirma, nativeFallback) {
+        onDispose { nativeAfirma.close(); nativeFallback.invalidate() }
+    }
+    LaunchedEffect(nativeAfirma, nativeAfirmaPrompt?.token, nativeAfirmaPrompt?.phase) {
+        while (nativeAfirmaPrompt != null && nativeAfirmaPrompt?.phase != AfirmaConsentPhase.FINISHED) {
+            delay(1_000)
+            nativeAfirma.tick()
+        }
+    }
+    var interactivePrompt by remember { mutableStateOf<InteractiveClientAuthPrompt?>(null) }
+    var interactiveProblem by remember { mutableStateOf<InteractiveClientAuthProblem?>(null) }
+    var preserveInteractiveWebViewDuringClear by remember { mutableStateOf(false) }
+    val interactiveClientAuth = remember(selectedServiceId, validatedEntryUrl, clientCertPreferenceCoordinator) {
+        InteractiveClientAuthController<WebView>(
+            isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
+            identityProvider = { currentIdentityProvider() },
+            canRespond = {
+                activePopup == null && lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                    clientCertPreferenceCoordinator.state.value == ClientCertPreferenceBarrierState.IDLE
+            },
+            clearClientCertPreferences = {
+                onRelatedClientCertPreferenceClear(true)
+                preserveInteractiveWebViewDuringClear = true
+                clientCertPreferenceCoordinator.requestClear { _, result ->
+                    mainHandler.post {
+                        preserveInteractiveWebViewDuringClear = false
+                        onRelatedClientCertPreferenceClear(false)
+                        if (result == ClientCertPreferenceClearResult.FAILED) {
+                            browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                        }
+                    }
+                }
+            },
+            onPrompt = { interactivePrompt = it },
+            onProblem = { interactiveProblem = it },
+        )
+    }
+    LaunchedEffect(certificateState, certificatePanelVisible) {
+        interactiveClientAuth.refreshIdentity()
+    }
+    LaunchedEffect(clientCertPreferenceState) {
+        // Another process-scoped clear may supersede this callback. Once the
+        // platform settles, an old preservation flag cannot escape its barrier.
+        if (clientCertPreferenceState != ClientCertPreferenceBarrierState.CLEARING) {
+            popupClearingCertificatePreferences = null
+            preserveInteractiveWebViewDuringClear = false
+        }
+    }
     val clientCertPreferenceBlocked =
-        !preserveWebViewDuringClientAuthClear &&
+        !preserveWebViewDuringClientAuthClear && !preserveInteractiveWebViewDuringClear &&
+            activePopup == null && popupClearingCertificatePreferences == null &&
             (clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
 
+    var nativeRetrievalPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaRetrievalPrompt?>(null) }
+    val nativeRetrieval = remember(selectedServiceId, validatedEntryUrl, nativeAfirma) {
+        AfirmaRetrievalController<WebView>(
+            scope = nativeAfirmaScope,
+            resolver = AfirmaDeferredResolver(),
+            isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
+            canRespond = { activePopup == null && lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) },
+            onPrompt = { nativeRetrievalPrompt = it },
+            onPrepared = { owner, epoch, operation ->
+                val busy = pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                    pendingCertificateSelection != null || pendingRequest != null || interactivePrompt != null ||
+                    nativeAfirma.hasPending || nativeFallback.hasPending || clientAuthPreparing ||
+                    currentSigningState !is SigningUiState.Idle
+                if (busy) { operation.close(); false } else nativeAfirma.offer(owner, epoch, operation)
+            },
+        )
+    }
+    DisposableEffect(nativeRetrieval) { onDispose { nativeRetrieval.close() } }
+    LaunchedEffect(nativeRetrieval, nativeRetrievalPrompt?.token, nativeRetrievalPrompt?.loading) {
+        while (nativeRetrievalPrompt?.loading == true) { delay(1_000); nativeRetrieval.tick() }
+    }
+
     fun advanceNavigationEpoch() {
+        closePopup()
+        nativeRetrieval.invalidate()
+        nativeAfirma.invalidate()
+        nativeFallback.invalidate()
+        interactiveClientAuth.cancelPending()
         bridgeAttachmentLease.current()?.abandonMiniAppletRequests()
         check(navigationEpoch.longValue != Long.MAX_VALUE)
         navigationEpoch.longValue++
@@ -300,7 +470,7 @@ fun BrowserScreen(
         reply: CertificateSelectionReplyChannel,
     ) {
         if (pendingCertificateSelection != null ||
-            request.context.profileId != selectedServiceId.value ||
+            request.context.profileId != selectedServiceId?.value ||
             request.context.navigationEpoch != navigationEpoch.longValue
         ) {
             reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.PROTOCOL_FAILED)
@@ -336,7 +506,17 @@ fun BrowserScreen(
     }
 
     fun requestProcessClientCertPreferenceClear() {
-        clientCertPreferenceCoordinator.requestClear()
+        // A generic-choice revocation already owns an in-flight process clear.
+        if (!preserveInteractiveWebViewDuringClear) {
+            // Closing an unprofiled child also revokes process-wide choices.
+            // Notify the retained parent BEFORE the barrier enters CLEARING;
+            // otherwise it interprets this as an unrelated reset and rebuilds
+            // its original WebView, losing the form we deliberately retained.
+            onRelatedClientCertPreferenceClear(true)
+            clientCertPreferenceCoordinator.requestClear { _, _ ->
+                mainHandler.post { onRelatedClientCertPreferenceClear(false) }
+            }
+        }
     }
 
     fun cancelPendingInPlaceClientAuth() {
@@ -345,6 +525,8 @@ fun BrowserScreen(
     }
 
     fun abandonClientAuth() {
+        interactiveClientAuth.cancelPending()
+        interactiveClientAuth.revokeCachedChoice()
         carneJovenPreTlsRetryController.reset()
         cancelClientAuthClearCallback()
         preserveWebViewDuringClientAuthClear = false
@@ -539,7 +721,13 @@ fun BrowserScreen(
     }
 
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
-        pendingRequest = request
+        // URI notifications have no per-call reply channel. A second observer
+        // must not replace consent or consume a concurrently loaded request.
+        val busy = activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending ||
+            pendingRequest != null || pendingCertificateSelection != null || pendingInPlaceClientAuth != null ||
+            pendingClientAuthTarget != null || interactivePrompt != null || clientAuthPreparing ||
+            currentSigningState !is SigningUiState.Idle
+        if (!busy) pendingRequest = request
     }
     val callbacks = remember(
         selectedServiceId,
@@ -579,6 +767,13 @@ fun BrowserScreen(
             }
 
             override fun onBrowserError(error: BrowserErrorCode) {
+                nativeRetrieval.invalidate()
+                nativeAfirma.invalidate()
+                nativeFallback.invalidate()
+                interactiveClientAuth.cancelPending()
+                if (error == BrowserErrorCode.SSL_ERROR || error == BrowserErrorCode.SAFE_BROWSING) {
+                    interactiveClientAuth.revokeCachedChoice()
+                }
                 browserError = error
                 pageProgress = 100
             }
@@ -665,37 +860,76 @@ fun BrowserScreen(
     BackHandler(onBack = ::goBack)
     DisposableEffect(selectedServiceId, onCancelSigning, clientCertPreferenceCoordinator) {
         onDispose {
+            nativeRetrieval.invalidate()
+            nativeAfirma.invalidate()
+            nativeFallback.invalidate()
+            interactiveClientAuth.close()
             sessionDataClearLease.invalidate()
             globalDataClearLease.invalidate()
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeAttachmentLease.close()
-            webViewRef.getAndSet(null)?.let { webView ->
+            // AndroidView.onRelease is the sole native-view owner. Disposing
+            // Compose state must not also destroy an attached child WebView.
+            webViewRef.getAndSet(null)?.let {
                 onWebViewChanged(null)
-                webView.stopLoading()
-                webView.destroy()
             }
             abandonClientAuth()
         }
     }
 
-    DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator) {
+    DisposableEffect(selectedServiceId, lifecycleOwner, clientCertPreferenceCoordinator, nativeRetrieval, nativeAfirma) {
+        var wasBackgrounded = false
+        var retainedLegacyState = false
+        var retainedFingerprint: String? = null
+        fun revokeLegacyBackgroundFlow() {
+            pendingClientAuthTarget = null
+            clientAuthGrant = null
+            pendingNormalUrl.set(validatedEntryUrl)
+            abandonClientAuth()
+            advanceNavigationEpoch()
+            onCancelSigning(SigningCancelReason.BACKGROUND, null)
+            webViewRecreationEpoch++
+        }
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
+                wasBackgrounded = true
+                val expectedReturn = currentMayRetainExternalReturn()
+                if (!expectedReturn) closePopup()
+                nativeRetrieval.onBackground()
+                nativeAfirma.onBackground(expectedReturn)
+                interactiveClientAuth.onBackground(expectedReturn)
                 val hadClientAuthState = pendingClientAuthTarget != null ||
                     pendingInPlaceClientAuth != null ||
                     inPlaceClientAuthHandlerRef.get() != null ||
                     clientAuthGrant != null ||
                     clientAuthPreparing ||
                     currentClientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE
-                pendingClientAuthTarget = null
-                clientAuthGrant = null
-                if (hadClientAuthState) pendingNormalUrl.set(validatedEntryUrl)
-                abandonClientAuth()
-                if (hadClientAuthState) {
-                    advanceNavigationEpoch()
-                    onCancelSigning(SigningCancelReason.BACKGROUND, null)
-                    webViewRecreationEpoch++
+                retainedLegacyState = hadClientAuthState && expectedReturn
+                retainedFingerprint = if (retainedLegacyState) {
+                    currentIdentityProvider()?.let(::certificateSelectionFingerprint)
+                } else null
+                if (hadClientAuthState && !expectedReturn && !preserveInteractiveWebViewDuringClear) {
+                    revokeLegacyBackgroundFlow()
                 }
+            } else if (event == Lifecycle.Event.ON_START && wasBackgrounded) {
+                wasBackgrounded = false
+                // Only the visible child consumes the single-use return. The
+                // retained parent merely observes validity; consuming here
+                // would make the same return appear expired to its child.
+                val returnStillValid = if (activePopup != null) currentMayRetainExternalReturn()
+                    else currentConsumeExternalReturn()
+                nativeRetrieval.onForeground()
+                nativeAfirma.onForeground(returnStillValid)
+                interactiveClientAuth.onForeground(returnStillValid)
+                val sameIdentity = retainedFingerprint == currentIdentityProvider()?.let(::certificateSelectionFingerprint)
+                val grantLive = clientAuthGrant?.authorized?.isExpiredOrInvalid() != true &&
+                    pendingInPlaceClientAuth?.authorized?.isExpiredOrInvalid() != true &&
+                    pendingClientAuthTarget?.isExpiredOrInvalid() != true
+                if (retainedLegacyState && (!returnStillValid || !sameIdentity || !grantLive)) {
+                    revokeLegacyBackgroundFlow()
+                }
+                retainedLegacyState = false
+                retainedFingerprint = null
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -732,13 +966,21 @@ fun BrowserScreen(
         isEffectiveProfileOrigin -> stringResource(R.string.browser_trust_browse)
         else -> stringResource(R.string.browser_trust_browse_only)
     }
+    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().then(
+        if (activePopup != null) Modifier.alpha(0f).clearAndSetSemantics { } else Modifier,
+    )) {
     BrowserLayout(
+        publicBrowsing = selectedServiceId == null,
+        webAuthnState = webAuthnState,
         currentUrl = currentUrl,
         profileName = effectiveProfile?.displayName
             ?: selectedProfile?.displayName
             ?: stringResource(R.string.app_name),
         trustLabel = trustLabel,
-        certificateOwner = certificateState.summary.ownerName,
+        certificateOwner = certificateState?.summary?.ownerName ?: stringResource(R.string.browser_no_unlocked_certificate),
+        certificateAvailable = certificateState != null,
+        onOpenInBrowser = { webViewRef.get()?.url?.let { onOpenExternal(Uri.parse(it)) } },
         onBack = ::goBack,
         onHome = {
             clientAuthGrant = null
@@ -763,11 +1005,17 @@ fun BrowserScreen(
             if (!leavingClientAuth) webViewRef.get()?.reload()
         },
         onChangeCertificate = {
+            interactiveClientAuth.cancelPending()
+            interactiveClientAuth.revokeCachedChoice()
             cancelPendingCertificateSelection(
                 dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED,
             )
-            clientAuthGrant = null
-            abandonClientAuth()
+            if (clientAuthGrant != null || inPlaceClientAuthHandlerRef.get() != null ||
+                pendingClientAuthTarget != null || pendingInPlaceClientAuth != null
+            ) {
+                clientAuthGrant = null
+                abandonClientAuth()
+            }
             onCancelSigning(SigningCancelReason.CERTIFICATE_LOCKED, null)
             onChangeCertificate()
         },
@@ -816,8 +1064,19 @@ fun BrowserScreen(
             }
             val profile = selectedProfile
             if (profile == null) {
-                browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
-                pageProgress = 100
+                // No fabricated profile: clear only the displayed public site's
+                // data and report any platform cookie limitation accurately.
+                siteClearResult = runCatching {
+                    siteDataCleaner.clearOrigin(URI(currentUrl), webViewCapabilities)
+                }.getOrDefault(SiteClearResult.FAILED)
+                val clearRequest = sessionDataClearLease.begin(null)
+                clientCertPreferenceCoordinator.requestClear { _, result ->
+                    mainHandler.post {
+                        if (!sessionDataClearLease.consume(clearRequest)) return@post
+                        if (result == ClientCertPreferenceClearResult.CLEARED) onClearSession()
+                        else browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
+                    }
+                }
             } else {
                 clientAuthPreparing = true
                 val sessionClearRequest = sessionDataClearLease.begin(selectedServiceId)
@@ -910,8 +1169,7 @@ fun BrowserScreen(
                                 browserError = null
                                 pageProgress = 0
                                 if (clientAuthGrant != null) {
-                                    val activeStartUrl = BuiltInSiteProfiles.runtimeRegistry
-                                        .profile(selectedServiceId)
+                                    val activeStartUrl = selectedServiceId?.let(BuiltInSiteProfiles.runtimeRegistry::profile)
                                         ?.startUrl
                                         ?.toASCIIString()
                                         ?: validatedEntryUrl
@@ -945,6 +1203,47 @@ fun BrowserScreen(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                         )
                         webViewRef.set(webView)
+                        webAuthnState = webView.webAuthnEngineState
+                        onShowFileChooser?.let(webView::setFileChooserListener)
+                        webView.setDocumentDownloadLauncher(
+                            canRespond = {
+                                activePopup == null && webViewRef.get() === webView &&
+                                    lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                                    !certificatePanelVisible && currentSigningState is SigningUiState.Idle &&
+                                    !nativeAfirma.hasPending && !nativeFallback.hasPending && !nativeRetrieval.hasPending &&
+                                    interactivePrompt == null && pendingRequest == null && pendingCertificateSelection == null &&
+                                    pendingInPlaceClientAuth == null && pendingClientAuthTarget == null &&
+                                    !clientAuthPreparing && clientAuthGrant == null &&
+                                    currentClientCertPreferenceState == ClientCertPreferenceBarrierState.IDLE
+                            },
+                            launch = onDocumentDownload,
+                        )
+                        webView.setPopupListeners(
+                            create = popupRequest@{ owner, _, userGesture, message ->
+                                if (popupTransport != null || !userGesture || owner !== webViewRef.get() ||
+                                    !owner.hasWindowFocus() || !owner.isShown || certificatePanelVisible ||
+                                    !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) ||
+                                    activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending ||
+                                    nativeRetrieval.hasPending || interactivePrompt != null ||
+                                    pendingCertificateSelection != null || pendingRequest != null ||
+                                    pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                                    clientAuthPreparing || clientAuthGrant != null ||
+                                    currentClientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE ||
+                                    currentSigningState !is SigningUiState.Idle
+                                ) return@popupRequest false
+                                val page = dev.junta.firmamobile.browser.PublicBrowserAddress.parse(owner.url ?: "")
+                                    ?: return@popupRequest false
+                                val token = popupLease.reserve(owner, navigationEpoch.longValue) ?: return@popupRequest false
+                                val transfer = BrowserPopupTransport.create(owner, message) {
+                                    activePopup?.token == token && popupLease.isCurrent(token) &&
+                                        lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+                                }
+                                if (transfer == null) { popupLease.release(token); return@popupRequest false }
+                                activePopup = BrowserPopupState(token, URI("https://${page.host}"), transfer)
+                                true
+                            },
+                            close = { window -> if (popupTransport != null && webViewRef.get() === window) onPopupWindowClose() },
+                        )
                         webView.setPageProgressListener { progress ->
                             webView.post {
                                 if (webViewRef.get() === webView) pageProgress = progress
@@ -961,6 +1260,55 @@ fun BrowserScreen(
                                 activeProfileId = { effectiveTopLevelProfileId },
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
+                                onExternalAppRequest = { owner, target ->
+                                    val busy = activePopup != null || certificatePanelVisible ||
+                                        pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                                        pendingCertificateSelection != null || pendingRequest != null ||
+                                        interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending ||
+                                        nativeRetrieval.hasPending || clientAuthPreparing || clientAuthGrant != null ||
+                                        currentSigningState !is SigningUiState.Idle ||
+                                        clientCertPreferenceCoordinator.state.value != ClientCertPreferenceBarrierState.IDLE
+                                    !busy && owner === webViewRef.get() &&
+                                        lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                                        currentExternalAppRequest?.invoke(owner, target) == true
+                                },
+                                onNativeAfirmaInvocation = { owner, rawUri, page ->
+                                    val busy = activePopup != null || pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                                        pendingCertificateSelection != null || pendingRequest != null ||
+                                        interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending || clientAuthPreparing ||
+                                        currentSigningState !is SigningUiState.Idle
+                                    if (busy) true else {
+                                        when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
+                                            is AfirmaServletParseResult.Accepted -> {
+                                                val operation = runCatching { dev.junta.firmamobile.afirma.servlet.nativeOperation(parsed.invocation) }.getOrElse {
+                                                    parsed.invocation.close()
+                                                    null
+                                                }
+                                                if (operation == null) nativeFallback.offer(owner, navigationEpoch.longValue, null)
+                                                else nativeAfirma.offer(owner, navigationEpoch.longValue, operation)
+                                            }
+                                            is AfirmaServletParseResult.Deferred -> nativeRetrieval.offer(owner, navigationEpoch.longValue, parsed.invocation)
+                                            is AfirmaServletParseResult.Unsupported -> nativeFallback.offer(owner, navigationEpoch.longValue, rawUri)
+                                            is AfirmaServletParseResult.Invalid -> nativeFallback.offer(owner, navigationEpoch.longValue, null)
+                                        }
+                                        true
+                                    }
+                                },
+                                onInteractiveClientAuthSslError = { owner, failedUrl ->
+                                    interactiveClientAuth.onServerTlsError(owner, navigationEpoch.longValue, failedUrl)
+                                },
+                                onInteractiveClientAuthChallenge = { owner, request ->
+                                    val busy = activePopup != null || pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                                        pendingCertificateSelection != null || pendingRequest != null ||
+                                        clientAuthPreparing || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending ||
+                                        currentSigningState !is SigningUiState.Idle
+                                    if (busy) request.ignore() else {
+                                        interactiveClientAuth.offer(
+                                            owner, navigationEpoch.longValue,
+                                            owner.url ?: validatedEntryUrl, request,
+                                        )
+                                    }
+                                },
                                 onClientAuthTarget = { authorized ->
                                     if (authorized.profileId == effectiveTopLevelProfileId) {
                                         pendingClientAuthPostBody.getAndSet(null)?.fill(0)
@@ -1005,6 +1353,10 @@ fun BrowserScreen(
                                     inPlaceClientAuthHandlerRef.get()?.resolveRequestContinuation(rawUrl)
                                 },
                                 onInPlaceClientAuthChallenge = onInPlaceChallenge@{ authorized, request ->
+                                    if (activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending) {
+                                        request.ignore()
+                                        return@onInPlaceChallenge
+                                    }
                                     if (carneJovenPreTlsRetryController.matchesRetryContract(authorized)) {
                                         carneJovenPreTlsRetryController.reset()
                                     }
@@ -1091,17 +1443,21 @@ fun BrowserScreen(
                             )
                             normalClientRef.set(client)
                             webView.webViewClient = client
-                            if (profileRequiresWebMessageBridge(selectedProfile)) {
+                            if (selectedServiceId != null && profileRequiresWebMessageBridge(selectedProfile)) {
                                 val attachment = WebMessageBridge(
                                     profileId = selectedServiceId,
                                     logger = logger,
                                     onAfirmaRequest = handleAfirmaRequest,
                                     onMiniAppletRequest = { request, reply ->
-                                        onMiniAppletRequest(request, reply)
+                                        if (activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending) {
+                                            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE)
+                                        } else onMiniAppletRequest(request, reply)
                                     },
                                     onMiniAppletCancel = onMiniAppletCancel,
                                     onCertificateSelectionRequest = { request, reply ->
-                                        prepareCertificateSelection(request, reply)
+                                        if (activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending) {
+                                            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE)
+                                        } else prepareCertificateSelection(request, reply)
                                     },
                                     onCertificateSelectionCancel = { requestId ->
                                         if (pendingCertificateSelection?.request?.requestId == requestId) {
@@ -1113,7 +1469,8 @@ fun BrowserScreen(
                                             request.authorized.profileId == effectiveTopLevelProfileId &&
                                                 pendingClientAuthTarget == null &&
                                                 clientAuthGrant == null &&
-                                                !clientAuthPreparing
+                                                !clientAuthPreparing && !nativeAfirma.hasPending &&
+                                                !nativeFallback.hasPending && !nativeRetrieval.hasPending
                                         if (!canOwnRequest) {
                                             request.postBody.fill(0)
                                         } else {
@@ -1126,9 +1483,12 @@ fun BrowserScreen(
                                         request: MelillaBatchBridgeRequest,
                                         reply: MelillaBatchReplyChannel,
                                         ->
-                                        if (onMelillaBatchRequest != null) {
+                                        if (activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending) {
+                                            reply.failure(dev.junta.firmamobile.signing.SigningErrorCode.SIGNING_SERVICE_UNAVAILABLE)
+                                        } else if (onMelillaBatchRequest != null) {
                                             onMelillaBatchRequest(request, reply)
                                         }
+                                        Unit // The reply result must not change this nullable callback's Unit contract.
                                     }.takeIf { onMelillaBatchRequest != null },
                                     onMelillaBatchCancel = onMelillaBatchCancel,
                                     activeProfileId = { effectiveTopLevelProfileId },
@@ -1237,7 +1597,17 @@ fun BrowserScreen(
                                 }
                             }
                         }
-                        if (tlsGrant == null) {
+                        if (popupTransport != null) {
+                            // This fresh view receives Chromium's pending native
+                            // contents, preserving POST/opener state. Never load
+                            // an inferred URL in place of the real popup.
+                            webView.doOnAttach {
+                                if (webViewRef.get() !== webView || !popupTransport.attach(webView)) {
+                                    popupTransport.cancel()
+                                    mainHandler.post { onPopupWindowClose() }
+                                }
+                            }
+                        } else if (tlsGrant == null) {
                             val requestedUrl = pendingNormalUrl.getAndSet(null)
                             if (requestedUrl != null) {
                                 webView.loadUrl(requestedUrl)
@@ -1258,11 +1628,19 @@ fun BrowserScreen(
                             dedicatedClientRef.getAndSet(null)?.abandon()
                         }
                         if (webViewRef.compareAndSet(webView, null)) {
+                            nativeRetrieval.invalidate()
+                            interactiveClientAuth.cancelPending()
                             normalClientRef.set(null)
                             onWebViewChanged(null)
                         }
-                        webView.stopLoading()
-                        webView.destroy()
+                        // Detach before native destruction, and let the current
+                        // Chromium onCloseWindow callback unwind first. The
+                        // parent frame has already regained visibility above.
+                        (webView.parent as? ViewGroup)?.removeView(webView)
+                        mainHandler.post {
+                            webView.stopLoading()
+                            webView.destroy()
+                        }
                     },
                 )
             }
@@ -1272,8 +1650,9 @@ fun BrowserScreen(
     pendingRequest?.let { request ->
         AfirmaObservationDialog(
             request = request,
-            certificateOwner = certificateState.summary.ownerName,
+            certificateOwner = certificateState?.summary?.ownerName ?: stringResource(R.string.browser_no_unlocked_certificate),
             onDismiss = { pendingRequest = null },
+            onOpenOfficial = { pendingRequest = null; onOpenOfficialAutoFirma(Uri.parse(request.rawUri)) },
         )
     }
 
@@ -1314,13 +1693,74 @@ fun BrowserScreen(
         )
     }
 
+    if (!certificatePanelVisible) {
+        nativeRetrievalPrompt?.let { prompt ->
+            AfirmaRetrievalDialog(prompt,
+                onCancel = { nativeRetrieval.cancel(prompt.token) },
+                onClose = { nativeRetrieval.dismiss(prompt.token) },
+            )
+        }
+        nativeAfirmaPrompt?.let { prompt ->
+            NativeAfirmaConsentDialog(
+                prompt = prompt,
+                onConfirm = { nativeAfirma.confirm(prompt.token) },
+                onUnlock = onChangeCertificate,
+                onCancel = {
+                    if (prompt.phase == AfirmaConsentPhase.REVIEW) {
+                        nativeAfirma.requestCancellation(prompt.token)
+                    } else {
+                        nativeAfirma.cancel(prompt.token)
+                    }
+                },
+                onDismiss = { nativeAfirma.dismiss(prompt.token) },
+            )
+        }
+        nativeFallbackPrompt?.let { fallback ->
+            AlertDialog(
+                onDismissRequest = { nativeFallback.dismiss(fallback.token) },
+                title = { Text(stringResource(R.string.native_afirma_title)) },
+                text = { Text(stringResource(if (fallback.invalid) R.string.native_afirma_invalid else R.string.native_afirma_unsupported)) },
+                confirmButton = {
+                    TextButton(onClick = { nativeFallback.dismiss(fallback.token) }) {
+                        Text(stringResource(R.string.native_afirma_close))
+                    }
+                },
+                dismissButton = {
+                    if (!fallback.invalid) {
+                        TextButton(onClick = {
+                            nativeFallback.consume(fallback.token)?.let { onOpenOfficialAutoFirma(Uri.parse(it)) }
+                        }) { Text(stringResource(R.string.native_afirma_official)) }
+                    }
+                },
+            )
+        }
+        interactivePrompt?.let { prompt ->
+            InteractiveClientAuthDialog(
+                prompt = prompt,
+                onConfirm = { interactiveClientAuth.confirm(prompt.token) },
+                onUnlock = onChangeCertificate,
+                onCancel = { interactiveClientAuth.cancel(prompt.token) },
+            )
+        }
+        if (interactiveProblem != null && interactivePrompt == null) {
+            AlertDialog(
+                onDismissRequest = { interactiveProblem = null },
+                title = { Text(stringResource(R.string.interactive_tls_title)) },
+                text = { Text(stringResource(R.string.interactive_tls_ended)) },
+                confirmButton = {
+                    TextButton(onClick = { interactiveProblem = null }) { Text(stringResource(R.string.interactive_tls_close)) }
+                },
+            )
+        }
+    }
+
     pendingInPlaceClientAuth?.let { pending ->
         ClientAuthConfirmationDialog(
             organization = effectiveProfile?.displayName
                 ?: selectedProfile?.displayName
                 ?: stringResource(R.string.app_name),
             host = pending.authorized.target.host,
-            certificateOwner = certificateState.summary.ownerName,
+            certificateOwner = certificateState?.summary?.ownerName ?: stringResource(R.string.browser_no_unlocked_certificate),
             onContinue = {
                 if (pending.authorized.profileId != effectiveTopLevelProfileId ||
                     pending.navigationEpoch != navigationEpoch.longValue ||
@@ -1369,7 +1809,7 @@ fun BrowserScreen(
                 ?: selectedProfile?.displayName
                 ?: stringResource(R.string.app_name),
             host = authorized.target.host,
-            certificateOwner = certificateState.summary.ownerName,
+            certificateOwner = certificateState?.summary?.ownerName ?: stringResource(R.string.browser_no_unlocked_certificate),
             onContinue = {
                 if (authorized.profileId != effectiveTopLevelProfileId ||
                     pendingClientAuthTargetEpoch != navigationEpoch.longValue
@@ -1434,6 +1874,64 @@ fun BrowserScreen(
         is SigningUiState.AwaitingConfirmation,
         -> Unit
     }
+    } // Retained parent content; no profile or native key authority is copied.
+    activePopup?.let { popup ->
+        key(popup.token) {
+            androidx.compose.material3.Surface(Modifier.fillMaxSize().testTag("browser-popup-window")) {
+                Column(Modifier.fillMaxSize()) {
+                    BrowserPopupHeader { closePopup(popup.token) }
+                    Box(Modifier.fillMaxWidth().weight(1f)) {
+                        BrowserScreen(
+                            profileId = null,
+                            entryUrl = popup.entryOrigin,
+                            certificateState = certificateState,
+                            logger = logger,
+                            signingState = signingState,
+                            onMiniAppletRequest = onMiniAppletRequest,
+                            onMiniAppletCancel = onMiniAppletCancel,
+                            onConfirmSigning = onConfirmSigning,
+                            onCancelSigning = onCancelSigning,
+                            onDismissSigningState = onDismissSigningState,
+                            onExitBrowser = { closePopup(popup.token) },
+                            onOpenExternal = onOpenExternal,
+                            onOpenOfficialAutoFirma = onOpenOfficialAutoFirma,
+                            onChangeCertificate = onChangeCertificate,
+                            onLockCertificate = onLockCertificate,
+                            onClearSession = onClearSession,
+                            clientCertificateIdentityProvider = clientCertificateIdentityProvider,
+                            clientCertPreferenceCoordinator = clientCertPreferenceCoordinator,
+                            onWebViewChanged = { child ->
+                                popup.child = child
+                                if (activePopup === popup) {
+                                    if (child != null && popup.transport.attached) popupLease.markAttached(popup.token)
+                                    onWebViewChanged(child)
+                                }
+                            },
+                            onNavigationEpochChanged = onNavigationEpochChanged,
+                            onShowFileChooser = onShowFileChooser,
+                            onDocumentDownload = onDocumentDownload,
+                            onExternalAppRequest = onExternalAppRequest,
+                            certificatePanelVisible = certificatePanelVisible,
+                            mayRetainExternalReturn = mayRetainExternalReturn,
+                            consumeExternalReturn = consumeExternalReturn,
+                            popupTransport = popup.transport,
+                            onPopupWindowClose = { closePopup(popup.token) },
+                            onRelatedClientCertPreferenceClear = { clearing ->
+                                if (clearing) popupClearingCertificatePreferences = popup.token
+                                else if (popupClearingCertificatePreferences == popup.token) popupClearingCertificatePreferences = null
+                            },
+                        )
+                    }
+                }
+            }
+            LaunchedEffect(popup.token) {
+                // Attachment is asynchronous to Compose's factory callback.
+                while (activePopup === popup && !popup.transport.attached) delay(16)
+                if (activePopup === popup && popup.transport.attached) popupLease.markAttached(popup.token)
+            }
+        }
+    }
+    }
 }
 
 @Composable
@@ -1451,6 +1949,10 @@ internal fun BrowserLayout(
     onClearCurrentSite: () -> Unit,
     onClearSession: () -> Unit,
     onDeleteAllBrowserData: () -> Unit,
+    onOpenInBrowser: (() -> Unit)? = null,
+    certificateAvailable: Boolean = true,
+    publicBrowsing: Boolean = false,
+    webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null,
     content: @Composable (Modifier) -> Unit,
 ) {
     var confirmClearCurrentSite by remember { mutableStateOf(false) }
@@ -1460,6 +1962,7 @@ internal fun BrowserLayout(
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
+            Column {
             IndustrialBrowserTopBar(
                 profileName = profileName,
                 host = BrowserAddressPresentation.hostOf(currentUrl),
@@ -1472,15 +1975,20 @@ internal fun BrowserLayout(
                 onClearCurrentSiteRequested = { confirmClearCurrentSite = true },
                 onClearSessionRequested = { confirmClearSession = true },
                 onDeleteAllBrowserDataRequested = { confirmDeleteAllData = true },
+                onOpenInBrowser = onOpenInBrowser,
                 windowInsets = browserInsets.only(
                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                 ),
                 modifier = Modifier.testTag(BROWSER_TOOLBAR_TAG),
             )
+            if (publicBrowsing) PublicBrowsingNotice()
+            webAuthnState?.let { WebAuthnStatusButton(it, onOpenInBrowser) }
+            }
         },
         bottomBar = {
             BrowserCertificateStrip(
                 certificateOwner = certificateOwner,
+                certificateAvailable = certificateAvailable,
                 modifier = Modifier
                     .testTag(BROWSER_BOTTOM_BAR_TAG),
                 windowInsets = browserInsets.only(
@@ -1525,7 +2033,7 @@ internal fun BrowserLayout(
         AlertDialog(
             onDismissRequest = { confirmClearSession = false },
             title = { Text(stringResource(R.string.browser_clear_session_title)) },
-            text = { Text(stringResource(R.string.browser_clear_session_copy)) },
+            text = { Text(stringResource(if (publicBrowsing) R.string.public_browsing_clear_copy else R.string.browser_clear_session_copy)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmClearSession = false
@@ -1732,6 +2240,7 @@ private fun AfirmaObservationDialog(
     request: AfirmaRequest,
     certificateOwner: String,
     onDismiss: () -> Unit,
+    onOpenOfficial: () -> Unit,
 ) {
     val algorithm = request.singleValue("algorithm") ?: stringResource(R.string.unknown_value)
     val format = request.singleValue("format") ?: stringResource(R.string.unknown_value)
@@ -1748,9 +2257,10 @@ private fun AfirmaObservationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close))
-            }
+            TextButton(onClick = onOpenOfficial) { Text(stringResource(R.string.open_official_autofirma)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         },
     )
 }

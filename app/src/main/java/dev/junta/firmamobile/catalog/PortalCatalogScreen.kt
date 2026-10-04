@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,11 +15,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -35,16 +35,22 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -66,6 +72,7 @@ import dev.junta.firmamobile.ui.theme.JuntaTeal
 import dev.junta.firmamobile.ui.theme.JuntaTealDark
 import java.text.Normalizer
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @Composable
 fun PortalCatalogScreen(
@@ -80,8 +87,27 @@ fun PortalCatalogScreen(
     onOpenPortal: (PortalCatalogItem) -> Unit,
     onBackToCertificate: () -> Unit,
     onUserMessageShown: () -> Unit,
+    onOpenPublicWeb: ((java.net.URI) -> Unit)? = null,
+    onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)? = null,
 ) {
     var regionPickerVisible by rememberSaveable { mutableStateOf(false) }
+    var portalOptions by remember { mutableStateOf<PortalCatalogItem?>(null) }
+    // Hoisted outside lazy items, deliberately not saved to a state bundle.
+    var addressInput by remember { mutableStateOf(CatalogAddressInput.empty()) }
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val showAddressShortcut by remember { derivedStateOf { listState.firstVisibleItemIndex > 2 } }
+    fun openTypedAddress() {
+        if (onOpenPublicWeb == null) return
+        val submission = addressInput.submit()
+        addressInput = submission.state
+        submission.destination?.let { destination ->
+            focusManager.clearFocus()
+            onOpenPublicWeb(destination)
+        }
+    }
     var expandedRegionalSectionKey by rememberSaveable(
         state.selectedRegion.wireValue,
         state.searchText.isNotBlank(),
@@ -108,9 +134,10 @@ fun PortalCatalogScreen(
 
     Box(modifier = Modifier.fillMaxSize().background(JuntaPaper)) {
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding(),
+                .safeDrawingPadding().imePadding().testTag("catalog-list"),
             contentPadding = PaddingValues(
                 start = 18.dp,
                 top = 16.dp,
@@ -119,28 +146,67 @@ fun PortalCatalogScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(key = "catalog-header") { CatalogHeader(onBackToCertificate) }
-            item(key = "catalog-region") {
+            item(key = "catalog-header", contentType = "catalog-header") { CatalogHeader(onBackToCertificate) }
+            if (onOpenPublicWeb != null) {
+                item(key = "catalog-address", contentType = "catalog-address") {
+                    CatalogAddressCard(
+                        state = addressInput,
+                        onEdit = { addressInput = addressInput.edit(it) },
+                        onPaste = { addressInput = addressInput.paste(readCatalogClipboardText(context)) },
+                        onClear = { addressInput = addressInput.clear() },
+                        onSubmit = ::openTypedAddress,
+                    )
+                }
+            }
+            if (onOpenCompatibilityPortal != null) {
+                item(key = "catalog-universal-afirma", contentType = "catalog-universal-afirma") {
+                    Text(
+                        text = stringResource(R.string.catalog_universal_afirma_copy),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = JuntaMutedInk,
+                        modifier = Modifier.fillMaxWidth().testTag("catalog-universal-afirma"),
+                    )
+                }
+            }
+            item(key = "catalog-region", contentType = "catalog-region") {
                 RegionSelectorCard(
                     selectedRegion = state.selectedRegion,
-                    locationLoading = state.locationState == CatalogLocationState.LOADING,
                     onChangeRegion = { regionPickerVisible = true },
-                    onUseLocation = onUseLocation,
                 )
             }
-            item(key = "catalog-search") {
+            item(key = "catalog-search", contentType = "catalog-search") {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.searchText,
                     onValueChange = onSearchTextChange,
                     label = { Text(stringResource(R.string.catalog_search_label)) },
                     singleLine = true,
                     shape = CatalogShape,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("catalog-search-field"),
+                    trailingIcon = if (state.searchText.isNotEmpty()) {
+                        {
+                            val label = stringResource(R.string.catalog_search_clear)
+                            TextButton(onClick = { onSearchTextChange("") },
+                                modifier = Modifier.testTag("catalog-search-clear").semantics { contentDescription = label }) {
+                                Text("×")
+                            }
+                        }
+                    } else null,
                 )
+                }
             }
 
-            if (state.sections.isEmpty()) {
-                item(key = "catalog-empty") {
+            item(key = "catalog-options-hint", contentType = "notice") {
+                Text(stringResource(R.string.catalog_options_hint), style = MaterialTheme.typography.bodySmall,
+                    color = JuntaMutedInk)
+            }
+            if (state.catalogLoading) {
+                item(key = "catalog-loading", contentType = "notice") {
+                    Text(stringResource(R.string.catalog_loading), color = JuntaMutedInk,
+                        modifier = Modifier.testTag("catalog-loading"))
+                }
+            } else if (state.sections.isEmpty()) {
+                item(key = "catalog-empty", contentType = "catalog-empty") {
                     CatalogNotice(
                         title = stringResource(R.string.catalog_empty_title),
                         text = stringResource(R.string.catalog_empty_copy),
@@ -151,7 +217,7 @@ fun PortalCatalogScreen(
                     val sectionKey = section.stableKey
                     val collapsible = state.searchText.isBlank() && section.kind.isRegional
                     val expanded = !collapsible || expandedRegionalSectionKey == sectionKey
-                    item(key = "section-$sectionKey") {
+                    item(key = "section-$sectionKey", contentType = "section-header") {
                         CatalogSectionHeader(
                             section = section,
                             expanded = expanded,
@@ -168,17 +234,27 @@ fun PortalCatalogScreen(
                         items(
                             items = section.items,
                             key = { portal -> "portal-$sectionKey-${portal.portalId.value}" },
+                            contentType = { "portal-card" },
                         ) { portal ->
-                            PortalCard(
+                            CatalogPortalCard(
                                 portal = portal,
                                 isFavorite = portal.portalId in state.favoritePortalIds,
-                                onToggleFavorite = onToggleFavorite,
-                                onOpenPortal = onOpenPortal,
+                                onOpen = onOpenPortal,
+                                onOptions = { portalOptions = it },
                             )
                         }
                     }
                 }
             }
+        }
+
+        if (onOpenPublicWeb != null && showAddressShortcut && snackbarHostState.currentSnackbarData == null) {
+            OutlinedButton(
+                onClick = { scope.launch { listState.animateScrollToItem(0) } },
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = JuntaPaperElevated),
+                modifier = Modifier.align(Alignment.BottomEnd).safeDrawingPadding().imePadding()
+                    .padding(end = 18.dp, bottom = 16.dp).heightIn(min = 48.dp).testTag("catalog-return-to-address"),
+            ) { Text(stringResource(R.string.catalog_address_back_to_top)) }
         }
 
         SnackbarHost(
@@ -200,11 +276,37 @@ fun PortalCatalogScreen(
     if (regionPickerVisible) {
         RegionPickerSheet(
             selectedRegion = state.selectedRegion,
+            locationLoading = state.locationState == CatalogLocationState.LOADING,
+            onUseLocation = { regionPickerVisible = false; onUseLocation() },
             onDismiss = { regionPickerVisible = false },
             onSelect = { region ->
                 onSelectRegion(region)
                 regionPickerVisible = false
             },
+        )
+    }
+
+    portalOptions?.let { portal ->
+        AlertDialog(
+            onDismissRequest = { portalOptions = null },
+            title = { Text(portal.displayName, maxLines = 3, overflow = TextOverflow.Ellipsis) },
+            text = {
+                Column {
+                    TextButton(onClick = { portalOptions = null; onToggleFavorite(portal.portalId) },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("catalog-option-favorite")) {
+                        Text(stringResource(if (portal.portalId in state.favoritePortalIds) R.string.catalog_favorite_saved else R.string.catalog_favorite_add))
+                    }
+                    if (onOpenCompatibilityPortal != null && portal.isEnabled) {
+                        TextButton(onClick = { portalOptions = null; onOpenCompatibilityPortal(portal) },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("catalog-open-profile-${portal.portalId.value}")) {
+                            Text(stringResource(R.string.catalog_open_profile_compatibility))
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { portalOptions = null }) { Text(stringResource(R.string.catalog_options_close)) } },
+            shape = CatalogShape,
+            modifier = Modifier.testTag("catalog-site-options"),
         )
     }
 
@@ -259,56 +361,16 @@ private fun CatalogHeader(onBackToCertificate: () -> Unit) {
 }
 
 @Composable
-private fun RegionSelectorCard(
-    selectedRegion: PortalRegionCode,
-    locationLoading: Boolean,
-    onChangeRegion: () -> Unit,
-    onUseLocation: () -> Unit,
-) {
-    ShadowedCatalogSurface {
-        Text(
-            text = stringResource(R.string.catalog_my_region_label),
-            color = JuntaTeal,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = selectedRegion.localizedName(),
-            color = JuntaInk,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.semantics { heading() },
-        )
-        Text(
-            text = stringResource(R.string.catalog_region_copy),
-            color = JuntaMutedInk,
-            style = MaterialTheme.typography.bodySmall,
-        )
-        OutlinedButton(
-            onClick = onChangeRegion,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            shape = CatalogShape,
-        ) {
-            Text(stringResource(R.string.catalog_change_region))
+private fun RegionSelectorCard(selectedRegion: PortalRegionCode, onChangeRegion: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.catalog_my_region_label), color = JuntaMutedInk, style = MaterialTheme.typography.labelSmall)
+            Text(selectedRegion.localizedName(), color = JuntaInk, style = MaterialTheme.typography.titleMedium,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
-        Button(
-            onClick = onUseLocation,
-            enabled = !locationLoading,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            shape = CatalogShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = JuntaTeal,
-                contentColor = JuntaPaperElevated,
-                disabledContainerColor = JuntaHairline,
-                disabledContentColor = JuntaMutedInk,
-            ),
-        ) {
-            Text(
-                if (locationLoading) {
-                    stringResource(R.string.catalog_locating)
-                } else {
-                    stringResource(R.string.catalog_use_location)
-                },
-            )
+        TextButton(onClick = onChangeRegion, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.catalog_change_region))
         }
     }
 }
@@ -380,88 +442,6 @@ private fun CatalogSectionHeader(
 }
 
 @Composable
-private fun PortalCard(
-    portal: PortalCatalogItem,
-    isFavorite: Boolean,
-    onToggleFavorite: (PortalId) -> Unit,
-    onOpenPortal: (PortalCatalogItem) -> Unit,
-) {
-    ShadowedCatalogSurface {
-        Text(
-            text = portal.displayName,
-            color = JuntaInk,
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = "${portal.organization} · ${portal.territory}",
-            color = JuntaTealDark,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 3,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedButton(
-                onClick = { onToggleFavorite(portal.portalId) },
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                shape = CatalogShape,
-            ) {
-                Text(
-                    text = if (isFavorite) {
-                        stringResource(R.string.catalog_favorite_saved)
-                    } else {
-                        stringResource(R.string.catalog_favorite_add)
-                    },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Button(
-                onClick = { onOpenPortal(portal) },
-                modifier = Modifier.weight(1.15f).heightIn(min = 48.dp),
-                shape = CatalogShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = JuntaTeal,
-                    contentColor = JuntaPaperElevated,
-                ),
-            ) {
-                Text(stringResource(R.string.catalog_open))
-            }
-        }
-    }
-}
-
-@Composable
-private fun ShadowedCatalogSurface(content: @Composable ColumnScope.() -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(end = 4.dp, bottom = 5.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .offset(x = 4.dp, y = 5.dp)
-                .background(JuntaInk, CatalogShape),
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(JuntaPaperElevated, CatalogShape)
-                .border(2.dp, JuntaInk, CatalogShape)
-                .padding(horizontal = 13.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            content = content,
-        )
-    }
-}
-
-@Composable
 private fun CatalogNotice(title: String, text: String) {
     Column(
         modifier = Modifier
@@ -480,6 +460,8 @@ private fun CatalogNotice(title: String, text: String) {
 @Composable
 private fun RegionPickerSheet(
     selectedRegion: PortalRegionCode,
+    locationLoading: Boolean,
+    onUseLocation: () -> Unit,
     onDismiss: () -> Unit,
     onSelect: (PortalRegionCode) -> Unit,
 ) {
@@ -518,6 +500,10 @@ private fun RegionPickerSheet(
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.semantics { heading() },
             )
+            TextButton(onClick = onUseLocation, enabled = !locationLoading,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(stringResource(if (locationLoading) R.string.catalog_locating else R.string.catalog_use_location))
+            }
             OutlinedTextField(
                 value = searchText,
                 onValueChange = { searchText = it.take(80) },
@@ -531,7 +517,7 @@ private fun RegionPickerSheet(
                 contentPadding = PaddingValues(bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(regions, key = { it.wireValue }) { region ->
+                items(regions, key = { it.wireValue }, contentType = { "region-option" }) { region ->
                     val selectedRegionButton = region == selectedRegion
                     if (selectedRegionButton) {
                         Button(

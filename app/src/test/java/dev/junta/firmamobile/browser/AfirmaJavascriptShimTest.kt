@@ -828,7 +828,7 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("const badajozCompatibilityEnabled = true"))
         assertTrue(disabled.contains("const badajozCompatibilityEnabled = false"))
         assertTrue(enabled.contains("https://sede.dip-badajoz.es"))
-        assertTrue(enabled.contains("args[2] === \"Cades\""))
+        assertTrue(enabled.contains("args[2].toLowerCase() === \"cades\""))
         assertTrue(enabled.contains("const nativeFormat = isExactBadajozCall ? \"CAdES\" : args[2]"))
         assertTrue(enabled.contains("filters=nonexpired:true;authCert:true"))
     }
@@ -842,7 +842,9 @@ class AfirmaJavascriptShimTest {
             qaDiagnosticsEnabled = false,
             badajozCompatibilityEnabled = true,
         )
-        assertTrue(enabled.contains("functionalSigningEnabled && badajozCompatibilityEnabled"))
+        assertTrue(enabled.contains("const startHookGuard ="))
+        assertTrue(enabled.contains("window.setInterval(repairCurrentSigningLibraries, 500)"))
+        assertTrue(enabled.contains("document.addEventListener(\"visibilitychange\""))
         assertTrue(enabled.contains("window.setInterval"))
         assertTrue(enabled.contains("window.clearInterval"))
         assertTrue(enabled.contains("wrapMiniApplet(window.MiniApplet"))

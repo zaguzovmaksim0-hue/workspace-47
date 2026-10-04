@@ -407,7 +407,11 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        val format = when (json.strictString(FORMAT_FIELD)) {
+        val suppliedFormat = json.strictString(FORMAT_FIELD)
+        val normalizedFormat = if (isDiputacionBadajozContract && suppliedFormat.equals(FORMAT_CADES, ignoreCase = true)) {
+            FORMAT_CADES
+        } else suppliedFormat
+        val format = when (normalizedFormat) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
             FORMAT_PADES -> if (isAccedaContract || isGranCanariaContract || isFuerteventuraContract || isMinecoContract || isTransparenciaContract) {
                 SigningFormat.PADES to SignatureFormat.PADES
@@ -470,7 +474,13 @@ internal class ProfileMiniAppletBridgeAdapter(
                 SigningErrorCode.INVALID_REQUEST,
             )
         }
-        val rawExtraProperties = if (isUgrContract) {
+        val rawExtraProperties = if (isDiputacionBadajozContract) {
+            json.strictString(EXTRA_PROPERTIES_FIELD)?.let {
+                dev.junta.firmamobile.signing.LiteralSigningProperties.canonicalize(
+                    it, DiputacionBadajozCadesAdapter.EXPECTED_EXTRA_PROPERTIES,
+                )
+            } ?: return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
+        } else if (isUgrContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it.isEmpty() }
                 ?: return MiniAppletBridgeRouteResult.Rejected(

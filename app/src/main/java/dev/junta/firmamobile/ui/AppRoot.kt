@@ -96,6 +96,14 @@ fun AppRoot(
             )
             Spacer(modifier = Modifier.height(12.dp))
             CertificateStateBanner(state)
+            if (state !is CertificateUiState.Unlocked) {
+                androidx.compose.material3.TextButton(
+                    onClick = onContinue,
+                    modifier = Modifier.fillMaxWidth().testTag("browse-without-certificate"),
+                ) {
+                    Text(stringResource(R.string.browse_without_certificate))
+                }
+            }
             Spacer(modifier = Modifier.height(4.dp))
         }
     }

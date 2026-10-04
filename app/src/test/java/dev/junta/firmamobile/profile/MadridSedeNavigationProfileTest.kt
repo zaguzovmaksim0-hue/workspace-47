@@ -82,10 +82,13 @@ class MadridSedeNavigationProfileTest {
         assertEquals(NavigationDecision.AllowInWebView, policy.decide(applicationUrl.toString(), startUrl.toString()))
         assertEquals(NavigationDecision.AllowInWebView, policy.decide(casUrl.toString(), applicationUrl.toString()))
         val claveDecision = policy.decide(claveUrl.toString(), casUrl.toString())
-        assertEquals(
-            NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION),
-            claveDecision,
-        )
+        assertEquals(NavigationDecision.AllowInWebView, claveDecision)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, claveUrl))
+        val resolution = dev.junta.firmamobile.browser.BrowserUrlPolicy(
+            BuiltInSiteProfiles.qaRegistry, profileId,
+        ).resolve(claveUrl.toASCIIString(), profileId)
+        assertEquals(TrustMode.BROWSE_ONLY, resolution.trustMode)
+        assertNull(resolution.site)
     }
 
     @Test

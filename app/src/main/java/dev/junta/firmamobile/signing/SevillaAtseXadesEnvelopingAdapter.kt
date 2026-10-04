@@ -611,6 +611,7 @@ internal object SevillaAtseXadesEnvelopingCodec {
 
     private fun SigningAlgorithm.xadesSignatureMethod(): String = when (this) {
         SigningAlgorithm.SHA1_WITH_RSA -> RSA_SHA1
+        SigningAlgorithm.SHA384_WITH_RSA -> error("unsupported XAdES Enveloping signature algorithm")
         SigningAlgorithm.SHA512_WITH_RSA -> RSA_SHA512
         SigningAlgorithm.SHA256_WITH_RSA -> error("unsupported XAdES Enveloping signature algorithm")
     }

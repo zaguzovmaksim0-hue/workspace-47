@@ -77,6 +77,7 @@ internal fun IndustrialBrowserTopBar(
     onClearCurrentSiteRequested: () -> Unit,
     onClearSessionRequested: () -> Unit,
     onDeleteAllBrowserDataRequested: () -> Unit,
+    onOpenInBrowser: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets(0, 0, 0, 0),
 ) {
@@ -137,6 +138,7 @@ internal fun IndustrialBrowserTopBar(
                         onClick = { menuExpanded = true },
                     )
                     BrowserOverflowMenu(
+                        onOpenInBrowser = onOpenInBrowser?.let { open -> { menuExpanded = false; open() } },
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false },
                         onChangeCertificate = {
@@ -223,6 +225,7 @@ internal fun BrowserOverflowMenu(
     onClearCurrentSiteRequested: () -> Unit,
     onClearSessionRequested: () -> Unit,
     onDeleteAllBrowserDataRequested: () -> Unit,
+    onOpenInBrowser: (() -> Unit)? = null,
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -232,6 +235,13 @@ internal fun BrowserOverflowMenu(
             .background(JuntaPaperElevated, BrowserMenuShape)
             .border(1.5.dp, JuntaInk, BrowserMenuShape),
     ) {
+        onOpenInBrowser?.let { open ->
+            BrowserMenuItem(
+                iconRes = R.drawable.ic_browser_home,
+                text = stringResource(R.string.browser_open_external),
+                onClick = open,
+            )
+        }
         BrowserMenuItem(
             iconRes = R.drawable.ic_browser_change_certificate,
             text = stringResource(R.string.browser_change_certificate),
@@ -293,6 +303,7 @@ private fun BrowserMenuItem(
 @Composable
 internal fun BrowserCertificateStrip(
     certificateOwner: String,
+    certificateAvailable: Boolean = true,
     modifier: Modifier = Modifier,
     windowInsets: WindowInsets = WindowInsets(0, 0, 0, 0),
 ) {
@@ -321,7 +332,7 @@ internal fun BrowserCertificateStrip(
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.browser_certificate_active),
+                    text = stringResource(if (certificateAvailable) R.string.browser_certificate_active else R.string.certificate_title),
                     color = JuntaTealDark,
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontSize = 14.sp,

@@ -25,7 +25,7 @@ class JuntaNavigationPolicyTest {
         "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/"
 
     @Test
-    fun keepsOnlySelectedProfileHttpsNavigationInsideWebView() {
+    fun keepsSelectedProfileHttpsNavigationInsideWebView() {
         val decision = policy.decide(
             "https://ssoweb.juntadeandalucia.es/login?continue=1",
             trustedPage,
@@ -35,20 +35,16 @@ class JuntaNavigationPolicyTest {
     }
 
     @Test
-    fun blocksCrossProfileNavigationInsteadOfRebindingTheWebView() {
+    fun allowsCrossProfileBrowsingWithoutRebindingTheSecurityProfile() {
         val decision = policy.decide("https://reg.redsara.es/es/", trustedPage)
 
-        assertEquals(
-            NavigationBlockReason.CROSS_PROFILE_NAVIGATION,
-            (decision as NavigationDecision.Block).reason,
-        )
+        assertEquals(NavigationDecision.AllowInWebView, decision)
     }
 
     @Test
-    fun blocksThirdPartyHttpsInsideTheAppAndBlocksHttpDowngrades() {
+    fun allowsThirdPartyHttpsButBlocksHttpDowngrades() {
         val https = policy.decide("https://example.org/help", trustedPage)
-            as NavigationDecision.Block
-        assertEquals(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION, https.reason)
+        assertEquals(NavigationDecision.AllowInWebView, https)
 
         val http = policy.decide("http://example.org/help", trustedPage)
             as NavigationDecision.Block
@@ -156,31 +152,26 @@ class JuntaNavigationPolicyTest {
     }
 
     @Test
-    fun blocksClientAuthRequestOriginFailClosedInsteadOfOpeningExternalBrowser() {
+    fun clientAuthRequestOriginCanLoadButDoesNotGrantACertificate() {
         val carneJovenPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia"))
         val carneJovenPage = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         val ws235Target = "https://ws235.juntadeandalucia.es/authenticationFacade?action=validateCert&appId=IAJ.CARNETJOVEN&ticketId=123&webSessionId=456&comeBackURL=aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ%3D"
 
         val decision = carneJovenPolicy.decide(ws235Target, carneJovenPage)
-        assertTrue(decision is NavigationDecision.Block)
-        assertEquals(
-            NavigationBlockReason.CROSS_PROFILE_NAVIGATION,
-            (decision as NavigationDecision.Block).reason,
-        )
+        assertEquals(NavigationDecision.AllowInWebView, decision)
     }
 
     @Test
-    fun euskadiClientAuthTargetIsNeverNormalBrowserNavigation() {
+    fun euskadiClientAuthPageCanLoadWithoutImplicitKeyPermission() {
         val euskadiPolicy = JuntaNavigationPolicy(ProfileId("euskadi-sede-electronica"))
         val source = "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication"
         val target = "https://eidas2.izenpe.com/cert-authn-external-validation/authenticate"
 
-        val decision = euskadiPolicy.decide(target, source) as NavigationDecision.Block
-        assertEquals(NavigationBlockReason.CROSS_PROFILE_NAVIGATION, decision.reason)
+        assertEquals(NavigationDecision.AllowInWebView, euskadiPolicy.decide(target, source))
     }
 
     @Test
-    fun veaCertificateAuthNavigationStaysInWebViewOnlyForExactBoundedContract() {
+    fun veaBrowserNavigationIsIndependentFromCertificateGrant() {
         val vea = JuntaNavigationPolicy(
             ProfileId("junta-andalucia-vea-peg"),
             BuiltInSiteProfiles.qaRegistry,
@@ -205,12 +196,11 @@ class JuntaNavigationPolicyTest {
             vea.decide(VEA_API_END, "$VEA_API_RETURN?resCode=1"),
         )
 
-        val directTarget = vea.decide(target, VEA_START) as NavigationDecision.Block
-        assertEquals(NavigationBlockReason.CROSS_PROFILE_NAVIGATION, directTarget.reason)
+        assertEquals(NavigationDecision.AllowInWebView, vea.decide(target, VEA_START))
     }
 
     @Test
-    fun veaCertificateAuthNavigationRejectsApiAndRedirectNearMisses() {
+    fun veaBrowserDoesNotRejectOrdinaryHttpsDueToQueryShape() {
         val vea = JuntaNavigationPolicy(
             ProfileId("junta-andalucia-vea-peg"),
             BuiltInSiteProfiles.qaRegistry,
@@ -222,22 +212,21 @@ class JuntaNavigationPolicyTest {
             veaSource().replace("modoAcceso=afirma", "modoAcceso=clave"),
         )
         invalidSources.forEach { source ->
-            assertTrue(source, vea.decide(source, VEA_AUTH_FACADE) !is NavigationDecision.AllowInWebView)
+            assertEquals(source, NavigationDecision.AllowInWebView, vea.decide(source, VEA_AUTH_FACADE))
         }
         listOf(
             "$VEA_API_RETURN?resCode=1&extra=1",
             "$VEA_API_END?extra=1",
             "https://api-veaja.cloud.juntadeandalucia.es/auth/other",
         ).forEach { target ->
-            assertTrue(target, vea.decide(target, VEA_AUTH_FACADE) !is NavigationDecision.AllowInWebView)
+            assertEquals(target, NavigationDecision.AllowInWebView, vea.decide(target, VEA_AUTH_FACADE))
         }
         listOf(
             veaTarget(appId = "IAJ.CARNETJOVEN"),
             veaTarget(callback = "https://evil.example/return"),
             veaTarget() + "&extra=1",
         ).forEach { target ->
-            val blocked = vea.decide(target, veaSource()) as NavigationDecision.Block
-            assertEquals(target, NavigationBlockReason.CROSS_PROFILE_NAVIGATION, blocked.reason)
+            assertEquals(target, NavigationDecision.AllowInWebView, vea.decide(target, veaSource()))
         }
     }
 
@@ -266,11 +255,7 @@ class JuntaNavigationPolicyTest {
 
         val uppercaseTarget = "https://WS235.JUNTADEANDALUCIA.ES:443/authenticationFacade?action=test"
         val uppercaseDecision = carneJovenPolicy.decide(uppercaseTarget, carneJovenPage)
-        assertTrue(uppercaseDecision is NavigationDecision.Block)
-        assertEquals(
-            NavigationBlockReason.CROSS_PROFILE_NAVIGATION,
-            (uppercaseDecision as NavigationDecision.Block).reason,
-        )
+        assertEquals(NavigationDecision.AllowInWebView, uppercaseDecision)
 
         val httpTarget = "http://ws235.juntadeandalucia.es/authenticationFacade"
         val httpDecision = carneJovenPolicy.decide(httpTarget, carneJovenPage)

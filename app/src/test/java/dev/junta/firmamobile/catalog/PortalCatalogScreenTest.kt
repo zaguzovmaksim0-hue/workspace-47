@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
@@ -24,6 +26,7 @@ import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
@@ -78,7 +81,7 @@ class PortalCatalogScreenTest {
 
         rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(uned.displayName))
         rule.onNodeWithText(uned.displayName).assertIsDisplayed()
-        rule.onNodeWithText("Abrir").performClick()
+        rule.onNodeWithText("Abrir sitio").performClick()
         rule.onAllNodesWithText("E2E", substring = true).assertCountEquals(0)
         rule.onAllNodesWithText("CATÁLOGO LOCAL", substring = true).assertCountEquals(0)
         rule.onAllNodesWithText("IMPLEMENTADO", substring = true).assertCountEquals(0)
@@ -113,10 +116,12 @@ class PortalCatalogScreenTest {
         setCatalogContent(state = state, onOpenPortal = { opened = it })
 
         rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(externalOnly.displayName))
-        rule.onNodeWithText("Abrir").performClick()
+        rule.onNodeWithTag("catalog-open-${externalOnly.portalId.value}").performClick()
         rule.runOnIdle {
             assertNotNull(opened)
             assertFalse(externalOnly.isEnabled)
+            assertTrue(externalOnly.opensWithoutProfile)
+            assertTrue(externalOnly.canOpen)
         }
     }
 
@@ -254,6 +259,8 @@ class PortalCatalogScreenTest {
         )
 
         rule.runOnIdle { assertEquals(0, requests) }
+        rule.onNodeWithText("Usar mi ubicación").assertDoesNotExist()
+        rule.onNodeWithText("Cambiar región").performClick()
         rule.onNodeWithText("Usar mi ubicación").performClick()
         rule.runOnIdle { assertEquals(1, requests) }
     }
@@ -284,7 +291,8 @@ class PortalCatalogScreenTest {
 
         rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Favoritos"))
         rule.onNodeWithText("Favoritos").assertIsDisplayed()
-        rule.onNodeWithText("Recientes").performScrollTo().assertIsDisplayed()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Recientes"))
+        rule.onNodeWithText("Recientes").assertIsDisplayed()
         assertEquals(PortalCatalogSectionKind.FAVORITES, state.sections[0].kind)
         assertEquals(PortalCatalogSectionKind.RECENT, state.sections[1].kind)
     }
@@ -319,8 +327,14 @@ class PortalCatalogScreenTest {
         rule.onNode(hasScrollToIndexAction())
             .performScrollToNode(hasText("Carné Joven Europeo de Andalucía"))
         rule.onNodeWithText("Carné Joven Europeo de Andalucía").assertIsDisplayed()
-        rule.onNodeWithText("Favorito").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("Abrir").assertIsDisplayed()
+        rule.onNodeWithText("Favorito").assertDoesNotExist()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Abrir sitio"))
+        rule.onNodeWithText("Abrir sitio").assertIsDisplayed()
+        val portal = state.sections.flatMap { it.items }.single()
+        val options = rule.onNodeWithTag("catalog-card-${portal.portalId.value}")
+            .fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        rule.runOnIdle { assertTrue(options.single().action()) }
+        rule.onNodeWithTag("catalog-option-favorite").assertIsDisplayed()
     }
 
     private fun stateFor(

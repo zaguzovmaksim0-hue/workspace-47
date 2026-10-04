@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_cades_policy_notice">La sede solicita esta referencia de política de firma: %1$s. El identificador y la huella se incluirán en los datos firmados. No se ha descargado ni verificado el documento de política; su inclusión no acredita por sí sola el cumplimiento de todas sus reglas.</string>
+    <string name="native_cades_policy_batch">Esta solicitud incluye %1$d elemento(s) con una política de firma explícita. Cada referencia se conserva en su firma; un dato incompleto hará fallar ese elemento. No se descargan documentos de política ni se confirma automáticamente la operación.</string>
+</resources>

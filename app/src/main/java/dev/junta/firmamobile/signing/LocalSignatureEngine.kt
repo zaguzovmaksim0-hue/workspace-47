@@ -3,6 +3,9 @@ package dev.junta.firmamobile.signing
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import java.security.SecureRandom
 import java.security.Signature
+import java.security.PrivateKey
+import java.security.interfaces.RSAPrivateKey
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 enum class LocalSignatureError {
     INPUT_TOO_LARGE,
@@ -54,7 +57,7 @@ class JcaLocalSignatureEngine internal constructor(
                 if (!privateKey.algorithm.equals(RSA, ignoreCase = true)) {
                     null
                 } else {
-                    Signature.getInstance(jcaAlgorithm).run {
+                    signatureForKey(privateKey, jcaAlgorithm).run {
                         initSign(privateKey, secureRandom)
                         update(inputCopy)
                         sign()
@@ -80,6 +83,17 @@ class JcaLocalSignatureEngine internal constructor(
         }
     }
 
+    private fun signatureForKey(key: PrivateKey, algorithm: String): Signature =
+        if (key is RSAPrivateKey) {
+            // A software RSA key exposes its numerical parameters already.
+            // Conscrypt treats a null-format wrapper as an opaque key and can
+            // recurse through private-key upcalls. Use the isolated bundled
+            // provider for this case; never serialize the key or reorder the
+            // process providers. Opaque AndroidKeyStore keys retain native JCA
+            // dispatch, and no signature is retried through a second provider.
+            Signature.getInstance(algorithm, BouncyCastleProvider())
+        } else Signature.getInstance(algorithm)
+
     private fun verify(
         algorithm: String,
         input: ByteArray,
@@ -101,5 +115,6 @@ class JcaLocalSignatureEngine internal constructor(
 internal fun SigningAlgorithm.jcaName(): String = when (this) {
     SigningAlgorithm.SHA1_WITH_RSA -> "SHA1withRSA"
     SigningAlgorithm.SHA256_WITH_RSA -> "SHA256withRSA"
+    SigningAlgorithm.SHA384_WITH_RSA -> "SHA384withRSA"
     SigningAlgorithm.SHA512_WITH_RSA -> "SHA512withRSA"
 }

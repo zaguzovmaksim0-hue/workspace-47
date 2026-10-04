@@ -39,13 +39,13 @@ sealed interface NavigationDecision {
 }
 
 class JuntaNavigationPolicy(
-    private val selectedProfileId: ProfileId,
+    private val selectedProfileId: ProfileId?,
     private val registry: SiteProfileRegistry = BuiltInSiteProfiles.runtimeRegistry,
     private val afirmaUriParser: AfirmaUriParser = AfirmaUriParser(),
 ) {
     init {
-        require(registry.profile(selectedProfileId) != null) {
-            "Selected navigation profile is not active: ${selectedProfileId.value}"
+        require(selectedProfileId == null || registry.profile(selectedProfileId) != null) {
+            "Selected navigation profile is not active: ${selectedProfileId?.value}"
         }
     }
 
@@ -84,6 +84,10 @@ class JuntaNavigationPolicy(
         if (isAutoFirmaPlayStoreUrl(target, rawUrl)) {
             return NavigationDecision.Block(NavigationBlockReason.PLAY_STORE_FALLBACK)
         }
+        if (BrowserUrlPolicy(registry, selectedProfileId).resolve(rawUrl).uri == null) {
+            return NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
+        }
+        if (selectedProfileId == null) return NavigationDecision.AllowInWebView
         val targetUri = runCatching { java.net.URI(rawUrl) }.getOrNull()
         if (targetUri != null && registry.isClientAuthBrowseUrl(selectedProfileId, targetUri)) {
             return NavigationDecision.AllowInWebView
@@ -97,22 +101,19 @@ class JuntaNavigationPolicy(
         if (JuntaOriginPolicy.isAllowed(target, selectedProfileId)) {
             return NavigationDecision.AllowInWebView
         }
-        val otherProfile = registry.resolve(target)?.profile?.profileId
-        if (otherProfile != null && otherProfile != selectedProfileId) {
-            return NavigationDecision.Block(NavigationBlockReason.CROSS_PROFILE_NAVIGATION)
-        }
-        if (isClientAuthRequestOrigin(target)) {
-            return NavigationDecision.Block(NavigationBlockReason.CROSS_PROFILE_NAVIGATION)
-        }
-        return if (isSafeExternalHttpsUrl(target)) {
-            NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_EXTERNAL_NAVIGATION)
+        // Browser permissions and key permissions are independent. All admitted
+        // public HTTPS pages can load, including IdP redirects and POST targets;
+        // BrowserUrlPolicy and the native bridge still withhold signing trust.
+        val resolution = BrowserUrlPolicy(registry, selectedProfileId).resolve(rawUrl)
+        return if (resolution.uri != null) {
+            NavigationDecision.AllowInWebView
         } else {
             NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
     }
 
     private fun isClientAuthRequestOrigin(target: Uri): Boolean {
-        val profile = registry.profile(selectedProfileId) ?: return false
+        val profile = selectedProfileId?.let(registry::profile) ?: return false
         val requestOrigins = profile.clientAuthPolicy?.requestOrigins ?: return false
         if (requestOrigins.isEmpty()) return false
         val targetOrigin = exactOriginOf(target) ?: return false
@@ -143,6 +144,7 @@ class JuntaNavigationPolicy(
         currentPageUrl: String?,
     ): NavigationDecision {
         val blocked = NavigationDecision.Block(NavigationBlockReason.INSECURE_HTTP)
+        val selectedProfileId = selectedProfileId ?: return blocked
         if (selectedProfileId != OFVIRTUAL_PROFILE_ID || target.isOpaque ||
             target.encodedUserInfo != null || target.port !in setOf(-1, 80) ||
             !target.host.equals(OFVIRTUAL_HOST, ignoreCase = true) ||
@@ -186,6 +188,7 @@ class JuntaNavigationPolicy(
     }
 
     private fun decideAfirma(rawUrl: String, currentPageUrl: String?): NavigationDecision {
+        val selectedProfileId = selectedProfileId ?: return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
         val origin = currentPageUrl?.let { current ->
             try {
                 JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)
@@ -249,7 +252,7 @@ class JuntaNavigationPolicy(
         ) {
             return NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI)
         }
-        return NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT)
+        return NavigationDecision.OpenOfficialAutoFirma(uri)
     }
 
     private fun hasSafeOfficialAutoFirmaQuery(encodedQuery: String): Boolean {
@@ -336,6 +339,7 @@ class JuntaNavigationPolicy(
     }
 
     private fun decideIntent(rawUrl: String, currentPageUrl: String?): NavigationDecision {
+        val selectedProfileId = selectedProfileId ?: return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
         val trustedOrigin = currentPageUrl?.let { current ->
             try {
                 JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)

@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKFLOW = ROOT / ".github/workflows/real-e2e.yml"
+WORKFLOW = ROOT / "docs/archive/workflows/real-e2e.yml.disabled"
 RUNNER = ROOT / "scripts/ci/run-real-e2e.sh"
 REPORT_HELPER = ROOT / "scripts/ci/real_e2e_report.py"
 INSTRUMENTATION = ROOT / "app/src/androidTest/java/dev/junta/firmamobile/RealE2eInstrumentedTest.kt"
@@ -731,8 +731,11 @@ class RealE2ePolicyTest(unittest.TestCase):
             "BADAJOZ_FORCE_WS_ENTRY",
         ):
             self.assertIn(f'"{stage}"', source)
-        self.assertIn('window.setInterval(rewrapLateBadajozGlobals, 250)', source)
-        self.assertIn('window.setTimeout(() => window.clearInterval(lateRewrapTimer), signTimeoutMillis)', source)
+        self.assertIn('window.setInterval(repairCurrentSigningLibraries, 500)', source)
+        self.assertIn('window.clearInterval(hookGuardTimer)', source)
+        self.assertIn('document.visibilityState === "hidden"', source)
+        self.assertIn('window.addEventListener("pagehide", () => { documentActive = false; stopHookGuard(); })', source)
+        self.assertIn('window.addEventListener("pageshow", () => { documentActive = true; startHookGuard(); })', source)
         self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
     def test_badajoz_recipe_waits_in_webview_for_the_ready_sign_hook(self) -> None:

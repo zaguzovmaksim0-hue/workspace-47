@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_open_universal_afirma">Abrir con AutoFirma</string>
+    <string name="catalog_open_profile_compatibility">Modo específico del portal</string>
+    <string name="catalog_universal_afirma_copy">Un mismo motor de AutoFirma para todas las sedes. El modo específico queda como alternativa para integraciones particulares. Abrir una sede no confirma que su trámite haya sido verificado.</string>
+</resources>

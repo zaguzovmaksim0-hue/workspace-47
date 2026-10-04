@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_address_title">Abre tu dirección</string>
+    <string name="catalog_address_hint">Escribe o pega una dirección. Añadimos https:// si falta.</string>
+    <string name="catalog_address_label">Dirección de la web</string>
+    <string name="catalog_address_paste">Pegar</string>
+    <string name="catalog_address_clear">Limpiar</string>
+    <string name="catalog_address_open">Abrir</string>
+    <string name="catalog_address_opening">Abriendo…</string>
+    <string name="catalog_address_required">Escribe una dirección para continuar.</string>
+    <string name="catalog_address_invalid">Introduce una dirección HTTPS pública válida, sin usuario ni contraseña.</string>
+    <string name="catalog_address_too_long">La dirección es demasiado larga. No se abrirá una versión recortada.</string>
+    <string name="catalog_address_clipboard_empty">No hay una dirección de texto que pegar. También puedes escribirla.</string>
+    <string name="catalog_address_destination">Destino: %1$s</string>
+    <string name="catalog_address_back_to_top">↑ Dirección</string>
+    <string name="catalog_search_clear">Limpiar búsqueda del catálogo</string>
+</resources>
