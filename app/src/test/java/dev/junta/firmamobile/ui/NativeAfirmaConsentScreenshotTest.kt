@@ -3,7 +3,7 @@ package dev.junta.firmamobile.ui
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.inspector.WindowInspector
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import dev.junta.firmamobile.testing.createComposeRule
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentDetails
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt

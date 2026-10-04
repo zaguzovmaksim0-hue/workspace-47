@@ -1,7 +1,7 @@
 package dev.junta.firmamobile.ui
 
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import dev.junta.firmamobile.testing.createComposeRule
 import androidx.compose.ui.test.*
 import dev.junta.firmamobile.afirma.servlet.*
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme

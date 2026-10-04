@@ -15,3 +15,7 @@ Baseline: a26968b52f05546eca362c4a45f96c61a17bbc4a (PR 339).
 Targeted standalone JVM probes reproduced the original lock/cookie/import bugs before changes. After changes the cache probe denies restore for normal, no-op and throwing deletion; both signing-capable synthetic RSA KeyUsage forms import. No user certificate, government operation, E2E or VPN changes.
 
 Full Android acceptance remains the exact-head GitHub Actions result. Repository branch protection is an external administration setting and is not established by these source changes. No blanket readiness, R8 cause, all-portal compatibility or installed-APK claim follows from a source commit.
+
+## Optimized UI test host
+
+Robolectric uses the shipped merged manifest; adding ui-test-manifest only to testImplementation did not register its Activity there. The shared JVM-only Compose rule now registers the empty synthetic ComponentActivity in ShadowPackageManager before the normal Compose rule launches it. No application component is replaced, no assertions are skipped, and the delivered optimized APK is still checked to exclude this test host.

@@ -4,7 +4,7 @@ import android.net.Uri
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import dev.junta.firmamobile.testing.createComposeRule
 import dev.junta.firmamobile.certificate.CertificateSummary
 import dev.junta.firmamobile.certificate.StoredCertificateReference
 import dev.junta.firmamobile.signing.SigningErrorCode
