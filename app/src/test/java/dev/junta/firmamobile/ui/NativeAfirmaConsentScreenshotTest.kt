@@ -1,10 +1,9 @@
 package dev.junta.firmamobile.ui
 
 import android.graphics.Bitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.captureToImage
+import android.graphics.Canvas
+import android.view.inspector.WindowInspector
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-import androidx.compose.ui.test.onNodeWithTag
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentDetails
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt
@@ -41,9 +40,13 @@ class NativeAfirmaConsentScreenshotTest {
         rule.waitForIdle()
         val output = File("build/test-results/consent-preview/afirma-consent.png")
         output.parentFile.mkdirs()
-        output.outputStream().use {
-            check(rule.onNodeWithTag("native-afirma-consent").captureToImage()
-                .asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it))
+        rule.runOnIdle {
+            // PixelCopy requires a device compositor. Draw the real synthetic
+            // dialog view through Robolectric native graphics instead.
+            val view = WindowInspector.getGlobalWindowViews().last { it.width > 0 && it.height > 0 }
+            val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+            view.draw(Canvas(bitmap))
+            output.outputStream().use { check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }
         }
     }
 }
