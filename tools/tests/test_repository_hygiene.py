@@ -31,3 +31,9 @@ class RepositoryHygieneTest(unittest.TestCase):
         block = source.split('getByName("optimized") {', 1)[1].split("}", 1)[0]
         self.assertIn('kotlin.directories.add("src/release/java")', block)
         self.assertNotIn("src/debug", block)
+
+    def test_daily_build_keeps_runtime_optimizations_without_unverified_r8(self):
+        source = (ROOT / "app/build.gradle.kts").read_text()
+        block = source.split('buildTypes.create("optimized") {', 1)[1].split("\n    }", 1)[0]
+        self.assertIn("isDebuggable = false", block)
+        self.assertIn("isMinifyEnabled = false", block)

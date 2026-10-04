@@ -195,8 +195,8 @@ android {
         applicationId = "dev.junta.firmamobile"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.2.8"
+        versionCode = 11
+        versionName = "0.2.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
@@ -280,7 +280,8 @@ android {
         signingConfig = signingConfigs.getByName("debug")
         versionNameSuffix = "-optimized"
         isDebuggable = false
-        isMinifyEnabled = true
+        // Restore the known-compatible WebView path until R8 device coverage exists.
+        isMinifyEnabled = false
         // Retain existing profile availability, without debug receivers or disk logging.
         buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
     }
