@@ -1,4 +1,4 @@
-"""Keep an explicit operator-requested no-E2E scope narrow and observable."""
+"""Keep emulator opt-in explicit while preserving the default unit/build gates."""
 from pathlib import Path
 import re
 import unittest
@@ -7,28 +7,30 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class OperatorVerificationScopeTest(unittest.TestCase):
-    def test_only_the_named_pr_with_the_explicit_label_can_skip_instrumentation(self):
+    def test_only_explicit_manual_opt_in_runs_instrumentation(self):
         text = (ROOT / ".github/workflows/ci.yml").read_text()
         job = text.split("  android-instrumented:\n", 1)[1].split("\n  python:", 1)[0]
         condition = re.search(r"^    if: (.+)$", job, re.M)
         self.assertIsNotNone(condition)
         self.assertEqual(
-            "${{ github.event_name != 'pull_request' || github.event.pull_request.number != 338 || !contains(github.event.pull_request.labels.*.name, 'verification:no-e2e') }}",
+            "${{ github.event_name == 'workflow_dispatch' && inputs.run_instrumentation }}",
             condition.group(1),
         )
         self.assertIn("script: bash scripts/run-android-instrumentation-ci.sh", job)
         self.assertNotIn("continue-on-error", job)
-        # Removing the label, using another PR, pushing main or manually running
-        # CI retains instrumentation. No global CI/test skip is introduced.
-        for event, number, labels, expected in [
-            ("pull_request", 338, {"verification:no-e2e"}, False),
-            ("pull_request", 338, set(), True),
-            ("pull_request", 339, {"verification:no-e2e"}, True),
-            ("push", None, {"verification:no-e2e"}, True),
-            ("workflow_dispatch", None, {"verification:no-e2e"}, True),
+        # Ordinary PRs and main pushes remain non-E2E, including after merge.
+        for event, opt_in, expected in [
+            ("pull_request", False, False),
+            ("pull_request", True, False),
+            ("push", False, False),
+            ("push", True, False),
+            ("workflow_dispatch", False, False),
+            ("workflow_dispatch", True, True),
         ]:
-            run = event != "pull_request" or number != 338 or "verification:no-e2e" not in labels
+            run = event == "workflow_dispatch" and opt_in
             self.assertEqual(expected, run)
+        self.assertIn("type: boolean", text)
+        self.assertIn("default: false", text)
 
     def test_unit_build_and_security_jobs_are_not_conditioned_on_the_label(self):
         ci = (ROOT / ".github/workflows/ci.yml").read_text()
