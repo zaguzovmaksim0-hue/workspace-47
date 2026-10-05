@@ -7,8 +7,18 @@ import org.junit.Test
 
 class RuntimeProfilePolicyTest {
     @Test
+    fun publicUnverifiedProfilesDoNotEnableQaDiagnostics() {
+        if (BuildConfig.BUILD_TYPE == "release") {
+            assertEquals(true, BuildConfig.ALLOW_UNVERIFIED_PROFILES)
+            assertEquals(false, BuildConfig.ALLOW_QA_PROFILES)
+            assertEquals(false, BuildConfig.ENABLE_WEBVIEW_CONTENTS_DEBUGGING)
+            assertEquals(false, BuildConfig.ENABLE_WS024_QA_TUNNEL)
+        }
+    }
+
+    @Test
     fun debugAndQaVariantsUseQaRegistryWhileReleasePolicyRemainsExplicit() {
-        val expected = if (BuildConfig.ALLOW_QA_PROFILES) {
+        val expected = if (BuildConfig.ALLOW_QA_PROFILES || BuildConfig.ALLOW_UNVERIFIED_PROFILES) {
             BuiltInSiteProfiles.qaRegistry
         } else {
             BuiltInSiteProfiles.releaseRegistry
@@ -16,7 +26,7 @@ class RuntimeProfilePolicyTest {
 
         assertSame(expected, BuiltInSiteProfiles.runtimeRegistry)
         assertEquals(
-            BuildConfig.ALLOW_QA_PROFILES,
+            BuildConfig.ALLOW_QA_PROFILES || BuildConfig.ALLOW_UNVERIFIED_PROFILES,
             BuiltInSiteProfiles.runtimeRegistry.profile(ProfileId("carne-joven-andalucia")) != null,
         )
         assertEquals(

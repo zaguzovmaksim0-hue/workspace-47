@@ -77,6 +77,7 @@ jobs:
               --cache "${GRADLE_USER_HOME:-$HOME/.gradle}/caches/modules-2/files-2.1" \
               --configuration "${variant}RuntimeClasspath" \
               --output "app/build/reports/runtime-licenses/${variant}"
+            python3 tools/verify_legal_bundle.py --inventory "app/build/reports/runtime-licenses/${variant}/inventory.json"
           done
       - name: Retain runtime license evidence (not release approval)
         if: always()
@@ -103,6 +104,28 @@ jobs:
           retention-days: 3
       - name: Verify release signing fails closed without secrets
         run: scripts/ci/verify-release-fail-closed.sh
+      - name: Build and test actual release variant with a disposable CI-only signer
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JFM_RELEASE_STORE_FILE="$RUNNER_TEMP/ci-only-release.p12"
+          export JFM_RELEASE_STORE_PASSWORD=ci-only-not-a-production-secret
+          export JFM_RELEASE_KEY_PASSWORD=ci-only-not-a-production-secret
+          export JFM_RELEASE_KEY_ALIAS=ci-only
+          keytool -genkeypair -keystore "$JFM_RELEASE_STORE_FILE" -storetype PKCS12 -alias "$JFM_RELEASE_KEY_ALIAS" -keyalg RSA -keysize 3072 -validity 2 -dname "CN=CI ONLY NOT FOR DISTRIBUTION" -storepass:env JFM_RELEASE_STORE_PASSWORD -keypass:env JFM_RELEASE_KEY_PASSWORD -noprompt
+          ./gradlew testReleaseUnitTest lintRelease assembleRelease --no-daemon
+          python3 tools/verify_legal_bundle.py --apk app/build/outputs/apk/release/app-release.apk
+          printf '%s\n' "$VERIFY_REF" > app/build/outputs/apk/release/SOURCE_COMMIT.txt
+          printf '%s\n' 'CI-ONLY SIGNATURE. MUST BE VERIFIED AND RE-SIGNED PRIVATELY BEFORE DISTRIBUTION.' > app/build/outputs/apk/release/DO_NOT_DISTRIBUTE.txt
+          (cd app/build/outputs/apk/release && sha256sum app-release.apk > SHA256SUMS)
+          rm -f "$JFM_RELEASE_STORE_FILE"
+      - name: Retain release candidate for private verification and signing
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: firmamobile-release-candidate-${{ env.VERIFY_REF }}
+          path: app/build/outputs/apk/release/
+          if-no-files-found: error
+          retention-days: 3
       - name: Record QA artifact provenance
         shell: bash
         run: |
@@ -128,10 +151,12 @@ jobs:
             app/build/test-results/testDebugUnitTest/
             app/build/test-results/testQaUnitTest/
             app/build/test-results/testOptimizedUnitTest/
+            app/build/test-results/testReleaseUnitTest/
             app/build/test-results/consent-preview/
             app/build/reports/lint-results-debug.xml
             app/build/reports/lint-results-qa.xml
             app/build/reports/lint-results-optimized.xml
+            app/build/reports/lint-results-release.xml
           if-no-files-found: warn
           retention-days: 3
 

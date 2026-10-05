@@ -81,6 +81,7 @@ internal fun NativeAfirmaConsentDialog(
                     "batch" -> R.string.native_multiphase_batch
                     else -> R.string.native_afirma_sign
                 }))
+                Text(stringResource(R.string.compatibility_operation_notice))
                 Surface(
                     shape = JuntaPanelShape,
                     color = MaterialTheme.colorScheme.primaryContainer,

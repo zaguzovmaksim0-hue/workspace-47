@@ -272,4 +272,13 @@
     <string name="catalog_geocoding_failed_copy">El servicio de Android que convierte la ubicación en una región no respondió o no pudo reconocerla. Comprueba la conexión y vuelve a intentarlo, o elige tu región manualmente.</string>
     <string name="catalog_location_timeout_title">La ubicación está tardando</string>
     <string name="catalog_location_timeout_copy">El teléfono no entregó una ubicación a tiempo. Puedes volver a intentarlo o elegir tu región manualmente.</string>
+    <string name="legal_information">Información legal</string>
+    <string name="legal_privacy">Privacidad</string>
+    <string name="legal_licenses">Licencias y componentes</string>
+    <string name="legal_about">Información de la versión</string>
+    <string name="legal_back">Volver</string>
+    <string name="legal_load_error">No se pudo cargar el documento local. Consulta la documentación del repositorio oficial del proyecto.</string>
+    <string name="compatibility_unverified_short">Compatibilidad de firma no confirmada</string>
+    <string name="compatibility_unverified_operation">Esta operación no tiene compatibilidad confirmada en un escenario real. Comprueba el resultado y el justificante del portal antes de repetirla.</string>
+    <string name="compatibility_operation_notice">La compatibilidad depende del portal y de la operación. Algunas funciones no se han verificado en escenarios reales; comprueba siempre el resultado emitido por el organismo.</string>
 </resources>

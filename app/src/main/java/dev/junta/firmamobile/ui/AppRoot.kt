@@ -64,6 +64,8 @@ fun AppRoot(
     onForget: () -> Unit = {},
     onContinue: () -> Unit = {},
 ) {
+    var legalInformationVisible by remember { mutableStateOf(false) }
+    if (legalInformationVisible) LegalInformationDialog(onDismiss = { legalInformationVisible = false })
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -106,6 +108,12 @@ fun AppRoot(
                 ) {
                     Text(stringResource(R.string.browse_without_certificate))
                 }
+            }
+            androidx.compose.material3.TextButton(
+                onClick = { legalInformationVisible = true },
+                modifier = Modifier.fillMaxWidth().testTag("open-legal-information"),
+            ) {
+                Text(stringResource(R.string.legal_information))
             }
             Spacer(modifier = Modifier.height(4.dp))
         }

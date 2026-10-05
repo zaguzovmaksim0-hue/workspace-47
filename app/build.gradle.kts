@@ -205,6 +205,7 @@ android {
             chunkedBuildConfigText(siteProfileCatalogJson),
         )
         buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
+        buildConfigField("boolean", "ALLOW_UNVERIFIED_PROFILES", "false")
         buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "false")
         buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", "false")
         buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))
@@ -261,6 +262,8 @@ android {
             isDebuggable = false
             signingConfig = signingConfigs.findByName("privateRelease")
             buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
+            // Explicit maintainer choice: retain existing capabilities without QA diagnostics.
+            buildConfigField("boolean", "ALLOW_UNVERIFIED_PROFILES", "true")
             buildConfigField("boolean", "ENABLE_WEBVIEW_CONTENTS_DEBUGGING", "false")
             buildConfigField("boolean", "ENABLE_WS024_QA_TUNNEL", "false")
             buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))

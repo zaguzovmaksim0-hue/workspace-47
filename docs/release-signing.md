@@ -27,7 +27,7 @@ the keystore path does not exist.
 
 Portal policy:
 
-- `release`: only sensitive profiles with `VERIFIED_E2E` evidence and `ENABLED` activation.
+- `release`: the maintainer explicitly opted to retain the existing unverified profiles on 2026-10-05. `ALLOW_UNVERIFIED_PROFILES=true` enables them without enabling `ALLOW_QA_PROFILES` diagnostics. Their evidence states are unchanged and the UI discloses unconfirmed compatibility. Disabled profiles remain disabled. The strict `releaseRegistry` remains available as a separate policy.
 - `debug` / `qa`: also permits `QA_ONLY` profiles for controlled testing.
 
 ## Public distribution checkpoint (2026-10-05)

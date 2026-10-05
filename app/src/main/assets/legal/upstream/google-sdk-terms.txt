@@ -1,0 +1,14 @@
+Componentes Google identity y Google Play services
+
+Los POM de estos componentes identifican Android Software Development Kit License:
+https://developer.android.com/studio/terms.html
+
+No se presentan como código propio de Firma Mobile ni se relicencian bajo Apache-2.0. Sus avisos de componentes de código abierto (third_party_licenses.txt y el índice correspondiente) se incluyen íntegros en los documentos «Aviso» de esta sección. El índice de componentes identifica qué documentos corresponden a cada artefacto.
+
+Información del proveedor sobre avisos:
+https://developers.google.com/android/guides/opensource
+
+Condiciones del proveedor para Google Play services:
+https://developers.google.com/android/guides/overview
+
+Este documento es una referencia informativa a los términos del proveedor, no una modificación o traducción vinculante de esos términos ni una aceptación de nuevos acuerdos en nombre del usuario.
