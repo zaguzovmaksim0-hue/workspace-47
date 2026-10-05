@@ -34,6 +34,9 @@ internal fun legalTextChunks(text: String): List<String> =
 @Composable
 internal fun LegalInformationDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
+    val loadError = stringResource(R.string.legal_load_error)
+    val privacyTitle = stringResource(R.string.legal_privacy)
+    val aboutTitle = stringResource(R.string.legal_about)
     var section by remember { mutableStateOf("menu") }
     var document by remember { mutableStateOf<LegalDocument?>(null) }
     fun back() {
@@ -65,7 +68,7 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                 val selected = document
                 when {
                     selected != null -> {
-                        val content by produceState<String?>(null, selected.asset) {
+                        val content by produceState<String?>(null, selected.asset, loadError) {
                             value = withContext(Dispatchers.IO) {
                                 runCatching {
                                     require(validLegalAsset(selected.asset))
@@ -74,7 +77,7 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                                         require(text.length <= 2_000_000)
                                         text
                                     }
-                                }.getOrElse { context.getString(R.string.legal_load_error) }
+                                }.getOrElse { loadError }
                             }
                         }
                         val chunks = remember(content) { content?.let(::legalTextChunks).orEmpty() }
@@ -113,7 +116,7 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                         }
                     }
                     else -> {
-                        TextButton(onClick = { document = LegalDocument(context.getString(R.string.legal_privacy), "legal/privacy.txt") },
+                        TextButton(onClick = { document = LegalDocument(privacyTitle, "legal/privacy.txt") },
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                             Text(stringResource(R.string.legal_privacy))
                         }
@@ -121,7 +124,7 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                             Text(stringResource(R.string.legal_licenses))
                         }
-                        TextButton(onClick = { document = LegalDocument(context.getString(R.string.legal_about), "legal/about.txt") },
+                        TextButton(onClick = { document = LegalDocument(aboutTitle, "legal/about.txt") },
                             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                             Text(stringResource(R.string.legal_about))
                         }

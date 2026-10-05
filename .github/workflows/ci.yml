@@ -87,10 +87,10 @@ jobs:
           path: app/build/reports/runtime-licenses/
           if-no-files-found: warn
           retention-days: 7
-      - name: Run Android unit tests
-        run: ./gradlew testDebugUnitTest testQaUnitTest testOptimizedUnitTest --no-daemon
       - name: Run Android lint
         run: ./gradlew lintDebug lintQa lintOptimized --no-daemon
+      - name: Run Android unit tests
+        run: ./gradlew testDebugUnitTest testQaUnitTest testOptimizedUnitTest --no-daemon
       - name: Build Android APKs
         run: ./gradlew assembleDebug assembleQa assembleQaAndroidTest --no-daemon
       - name: Verify Android artifacts
