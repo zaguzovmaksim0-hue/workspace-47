@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Junta Firma Mobile</string>
-    <string name="launcher_name">Junta Firma</string>
+    <string name="app_name">Firma Mobile</string>
+    <string name="launcher_name">Firma Mobile</string>
     <string name="unofficial_disclosure">Cliente no oficial para uso personal</string>
     <string name="certificate_title">Certificado digital</string>
     <string name="certificate_copy">Selecciona tu archivo .p12 o .pfx.</string>
@@ -91,7 +91,7 @@
     <string name="afirma_request_certificate">Certificado: %1$s</string>
     <string name="afirma_request_format">Formato: %1$s</string>
     <string name="afirma_request_algorithm">Algoritmo: %1$s</string>
-    <string name="afirma_request_observed_copy">Esta solicitud usa el protocolo externo de AutoFirma. Puedes continuar en la aplicación oficial instalada; la firma se confirma allí. FirmaMobile no firmará esta solicitud automáticamente.</string>
+    <string name="afirma_request_observed_copy">Esta solicitud usa el protocolo externo de AutoFirma. Puedes continuar en la aplicación oficial instalada; la firma se confirma allí. Firma Mobile no firmará esta solicitud automáticamente.</string>
     <string name="signing_confirmation_title">Solicitud de firma</string>
     <string name="signing_site">Sitio: %1$s</string>
     <string name="signing_profile">Perfil: %1$s</string>
@@ -183,8 +183,8 @@
     <string name="browser_no_unlocked_certificate">Sin certificado desbloqueado</string>
     <string name="browser_open_external">Abrir en navegador</string>
     <string name="open_official_autofirma">Abrir AutoFirma</string>
-    <string name="external_handoff_title">Continuar fuera de FirmaMobile</string>
-    <string name="external_browser_copy">Se abrirá %1$s en tu navegador. Las cookies no se comparten con FirmaMobile: puede ser necesario empezar el acceso de nuevo.</string>
+    <string name="external_handoff_title">Continuar fuera de Firma Mobile</string>
+    <string name="external_browser_copy">Se abrirá %1$s en tu navegador. Las cookies no se comparten con Firma Mobile: puede ser necesario empezar el acceso de nuevo.</string>
     <string name="external_autofirma_copy">La solicitud de %1$s se enviará a la aplicación oficial AutoFirma instalada. Revisa y confirma allí la operación. Esta opción no equivale a una firma local completada.</string>
     <string name="external_handoff_continue">Continuar</string>
     <string name="external_handoff_unavailable_title">No se pudo abrir la aplicación</string>
@@ -267,4 +267,9 @@
     <string name="native_consent_expanded">Expandido</string>
     <string name="native_consent_collapsed">Contraído</string>
     <string name="certificate_revoking">Certificado bloqueado. Finalizando la eliminación del desbloqueo guardado…</string>
+    <string name="certificate_options">Opciones del certificado</string>
+    <string name="catalog_geocoding_failed_title">No se pudo identificar la región</string>
+    <string name="catalog_geocoding_failed_copy">El servicio de Android que convierte la ubicación en una región no respondió o no pudo reconocerla. Comprueba la conexión y vuelve a intentarlo, o elige tu región manualmente.</string>
+    <string name="catalog_location_timeout_title">La ubicación está tardando</string>
+    <string name="catalog_location_timeout_copy">El teléfono no entregó una ubicación a tiempo. Puedes volver a intentarlo o elegir tu región manualmente.</string>
 </resources>

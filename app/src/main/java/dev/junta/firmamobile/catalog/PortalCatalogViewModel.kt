@@ -5,6 +5,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,6 +22,8 @@ enum class CatalogLocationState {
     PERMISSION_DENIED,
     LOCATION_DISABLED,
     UNAVAILABLE,
+    GEOCODING_FAILED,
+    LOCATION_TIMEOUT,
     OUTSIDE_SPAIN,
 }
 
@@ -57,6 +63,7 @@ class PortalCatalogViewModel(
 ) : ViewModel() {
     private val searchText = MutableStateFlow("")
     private val locationState = MutableStateFlow(CatalogLocationState.IDLE)
+    private var detectionJob: Job? = null
     private val userMessage = MutableStateFlow<CatalogUserMessage?>(null)
 
     // Only actual catalog inputs rebuild/search the catalog. Location progress
@@ -105,6 +112,8 @@ class PortalCatalogViewModel(
     }
 
     fun selectRegion(region: PortalRegionCode) {
+        detectionJob?.cancel()
+        locationState.value = CatalogLocationState.IDLE
         viewModelScope.launch {
             preferencesStore.selectRegion(region, CatalogRegionSelectionSource.MANUAL)
         }
@@ -121,26 +130,36 @@ class PortalCatalogViewModel(
     }
 
     fun detectRegion() {
-        if (locationState.value == CatalogLocationState.LOADING) return
-        viewModelScope.launch {
+        if (detectionJob?.isActive == true) return
+        detectionJob = viewModelScope.launch {
             locationState.value = CatalogLocationState.LOADING
-            when (val result = regionDetector.detect()) {
-                is RegionDetectionResult.Success -> {
-                    preferencesStore.selectRegion(
-                        result.region,
-                        CatalogRegionSelectionSource.LOCATION,
-                    )
-                    locationState.value = CatalogLocationState.IDLE
-                    userMessage.value = CatalogUserMessage.LOCATION_DETECTED
+            try {
+                val details = regionDetector.diagnose()
+                currentCoroutineContext().ensureActive()
+                when (val result = details.result) {
+                    is RegionDetectionResult.Success -> {
+                        preferencesStore.selectRegion(result.region, CatalogRegionSelectionSource.LOCATION)
+                        locationState.value = CatalogLocationState.IDLE
+                        userMessage.value = CatalogUserMessage.LOCATION_DETECTED
+                    }
+                    RegionDetectionResult.PermissionDenied -> locationState.value = CatalogLocationState.PERMISSION_DENIED
+                    RegionDetectionResult.LocationDisabled -> locationState.value = CatalogLocationState.LOCATION_DISABLED
+                    RegionDetectionResult.OutsideSpain -> locationState.value = CatalogLocationState.OUTSIDE_SPAIN
+                    RegionDetectionResult.Unavailable -> locationState.value = when (details.failureReason) {
+                        RegionDetectionFailureReason.GEOCODER_UNAVAILABLE,
+                        RegionDetectionFailureReason.GEOCODER_TIMEOUT,
+                        RegionDetectionFailureReason.GEOCODER_ERROR,
+                        RegionDetectionFailureReason.REGION_UNRESOLVED -> CatalogLocationState.GEOCODING_FAILED
+                        RegionDetectionFailureReason.LOCATION_TIMEOUT -> CatalogLocationState.LOCATION_TIMEOUT
+                        else -> CatalogLocationState.UNAVAILABLE
+                    }
                 }
-                RegionDetectionResult.PermissionDenied ->
-                    locationState.value = CatalogLocationState.PERMISSION_DENIED
-                RegionDetectionResult.LocationDisabled ->
-                    locationState.value = CatalogLocationState.LOCATION_DISABLED
-                RegionDetectionResult.Unavailable ->
-                    locationState.value = CatalogLocationState.UNAVAILABLE
-                RegionDetectionResult.OutsideSpain ->
-                    locationState.value = CatalogLocationState.OUTSIDE_SPAIN
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: SecurityException) {
+                locationState.value = CatalogLocationState.PERMISSION_DENIED
+            } catch (_: Exception) {
+                locationState.value = CatalogLocationState.UNAVAILABLE
             }
         }
     }

@@ -1,101 +1,58 @@
-# Junta Firma Mobile
+# Firma Mobile
 
-> **Independent, unofficial project.** Junta Firma Mobile is not an application of, affiliated with, sponsored by, certified by, or endorsed by Junta de Andalucía or any other public administration, university, agency, or third-party service referenced by the project.
+Español | [English](README.en.md)
 
-Junta Firma Mobile is an Android client and interoperability project for certificate-backed authentication and electronic-signature flows used by Spanish public-sector web services. It combines a hardened WebView, local PKCS#12 handling, narrowly scoped portal profiles and protocol adapters, plus evidence-driven compatibility cataloging.
+**Proyecto independiente y no oficial.** Firma Mobile no pertenece a la Junta de Andalucía ni a ninguna otra administración pública. No es la aplicación oficial AutoFirma y no implica patrocinio, certificación ni respaldo de los organismos cuyos servicios aparecen en el catálogo.
 
-The project is experimental. Compatibility is recorded per exact profile and operation; the repository does not claim universal support for every Spanish public portal or every operation exposed by a supported portal.
+Aplicación Android para acceder a servicios públicos españoles y utilizar certificados digitales en operaciones de identificación y firma electrónica compatibles. Integra un navegador, gestión local de certificados PKCS#12 y adaptadores para protocolos y portales concretos.
 
-## Security model
+El proyecto es experimental. La compatibilidad se verifica por portal y operación: que un sitio aparezca en el catálogo no garantiza que admita identificación, firma o presentación de documentos desde la aplicación.
 
-Core design principles are fail-closed:
+## Empezar
 
-- user certificate/password handling remains local to the device;
-- real release signing material is supplied outside Git;
-- trusted origins and signing/network capabilities are explicit and versioned;
-- arbitrary browse-only HTTPS navigation does not gain signing privileges;
-- release transport remains direct-only;
-- QA relay/tunnel capability is opt-in, build-variant gated and not a general-purpose proxy;
-- protocol/evidence logs retain sanitized metadata rather than raw signing/session payloads;
-- real credentials, authenticated captures and personal identifiers must not be committed.
+- [Instalación y primeros pasos](docs/instalacion.md)
+- [Cambios de la versión 0.2.11](CHANGELOG.md)
+- [Documentación técnica](docs/README.md)
+- [Política de seguridad](SECURITY.md)
+- [Cómo contribuir](CONTRIBUTING.md)
 
-See [`SECURITY.md`](SECURITY.md) and [`docs/test-fixtures.md`](docs/test-fixtures.md).
+El nombre visible es **Firma Mobile** y la versión de uso diario es **0.2.11**. El identificador Android se mantiene como `dev.junta.firmamobile` para conservar la continuidad de las actualizaciones. El tipo de compilación interno `optimized` no forma parte del nombre visible de la versión.
 
-## Compatibility evidence
+## Certificados y privacidad
 
-The compatibility model distinguishes discovery from verified runtime behavior. A public site, detected JavaScript client or protocol fingerprint does not automatically become a trusted signing profile.
+El certificado y su contraseña se procesan localmente. La aplicación puede conservar el desbloqueo hasta 24 horas mediante una caché cifrada; la opción de bloqueo del menú del certificado permite finalizarlo antes. Bloquear no elimina el archivo ni revoca el certificado ante su emisor, y no garantiza cerrar una sesión ya abierta en un portal.
 
-Evidence and methodology live under:
+Cada operación de firma requiere confirmación. No deben incorporarse al repositorio certificados reales, contraseñas, cookies, documentos privados ni capturas autenticadas. Las pruebas emplean datos sintéticos; consulta [las reglas de las muestras de prueba](docs/test-fixtures.md).
 
-- `docs/compatibility/` — inventory, discovery methodology and catalog evidence;
-- `docs/e2e/` — bounded end-to-end evidence for exact tested operations;
-- `docs/protocol-observations.md` — sanitized protocol observations;
-- `app/src/main/res/raw/public_portal_catalog_v1.json` — generated runtime catalog.
+## Compatibilidad y límites
 
-The runtime catalog is generated from reviewed repository sources with `tools/generate_public_portal_catalog.py`; the generator itself does not fetch external URLs.
+Los perfiles y sus permisos son explícitos. Navegar por una dirección HTTPS no concede automáticamente permiso para utilizar el certificado. La configuración de un proveedor WebAuthn tampoco demuestra que ese proveedor autorice todas las operaciones.
 
-## Project navigation
+- [Inventario y evidencias](docs/compatibility/)
+- [Observaciones de protocolos](docs/protocol-observations.md)
+- [Evidencias históricas de operaciones concretas](docs/e2e/)
+- [Catálogo generado](app/src/main/res/raw/public_portal_catalog_v1.json)
 
-See [the documentation index](docs/README.md) for current engineering guidance, compatibility records, and historical archives. Start new work from current `origin/main`; historical worktrees are not continuation bases.
+El catálogo se genera con `tools/generate_public_portal_catalog.py` a partir de fuentes revisadas del repositorio; el generador no consulta sitios externos. El modo de uso diario incluye perfiles experimentales y no equivale a una distribución pública certificada.
 
-## Build
+## Desarrollo y comprobaciones
 
-Use the repository Gradle Wrapper. The Android build is configured around Java 17 and the Android/Gradle tooling declared in the repository.
-
-Typical development checks:
+Utiliza el Gradle Wrapper del repositorio y Java 17. GitHub Actions es el entorno principal para comprobar el **SHA exacto** de cada candidato: pruebas Android Debug, QA y Optimized, lint, APK, Python, Go y análisis de seguridad. La instrumentación con emulador requiere activación manual explícita. Las pruebas locales acotadas no sustituyen ese ciclo.
 
 ```bash
-./gradlew testDebugUnitTest
-./gradlew lintDebug
-./gradlew assembleDebug
+./gradlew testOptimizedUnitTest
+./gradlew lintOptimized
+./gradlew assembleOptimized
 ```
 
-Release builds intentionally require private signing configuration and must not fall back to a committed debug key. See `keystore.properties.example` and `app/build.gradle.kts`.
+Las compilaciones `release` necesitan una configuración de firma privada y nunca deben recurrir automáticamente a la clave de depuración. Consulta [firma de distribución](docs/release-signing.md), [verificación en GitHub Actions](docs/agents/github-actions-verification.md) y [notas de Termux](docs/building-on-termux.md).
 
-Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024-relay/`.
+Los cambios se preparan en ramas y se integran mediante pull request después de las comprobaciones aplicables. `main` sigue siendo la rama estable; los documentos históricos conservan sus fechas y no sustituyen la verificación del candidato actual.
 
-Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Current broad candidate verification runs on the exact pull-request head through GitHub Actions, including Android unit/lint/APK gates; API 36 emulator instrumentation is available only through an explicit manual opt-in; see [`docs/agents/github-actions-verification.md`](docs/agents/github-actions-verification.md). Agents may use narrow local tests for development feedback, while Codex Cloud is no longer the default verification route. The former one-shot Termux publication runner is retired.
+## Licencia y procedencia
 
-## Historical publication candidate
+El código del proyecto utiliza la [licencia MIT](LICENSE). Los componentes de terceros conservan sus propias licencias y avisos: [NOTICE](NOTICE), [procedencia](docs/provenance.md), [selección de licencia](docs/license-selection.md) y [auditoría de dependencias](docs/licenses/runtime-dependency-audit.md).
 
-The source-publication candidate is based on product commit `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`, the last autonomous product checkpoint with recorded Codex Cloud acceptance. Later autonomous TDD RED work was deliberately excluded.
+Las marcas, nombres y dominios de terceros se mencionan únicamente para explicar la interoperabilidad. Las obligaciones de redistribución de cada APK/AAB se comprueban por separado; publicar el código no certifica automáticamente cualquier binario.
 
-Final private pre-publication verification was completed at candidate SHA `6b5a2ab13497c6c623a223b4a951338f822ccba6`:
-
-- Gitleaks 8.30.1 scanned the full history/all refs: 424 commits, 0 findings, exit 0;
-- publication visual-resource policy: PASS;
-- Debug and QA unit tests: 656/656 each, no failures/errors;
-- Debug/QA lint: PASS;
-- Debug, QA and QA AndroidTest assemblies: PASS;
-- Android artifact verification: PASS;
-- release-signing fail-closed verification: PASS;
-- Python policy/catalog tests: 113 tests, 1 skipped, 0 failures;
-- Go relay test, vet and build: PASS. Native Go `-race` is not supported on Android/arm64 and is optional supporting evidence, not a source-publication blocker.
-
-See [`docs/oss-publication-status.md`](docs/oss-publication-status.md) for the publication record.
-
-## Test-only credentials
-
-The repository contains one intentionally public synthetic PKCS#12-shaped instrumentation fixture. It belongs to a synthetic test identity, uses a public test password and must never be trusted or reused operationally. Details are in [`docs/test-fixtures.md`](docs/test-fixtures.md).
-
-## Contributing
-
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting source, compatibility evidence or assets. The contribution rules prohibit real secrets/PII, unauthorized testing of third-party systems and untraceable copied assets/source.
-
-## Provenance and third-party material
-
-Source/asset/data provenance is tracked in [`docs/provenance.md`](docs/provenance.md). Known third-party material retains its own license, including the bundled Bebas Neue font under SIL Open Font License 1.1.
-
-The earlier unresolved custom WebP/launcher PNG artwork was removed and replaced with project-origin XML/vector resources; those resources passed the final Android build/resource verification. See [`docs/visual-asset-audit.md`](docs/visual-asset-audit.md).
-
-Third-party public-service names, domains, marks and software are referenced descriptively for interoperability. They remain subject to their respective owners' rights and licenses.
-
-## License
-
-The current root license text is the **MIT License**. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`docs/license-selection.md`](docs/license-selection.md).
-
-Separately licensed third-party material remains under its own terms and is not relicensed by the root license.
-
-The existing author/committer email metadata was explicitly accepted for publication. The maintainer also explicitly confirmed the five source-rights/no-unlicensed-copy statements in [`docs/maintainer-source-attestation.md`](docs/maintainer-source-attestation.md) on 2026-08-12.
-
-Source-publication gates are complete. Binary APK/AAB redistribution remains a separate compliance step because exact packaged dependency/NOTICE obligations must be checked for each release artifact.
+El [registro histórico de publicación](docs/oss-publication-status.md) conserva la aceptación de metadatos de autoría y las declaraciones de procedencia del mantenedor. La documentación técnica e histórica puede mantenerse en inglés; las instrucciones principales para usuarios se ofrecen en español.

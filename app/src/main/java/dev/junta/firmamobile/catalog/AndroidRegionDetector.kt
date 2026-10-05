@@ -18,6 +18,7 @@ import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -32,12 +33,14 @@ sealed interface RegionDetectionResult {
 
 fun interface RegionDetector {
     suspend fun detect(): RegionDetectionResult
+    suspend fun diagnose(): RegionDetectionDetails = RegionDetectionDetails(detect())
 }
 
 internal interface RegionLocationSource {
     fun hasCoarseLocationPermission(): Boolean
     fun isLocationEnabled(): Boolean
     fun availableProviders(): List<String>
+    fun recentLocation(): Location? = null
     suspend fun currentLocation(provider: String): Location?
 }
 
@@ -46,7 +49,7 @@ internal interface RegionGeocoder {
     suspend fun reverseGeocode(location: Location, maxResults: Int): List<RegionAddress>
 }
 
-internal enum class RegionDetectionFailureReason {
+enum class RegionDetectionFailureReason {
     NO_PROVIDER,
     LOCATION_TIMEOUT,
     LOCATION_NULL,
@@ -56,18 +59,18 @@ internal enum class RegionDetectionFailureReason {
     REGION_UNRESOLVED,
 }
 
-internal enum class RegionProviderAttemptOutcome {
+enum class RegionProviderAttemptOutcome {
     TIMEOUT,
     NULL,
     LOCATION_RECEIVED,
 }
 
-internal data class RegionProviderAttempt(
+data class RegionProviderAttempt(
     val provider: String,
     val outcome: RegionProviderAttemptOutcome,
 )
 
-internal data class RegionDetectionDetails(
+data class RegionDetectionDetails(
     val result: RegionDetectionResult,
     val failureReason: RegionDetectionFailureReason? = null,
     val providerAttempts: List<RegionProviderAttempt> = emptyList(),
@@ -86,7 +89,9 @@ class AndroidRegionDetector internal constructor(
 
     override suspend fun detect(): RegionDetectionResult = detectDetailed().result
 
-    internal suspend fun detectDetailed(): RegionDetectionDetails {
+    internal suspend fun detectDetailed(): RegionDetectionDetails = diagnose()
+
+    override suspend fun diagnose(): RegionDetectionDetails {
         if (!locationSource.hasCoarseLocationPermission()) {
             return RegionDetectionDetails(RegionDetectionResult.PermissionDenied)
         }
@@ -100,7 +105,9 @@ class AndroidRegionDetector internal constructor(
             )
         }
 
-        val providers = locationSource.availableProviders()
+        val available = locationSource.availableProviders()
+        val recent = locationSource.recentLocation()?.takeIf { it.provider in available }
+        val providers = if (recent != null) listOf(checkNotNull(recent.provider)) + available.filterNot { it == recent.provider } else available
         if (providers.isEmpty()) {
             return RegionDetectionDetails(
                 result = RegionDetectionResult.Unavailable,
@@ -116,7 +123,7 @@ class AndroidRegionDetector internal constructor(
         for (provider in providers) {
             val locationAttempt = try {
                 withTimeoutOrNull(locationTimeoutMillis) {
-                    ProviderAttemptCompletion(locationSource.currentLocation(provider))
+                    ProviderAttemptCompletion(recent?.takeIf { it.provider == provider } ?: locationSource.currentLocation(provider))
                 }
             } catch (_: SecurityException) {
                 return RegionDetectionDetails(
@@ -257,6 +264,15 @@ internal class AndroidRegionLocationSource(
 
     override fun availableProviders(): List<String> = candidateProviders().filter(::isProviderEnabled)
 
+    override fun recentLocation(): Location? {
+        if (!hasCoarseLocationPermission()) return null
+        val now = android.os.SystemClock.elapsedRealtimeNanos()
+        return availableProviders().mapNotNull { provider ->
+            runCatching { locationManager.getLastKnownLocation(provider) }.getOrNull()
+        }.filter { isUsableRecentRegionLocation(it, now) }
+            .maxByOrNull { it.elapsedRealtimeNanos }
+    }
+
     override suspend fun currentLocation(provider: String): Location? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             currentLocationApi30(provider)
@@ -338,10 +354,12 @@ internal class AndroidRegionGeocoder(
 
     override suspend fun reverseGeocode(location: Location, maxResults: Int): List<RegionAddress> {
         val geocoder = Geocoder(context, Locale.forLanguageTag("es-ES"))
-        val addresses = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            reverseGeocodeApi33(geocoder, location, maxResults)
-        } else {
-            reverseGeocodeLegacy(geocoder, location, maxResults)
+        val addresses = retryRegionGeocoding {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                reverseGeocodeApi33(geocoder, location, maxResults)
+            } else {
+                reverseGeocodeLegacy(geocoder, location, maxResults)
+            }
         }
         return addresses.map { address -> address.toRegionAddress() }
     }
@@ -385,4 +403,21 @@ internal class AndroidRegionGeocoder(
         subAdminArea = subAdminArea,
         locality = locality,
     )
+}
+
+/** Accept only a recent approximate fix; never infer a region from IP or persist coordinates. */
+internal fun isUsableRecentRegionLocation(location: Location, nowNanos: Long): Boolean {
+    val age = nowNanos - location.elapsedRealtimeNanos
+    return location.elapsedRealtimeNanos > 0 && age in 0..120_000_000_000L &&
+        location.hasAccuracy() && location.accuracy.isFinite() && location.accuracy in 0f..10_000f &&
+        location.latitude.isFinite() && location.latitude in -90.0..90.0 &&
+        location.longitude.isFinite() && location.longitude in -180.0..180.0
+}
+
+/** One bounded retry within the detector's existing total geocoding timeout. */
+internal suspend fun <T> retryRegionGeocoding(call: suspend () -> List<T>): List<T> {
+    val first = try { call() } catch (_: IOException) { emptyList() }
+    if (first.isNotEmpty()) return first
+    delay(300)
+    return call()
 }

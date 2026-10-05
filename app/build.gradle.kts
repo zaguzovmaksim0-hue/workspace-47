@@ -278,7 +278,7 @@ android {
         initWith(buildTypes.getByName("release"))
         matchingFallbacks += listOf("release")
         signingConfig = signingConfigs.getByName("debug")
-        versionNameSuffix = "-optimized"
+        versionNameSuffix = ""
         isDebuggable = false
         // Restore the known-compatible WebView path until R8 device coverage exists.
         isMinifyEnabled = false

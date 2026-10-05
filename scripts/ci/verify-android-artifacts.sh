@@ -43,6 +43,10 @@ if grep -Eq 'android:testOnly.*=true' "$manifest_report"; then
 fi
 rm -f "$manifest_report"
 
+optimized_badging=$("$AAPT2" dump badging "$OPTIMIZED_APK")
+grep -Fq "versionName='0.2.11'" <<<"$optimized_badging"
+grep -Fq "application-label:'Firma Mobile'" <<<"$optimized_badging"
+
 optimized_manifest=$(mktemp)
 "$AAPT2" dump xmltree --file AndroidManifest.xml "$OPTIMIZED_APK" >"$optimized_manifest"
 if grep -Eq 'android:debuggable.*=true|android:testOnly.*=true|ProtocolProbeActivity|E2eControl' "$optimized_manifest"; then
