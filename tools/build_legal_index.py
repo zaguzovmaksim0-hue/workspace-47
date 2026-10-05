@@ -50,7 +50,9 @@ def build():
             raise ValueError('No reviewed route for ' + coordinate)
         mappings[coordinate] = sorted(set(routes))
     for index, (asset, components) in enumerate(sorted(owners.items()), 1):
-        label = ', '.join(sorted(components))
+        label = sorted(components)[0]
+        if len(components) > 1:
+            label += f' (+{len(components) - 1} componentes)'
         docs.append({'title': f'Aviso {index:02d} — {label}', 'asset': asset})
     (LEGAL / 'documents.json').write_text(json.dumps(docs, ensure_ascii=False, indent=2) + '\n')
     (LEGAL / 'component-licenses.json').write_text(json.dumps(mappings, ensure_ascii=False, indent=2) + '\n')

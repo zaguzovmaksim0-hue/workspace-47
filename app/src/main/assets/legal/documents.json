@@ -44,7 +44,7 @@
     "asset": "legal/upstream/google-sdk-terms.txt"
   },
   {
-    "title": "Aviso 01 — org.bouncycastle:bcpkix-jdk18on:1.85, org.bouncycastle:bcprov-jdk18on:1.85, org.bouncycastle:bcutil-jdk18on:1.85",
+    "title": "Aviso 01 — org.bouncycastle:bcpkix-jdk18on:1.85 (+2 componentes)",
     "asset": "legal/dependencies/0e01f1549c9022f406392ac2947d32223b7c2e977d21ea2f8c182fdeb4dae5fd.txt"
   },
   {
@@ -64,7 +64,7 @@
     "asset": "legal/dependencies/483d00a5adc8beaa92a98379044b4734bd635072611cc5165ae0e1956bab0800.txt"
   },
   {
-    "title": "Aviso 06 — com.google.android.gms:play-services-auth-api-phone:18.0.2, com.google.android.gms:play-services-base:18.5.0, com.google.android.gms:play-services-tasks:18.2.0",
+    "title": "Aviso 06 — com.google.android.gms:play-services-auth-api-phone:18.0.2 (+2 componentes)",
     "asset": "legal/dependencies/653d2e7a2bb02c79b897e826df9c3b2d8e8b1a3b2cef5e29585124fa455ddaf5.txt"
   },
   {
@@ -72,7 +72,7 @@
     "asset": "legal/dependencies/6ad96c63a0e188ed4b1451cf136a8ff8a8d5d1d8ab2f5d4684881e47d323465d.txt"
   },
   {
-    "title": "Aviso 08 — androidx.activity:activity-compose:1.13.0, androidx.activity:activity-ktx:1.13.0, androidx.activity:activity:1.13.0, androidx.annotation:annotation-jvm:1.10.0, androidx.collection:collection-jvm:1.5.0, androidx.collection:collection-ktx:1.5.0, androidx.compose.animation:animation-android:1.11.3, androidx.compose.animation:animation-core-android:1.11.3, androidx.compose.foundation:foundation-android:1.11.3, androidx.compose.foundation:foundation-layout-android:1.11.3, androidx.compose.material3:material3-android:1.4.0, androidx.compose.material:material-ripple-android:1.11.3, androidx.compose.runtime:runtime-android:1.11.3, androidx.compose.runtime:runtime-annotation-android:1.11.3, androidx.compose.runtime:runtime-retain-android:1.11.3, androidx.compose.runtime:runtime-saveable-android:1.11.3, androidx.compose.ui:ui-android:1.11.3, androidx.compose.ui:ui-geometry-android:1.11.3, androidx.compose.ui:ui-graphics-android:1.11.3, androidx.compose.ui:ui-text-android:1.11.3, androidx.compose.ui:ui-tooling-preview-android:1.11.3, androidx.compose.ui:ui-unit-android:1.11.3, androidx.compose.ui:ui-util-android:1.11.3, androidx.core:core-ktx:1.18.0, androidx.core:core-viewtree:1.0.0, androidx.core:core:1.18.0, androidx.credentials:credentials-play-services-auth:1.6.0, androidx.credentials:credentials:1.6.0, androidx.datastore:datastore-android:1.2.0, androidx.datastore:datastore-core-android:1.2.0, androidx.datastore:datastore-core-okio-jvm:1.2.0, androidx.datastore:datastore-preferences-android:1.2.0, androidx.datastore:datastore-preferences-core-android:1.2.0, androidx.datastore:datastore-preferences-proto:1.2.0, androidx.lifecycle:lifecycle-common-java8:2.10.0, androidx.lifecycle:lifecycle-common-jvm:2.10.0, androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0, androidx.lifecycle:lifecycle-livedata-core:2.10.0, androidx.lifecycle:lifecycle-livedata:2.10.0, androidx.lifecycle:lifecycle-process:2.10.0, androidx.lifecycle:lifecycle-runtime-android:2.10.0, androidx.lifecycle:lifecycle-runtime-compose-android:2.10.0, androidx.lifecycle:lifecycle-runtime-ktx-android:2.10.0, androidx.lifecycle:lifecycle-viewmodel-android:2.10.0, androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0, androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0, androidx.lifecycle:lifecycle-viewmodel:2.10.0, androidx.navigationevent:navigationevent-android:1.0.0, androidx.navigationevent:navigationevent-compose-android:1.0.0, androidx.profileinstaller:profileinstaller:1.4.0, androidx.savedstate:savedstate-android:1.4.0, androidx.savedstate:savedstate-compose-android:1.4.0, androidx.savedstate:savedstate-ktx:1.4.0, androidx.startup:startup-runtime:1.2.0, androidx.transition:transition:1.6.0, androidx.webkit:webkit:1.16.0, androidx.window:window-core-android:1.5.0, androidx.window:window:1.5.0",
+    "title": "Aviso 08 — androidx.activity:activity-compose:1.13.0 (+57 componentes)",
     "asset": "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt"
   },
   {
@@ -100,7 +100,7 @@
     "asset": "legal/dependencies/b64933ee1d36d14659156223a2604edadb60bffdd465d5368ff422d7689db5fb.txt"
   },
   {
-    "title": "Aviso 15 — com.google.android.gms:play-services-basement:18.5.0, com.google.android.gms:play-services-identity-credentials:16.0.0-alpha08",
+    "title": "Aviso 15 — com.google.android.gms:play-services-basement:18.5.0 (+1 componentes)",
     "asset": "legal/dependencies/c24c8840650fb045069d5b9d37bae5a0e58338c546a6845053d933741ed77878.txt"
   },
   {
@@ -108,11 +108,11 @@
     "asset": "legal/dependencies/c7852b98a25e2e4fb0cf6edeaf83dfddd2849bbee69e9e2269ceeb5306ab9cda.txt"
   },
   {
-    "title": "Aviso 17 — com.google.android.gms:play-services-basement:18.5.0, com.google.android.gms:play-services-identity-credentials:16.0.0-alpha08",
+    "title": "Aviso 17 — com.google.android.gms:play-services-basement:18.5.0 (+1 componentes)",
     "asset": "legal/dependencies/ce8b3284215b312d3aaeb2ca73228b1b52557ca5151bd8725b47e11a707ccf77.txt"
   },
   {
-    "title": "Aviso 18 — commons-codec:commons-codec:1.18.0, org.apache.santuario:xmlsec:3.0.6",
+    "title": "Aviso 18 — commons-codec:commons-codec:1.18.0 (+1 componentes)",
     "asset": "legal/dependencies/cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30.txt"
   },
   {
@@ -132,7 +132,7 @@
     "asset": "legal/dependencies/de5f2db3626d3d298f024b4ce6f5585752fcd421b04f3844d47149fe07e42720.txt"
   },
   {
-    "title": "Aviso 23 — com.google.android.gms:play-services-auth-api-phone:18.0.2, com.google.android.gms:play-services-base:18.5.0, com.google.android.gms:play-services-tasks:18.2.0",
+    "title": "Aviso 23 — com.google.android.gms:play-services-auth-api-phone:18.0.2 (+2 componentes)",
     "asset": "legal/dependencies/f49b0d3754fe9430ca8e1d7578b98f9c74c912fa5182bee2db86f0c386ab7970.txt"
   },
   {

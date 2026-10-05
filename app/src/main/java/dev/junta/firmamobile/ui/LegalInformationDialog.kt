@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import dev.junta.firmamobile.R
@@ -58,7 +59,7 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                         Text(stringResource(R.string.close))
                     }
                 }
-                Text(title, style = MaterialTheme.typography.titleLarge,
+                Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(vertical = 12.dp).semantics { heading() })
                 HorizontalDivider()
                 val selected = document
@@ -106,7 +107,7 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                             items(list, key = { it.asset }) { item ->
                                 TextButton(onClick = { document = item },
                                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                                    Text(item.title, modifier = Modifier.fillMaxWidth())
+                                    Text(item.title, modifier = Modifier.fillMaxWidth(), maxLines = 3, overflow = TextOverflow.Ellipsis)
                                 }
                             }
                         }

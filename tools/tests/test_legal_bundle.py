@@ -20,6 +20,7 @@ class LegalBundleTest(unittest.TestCase):
     def test_display_index_contains_all_preserved_notices_and_required_documents(self):
         documents = json.loads((LEGAL / 'documents.json').read_text())
         paths = {row['asset'] for row in documents}
+        self.assertTrue(all(len(row['title']) <= 180 for row in documents))
         self.assertIn('legal/project-license.txt', paths)
         self.assertIn('legal/project-notice.txt', paths)
         self.assertIn('legal/components.txt', paths)
