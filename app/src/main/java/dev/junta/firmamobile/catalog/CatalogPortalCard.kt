@@ -55,7 +55,7 @@ internal fun CatalogPortalCard(
         Text((if (isFavorite) "★  " else "") + "${portal.organization} · ${portal.territory}",
             color = JuntaMutedInk, style = MaterialTheme.typography.bodySmall,
             maxLines = 2, overflow = TextOverflow.Ellipsis)
-        if (portal.profileStatus != dev.junta.firmamobile.profile.CompatibilityStatus.VERIFIED_E2E) {
+        if (portal.supportStatus != PortalSupportStatus.VERIFIED_E2E) {
             Text(stringResource(R.string.compatibility_unverified_short),
                 color = JuntaMutedInk, style = MaterialTheme.typography.bodySmall)
         }
