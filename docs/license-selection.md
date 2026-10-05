@@ -1,17 +1,24 @@
-# Project license reference
+# Licencia del proyecto
 
-**Current reference:** the checked-in root [`LICENSE`](../LICENSE) contains the MIT License.
-This correction changes documentation only; the license text and third-party terms are unchanged.
+El material propio de Firma Mobile utiliza **Apache License 2.0**, con el aviso
+**Copyright 2026 Maksim Zaguzov**. El texto vinculante está en [LICENSE](../LICENSE);
+los avisos y exclusiones están en [NOTICE](../NOTICE).
 
-The selection and verification record below is historical. It does not override the current root license.
+## Corrección del 5 de octubre de 2026
 
-**Historical status:** approved for source publication
+El commit `0d1eb33b` introdujo Apache-2.0 el 12 de agosto. El commit
+`bfef6e7a41c91c87d3b83ac5b27440c97ab71c4d`, destinado a un ensayo Kai macOS ajeno
+al producto, sustituyó el archivo raíz por MIT con «Copyright (c) 2026 Kai».
+El ensayo y su wheel fueron retirados en `fe4d9599`, pero la sustitución de
+LICENSE permaneció. El mantenedor pidió corregir su nombre y aprobó expresamente
+restaurar Apache-2.0 el 5 de octubre. No se atribuye a Maksim Zaguzov el software
+Kai ni otros componentes de terceros. No se reescribe el historial ni se revocan
+permisos válidamente concedidos sobre versiones anteriores.
 
-## Historical selected project license
+## Evidencia histórica de publicación de fuentes
 
-The historical record stated that **Apache License 2.0** applied to project-origin Junta Firma Mobile source and documentation unless a file or directory is explicitly identified as third-party or separately licensed.
-
-At that historical checkpoint the record described the root `LICENSE` as Apache License 2.0. That description does not match the current file; use the current root text instead. `NOTICE`, `docs/provenance.md`, `docs/visual-asset-audit.md`, and `docs/licenses/runtime-dependency-audit.md` remain part of the licensing/provenance record.
+Los datos siguientes corresponden al candidato de agosto, no certifican el APK
+actual. Véase la [revisión de distribución](public-distribution-review-2026-10-05.md).
 
 ## Approval evidence
 

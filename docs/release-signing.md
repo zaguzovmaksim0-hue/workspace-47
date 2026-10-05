@@ -1,6 +1,6 @@
 # Private release signing
 
-`debug` and `qa` builds use the Android debug key and may expose QA-only portal profiles.
+`debug`, `qa`, and `optimized` builds use the Android debug key and may expose QA-only portal profiles.
 They are not distribution builds.
 
 A `release` build never falls back to the debug key. Before building it, provide all four
@@ -29,3 +29,13 @@ Portal policy:
 
 - `release`: only sensitive profiles with `VERIFIED_E2E` evidence and `ENABLED` activation.
 - `debug` / `qa`: also permits `QA_ONLY` profiles for controlled testing.
+
+## Public distribution checkpoint (2026-10-05)
+
+The daily-use `optimized` variant is non-debuggable but still uses the debug
+signing configuration, enables QA profiles, and disables R8. It is not the
+public `release` candidate. See [the distribution review](public-distribution-review-2026-10-05.md).
+
+Creating or configuring a new release key requires explicit authorization.
+Do not replace the existing installed app signer as part of documentation work;
+a new signer needs a deliberate update/migration plan to protect existing data.

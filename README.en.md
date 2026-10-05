@@ -94,7 +94,7 @@ Third-party public-service names, domains, marks and software are referenced des
 
 ## License
 
-The current root license text is the **MIT License**. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`docs/license-selection.md`](docs/license-selection.md).
+The current root license text is the **Apache License 2.0**. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`docs/license-selection.md`](docs/license-selection.md).
 
 Separately licensed third-party material remains under its own terms and is not relicensed by the root license.
 
