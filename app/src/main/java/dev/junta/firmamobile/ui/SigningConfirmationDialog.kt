@@ -32,6 +32,9 @@ internal fun SigningConfirmationDialog(
                 Text(stringResource(R.string.signing_site, state.siteHost))
                 Text(stringResource(R.string.signing_profile, state.profileName))
                 Text(stringResource(R.string.signing_support_level, state.supportLevel))
+                if (state.supportLevel != "VERIFIED_E2E") {
+                    Text(stringResource(R.string.compatibility_unverified_operation))
+                }
                 Text(stringResource(R.string.signing_operation, state.safeDescription))
                 Text(stringResource(R.string.signing_certificate, state.certificateOwner))
                 Text(stringResource(R.string.signing_format, state.format))

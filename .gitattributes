@@ -1,3 +1,6 @@
 # Normalize wrapper blobs while preserving platform-native checkout endings.
 gradlew text eol=lf
 gradlew.bat text eol=crlf
+# Preserve vendored legal texts byte-for-byte, including upstream whitespace.
+app/src/main/assets/legal/dependencies/*.txt -whitespace
+app/src/main/assets/legal/upstream/*.txt -whitespace

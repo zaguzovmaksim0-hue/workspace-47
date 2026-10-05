@@ -1,0 +1,11 @@
+Firma Mobile 0.2.11
+Copyright 2026 Maksim Zaguzov
+
+Proyecto independiente y no oficial, distribuido bajo Apache License 2.0 para su código propio. No pertenece a la Junta de Andalucía ni a otra administración; no implica patrocinio, certificación o respaldo oficial.
+
+La designación de un canal de publicación como estable no convierte en verificadas todas las operaciones del catálogo. La compatibilidad se describe por portal y operación. No se garantiza que cualquier portal permita identificación, firma o presentación desde la aplicación.
+
+Nunca interpretes una pantalla local de éxito como justificante de presentación ante un organismo. Conserva y comprueba el justificante emitido por el portal. Si una operación se interrumpe, comprueba su estado antes de repetirla.
+
+Consulta cambios, limitaciones y fuentes en:
+https://github.com/zaguzovmaksim0-hue/workspace-47

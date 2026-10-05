@@ -37,3 +37,9 @@ class RepositoryHygieneTest(unittest.TestCase):
         block = source.split('buildTypes.create("optimized") {', 1)[1].split("\n    }", 1)[0]
         self.assertIn("isDebuggable = false", block)
         self.assertIn("isMinifyEnabled = false", block)
+
+    def test_release_host_tests_are_explicitly_enabled(self):
+        source = (ROOT / "app/build.gradle.kts").read_text()
+        block = source.split('beforeVariants(selector().withBuildType("release"))', 1)[1].split("    }", 1)[0]
+        self.assertIn("HostTestBuilder.UNIT_TEST_TYPE", block)
+        self.assertIn("?.enable = true", block)

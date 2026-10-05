@@ -14,6 +14,7 @@ El proyecto es experimental. La compatibilidad se verifica por portal y operaci�
 - [Cambios de la versión 0.2.11](CHANGELOG.md)
 - [Documentación técnica](docs/README.md)
 - [Política de seguridad](SECURITY.md)
+- [Política de privacidad](docs/privacidad.md)
 - [Cómo contribuir](CONTRIBUTING.md)
 
 El nombre visible es **Firma Mobile** y la versión de uso diario es **0.2.11**. El identificador Android se mantiene como `dev.junta.firmamobile` para conservar la continuidad de las actualizaciones. El tipo de compilación interno `optimized` no forma parte del nombre visible de la versión.

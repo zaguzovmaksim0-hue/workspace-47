@@ -36,3 +36,5 @@ El flujo y el paquete del perfilador Kai para macOS, ajenos a este proyecto, se 
 Utiliza una copia limpia que siga la rama actual prevista. Antes de reorganizar copias antiguas, conserva sus commits, diferencias binarias y archivos fuente no seguidos. Compara cualquier archivo antiguo modificado con el código actual antes de integrarlo; no apliques cambios obsoletos a los flujos de firma sin revisión.
 
 - [Revisión de distribución pública y bloqueos (5 de octubre de 2026)](public-distribution-review-2026-10-05.md)
+
+- [Política de privacidad](privacidad.md)

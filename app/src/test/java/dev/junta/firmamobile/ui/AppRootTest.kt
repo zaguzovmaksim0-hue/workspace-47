@@ -34,6 +34,16 @@ class AppRootTest {
     val rule = createComposeRule()
 
     @Test
+    fun legalInformationCanBeOpenedAndClosedWithoutCertificate() {
+        rule.setContent { JuntaFirmaTheme { AppRoot() } }
+        rule.onNodeWithTag("open-legal-information").performScrollTo().performClick()
+        rule.onNodeWithText("Privacidad").assertIsDisplayed()
+        rule.onNodeWithText("Licencias y componentes").assertIsDisplayed()
+        rule.onNodeWithText("Cerrar").performClick()
+        rule.onNodeWithTag("legal-information-dialog").assertDoesNotExist()
+    }
+
+    @Test
     fun browsingDoesNotRequireImportingOrUnlockingACertificate() {
         var continued = false
         var selected = false

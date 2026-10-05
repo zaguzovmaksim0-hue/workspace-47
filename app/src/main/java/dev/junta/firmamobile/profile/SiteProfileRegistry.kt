@@ -152,7 +152,7 @@ object BuiltInSiteProfiles {
         SiteProfileRegistry(catalog, BuildTrustPolicy.QA)
     }
     val runtimeRegistry: SiteProfileRegistry by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        if (BuildConfig.ALLOW_QA_PROFILES) qaRegistry else releaseRegistry
+        if (BuildConfig.ALLOW_QA_PROFILES || BuildConfig.ALLOW_UNVERIFIED_PROFILES) qaRegistry else releaseRegistry
     }
 
     val JSON: String = BuildConfig.SITE_PROFILE_CATALOG_JSON

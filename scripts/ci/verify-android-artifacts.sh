@@ -83,4 +83,6 @@ for apk in "$DEBUG_APK" "$QA_APK" "$OPTIMIZED_APK"; do
   rm -f "$strings_file"
 done
 
+python3 tools/verify_legal_bundle.py --apk "$OPTIMIZED_APK"
+
 echo "Android artifact verification passed"

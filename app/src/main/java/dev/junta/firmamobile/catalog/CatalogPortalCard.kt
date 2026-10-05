@@ -55,6 +55,10 @@ internal fun CatalogPortalCard(
         Text((if (isFavorite) "★  " else "") + "${portal.organization} · ${portal.territory}",
             color = JuntaMutedInk, style = MaterialTheme.typography.bodySmall,
             maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (portal.supportStatus != PortalSupportStatus.VERIFIED_E2E) {
+            Text(stringResource(R.string.compatibility_unverified_short),
+                color = JuntaMutedInk, style = MaterialTheme.typography.bodySmall)
+        }
         Button(onClick = { onOpen(portal) }, enabled = portal.canOpen, shape = shape,
             colors = ButtonDefaults.buttonColors(containerColor = JuntaTeal, contentColor = JuntaPaperElevated),
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("catalog-open-${portal.portalId.value}")) {
