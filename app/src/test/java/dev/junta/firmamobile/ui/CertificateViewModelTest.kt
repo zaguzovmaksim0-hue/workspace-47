@@ -313,6 +313,8 @@ class CertificateViewModelTest {
         viewModel.lock()
 
         assertNull(session.identityForSigning())
+        assertTrue((viewModel.state.value as CertificateUiState.Locked).revocationPending)
+        advanceUntilIdle()
         assertEquals(CertificateUiState.Locked(selected, identity.summary, null), viewModel.state.value)
         assertTrue(cache.clearCalls >= 1)
     }
@@ -372,7 +374,7 @@ class CertificateViewModelTest {
     fun forgetClearsRepositorySessionAndUi() = runTest(dispatcher) {
         val selected = reference()
         val gateway = FakeCertificateGateway().apply { current = selected }
-        val session = CertificateSession()
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
         val cache = FakeCertificateUnlockCache()
         val viewModel = viewModel(gateway, session, cache)
         advanceUntilIdle()
@@ -387,9 +389,51 @@ class CertificateViewModelTest {
         assertTrue(cache.clearCalls >= 1)
     }
 
+    @Test
+    fun explicitLockReportsUnverifiedRevocationAndStillLocksIdentity() = runTest(dispatcher) {
+        val selected = reference()
+        val gateway = FakeCertificateGateway().apply { current = selected }
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
+        val cache = FakeCertificateUnlockCache().apply { clearVerified = false }
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle()
+        model.lock()
+        assertNull(session.identityForSigning())
+        assertTrue((model.state.value as CertificateUiState.Locked).revocationPending)
+        advanceUntilIdle()
+        val state = model.state.value as CertificateUiState.Locked
+        assertEquals(CertificateUiError.STORAGE_FAILURE, state.error)
+    }
+
+    @Test
+    fun lockDeniesKeyAndRestoreBeforeQueuedDurableRevocationRuns() = runTest(dispatcher) {
+        val identity = validIdentity()
+        val selected = reference(summary = identity.summary)
+        val gateway = FakeCertificateGateway().apply { current = selected }
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
+        val cache = FakeCertificateUnlockCache()
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle()
+        session.unlock(identity)
+        val clears = cache.clearCalls
+        val restores = cache.restoreCalls
+        model.lock()
+        assertNull(session.identityForSigning())
+        assertEquals(clears, cache.clearCalls)
+        assertTrue((model.state.value as CertificateUiState.Locked).revocationPending)
+        model.onAppForegrounded()
+        val password = "queued".toCharArray()
+        model.unlock(password)
+        assertTrue(password.all { it == '\u0000' })
+        advanceUntilIdle()
+        assertTrue(cache.clearCalls > clears)
+        assertEquals(restores, cache.restoreCalls)
+        assertTrue(!(model.state.value as CertificateUiState.Locked).revocationPending)
+    }
+
     private fun viewModel(
         gateway: FakeCertificateGateway,
-        session: CertificateSession = CertificateSession(),
+        session: CertificateSession = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC)),
         cache: CertificateUnlockCache = FakeCertificateUnlockCache(),
     ) = CertificateViewModel(
         gateway = gateway,
@@ -397,6 +441,7 @@ class CertificateViewModelTest {
         unlockCache = cache,
         clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
         unlockDuration = Duration.ofHours(24),
+        ioDispatcher = dispatcher,
     )
 
     private fun reference(
@@ -450,6 +495,8 @@ class CertificateViewModelTest {
     }
 
     private class FakeCertificateUnlockCache : CertificateUnlockCache {
+        var clearVerified = true
+        override fun clearAndReport(): Boolean { clear(); return clearVerified }
         var restoredPassword: CharArray? = null
         var restoredExpiry: Instant? = null
         var restoredLease: CertificateUnlockLease? = null

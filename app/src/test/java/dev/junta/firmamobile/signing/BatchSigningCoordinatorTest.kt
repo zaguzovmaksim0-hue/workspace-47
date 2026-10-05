@@ -383,7 +383,7 @@ class BatchSigningCoordinatorTest {
     }
 
     private companion object {
-        val NOW: Instant = Instant.parse("2026-08-11T12:00:00Z")
+        val NOW: Instant = dev.junta.firmamobile.certificate.TestCertificateFactory.now
         val REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174100")
         val DOCUMENT_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174101")
         val MELILLA_ORIGIN = TrustedOrigin("https", "sede.melilla.es", 443)

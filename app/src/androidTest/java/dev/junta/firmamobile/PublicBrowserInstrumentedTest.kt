@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.compose.ui.test.onNodeWithContentDescription
 import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
@@ -49,7 +50,11 @@ class PublicBrowserInstrumentedTest {
         val current = AtomicReference<WebView?>()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             render(scenario, current)
+            rule.onNodeWithTag("public-browsing-notice").assertDoesNotExist()
+            rule.onNodeWithContentDescription("Más opciones").performClick()
+            rule.onNodeWithText("Información del sitio").performClick()
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
+            rule.onNodeWithTag("browser-site-information-close").performClick()
             val request = CertificateRequest()
             scenario.onActivity { activity ->
                 val view = checkNotNull(current.get())

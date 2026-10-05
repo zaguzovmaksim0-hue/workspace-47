@@ -103,7 +103,7 @@ class Pkcs12Loader internal constructor(
         }
 
         val keyUsage = certificate.keyUsage
-        if (keyUsage != null && (keyUsage.isEmpty() || !keyUsage[0])) {
+        if (keyUsage != null && (!keyUsage.getOrElse(0) { false } && !keyUsage.getOrElse(1) { false })) {
             return CertificateLoadResult.Failure(CertificateErrorCode.KEY_USAGE_NOT_PERMITTED)
         }
         if (!privateKeyMatchesCertificate(privateKey, certificate)) {

@@ -8,10 +8,11 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import dev.junta.firmamobile.testing.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -188,7 +189,7 @@ class BrowserScreenTest {
             }
         }
 
-        rule.onNodeWithText("Junta de Andalucía").assertIsDisplayed()
+        rule.onNodeWithText("Junta de Andalucía").assertDoesNotExist()
         rule.onNodeWithText("www.juntadeandalucia.es", substring = true).assertIsDisplayed()
         rule.onNodeWithText("Certificado activo").assertIsDisplayed()
         rule.onNodeWithText("Persona de Prueba").assertIsDisplayed()
@@ -229,6 +230,46 @@ class BrowserScreenTest {
     }
 
     @Test
+    fun siteInformationIsHiddenUntilMenuRequestAndCanReopenWithoutNavigation() {
+        val url = mutableStateOf("https://public.example/start")
+        val events = mutableListOf<String>()
+        rule.setContent {
+            JuntaFirmaTheme {
+                BrowserLayout(
+                    certificateOwner = "Persona de Prueba",
+                    currentUrl = url.value,
+                    publicBrowsing = true,
+                    webAuthnState = dev.junta.firmamobile.browser.WebAuthnEngineState.UNSUPPORTED,
+                    browserInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
+                    onBack = { events += "back" }, onHome = { events += "home" },
+                    onReload = { events += "reload" }, onChangeCertificate = {},
+                    onLockCertificate = {}, onClearCurrentSite = {}, onClearSession = {},
+                    onDeleteAllBrowserData = {},
+                ) { Text("contenido-web") }
+            }
+        }
+        rule.onNodeWithTag("public-browsing-notice").assertDoesNotExist()
+        rule.onNodeWithTag("webauthn-status").assertDoesNotExist()
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(56.dp)
+        repeat(2) {
+            rule.onNodeWithContentDescription("Más opciones").performClick()
+            rule.onNodeWithText("Información del sitio").performClick()
+            rule.onNodeWithTag("browser-site-information").assertIsDisplayed()
+            rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
+            rule.onNodeWithTag("webauthn-status").performScrollTo().assertIsDisplayed()
+            rule.onNodeWithTag("browser-site-information-close").performClick()
+            rule.onNodeWithTag("browser-site-information").assertDoesNotExist()
+            rule.onNodeWithText("contenido-web").assertIsDisplayed()
+        }
+        rule.runOnIdle { assertTrue(events.isEmpty()) }
+        rule.onNodeWithContentDescription("Más opciones").performClick()
+        rule.onNodeWithText("Información del sitio").performClick()
+        rule.runOnIdle { url.value = "https://other.example/" }
+        rule.onNodeWithTag("browser-site-information").assertDoesNotExist()
+        rule.onNodeWithText("other.example").assertIsDisplayed()
+    }
+
+    @Test
     fun longAddressUsesOneLineReadOnlyHost() {
         rule.setContent {
             JuntaFirmaTheme {
@@ -255,11 +296,11 @@ class BrowserScreenTest {
 
         rule.onNodeWithText("www.juntadeandalucia.es", substring = true).assertIsDisplayed()
         rule.onNodeWithText(LONG_URL).assertDoesNotExist()
-        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(72.dp)
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(56.dp)
 
         rule.onNodeWithText(LONG_URL).assertDoesNotExist()
         rule.onNodeWithTag("browser_address_field").assertDoesNotExist()
-        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(72.dp)
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(56.dp)
     }
 
     @Test
@@ -318,8 +359,8 @@ class BrowserScreenTest {
             }
         }
 
-        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(96.dp)
-        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(96.dp)
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(80.dp)
+        rule.onNodeWithTag(BROWSER_TOOLBAR_TAG).assertHeightIsEqualTo(80.dp)
     }
 
     @Test

@@ -42,8 +42,10 @@ The current CI/security workflows provide the broad candidate gate:
   - `verifyPortableAapt2Configuration`
   - `testDebugUnitTest`
   - `testQaUnitTest`
+  - `testOptimizedUnitTest`
   - `lintDebug`
   - `lintQa`
+  - `lintOptimized`
   - `assembleDebug`
   - `assembleQa`
   - `assembleQaAndroidTest`

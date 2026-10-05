@@ -5,7 +5,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import dev.junta.firmamobile.testing.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -78,7 +78,7 @@ class AppRootTest {
         rule.onNodeWithTag("jfm-brand-title").assertExists()
         rule.onNodeWithTag("jfm-certificate-card").assertExists()
         rule.onNodeWithTag("jfm-home-navigation").assertDoesNotExist()
-        rule.onNodeWithText("Junta Firma Mobile").assertIsDisplayed()
+        rule.onNodeWithText("Firma Mobile").assertIsDisplayed()
         rule.onNodeWithText("Selección segura disponible")
             .assertIsDisplayed()
         rule.onNodeWithText(
@@ -142,10 +142,12 @@ class AppRootTest {
     @Test
     fun unlockedCertificateShowsSafeSummaryAndActions() {
         val summary = summary()
+        var locked = false
         rule.setContent {
             JuntaFirmaTheme {
                 AppRoot(
                     state = CertificateUiState.Unlocked(reference(summary), summary),
+                    onLock = { locked = true },
                 )
             }
         }
@@ -161,7 +163,11 @@ class AppRootTest {
             .assertIsDisplayed()
         rule.onNodeWithText("Continuar").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Elegir otro").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("Bloquear certificado").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Bloquear certificado").assertDoesNotExist()
+        rule.onNodeWithContentDescription("Opciones del certificado").performScrollTo().performClick()
+        rule.onNodeWithText("Bloquear certificado").assertIsDisplayed().performClick()
+        rule.runOnIdle { check(locked) }
+        rule.onNodeWithText("Bloquear certificado").assertDoesNotExist()
         rule.onNodeWithText("Olvidar certificado").performScrollTo().assertIsDisplayed()
     }
 

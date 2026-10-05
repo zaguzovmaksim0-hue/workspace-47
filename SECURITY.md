@@ -1,76 +1,43 @@
-# Security policy
+# Política de seguridad
 
-Junta Firma Mobile handles certificate-backed authentication and electronic-signature workflows, so security reports must be treated as sensitive even when a bug appears to affect only a development or QA path.
+Firma Mobile utiliza certificados digitales y operaciones de firma electrónica. Trata los informes de seguridad como sensibles, incluso cuando sólo afecten a una variante de desarrollo.
 
-## Supported code
+## Alcance
 
-Security review currently covers the active project source in this repository, including:
+La revisión cubre el código activo del repositorio: certificados y estado de firma, navegación WebView y puente JavaScript, validación de solicitudes, operaciones criptográficas, relay QA bajo `ws024-relay/` y separación de capacidades entre variantes.
 
-- Android certificate handling and in-memory signing state;
-- WebView navigation/origin policy and JavaScript bridge;
-- signing request validation and local cryptographic operations;
-- project-controlled QA relay code under `ws024-relay/`;
-- build/release configuration that separates QA capabilities from release behavior.
+No se ha declarado una matriz estable de soporte de versiones binarias. Las afirmaciones de seguridad se limitan al commit, variante y operación comprobados.
 
-This is a public source repository. A stable binary release support matrix has not yet been declared; security claims remain scoped to the exact source commit, build variant, and operation that was verified.
+## Comunicar una vulnerabilidad
 
-## Reporting a vulnerability
+No incluyas secretos ni información personal en una incidencia pública. Utiliza el canal privado de informes de seguridad de GitHub si está disponible. Si no aparece, contacta primero con el mantenedor mediante GitHub con una descripción mínima y no sensible para acordar un intercambio privado antes de enviar detalles de explotación.
 
-Do not include secrets, private keys, personal certificates, passwords, session cookies, authentication tokens, one-time codes, personal identifiers, private documents, or raw authenticated captures in a public issue.
+Incluye: commit/versión, variante, componente, reproducción mínima con datos sintéticos, comportamiento esperado y observado, impacto, alcance en `release`/`qa`/`debug` y posibles medidas correctoras.
 
-Use a private GitHub security-reporting channel when one is available for the repository. If no private GitHub reporting channel is presented, contact the maintainer through GitHub first with a minimal non-sensitive description so a private exchange can be arranged before sending exploit details or sensitive evidence.
+## Sistemas de terceros
 
-A useful report contains:
+La presencia de un portal en el catálogo o código **no autoriza a escanearlo, ejecutar fuzzing, explotar fallos, eludir controles ni realizar pruebas destructivas o autenticadas**. Trabaja únicamente sobre código e infraestructura propios, muestras locales, observación pública normal o sistemas con autorización explícita para la prueba.
 
-- affected commit/version and build variant;
-- affected component;
-- minimal reproduction using synthetic/test data;
-- expected versus actual security boundary;
-- impact assessment;
-- whether the issue is reachable in `release`, `qa`, `debug`, or test-only code;
-- remediation ideas, if known.
+Los posibles fallos de un servicio público ajeno deben comunicarse mediante el canal del operador de ese servicio. No continúes las pruebas a través de este proyecto sin permiso.
 
-## Third-party public services are out of scope for authorization
+## Credenciales y evidencias
 
-This project interoperates with websites and services operated by Spanish public administrations and other third parties. Their presence in source code, compatibility catalogs, documentation, tests, or profiles **does not grant authorization to scan, fuzz, exploit, bypass access controls, perform destructive tests, or conduct authenticated security testing against those systems**.
+Nunca publiques ni adjuntes certificados reales, claves privadas, archivos `.jks`/`.keystore`, credenciales del relay, contraseñas, tokens, cookies, identificadores de sesión, desafíos de autenticación, OTP/SMS, claves API, documentos privados, capturas autenticadas, registros de claves TLS ni tráfico descifrado.
 
-Research for this project must remain within one of these boundaries:
+La muestra PKCS#12 de instrumentación es deliberadamente sintética. Su clave es pública y no debe utilizarse operativamente; consulta [su documentación](docs/test-fixtures.md).
 
-1. project-owned code and infrastructure;
-2. local/offline fixtures and synthetic data;
-3. normal public-client interoperability observation that does not exceed ordinary intended service use;
-4. a third-party system for which the researcher separately has explicit permission covering the proposed test.
+## Separación del relay QA y la distribución
 
-Potential vulnerabilities in a third-party public service should be reported through that service/operator's own vulnerability or incident channel, not tested further through this project without authorization.
+El relay es una herramienta de investigación explícita, no un proxy general. Deben conservarse estas condiciones:
 
-## Credential and evidence rules
+- `release` utiliza transporte directo y una política de túnel vacía;
+- el túnel QA requiere habilitación explícita y está limitado por variante;
+- el upstream del relay permanece fijo y revisado;
+- hosts operativos, credenciales, claves TLS y configuración privada no se incorporan a Git;
+- los registros sólo contienen metadatos saneados.
 
-Never commit or attach:
+Todo cambio que debilite esas condiciones requiere revisión específica antes de integrarse.
 
-- real `.p12`, `.pfx`, `.jks`, `.keystore`, PEM private keys, or release signing material;
-- real relay credentials or credential databases;
-- passwords, cookies, bearer tokens, session IDs, challenges, OTP/SMS codes, or private API keys;
-- HAR/pcap captures from authenticated sessions;
-- screenshots containing certificate identity, account data, expediente/document content, or other personal information;
-- TLS key logs or decrypted traffic captures.
+## Divulgación coordinada
 
-The committed PKCS#12-shaped fixture under Android instrumentation assets is intentionally synthetic and documented in `docs/test-fixtures.md`; its private key is public test material and must never be trusted operationally.
-
-## QA relay and release boundary
-
-QA transport is an opt-in research/compatibility facility. It is not a general-purpose proxy and must not become a release dependency by configuration accident.
-
-Required invariants:
-
-- release builds remain direct-only;
-- release tunnel policy remains empty;
-- QA tunnel capability remains build-variant gated and explicit;
-- relay upstream destinations remain fixed/reviewed rather than arbitrary;
-- operational relay hosts, credentials, TLS private keys and private deployment material stay outside Git;
-- logs retain only sanitized metadata.
-
-A change that weakens these invariants requires focused security review before merge.
-
-## Coordinated disclosure
-
-Please allow reasonable time to reproduce and remediate a valid project vulnerability before publishing exploit details. This request does not restrict independent research on systems you own or are authorized to test, and it does not create authorization to test third-party public services.
+Concede un plazo razonable para reproducir y corregir una vulnerabilidad válida antes de publicar detalles de explotación. Esta petición no limita la investigación autorizada ni concede autorización para probar servicios públicos de terceros.

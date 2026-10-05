@@ -14,6 +14,7 @@ val runtimeDependencyLockConfigurations = setOf(
     "debugRuntimeClasspath",
     "qaRuntimeClasspath",
     "releaseRuntimeClasspath",
+    "optimizedRuntimeClasspath",
 )
 
 dependencyLocking {
@@ -194,8 +195,8 @@ android {
         applicationId = "dev.junta.firmamobile"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.2.7"
+        versionCode = 13
+        versionName = "0.2.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
@@ -265,7 +266,7 @@ android {
             buildConfigField("String", "WS024_QA_RELAY_HOST", quotedBuildConfigString(""))
             buildConfigField("int", "WS024_QA_RELAY_PORT", "443")
             buildConfigField("String", "WS024_QA_RELAY_SPKI_PINS", quotedBuildConfigString(""))
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -273,7 +274,24 @@ android {
         }
     }
 
+    buildTypes.create("optimized") {
+        initWith(buildTypes.getByName("release"))
+        matchingFallbacks += listOf("release")
+        signingConfig = signingConfigs.getByName("debug")
+        versionNameSuffix = ""
+        isDebuggable = false
+        // Restore the known-compatible WebView path until R8 device coverage exists.
+        isMinifyEnabled = false
+        // Retain existing profile availability, without debug receivers or disk logging.
+        buildConfigField("boolean", "ALLOW_QA_PROFILES", "true")
+    }
+
     sourceSets {
+        getByName("testDebug") { kotlin.directories.add("src/testDevelopment/java") }
+        getByName("testQa") { kotlin.directories.add("src/testDevelopment/java") }
+        getByName("optimized") {
+            kotlin.directories.add("src/release/java")
+        }
         getByName("qa") {
             manifest.srcFile("src/debug/AndroidManifest.xml")
             kotlin.directories.add("src/debug/java")
@@ -313,6 +331,11 @@ tasks.withType<Test>().configureEach {
 }
 
 androidComponents {
+    beforeVariants(selector().withBuildType("optimized")) { variantBuilder ->
+        variantBuilder.hostTests[
+            com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE
+        ]?.enable = true
+    }
     // testBuildType selects QA for device tests. Explicitly keep both JVM
     // security-test variants available.
     beforeVariants(selector().withBuildType("debug")) { variantBuilder ->

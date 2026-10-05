@@ -7,12 +7,13 @@ internal object ApplicationSanitizedLoggerFactory {
         filesDirectory: File,
         qaEnabled: Boolean,
         diagnosticMirror: SanitizedLogSink,
+        executor: java.util.concurrent.Executor? = null,
     ): SanitizedLogger {
         val sink = if (qaEnabled) {
             val fileSink = QaDiagnosticFileSink(
                 file = filesDirectory.resolve(QaDiagnosticFileSink.FILE_NAME),
             )
-            object : SanitizedLogSink {
+            val combined = object : SanitizedLogSink {
                 override fun emit(record: String) {
                     runCatching { fileSink.emit(record) }
                     runCatching { diagnosticMirror.emit(record) }
@@ -23,6 +24,7 @@ internal object ApplicationSanitizedLoggerFactory {
                     runCatching { diagnosticMirror.clear() }
                 }
             }
+            if (executor == null) AsyncSanitizedLogSink(combined) else AsyncSanitizedLogSink(combined, executor)
         } else {
             SanitizedLogSink {}
         }

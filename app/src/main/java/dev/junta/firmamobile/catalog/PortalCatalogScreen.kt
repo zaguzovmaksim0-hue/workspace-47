@@ -562,6 +562,8 @@ private fun LocationResultDialog(
         CatalogLocationState.PERMISSION_DENIED -> R.string.catalog_location_permission_title
         CatalogLocationState.LOCATION_DISABLED -> R.string.catalog_location_disabled_title
         CatalogLocationState.UNAVAILABLE -> R.string.catalog_location_unavailable_title
+        CatalogLocationState.GEOCODING_FAILED -> R.string.catalog_geocoding_failed_title
+        CatalogLocationState.LOCATION_TIMEOUT -> R.string.catalog_location_timeout_title
         CatalogLocationState.OUTSIDE_SPAIN -> R.string.catalog_location_outside_title
         CatalogLocationState.IDLE, CatalogLocationState.LOADING -> return
     }
@@ -569,6 +571,8 @@ private fun LocationResultDialog(
         CatalogLocationState.PERMISSION_DENIED -> R.string.catalog_location_permission_copy
         CatalogLocationState.LOCATION_DISABLED -> R.string.catalog_location_disabled_copy
         CatalogLocationState.UNAVAILABLE -> R.string.catalog_location_unavailable_copy
+        CatalogLocationState.GEOCODING_FAILED -> R.string.catalog_geocoding_failed_copy
+        CatalogLocationState.LOCATION_TIMEOUT -> R.string.catalog_location_timeout_copy
         CatalogLocationState.OUTSIDE_SPAIN -> R.string.catalog_location_outside_copy
         CatalogLocationState.IDLE, CatalogLocationState.LOADING -> return
     }

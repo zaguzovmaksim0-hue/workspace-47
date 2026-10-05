@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Junta Firma Mobile</string>
-    <string name="launcher_name">Junta Firma</string>
+    <string name="app_name">Firma Mobile</string>
+    <string name="launcher_name">Firma Mobile</string>
     <string name="unofficial_disclosure">Cliente no oficial para uso personal</string>
     <string name="certificate_title">Certificado digital</string>
     <string name="certificate_copy">Selecciona tu archivo .p12 o .pfx.</string>
@@ -66,11 +66,12 @@
     <string name="browser_clear_current_site_copy">Se intentarán borrar únicamente las cookies y el almacenamiento del sitio actual. Los demás portales no se modificarán.</string>
     <string name="browser_clear_current_site_confirm">Borrar este sitio</string>
     <string name="browser_clear_current_site_success">Se borraron los datos del sitio actual.</string>
-    <string name="browser_clear_current_site_limited">Se borró el almacenamiento del sitio, pero este WebView no permite borrar sus cookies por separado.</string>
+    <string name="browser_clear_current_site_limited">Se borró el almacenamiento del sitio. No se puede garantizar la eliminación de todas sus cookies; pueden quedar cookies de otras rutas.</string>
     <string name="browser_clear_current_site_failed">No se pudieron borrar los datos del sitio actual.</string>
     <string name="browser_clear_session">Cerrar sesión</string>
     <string name="browser_clear_session_title">Cerrar sesión del certificado</string>
-    <string name="browser_clear_session_copy">Se cerrará el portal, se eliminarán sus datos de sesión y se bloqueará el certificado. También se cerrarán otras sesiones web abiertas en la aplicación, sin borrar sus datos persistentes.</string>
+    <string name="browser_clear_session_copy">Se cerrará el portal y se bloqueará el certificado. Se intentarán borrar sus datos y se eliminarán las cookies temporales de la aplicación. Pueden quedar cookies persistentes en otras rutas: no se garantiza el cierre de sesión en el servidor.</string>
+    <string name="browser_clear_session_limited">Certificado bloqueado. Pueden quedar cookies persistentes; no se garantiza el cierre de sesión del portal.</string>
     <string name="browser_clear_session_confirm">Cerrar sesión</string>
     <string name="browser_delete_all_data">Borrar todos los datos web</string>
     <string name="browser_delete_all_data_title">Borrar todos los datos web</string>
@@ -90,7 +91,7 @@
     <string name="afirma_request_certificate">Certificado: %1$s</string>
     <string name="afirma_request_format">Formato: %1$s</string>
     <string name="afirma_request_algorithm">Algoritmo: %1$s</string>
-    <string name="afirma_request_observed_copy">Esta solicitud usa el protocolo externo de AutoFirma. Puedes continuar en la aplicación oficial instalada; la firma se confirma allí. FirmaMobile no firmará esta solicitud automáticamente.</string>
+    <string name="afirma_request_observed_copy">Esta solicitud usa el protocolo externo de AutoFirma. Puedes continuar en la aplicación oficial instalada; la firma se confirma allí. Firma Mobile no firmará esta solicitud automáticamente.</string>
     <string name="signing_confirmation_title">Solicitud de firma</string>
     <string name="signing_site">Sitio: %1$s</string>
     <string name="signing_profile">Perfil: %1$s</string>
@@ -182,8 +183,8 @@
     <string name="browser_no_unlocked_certificate">Sin certificado desbloqueado</string>
     <string name="browser_open_external">Abrir en navegador</string>
     <string name="open_official_autofirma">Abrir AutoFirma</string>
-    <string name="external_handoff_title">Continuar fuera de FirmaMobile</string>
-    <string name="external_browser_copy">Se abrirá %1$s en tu navegador. Las cookies no se comparten con FirmaMobile: puede ser necesario empezar el acceso de nuevo.</string>
+    <string name="external_handoff_title">Continuar fuera de Firma Mobile</string>
+    <string name="external_browser_copy">Se abrirá %1$s en tu navegador. Las cookies no se comparten con Firma Mobile: puede ser necesario empezar el acceso de nuevo.</string>
     <string name="external_autofirma_copy">La solicitud de %1$s se enviará a la aplicación oficial AutoFirma instalada. Revisa y confirma allí la operación. Esta opción no equivale a una firma local completada.</string>
     <string name="external_handoff_continue">Continuar</string>
     <string name="external_handoff_unavailable_title">No se pudo abrir la aplicación</string>
@@ -254,4 +255,21 @@
     <string name="public_web_open_title">Abrir otra web</string>
     <string name="public_web_address">Dirección HTTPS</string>
     <string name="public_web_open_hint">Abre una dirección HTTPS pública sin crear un perfil ni guardar nuevos permisos. La firma y el acceso con certificado requieren su propio consentimiento.</string>
+    <string name="browser_site_information">Información del sitio</string>
+    <string name="native_consent_review_title">Revisar firma</string>
+    <string name="native_consent_result_title">Resultado</string>
+    <string name="native_consent_progress_title">En curso</string>
+    <string name="native_consent_page_label">Solicitado por</string>
+    <string name="native_consent_recipient_label">Destino del resultado</string>
+    <string name="native_consent_certificate_label">Tu certificado</string>
+    <string name="native_consent_show_details">Ver detalles técnicos</string>
+    <string name="native_consent_hide_details">Ocultar detalles técnicos</string>
+    <string name="native_consent_expanded">Expandido</string>
+    <string name="native_consent_collapsed">Contraído</string>
+    <string name="certificate_revoking">Certificado bloqueado. Finalizando la eliminación del desbloqueo guardado…</string>
+    <string name="certificate_options">Opciones del certificado</string>
+    <string name="catalog_geocoding_failed_title">No se pudo identificar la región</string>
+    <string name="catalog_geocoding_failed_copy">El servicio de Android que convierte la ubicación en una región no respondió o no pudo reconocerla. Comprueba la conexión y vuelve a intentarlo, o elige tu región manualmente.</string>
+    <string name="catalog_location_timeout_title">La ubicación está tardando</string>
+    <string name="catalog_location_timeout_copy">El teléfono no entregó una ubicación a tiempo. Puedes volver a intentarlo o elegir tu región manualmente.</string>
 </resources>

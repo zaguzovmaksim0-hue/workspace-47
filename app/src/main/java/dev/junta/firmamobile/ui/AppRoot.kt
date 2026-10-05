@@ -27,6 +27,9 @@ import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -133,8 +136,26 @@ private fun CertificatePanel(
                 text = stringResource(R.string.certificate_title),
                 color = JuntaTeal,
                 style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.semantics { heading() },
+                modifier = Modifier.weight(1f).semantics { heading() },
             )
+            if (state is CertificateUiState.Unlocked) {
+                var expanded by remember(state.reference.uri) { mutableStateOf(false) }
+                Box {
+                    androidx.compose.material3.IconButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Icon(painterResource(R.drawable.ic_browser_more),
+                            contentDescription = stringResource(R.string.certificate_options), tint = JuntaTeal)
+                    }
+                    androidx.compose.material3.DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text(stringResource(R.string.lock_certificate)) },
+                            onClick = { expanded = false; onLock() },
+                        )
+                    }
+                }
+            }
         }
         Spacer(modifier = Modifier.height(10.dp))
         Column(modifier = Modifier.padding(start = 56.dp)) {
@@ -174,7 +195,6 @@ private fun CertificatePanel(
                 state = state,
                 onContinue = onContinue,
                 onSelectCertificate = onSelectCertificate,
-                onLock = onLock,
                 onForget = onForget,
             )
         }
@@ -241,6 +261,10 @@ private fun LockedCertificate(
     DisposableEffect(passwordState) {
         onDispose { passwordState.clearText() }
     }
+    if (state.revocationPending) {
+        Text(stringResource(R.string.certificate_revoking), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        Spacer(modifier = Modifier.height(8.dp))
+    }
     val passwordLabel = stringResource(R.string.certificate_password)
     OutlinedSecureTextField(
         state = passwordState,
@@ -260,7 +284,7 @@ private fun LockedCertificate(
             passwordState.clearText()
             onUnlock(password)
         },
-        enabled = passwordState.text.isNotEmpty(),
+        enabled = passwordState.text.isNotEmpty() && !state.revocationPending,
     )
     Spacer(modifier = Modifier.height(6.dp))
     JuntaOutlinedAction(
@@ -300,7 +324,6 @@ private fun UnlockedCertificate(
     state: CertificateUiState.Unlocked,
     onContinue: () -> Unit,
     onSelectCertificate: () -> Unit,
-    onLock: () -> Unit,
     onForget: () -> Unit,
 ) {
     Text(
@@ -319,11 +342,6 @@ private fun UnlockedCertificate(
     JuntaOutlinedAction(
         text = stringResource(R.string.choose_another_certificate),
         onClick = onSelectCertificate,
-    )
-    Spacer(modifier = Modifier.height(6.dp))
-    JuntaOutlinedAction(
-        text = stringResource(R.string.lock_certificate),
-        onClick = onLock,
     )
     Spacer(modifier = Modifier.height(6.dp))
     JuntaOutlinedAction(

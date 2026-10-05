@@ -63,14 +63,23 @@ jobs:
           sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - name: Verify dependency metadata and portable toolchain
         run: ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon
+      - name: Build optimized daily-use APK
+        run: ./gradlew assembleOptimized --no-daemon
       - name: Run Android unit tests
-        run: ./gradlew testDebugUnitTest testQaUnitTest --no-daemon
+        run: ./gradlew testDebugUnitTest testQaUnitTest testOptimizedUnitTest --no-daemon
       - name: Run Android lint
-        run: ./gradlew lintDebug lintQa --no-daemon
+        run: ./gradlew lintDebug lintQa lintOptimized --no-daemon
       - name: Build Android APKs
         run: ./gradlew assembleDebug assembleQa assembleQaAndroidTest --no-daemon
       - name: Verify Android artifacts
         run: scripts/ci/verify-android-artifacts.sh
+      - name: Retain optimized candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: firmamobile-optimized-${{ env.VERIFY_REF }}
+          path: app/build/outputs/apk/optimized/app-optimized.apk
+          if-no-files-found: error
+          retention-days: 3
       - name: Verify release signing fails closed without secrets
         run: scripts/ci/verify-release-fail-closed.sh
       - name: Record QA artifact provenance
@@ -97,8 +106,11 @@ jobs:
           path: |
             app/build/test-results/testDebugUnitTest/
             app/build/test-results/testQaUnitTest/
+            app/build/test-results/testOptimizedUnitTest/
+            app/build/test-results/consent-preview/
             app/build/reports/lint-results-debug.xml
             app/build/reports/lint-results-qa.xml
+            app/build/reports/lint-results-optimized.xml
           if-no-files-found: warn
           retention-days: 3
 

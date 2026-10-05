@@ -54,7 +54,7 @@ class SecureTunnelBuildConfigurationTest {
         val releaseSource = sourceTreeText("app/src/release")
         val forbidden = listOf(
             "QaOneShotTunnelCredentialProvider",
-            QaOneShotTunnelCredentialProvider.FILE_NAME,
+            "ws024-qa-credential.once",
             "JFM_WS024_QA_CREDENTIAL",
         )
         for (value in forbidden) {
@@ -65,7 +65,7 @@ class SecureTunnelBuildConfigurationTest {
             "app/src/debug/java/dev/junta/firmamobile/network/QaOneShotTunnelCredentialProvider.kt",
         )
         assertTrue(debugProvider.isFile)
-        assertTrue(debugProvider.readText().contains(QaOneShotTunnelCredentialProvider.FILE_NAME))
+        assertTrue(debugProvider.readText().contains("ws024-qa-credential.once"))
     }
 
     @Test

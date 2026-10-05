@@ -2,7 +2,7 @@ package dev.junta.firmamobile.ui
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import dev.junta.firmamobile.testing.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -38,6 +38,7 @@ class NativePrecalculatedHashConsentTest {
         val prompt = prompt(details("SHA-256"), locked = true)
         rule.setContent { JuntaFirmaTheme { NativeAfirmaConsentDialog(prompt, { confirmations++ }, { unlocks++ }, {}, {}) } }
         rule.onNodeWithTag("native-cades-provided-hash-notice").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("native-afirma-details-toggle").performScrollTo().performClick()
         rule.onNodeWithText("Huella recibida: 32 bytes; tamaño del documento original desconocido.").performScrollTo().assertIsDisplayed()
         rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
         rule.runOnIdle { assertEquals(0, confirmations); assertEquals(0, unlocks) }
@@ -46,6 +47,7 @@ class NativePrecalculatedHashConsentTest {
     @Test fun aReviewableHashRequestStillNeedsTheExistingExplicitConfirmAction() {
         val prompt = prompt(details("SHA-256"), locked = false)
         rule.setContent { JuntaFirmaTheme { NativeAfirmaConsentDialog(prompt, { confirmations++ }, { unlocks++ }, {}, {}) } }
+        rule.onNodeWithTag("native-afirma-details-toggle").performScrollTo().performClick()
         rule.onNodeWithText("SHA-256 de los bytes recibidos, no del documento original: " + "a".repeat(64)).performScrollTo().assertIsDisplayed()
         rule.runOnIdle { assertEquals(0, confirmations) }
         rule.onNodeWithTag("native-afirma-confirm").performClick()

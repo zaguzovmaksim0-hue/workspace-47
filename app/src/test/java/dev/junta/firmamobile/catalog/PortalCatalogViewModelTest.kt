@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -91,6 +92,47 @@ class PortalCatalogViewModelTest {
         } finally {
             Dispatchers.resetMain()
         }
+    }
+
+    @Test
+    fun `geocoder failures have a distinct user-visible state`() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val detector = object : RegionDetector {
+                override suspend fun detect() = RegionDetectionResult.Unavailable
+                override suspend fun diagnose() = RegionDetectionDetails(
+                    RegionDetectionResult.Unavailable, RegionDetectionFailureReason.GEOCODER_ERROR)
+            }
+            val model = PortalCatalogViewModel(repository, FakeCatalogPreferencesStore(), detector,
+                computationDispatcher = StandardTestDispatcher(testScheduler))
+            val collection = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.state.collect() }
+            model.detectRegion(); advanceUntilIdle()
+            assertEquals(CatalogLocationState.GEOCODING_FAILED, model.state.value.locationState)
+            collection.cancel()
+        } finally { Dispatchers.resetMain() }
+    }
+
+    @Test
+    fun `manual region wins over a late automatic result`() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val pending = kotlinx.coroutines.CompletableDeferred<Unit>()
+            val detector = RegionDetector {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { pending.await() }
+                RegionDetectionResult.Success(PortalRegionCode.GALICIA)
+            }
+            val store = FakeCatalogPreferencesStore()
+            val model = PortalCatalogViewModel(repository, store, detector,
+                computationDispatcher = StandardTestDispatcher(testScheduler))
+            val collection = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.state.collect() }
+            model.detectRegion(); runCurrent()
+            model.selectRegion(PortalRegionCode.ANDALUSIA)
+            pending.complete(Unit); advanceUntilIdle()
+            assertEquals(PortalRegionCode.ANDALUSIA, store.current.selectedRegion)
+            assertEquals(CatalogRegionSelectionSource.MANUAL, store.current.selectionSource)
+            assertEquals(CatalogLocationState.IDLE, model.state.value.locationState)
+            collection.cancel()
+        } finally { Dispatchers.resetMain() }
     }
 
     private class FakeCatalogPreferencesStore : CatalogPreferencesStore {

@@ -17,6 +17,11 @@ import java.time.Clock
 import java.time.Duration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +35,7 @@ class CertificateViewModel(
     private val unlockCache: CertificateUnlockCache = NoOpCertificateUnlockCache,
     private val clock: Clock = Clock.systemUTC(),
     private val unlockDuration: Duration = Duration.ofHours(24),
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow<CertificateUiState>(
         CertificateUiState.LoadingReference,
@@ -37,6 +43,13 @@ class CertificateViewModel(
     val state: StateFlow<CertificateUiState> = mutableState.asStateFlow()
 
     private var operationJob: Job? = null
+    private var revocationJob: Job? = null
+    private var restoreSuppressed = false
+
+    private suspend fun clearCache() {
+        revocationJob?.join()
+        withContext(ioDispatcher) { unlockCache.clear() }
+    }
 
     init {
         require(!unlockDuration.isNegative && !unlockDuration.isZero)
@@ -52,12 +65,14 @@ class CertificateViewModel(
 
     fun onCertificateSelected(uri: Uri) {
         cancelCurrentOperation()
-        unlockCache.clear()
+        restoreSuppressed = true
+        unlockCache.invalidate()
         session.forget()
         val previous = mutableState.value.referenceOrNull()
         mutableState.value = CertificateUiState.LoadingReference
         operationJob = viewModelScope.launch {
             mutableState.value = try {
+                clearCache()
                 when (val result = gateway.select(uri)) {
                     is CertificateSelectionResult.Success -> result.reference.toLockedState()
                     is CertificateSelectionResult.Failure -> {
@@ -77,7 +92,7 @@ class CertificateViewModel(
 
     fun unlock(password: CharArray) {
         val locked = mutableState.value as? CertificateUiState.Locked
-        if (locked == null) {
+        if (locked == null || locked.revocationPending || revocationJob?.isActive == true) {
             password.fill('\u0000')
             return
         }
@@ -100,13 +115,14 @@ class CertificateViewModel(
                         )
                         ensureActive()
                         session.unlock(result.identity, lease)
+                        restoreSuppressed = false
                         mutableState.value = CertificateUiState.Unlocked(
                             reference = locked.reference,
                             summary = result.identity.summary,
                         )
                     }
                     is CertificateLoadResult.Failure -> {
-                        unlockCache.clear()
+                        clearCache()
                         session.lock()
                         mutableState.value = locked.copy(error = result.code.toUiError())
                     }
@@ -114,7 +130,7 @@ class CertificateViewModel(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: Exception) {
-                unlockCache.clear()
+                clearCache()
                 session.lock()
                 mutableState.value = locked.copy(error = CertificateUiError.STORAGE_FAILURE)
             } finally {
@@ -127,14 +143,32 @@ class CertificateViewModel(
 
     fun lock() {
         cancelCurrentOperation()
-        unlockCache.clear()
+        restoreSuppressed = true
         session.lock()
+        unlockCache.invalidate()
         val current = mutableState.value
-        val reference = current.referenceOrNull() ?: return
-        mutableState.value = reference.toLockedState(current.summaryOrNull())
+        val reference = current.referenceOrNull()
+        if (reference != null) {
+            mutableState.value = reference.toLockedState(current.summaryOrNull()).copy(revocationPending = true)
+        }
+        val previous = revocationJob
+        val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
+            previous?.join()
+            val revoked = withContext(NonCancellable + ioDispatcher) {
+                runCatching { unlockCache.clearAndReport() }.getOrDefault(false)
+            }
+            val latest = mutableState.value as? CertificateUiState.Locked
+            if (revocationJob === currentCoroutineContext()[Job] && latest != null && latest.reference == reference) {
+                mutableState.value = latest.copy(revocationPending = false,
+                    error = if (revoked) null else CertificateUiError.STORAGE_FAILURE)
+            }
+        }
+        revocationJob = job
+        job.start()
     }
 
     fun onAppForegrounded() {
+        if (restoreSuppressed || revocationJob?.isActive == true) return
         when (val current = mutableState.value) {
             CertificateUiState.LoadingReference,
             is CertificateUiState.NoCertificate,
@@ -154,6 +188,7 @@ class CertificateViewModel(
         session.onAppBackgrounded()
         if (session.identityForSigning() != null) return
         val current = mutableState.value
+        if (current is CertificateUiState.Locked) return
         val reference = current.referenceOrNull() ?: return
         mutableState.value = reference.toLockedState(current.summaryOrNull())
     }
@@ -162,6 +197,7 @@ class CertificateViewModel(
         cancelUnlockOperation()
         session.onMemoryPressure()
         val current = mutableState.value
+        if (current is CertificateUiState.Locked) return
         val reference = current.referenceOrNull() ?: return
         mutableState.value = reference.toLockedState(current.summaryOrNull())
         restoreFromCache(reference)
@@ -169,12 +205,14 @@ class CertificateViewModel(
 
     fun forget() {
         cancelCurrentOperation()
-        unlockCache.clear()
+        restoreSuppressed = true
+        unlockCache.invalidate()
         session.forget()
         val previous = mutableState.value.referenceOrNull()
         mutableState.value = CertificateUiState.LoadingReference
         operationJob = viewModelScope.launch {
             mutableState.value = try {
+                clearCache()
                 gateway.forget()
                 CertificateUiState.NoCertificate()
             } catch (cancellation: CancellationException) {
@@ -189,7 +227,7 @@ class CertificateViewModel(
     private suspend fun loadReferenceAndRestore(): CertificateUiState = try {
         val reference = gateway.currentReference()
         if (reference == null) {
-            unlockCache.clear()
+            clearCache()
             CertificateUiState.NoCertificate()
         } else {
             restore(reference)
@@ -201,6 +239,7 @@ class CertificateViewModel(
     }
 
     private fun restoreFromCache(reference: StoredCertificateReference) {
+        if (restoreSuppressed || revocationJob?.isActive == true) return
         cancelCurrentOperation()
         operationJob = viewModelScope.launch {
             mutableState.value = restore(reference)
@@ -213,7 +252,7 @@ class CertificateViewModel(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {
-            unlockCache.clear()
+            clearCache()
             session.lock()
             return reference.toLockedState(CertificateUiError.STORAGE_FAILURE)
         } ?: return reference.toLockedState()
@@ -227,7 +266,7 @@ class CertificateViewModel(
                         CertificateUiState.Unlocked(reference, result.identity.summary)
                     }
                     is CertificateLoadResult.Failure -> {
-                        unlockCache.clear()
+                        clearCache()
                         session.lock()
                         reference.toLockedState()
                     }
@@ -235,7 +274,7 @@ class CertificateViewModel(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: Exception) {
-                unlockCache.clear()
+                clearCache()
                 session.lock()
                 reference.toLockedState()
             }

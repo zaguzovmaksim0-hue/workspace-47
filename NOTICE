@@ -1,4 +1,4 @@
-Junta Firma Mobile — third-party notices
+Firma Mobile — third-party notices
 
 This file is a pre-publication notice inventory. It does not replace the license
 text of any third-party component and does not grant rights to material whose
@@ -31,7 +31,7 @@ certification or endorsement is implied.
 Build/runtime dependencies
 --------------------------
 Gradle/Maven and Python dependencies are declared in the repository and are
-resolved externally rather than copied into Junta Firma Mobile project source.
+resolved externally rather than copied into Firma Mobile project source.
 The reviewed dependency families and their upstream license classes are recorded
 in docs/licenses/runtime-dependency-audit.md. Their licenses are not replaced by
 a future project root license.

@@ -214,6 +214,43 @@ class CertificateSessionTest {
         }
     }
 
+    @Test
+    fun certificateExpiryInvalidatesIdentityAndExistingSigningSnapshotBeforeLeaseExpiry() = runTest {
+        val identity = validIdentity()
+        val clock = MutableClock(identity.certificate.notAfter.toInstant().minusSeconds(60))
+        val session = CertificateSession(clock = clock)
+        session.unlock(identity)
+        val snapshot = checkNotNull(session.signingSnapshot())
+        clock.advance(Duration.ofSeconds(61))
+        snapshot.use {
+            assertNull(session.identityForSigning(it))
+            assertNull(session.identityForSigning())
+            assertNull(session.signingSnapshot())
+            assertEquals(CertificateSessionState.Locked(identity.summary), session.state())
+        }
+    }
+
+    @Test
+    fun civilRollbackBeforeCertificateValidityFailsClosed() = runTest {
+        val identity = validIdentity()
+        val clock = MutableClock(identity.certificate.notBefore.toInstant().plusSeconds(60))
+        val session = CertificateSession(clock = clock)
+        session.unlock(identity)
+        clock.rewind(Duration.ofSeconds(61))
+        assertNull(session.identityForSigning())
+    }
+
+    @Test
+    fun alreadyExpiredIdentityCannotBeUnlocked() = runTest {
+        val identity = validIdentity()
+        val session = CertificateSession(clock = Clock.fixed(
+            identity.certificate.notAfter.toInstant().plusSeconds(1), ZoneOffset.UTC))
+        org.junit.Assert.assertThrows(java.security.cert.CertificateExpiredException::class.java) {
+            session.unlock(identity)
+        }
+        assertNull(session.identityForSigning())
+    }
+
     private suspend fun validIdentity(
         bytes: ByteArray = TestCertificateFactory.validRsa(),
     ): UnlockedIdentity {

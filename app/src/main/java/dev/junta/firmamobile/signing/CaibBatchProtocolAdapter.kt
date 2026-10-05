@@ -42,7 +42,7 @@ class CaibBatchProtocolAdapter internal constructor(
         val xml = request.documents.single().dataReference
         val certs = runCatching { encodeCertificateChain(certificateChain) }.getOrNull()
             ?: return BatchProtocolPrepareResult.Failure(SigningErrorCode.INVALID_REQUEST)
-        val result = post(pair.first.url, "xml=$xml&certs=$certs")
+        val result = post(pair.first.url, "xml=$xml&certs=$certs", request.cancellation)
         return when (result) {
             is ProfileHttpResult.Failure -> BatchProtocolPrepareResult.Failure(result.toSigningError())
             is ProfileHttpResult.Success -> result.response.use { response ->
@@ -88,7 +88,7 @@ class CaibBatchProtocolAdapter internal constructor(
             localSignatures.forEach(LocalSignature::close)
         }
         val expectedDocumentId = state.expectedDocumentId
-        val result = post(state.postUrl, query)
+        val result = post(state.postUrl, query, request.cancellation)
         state.close()
         return when (result) {
             is ProfileHttpResult.Failure -> BatchProtocolCompletionResult.Failure(result.toSigningError())
@@ -136,9 +136,8 @@ class CaibBatchProtocolAdapter internal constructor(
         pre to bytes.copyOf()
     }.getOrNull()
 
-    private fun post(endpoint: URI, query: String): ProfileHttpResult {
+    private fun post(endpoint: URI, query: String, cancellation: ProfileHttpCancellation): ProfileHttpResult {
         val transport = transportFactory(endpoint)
-        val cancellation = ProfileHttpCancellation()
         return try {
             ProfileHttpRequest(ValidatedNetworkUrl(endpoint), ByteArray(0), encodedQuery = query).use {
                 transport.post(it, cancellation)

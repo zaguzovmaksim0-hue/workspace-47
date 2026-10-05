@@ -29,6 +29,7 @@ internal class BatchSigningCoordinator(
     private val profileDisplayName: String,
     private val supportLevel: String,
     private val profileRegistry: SiteProfileRegistry? = null,
+    private val phaseExecutor: BatchPhaseExecutor = BatchPhaseExecutor(),
 ) : AutoCloseable {
     private val mutableState = MutableStateFlow<SigningUiState>(SigningUiState.Idle)
     val state: StateFlow<SigningUiState> = mutableState.asStateFlow()
@@ -145,7 +146,10 @@ internal class BatchSigningCoordinator(
             operationValidationError(operation, identity)?.let { code ->
                 return fail(operation, code)
             }
-            val ownedPreSign = when (val prepared = operation.adapter.prepare(operation.request, identity.chain)) {
+            val prepared = phaseExecutor.run(operation.request.cancellation, discard = { result: BatchProtocolPrepareResult ->
+                if (result is BatchProtocolPrepareResult.Success) result.preSign.close()
+            }) { operation.adapter.prepare(operation.request, identity.chain) }
+            val ownedPreSign = when (prepared) {
                 is BatchProtocolPrepareResult.Failure -> return fail(operation, prepared.code)
                 is BatchProtocolPrepareResult.Success -> prepared.preSign
             }
@@ -162,8 +166,12 @@ internal class BatchSigningCoordinator(
                     return fail(operation, code)
                 }
                 val localSignature = when (
-                    val result = ownedPreSign.withInput(index) { bytes ->
-                        localSignatureEngine.sign(bytes, identity, operation.request.algorithm)
+                    val result = phaseExecutor.run(operation.request.cancellation, discard = { result: LocalSignatureResult ->
+                        if (result is LocalSignatureResult.Success) result.signature.close()
+                    }) {
+                        ownedPreSign.withInput(index) { bytes ->
+                            localSignatureEngine.sign(bytes, identity, operation.request.algorithm)
+                        }
                     }
                 ) {
                     is LocalSignatureResult.Failure ->
@@ -177,7 +185,9 @@ internal class BatchSigningCoordinator(
                 return fail(operation, code)
             }
             val completion = try {
-                operation.adapter.complete(operation.request, ownedPreSign, localSignatures)
+                phaseExecutor.run(operation.request.cancellation, discard = { result: BatchProtocolCompletionResult ->
+                    if (result is BatchProtocolCompletionResult.Success) result.response.close()
+                }) { operation.adapter.complete(operation.request, ownedPreSign, localSignatures) }
             } finally {
                 localSignatures.forEach(LocalSignature::close)
                 localSignatures.clear()
@@ -247,6 +257,7 @@ internal class BatchSigningCoordinator(
                 ?: active?.takeIf { requestId == null || it.request.requestId == requestId }
                 ?: return false
             if (!candidate.claimCancellation(reason.code)) return false
+            candidate.request.cancellation.cancel()
             if (pending === candidate) {
                 pending = null
                 candidate.clearSensitive()

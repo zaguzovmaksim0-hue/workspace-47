@@ -32,7 +32,7 @@ class VisualResourceContractTest {
         )
 
         assertEquals(R.mipmap.ic_launcher, applicationInfo.icon)
-        assertEquals("Junta Firma", applicationInfo.loadLabel(context.packageManager).toString())
+        assertEquals("Firma Mobile", applicationInfo.loadLabel(context.packageManager).toString())
         assertNotEquals(
             0,
             resources.getIdentifier("ic_launcher_background", "drawable", packageName),

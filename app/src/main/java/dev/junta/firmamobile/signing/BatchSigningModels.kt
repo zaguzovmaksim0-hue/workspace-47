@@ -37,6 +37,7 @@ class NormalizedBatchSigningRequest internal constructor(
     documents: List<NormalizedBatchSigningDocument>,
 ) : Closeable {
     val documents: List<NormalizedBatchSigningDocument> = documents.toList()
+    internal val cancellation = dev.junta.firmamobile.network.ProfileHttpCancellation()
     private var open = true
 
     init {
@@ -54,6 +55,7 @@ class NormalizedBatchSigningRequest internal constructor(
     @Synchronized
     override fun close() {
         open = false
+        cancellation.cancel()
     }
 }
 

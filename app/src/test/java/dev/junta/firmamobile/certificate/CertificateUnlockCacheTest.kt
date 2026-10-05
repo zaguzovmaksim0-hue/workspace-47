@@ -322,9 +322,21 @@ class CertificateUnlockCacheTest {
         }
 
         assertTrue(storage.writeStarted.await(5, TimeUnit.SECONDS))
-        cache.clear()
-        storage.allowWrite.countDown()
-
+        val clear = Thread { cache.clear() }
+        clear.start()
+        try {
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+            while (clear.state != Thread.State.BLOCKED && clear.isAlive && System.nanoTime() < deadline) {
+                Thread.yield()
+            }
+            // Revocation cannot be acknowledged while an older durable commit
+            // is still running. The only contended monitor is persistenceLock.
+            assertEquals(Thread.State.BLOCKED, clear.state)
+        } finally {
+            storage.allowWrite.countDown()
+            clear.join(5_000)
+        }
+        assertFalse(clear.isAlive)
         assertFalse(store.await())
         assertNull(storage.read())
     }
@@ -357,6 +369,87 @@ class CertificateUnlockCacheTest {
             ),
         )
         assertNull(longStorage.bytes)
+    }
+
+    @Test
+    fun failedDeletionBlocksRestoreAndReportsFailure() = runTest {
+        for (throwOnClear in listOf(false, true)) {
+            val storage = FailedDeletionStorage(throwOnClear)
+            val cache = cache(storage)
+            assertTrue(cache.store(reference, "synthetic".toCharArray(), now,
+                now.plus(Duration.ofHours(24)), 1_000_000_000L))
+            assertFalse(cache.clearAndReport())
+            assertNull(cache.restore(reference, now.plusSeconds(1)))
+            assertTrue(storage.bytes != null)
+        }
+    }
+
+    @Test
+    fun revokingKeyRejectsLeftoverRecordInNewCacheInstance() = runTest {
+        val storage = FailedDeletionStorage(false)
+        val keys = RevocableKeyProvider()
+        fun fresh() = EncryptedCertificateUnlockCache(storage, keys,
+            { CertificateUnlockBootTime(1, 1_000_000_000L) }, { 1_000_000_000L })
+        val first = fresh()
+        assertTrue(first.store(reference, "synthetic".toCharArray(), now,
+            now.plus(Duration.ofHours(24)), 1_000_000_000L))
+        assertTrue(first.clearAndReport())
+        assertTrue(storage.bytes != null)
+        val restarted = fresh()
+        assertNull(restarted.restore(reference, now.plusSeconds(1)))
+        assertEquals(1, keys.created)
+        // Only a new explicit unlock/store may create a replacement key.
+        assertTrue(restarted.store(reference, "new-synthetic".toCharArray(), now,
+            now.plus(Duration.ofHours(24)), 1_000_000_000L))
+        checkNotNull(restarted.restore(reference, now.plusSeconds(1))).use {
+            assertArrayEquals("new-synthetic".toCharArray(), it.password)
+        }
+        assertEquals(2, keys.created)
+    }
+
+    @Test
+    fun cancelledWriterCannotCreateNewKeyAfterAcknowledgedRevocation() = runTest {
+        val storage = AtomicCertificateUnlockRecordStorage(
+            temporaryFolder.newFolder("stale-writer").resolve("unlock.bin"))
+        val keys = RevocableKeyProvider()
+        val started = CountDownLatch(1)
+        val resume = CountDownLatch(1)
+        val old = EncryptedCertificateUnlockCache(storage, keys, {
+            started.countDown()
+            check(resume.await(5, TimeUnit.SECONDS))
+            CertificateUnlockBootTime(1, 1_000_000_000L)
+        }, { 1_000_000_000L })
+        val store = async(Dispatchers.Default) {
+            old.store(reference, "synthetic".toCharArray(), now,
+                now.plus(Duration.ofHours(24)), 1_000_000_000L)
+        }
+        assertTrue(started.await(5, TimeUnit.SECONDS))
+        store.cancel()
+        try {
+            assertTrue(old.clearAndReport())
+        } finally { resume.countDown() }
+        store.join()
+        assertEquals(0, keys.created)
+        assertNull(storage.read())
+        val restarted = EncryptedCertificateUnlockCache(storage, keys,
+            { CertificateUnlockBootTime(1, 1_000_000_001L) }, { 1_000_000_001L })
+        assertNull(restarted.restore(reference, now.plusSeconds(1)))
+    }
+
+    private class FailedDeletionStorage(private val throwOnClear: Boolean) : CertificateUnlockRecordStorage {
+        var bytes: ByteArray? = null
+        override fun read() = bytes?.copyOf()
+        override fun write(record: ByteArray): Boolean { bytes = record.copyOf(); return true }
+        override fun clear(): Boolean { if (throwOnClear) error("synthetic deletion failure"); return false }
+    }
+
+    private class RevocableKeyProvider : CertificateUnlockKeyProvider {
+        var key: SecretKey? = null
+        var created = 0
+        override fun getOrCreate(): SecretKey = key ?: KeyGenerator.getInstance("AES").apply { init(256) }
+            .generateKey().also { key = it; created++ }
+        override fun getExisting(): SecretKey? = key
+        override fun revoke(): Boolean { key = null; return true }
     }
 
     private fun cache(
@@ -429,9 +522,10 @@ class CertificateUnlockCacheTest {
             return true
         }
 
-        override fun clear() {
+        override fun clear(): Boolean {
             bytes?.fill(0)
             bytes = null
+            return true
         }
 
         fun isEmpty(): Boolean = bytes == null
@@ -453,9 +547,10 @@ class CertificateUnlockCacheTest {
             return true
         }
 
-        override fun clear() {
+        override fun clear(): Boolean {
             bytes?.fill(0)
             bytes = null
+            return true
         }
     }
 
@@ -472,10 +567,11 @@ class CertificateUnlockCacheTest {
             return true
         }
 
-        override fun clear() {
+        override fun clear(): Boolean {
             clearCalls += 1
             bytes?.fill(0)
             bytes = null
+            return true
         }
     }
 }

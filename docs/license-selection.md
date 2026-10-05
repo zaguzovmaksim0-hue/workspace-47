@@ -1,12 +1,17 @@
-# Project license selection
+# Project license reference
 
-**Status:** approved for source publication
+**Current reference:** the checked-in root [`LICENSE`](../LICENSE) contains the MIT License.
+This correction changes documentation only; the license text and third-party terms are unchanged.
 
-## Selected project license
+The selection and verification record below is historical. It does not override the current root license.
 
-**Apache License 2.0** applies to project-origin Junta Firma Mobile source and documentation unless a file or directory is explicitly identified as third-party or separately licensed.
+**Historical status:** approved for source publication
 
-The root `LICENSE` contains the unmodified Apache License 2.0 text. `NOTICE`, `docs/provenance.md`, `docs/visual-asset-audit.md`, and `docs/licenses/runtime-dependency-audit.md` remain part of the licensing/provenance record.
+## Historical selected project license
+
+The historical record stated that **Apache License 2.0** applied to project-origin Junta Firma Mobile source and documentation unless a file or directory is explicitly identified as third-party or separately licensed.
+
+At that historical checkpoint the record described the root `LICENSE` as Apache License 2.0. That description does not match the current file; use the current root text instead. `NOTICE`, `docs/provenance.md`, `docs/visual-asset-audit.md`, and `docs/licenses/runtime-dependency-audit.md` remain part of the licensing/provenance record.
 
 ## Approval evidence
 

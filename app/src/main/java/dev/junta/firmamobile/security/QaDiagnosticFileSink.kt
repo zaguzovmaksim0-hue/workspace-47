@@ -25,28 +25,28 @@ internal class QaDiagnosticFileSink(
         }
 
         runCatching {
-            val records = if (file.isFile) {
-                file.readLines(StandardCharsets.US_ASCII)
-                    .filter(::isSafeRecord)
-                    .toMutableList()
-            } else {
-                mutableListOf()
-            }
-            records += record
-            while (serializedSize(records) > maxBytes && records.isNotEmpty()) {
-                records.removeAt(0)
-            }
-            val output = buildString {
-                records.forEach { line ->
-                    append(line)
-                    append('\n')
+            // Append normally. Rotate a chunk only when full, rather than re-reading
+            // and rewriting the journal on every WebView callback.
+            val incomingSize = recordBytes.size + NEWLINE_BYTES.size
+            if (file.length() + incomingSize > maxBytes) {
+                val records = if (file.isFile) file.readLines(StandardCharsets.US_ASCII)
+                    .filter(::isSafeRecord).toMutableList() else mutableListOf()
+                val targetBytes = minOf(maxBytes / 2, maxBytes - incomingSize)
+                var retainedBytes = serializedSize(records)
+                while (retainedBytes > targetBytes && records.isNotEmpty()) {
+                    retainedBytes -= records.removeAt(0).length + NEWLINE_BYTES.size
                 }
-            }.toByteArray(StandardCharsets.US_ASCII)
-            file.outputStream().use { stream ->
-                stream.write(output)
-                stream.flush()
+                file.outputStream().use { stream ->
+                    records.forEach { line ->
+                        stream.write(line.toByteArray(StandardCharsets.US_ASCII))
+                        stream.write(NEWLINE_BYTES)
+                    }
+                }
             }
-            output.fill(0)
+            java.io.FileOutputStream(file, true).use { stream ->
+                stream.write(recordBytes)
+                stream.write(NEWLINE_BYTES)
+            }
         }
         recordBytes.fill(0)
     }

@@ -44,7 +44,7 @@ class SiteDataCleanerTest {
             capabilities(getCookieInfo = true),
         )
 
-        assertEquals(SiteClearResult.CLEARED_EXACTLY, result)
+        assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE, result)
         assertEquals(listOf("https://tramita.unizar.es"), storage.deletedOrigins)
         assertEquals(
             listOf("https://tramita.unizar.es/private/path"),
@@ -59,6 +59,16 @@ class SiteDataCleanerTest {
         assertEquals(1, cookies.flushCalls)
         assertEquals(0, cookies.removeAllCalls)
         assertEquals(0, storage.deleteAllCalls)
+    }
+
+    @Test
+    fun emptyUrlCookieListCannotProveCookiesAtOtherPathsAreGone() {
+        val cookies = FakeCookieStore(cookieInfo = emptyList())
+        val cleaner = SiteDataCleaner(cookies, FakeSiteWebStorage())
+        assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE,
+            cleaner.clearOrigin(URI("https://example.org/"), capabilities(true)))
+        assertTrue(cookies.writes.isEmpty())
+        assertEquals(0, cookies.removeAllCalls)
     }
 
     @Test
@@ -109,12 +119,12 @@ class SiteDataCleanerTest {
             dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
                 .profile(dev.junta.firmamobile.profile.ProfileId("carne-joven-andalucia")),
         )
-        var callback: Boolean? = null
+        var callback: SiteClearResult? = null
 
         cleaner.clearProfileSession(profile, capabilities(getCookieInfo = false)) { callback = it }
 
-        assertEquals(true, callback)
-        assertEquals(1, cookies.removeSessionCalls)
+        assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE, callback)
+        assertEquals(0, cookies.removeSessionCalls)
         assertEquals(0, cookies.removeAllCalls)
         assertEquals(
             setOf(
@@ -134,12 +144,12 @@ class SiteDataCleanerTest {
             dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
                 .profile(dev.junta.firmamobile.profile.ProfileId("junta-andalucia-vea-peg")),
         )
-        var callback: Boolean? = null
+        var callback: SiteClearResult? = null
 
         cleaner.clearProfileSession(profile, capabilities(getCookieInfo = false)) { callback = it }
 
-        assertEquals(true, callback)
-        assertEquals(1, cookies.removeSessionCalls)
+        assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE, callback)
+        assertEquals(0, cookies.removeSessionCalls)
         assertEquals(0, cookies.removeAllCalls)
         val cleared = storage.deletedOrigins.toSet()
         assertTrue("https://veaja.cloud.juntadeandalucia.es" in cleared)
@@ -148,6 +158,49 @@ class SiteDataCleanerTest {
         for (index in 1..6) {
             assertTrue("https://ws235-$index.juntadeandalucia.es" in cleared)
         }
+    }
+
+    @Test
+    fun profileSessionDoesNotClaimSuccessForPersistentCookieAtUnobservedPath() {
+        var persistentAuth = true
+        val cookies = object : WebCookieStore {
+            override fun getCookie(url: String): String? = if (persistentAuth) "AUTH=synthetic" else null
+            override fun getCookieInfo(url: String): List<String> =
+                if (URI(url).path.startsWith("/auth")) listOf("AUTH=synthetic; Path=/auth; Max-Age=86400") else emptyList()
+            override fun setCookie(url: String, value: String) { if (value.startsWith("AUTH=")) persistentAuth = false }
+            override fun flush() = Unit
+            override fun removeSessionCookies(callback: (Boolean) -> Unit) { callback(false) }
+            override fun removeAllCookies(callback: (Boolean) -> Unit) { error("Must not broaden cleanup") }
+        }
+        val profile = checkNotNull(dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+            .profile(dev.junta.firmamobile.profile.ProfileId("carne-joven-andalucia")))
+        var result: SiteClearResult? = null
+        SiteDataCleaner(cookies, FakeSiteWebStorage()).clearProfileSession(profile, capabilities(true)) { result = it }
+        assertTrue(persistentAuth)
+        assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE, result)
+    }
+
+    @Test
+    fun onlyExplicitLogoutMayClearGlobalSessionCookies() {
+        val profile = checkNotNull(dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+            .profile(dev.junta.firmamobile.profile.ProfileId("carne-joven-andalucia")))
+        val cookies = FakeCookieStore()
+        val cleaner = SiteDataCleaner(cookies, FakeSiteWebStorage())
+        cleaner.clearProfileSession(profile, capabilities(false)) { }
+        assertEquals(0, cookies.removeSessionCalls)
+        cleaner.clearProfileSession(profile, capabilities(false), clearAllSessionCookies = true) { }
+        assertEquals(1, cookies.removeSessionCalls)
+        assertEquals(0, cookies.removeAllCalls)
+    }
+
+    @Test
+    fun profileStorageFailureIsNotDowngradedToPartialSuccess() {
+        val profile = checkNotNull(dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+            .profile(dev.junta.firmamobile.profile.ProfileId("carne-joven-andalucia")))
+        var result: SiteClearResult? = null
+        SiteDataCleaner(FakeCookieStore(), FakeSiteWebStorage(failDeleteOrigin = true))
+            .clearProfileSession(profile, capabilities(false)) { result = it }
+        assertEquals(SiteClearResult.FAILED, result)
     }
 
     @Test

@@ -21,6 +21,22 @@ import dev.junta.firmamobile.security.SanitizedLogSink
 import dev.junta.firmamobile.security.SanitizedLogger
 
 class JuntaFirmaApplication : Application() {
+    private val catalogLoader = dev.junta.firmamobile.catalog.CatalogRepositoryLoader {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val publicCatalog = resources.openRawResource(R.raw.public_portal_catalog_v1)
+                .bufferedReader().use {
+                    dev.junta.firmamobile.catalog.PublicPortalCatalogParser.parse(it.readText())
+                }
+            dev.junta.firmamobile.catalog.PortalCatalogRepository(
+                registry = dev.junta.firmamobile.profile.BuiltInSiteProfiles.runtimeRegistry,
+                profileCatalog = dev.junta.firmamobile.profile.BuiltInSiteProfiles.catalog,
+                publicCatalog = publicCatalog,
+            ).also { it.portals() } // Warm the search index off the UI thread as well.
+        }
+    }
+
+    internal suspend fun loadCatalogRepository() = catalogLoader.get()
+
     lateinit var certificateGateway: CertificateGateway
         internal set
 
@@ -44,7 +60,7 @@ class JuntaFirmaApplication : Application() {
         PDFBoxResourceLoader.init(this)
         sanitizedLogger = ApplicationSanitizedLoggerFactory.create(
             filesDirectory = filesDir,
-            qaEnabled = BuildConfig.ALLOW_QA_PROFILES,
+            qaEnabled = BuildConfig.DEBUG && BuildConfig.ALLOW_QA_PROFILES,
             diagnosticMirror = SanitizedLogSink { record ->
                 Log.i(QA_DIAGNOSTIC_TAG, record)
             },

@@ -325,7 +325,7 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
-    fun clearSessionActuallyEndsTheSelectedProfileWebSessionBeforeLockingCertificate() {
+    fun clearSessionLocksFirstAndExitsOnlyAfterBrowserCleanup() {
         val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
         )
@@ -334,18 +334,22 @@ class BrowserSecurityRegressionTest {
             .substringBefore("        onDeleteAllBrowserData = {")
 
         assertTrue("Clear-session handler must be present", sessionBlock.isNotEmpty())
+        assertTrue("Partial cleanup must stay visible when leaving the browser",
+            sessionBlock.contains("R.string.browser_clear_session_limited"))
+        assertTrue("Partial cleanup must not be coerced to a Boolean success",
+            sessionBlock.contains("sessionCleared == SiteClearResult.FAILED"))
         val epochIndex = sessionBlock.indexOf("advanceNavigationEpoch()")
         val clearIndex = sessionBlock.indexOf("siteDataCleaner.clearProfileSession")
         val profileBranchIndex = sessionBlock.indexOf("            } else {")
         assertTrue("Profile cleanup must follow navigation invalidation", profileBranchIndex > epochIndex)
         val preferenceIndex = sessionBlock.indexOf("clientCertPreferenceCoordinator.requestClear", profileBranchIndex)
-        val exitIndex = sessionBlock.indexOf("onClearSession()", profileBranchIndex)
+        val exitIndex = sessionBlock.indexOf("onExitBrowser()", profileBranchIndex)
         val publicBranch = sessionBlock.substringBefore("            } else {")
         val publicClear = publicBranch.indexOf("siteDataCleaner.clearOrigin")
         val publicPreferences = publicBranch.indexOf("clientCertPreferenceCoordinator.requestClear")
         val publicLock = publicBranch.indexOf("onClearSession()")
-        assertTrue("Public cleanup must invalidate before clearing and lock after preference cleanup",
-            publicClear > epochIndex && publicPreferences > publicClear && publicLock > publicPreferences)
+        assertTrue("Public cleanup must lock before fallible browser work",
+            publicLock >= 0 && publicLock < epochIndex && publicClear > epochIndex && publicPreferences > publicClear)
         assertTrue(
             "Closing the certificate session must invalidate the active navigation before deleting profile session state",
             epochIndex >= 0 && clearIndex in (epochIndex + 1) until preferenceIndex,
@@ -355,7 +359,7 @@ class BrowserSecurityRegressionTest {
             preferenceIndex in (clearIndex + 1) until exitIndex,
         )
         assertTrue(
-            "The app may lock the certificate only after browser-session and client-certificate cleanup were requested",
+            "The browser exits only after client-certificate cleanup",
             exitIndex > preferenceIndex,
         )
     }
@@ -769,7 +773,7 @@ class BrowserSecurityRegressionTest {
         )
         assertTrue(
             "Melilla batch protocol must use the existing direct HTTPS transport stack",
-            "MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source,
+            "MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))" in source,
         )
         val melillaAdapterBlock = source
             .substringAfter("melillaBatchSigningAdapter = MelillaBatchSigningAdapter(", missingDelimiterValue = "")
@@ -875,8 +879,8 @@ class BrowserSecurityRegressionTest {
         )
         assertTrue(
             "MainActivity must create fixed Melilla and Extremadura STA protocol adapters over HTTPS transport",
-            "val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source &&
-                "val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source,
+            "val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))" in source &&
+                "val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy()::validate))" in source,
         )
         assertTrue(
             "The batch coordinator must resolve only the two fixed STA protocol adapters and bind confirmation metadata to the active profile",
@@ -938,6 +942,29 @@ class BrowserSecurityRegressionTest {
         // Dialog behavior does not grant camera, microphone, or location access.
         assertTrue(source.contains("request.deny()"))
         assertTrue(source.contains("callback.invoke(origin, false, false)"))
+    }
+
+    @Test
+    fun everyStaAdapterUsesItsOwnHostPolicyInsteadOfJuntaDefaultTransport() {
+        val source = projectSource("app/src/main/java/dev/junta/firmamobile/MainActivity.kt")
+        for (name in listOf("Melilla", "Extremadura", "LaPalma", "Huesca", "Burgos")) {
+            assertTrue("Missing exact host policy for $name", source.contains(
+                "${name}BatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.${name}BatchUrlPolicy()::validate))"))
+            assertFalse(source.contains("${name}BatchProtocolAdapter(transport = HttpsProfileHttpTransport())"))
+        }
+    }
+
+    @Test
+    fun logoutLocksBeforeFallibleCleanupAndAutomaticPreparationStaysScoped() {
+        val source = projectSource("app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt")
+        val logout = source.substringAfter("        onClearSession = {").substringBefore("        onDeleteAllBrowserData = {")
+        assertTrue(logout.indexOf("onClearSession()") >= 0)
+        assertTrue(logout.indexOf("onClearSession()") < logout.indexOf("abandonClientAuth()"))
+        assertTrue(logout.contains("clearAllSessionCookies = true"))
+        assertTrue(logout.contains("onExitBrowser()"))
+        val automatic = source.substringAfter("fun beginClientCertPreferenceRecovery()").substringBefore("val handleAfirmaRequest")
+        assertTrue(automatic.contains("clearProfileSession(profile, webViewCapabilities)"))
+        assertFalse(automatic.contains("clearAllSessionCookies = true"))
     }
 
     private fun profile(id: String) = BuiltInSiteProfiles.catalog.profiles.single {

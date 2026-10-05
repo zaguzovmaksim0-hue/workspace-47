@@ -1,30 +1,36 @@
-# Documentation index
+# Índice de documentación
 
-## Current development
+## Para usuarios
 
-- [Repository lifecycle](../CONTEXT.md): stable main, bounded branches, exact-commit verification.
-- [Contribution guide](../CONTRIBUTING.md).
-- [Verification policy](agents/github-actions-verification.md): unit tests, lint and builds in GitHub Actions; emulator runs require explicit manual opt-in.
-- [Test plan](test-plan.md) and [synthetic fixtures](test-fixtures.md).
-- [Signing configuration](release-signing.md).
-- [Security model](../SECURITY.md) and [provenance](provenance.md).
+- [Instalación y primeros pasos](instalacion.md).
+- [Cambios de versión](../CHANGELOG.md).
+- [Descripción del proyecto](../README.md).
 
-## Product and evidence
+## Desarrollo actual
 
-- [Specification](spec.md).
-- [Compatibility inventory](compatibility/all-spanish-public-portals-inventory.md).
-- [Protocol observations](protocol-observations.md).
-- `compatibility/` contains discovery and compatibility evidence.
-- `e2e/` contains historical bounded execution evidence, not current universal acceptance.
+- [Ciclo de trabajo del repositorio](../CONTEXT.md): main estable, ramas acotadas y verificación del commit exacto.
+- [Guía de contribución](../CONTRIBUTING.md).
+- [Política de verificación](agents/github-actions-verification.md): pruebas, lint y compilaciones en GitHub Actions; el emulador requiere activación manual explícita.
+- [Plan de pruebas](test-plan.md) y [muestras sintéticas](test-fixtures.md).
+- [Configuración de firma](release-signing.md).
+- [Modelo de seguridad](../SECURITY.md) y [procedencia](provenance.md).
 
-## Historical records
+## Producto y evidencias
 
-`autonomous/`, `superpowers/`, and old publication/test reports retain their original dates and commit-specific evidence. They are not instructions to resume obsolete branches. Preserve their paths so historical links continue to work.
+- [Especificación](spec.md).
+- [Inventario de compatibilidad](compatibility/all-spanish-public-portals-inventory.md).
+- [Observaciones de protocolos](protocol-observations.md).
+- `compatibility/` contiene evidencias de descubrimiento y compatibilidad.
+- `e2e/` conserva evidencias históricas de operaciones acotadas, no una garantía de compatibilidad universal actual.
 
-The real-certificate Actions workflow is [archived](archive/workflows/real-e2e.yml.disabled) as inert documentation. Its GitHub environment credentials were removed and its run history cleared by the owner-approved cleanup. Policy tests still inspect the archive to preserve its recorded boundaries. It must not be restored or supplied with credentials without new operator authorization.
+## Registros históricos
 
-The unrelated Kai macOS profiler workflow and wheel were removed from the current tree; prior Git commits retain them for recovery. Android code, the catalog tooling, and the QA relay remain part of this project.
+`autonomous/`, `superpowers/` y los informes antiguos conservan sus fechas y evidencias por commit. No indican que deban retomarse ramas obsoletas. La documentación técnica e histórica puede permanecer en inglés; se conservan sus rutas para no romper enlaces.
 
-## Local checkout hygiene
+El flujo con certificados reales está [archivado](archive/workflows/real-e2e.yml.disabled) como documento inerte. Sus credenciales de GitHub y su historial de ejecuciones se retiraron en la limpieza autorizada. No debe reactivarse ni recibir credenciales sin nueva autorización. Las pruebas de política siguen inspeccionando sus límites históricos.
 
-Use one clean checkout for current work, tracking the intended live branch. Before reorganizing old worktrees, preserve their commits, binary diffs, and untracked source files. An old modified file is not automatically a missing feature: compare it against current code before any integration. Keep historical experiments outside the normal working directory and never silently apply stale patches to current signing code.
+El flujo y el paquete del perfilador Kai para macOS, ajenos a este proyecto, se eliminaron del árbol actual; permanecen recuperables en el historial de Git.
+
+## Organización de las copias de trabajo
+
+Utiliza una copia limpia que siga la rama actual prevista. Antes de reorganizar copias antiguas, conserva sus commits, diferencias binarias y archivos fuente no seguidos. Compara cualquier archivo antiguo modificado con el código actual antes de integrarlo; no apliques cambios obsoletos a los flujos de firma sin revisión.
