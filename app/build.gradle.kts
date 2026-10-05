@@ -334,6 +334,11 @@ tasks.withType<Test>().configureEach {
 }
 
 androidComponents {
+    beforeVariants(selector().withBuildType("release")) { variantBuilder ->
+        variantBuilder.hostTests[
+            com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE
+        ]?.enable = true
+    }
     beforeVariants(selector().withBuildType("optimized")) { variantBuilder ->
         variantBuilder.hostTests[
             com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE

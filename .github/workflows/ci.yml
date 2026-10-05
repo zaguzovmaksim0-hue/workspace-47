@@ -87,21 +87,6 @@ jobs:
           path: app/build/reports/runtime-licenses/
           if-no-files-found: warn
           retention-days: 7
-      - name: Run Android lint
-        run: ./gradlew lintDebug lintQa lintOptimized --no-daemon
-      - name: Run Android unit tests
-        run: ./gradlew testDebugUnitTest testQaUnitTest testOptimizedUnitTest --no-daemon
-      - name: Build Android APKs
-        run: ./gradlew assembleDebug assembleQa assembleQaAndroidTest --no-daemon
-      - name: Verify Android artifacts
-        run: scripts/ci/verify-android-artifacts.sh
-      - name: Retain optimized candidate
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: firmamobile-optimized-${{ env.VERIFY_REF }}
-          path: app/build/outputs/apk/optimized/app-optimized.apk
-          if-no-files-found: error
-          retention-days: 3
       - name: Verify release signing fails closed without secrets
         run: scripts/ci/verify-release-fail-closed.sh
       - name: Build and test actual release variant with a disposable CI-only signer
@@ -124,6 +109,21 @@ jobs:
         with:
           name: firmamobile-release-candidate-${{ env.VERIFY_REF }}
           path: app/build/outputs/apk/release/
+          if-no-files-found: error
+          retention-days: 3
+      - name: Run Android lint
+        run: ./gradlew lintDebug lintQa lintOptimized --no-daemon
+      - name: Run Android unit tests
+        run: ./gradlew testDebugUnitTest testQaUnitTest testOptimizedUnitTest --no-daemon
+      - name: Build Android APKs
+        run: ./gradlew assembleDebug assembleQa assembleQaAndroidTest --no-daemon
+      - name: Verify Android artifacts
+        run: scripts/ci/verify-android-artifacts.sh
+      - name: Retain optimized candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: firmamobile-optimized-${{ env.VERIFY_REF }}
+          path: app/build/outputs/apk/optimized/app-optimized.apk
           if-no-files-found: error
           retention-days: 3
       - name: Record QA artifact provenance
