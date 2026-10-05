@@ -773,7 +773,7 @@ class BrowserSecurityRegressionTest {
         )
         assertTrue(
             "Melilla batch protocol must use the existing direct HTTPS transport stack",
-            "MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source,
+            "MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))" in source,
         )
         val melillaAdapterBlock = source
             .substringAfter("melillaBatchSigningAdapter = MelillaBatchSigningAdapter(", missingDelimiterValue = "")
@@ -879,8 +879,8 @@ class BrowserSecurityRegressionTest {
         )
         assertTrue(
             "MainActivity must create fixed Melilla and Extremadura STA protocol adapters over HTTPS transport",
-            "val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source &&
-                "val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = HttpsProfileHttpTransport())" in source,
+            "val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))" in source &&
+                "val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy()::validate))" in source,
         )
         assertTrue(
             "The batch coordinator must resolve only the two fixed STA protocol adapters and bind confirmation metadata to the active profile",
@@ -942,6 +942,16 @@ class BrowserSecurityRegressionTest {
         // Dialog behavior does not grant camera, microphone, or location access.
         assertTrue(source.contains("request.deny()"))
         assertTrue(source.contains("callback.invoke(origin, false, false)"))
+    }
+
+    @Test
+    fun everyStaAdapterUsesItsOwnHostPolicyInsteadOfJuntaDefaultTransport() {
+        val source = projectSource("app/src/main/java/dev/junta/firmamobile/MainActivity.kt")
+        for (name in listOf("Melilla", "Extremadura", "LaPalma", "Huesca", "Burgos")) {
+            assertTrue("Missing exact host policy for $name", source.contains(
+                "${name}BatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.${name}BatchUrlPolicy()::validate))"))
+            assertFalse(source.contains("${name}BatchProtocolAdapter(transport = HttpsProfileHttpTransport())"))
+        }
     }
 
     @Test

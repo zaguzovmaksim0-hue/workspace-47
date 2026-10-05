@@ -23,7 +23,7 @@ class StaBatchHttpTransportTest {
                     executor = ProfileHttpExecutor { url, _, _, _, _, _, _, _ ->
                         assertEquals(endpoint, url)
                         executions++
-                        RawProfileHttpResponse(200, "application/json", null, "{}".toByteArray())
+                        RawProfileHttpResponse(200, "text/plain", null, "{}".toByteArray())
                     },
                 )
             }
@@ -31,7 +31,7 @@ class StaBatchHttpTransportTest {
                 val url = URI("https://$host/sta/AutofirmaLote/$operation/op-g54-a")
                 ProfileHttpRequest(ValidatedNetworkUrl(url), "synthetic".toByteArray()).use { request ->
                     val result = transport.post(request, ProfileHttpCancellation())
-                    assertTrue(result is ProfileHttpResult.Success)
+                    assertTrue("$host $operation: $result", result is ProfileHttpResult.Success)
                     (result as ProfileHttpResult.Success).response.close()
                 }
             }
