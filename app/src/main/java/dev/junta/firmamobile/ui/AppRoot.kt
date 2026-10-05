@@ -241,6 +241,10 @@ private fun LockedCertificate(
     DisposableEffect(passwordState) {
         onDispose { passwordState.clearText() }
     }
+    if (state.revocationPending) {
+        Text(stringResource(R.string.certificate_revoking), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        Spacer(modifier = Modifier.height(8.dp))
+    }
     val passwordLabel = stringResource(R.string.certificate_password)
     OutlinedSecureTextField(
         state = passwordState,
@@ -260,7 +264,7 @@ private fun LockedCertificate(
             passwordState.clearText()
             onUnlock(password)
         },
-        enabled = passwordState.text.isNotEmpty(),
+        enabled = passwordState.text.isNotEmpty() && !state.revocationPending,
     )
     Spacer(modifier = Modifier.height(6.dp))
     JuntaOutlinedAction(

@@ -124,7 +124,7 @@ class SiteDataCleanerTest {
         cleaner.clearProfileSession(profile, capabilities(getCookieInfo = false)) { callback = it }
 
         assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE, callback)
-        assertEquals(1, cookies.removeSessionCalls)
+        assertEquals(0, cookies.removeSessionCalls)
         assertEquals(0, cookies.removeAllCalls)
         assertEquals(
             setOf(
@@ -149,7 +149,7 @@ class SiteDataCleanerTest {
         cleaner.clearProfileSession(profile, capabilities(getCookieInfo = false)) { callback = it }
 
         assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE, callback)
-        assertEquals(1, cookies.removeSessionCalls)
+        assertEquals(0, cookies.removeSessionCalls)
         assertEquals(0, cookies.removeAllCalls)
         val cleared = storage.deletedOrigins.toSet()
         assertTrue("https://veaja.cloud.juntadeandalucia.es" in cleared)
@@ -178,6 +178,19 @@ class SiteDataCleanerTest {
         SiteDataCleaner(cookies, FakeSiteWebStorage()).clearProfileSession(profile, capabilities(true)) { result = it }
         assertTrue(persistentAuth)
         assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE, result)
+    }
+
+    @Test
+    fun onlyExplicitLogoutMayClearGlobalSessionCookies() {
+        val profile = checkNotNull(dev.junta.firmamobile.profile.BuiltInSiteProfiles.qaRegistry
+            .profile(dev.junta.firmamobile.profile.ProfileId("carne-joven-andalucia")))
+        val cookies = FakeCookieStore()
+        val cleaner = SiteDataCleaner(cookies, FakeSiteWebStorage())
+        cleaner.clearProfileSession(profile, capabilities(false)) { }
+        assertEquals(0, cookies.removeSessionCalls)
+        cleaner.clearProfileSession(profile, capabilities(false), clearAllSessionCookies = true) { }
+        assertEquals(1, cookies.removeSessionCalls)
+        assertEquals(0, cookies.removeAllCalls)
     }
 
     @Test

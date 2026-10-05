@@ -284,7 +284,7 @@ private class StaBatchProtocolAdapter(
         }
         val networkResult = try {
             ProfileHttpRequest(ValidatedNetworkUrl(urls.preUrl), preBody).use { httpRequest ->
-                post(httpRequest)
+                post(httpRequest, request.cancellation)
             }
         } catch (_: Exception) {
             preBody.fill(0)
@@ -350,7 +350,7 @@ private class StaBatchProtocolAdapter(
 
         val networkResult = try {
             ProfileHttpRequest(ValidatedNetworkUrl(state.postUrl), postBody).use { httpRequest ->
-                post(httpRequest)
+                post(httpRequest, request.cancellation)
             }
         } catch (_: Exception) {
             postBody.fill(0)
@@ -538,8 +538,7 @@ private class StaBatchProtocolAdapter(
         }
     }
 
-    private fun post(request: ProfileHttpRequest): ProfileHttpResult {
-        val cancellation = ProfileHttpCancellation()
+    private fun post(request: ProfileHttpRequest, cancellation: ProfileHttpCancellation): ProfileHttpResult {
         return try {
             transport.post(request, cancellation)
         } catch (_: Exception) {

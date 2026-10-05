@@ -325,7 +325,7 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
-    fun clearSessionActuallyEndsTheSelectedProfileWebSessionBeforeLockingCertificate() {
+    fun clearSessionLocksFirstAndExitsOnlyAfterBrowserCleanup() {
         val screenSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt",
         )
@@ -343,13 +343,13 @@ class BrowserSecurityRegressionTest {
         val profileBranchIndex = sessionBlock.indexOf("            } else {")
         assertTrue("Profile cleanup must follow navigation invalidation", profileBranchIndex > epochIndex)
         val preferenceIndex = sessionBlock.indexOf("clientCertPreferenceCoordinator.requestClear", profileBranchIndex)
-        val exitIndex = sessionBlock.indexOf("onClearSession()", profileBranchIndex)
+        val exitIndex = sessionBlock.indexOf("onExitBrowser()", profileBranchIndex)
         val publicBranch = sessionBlock.substringBefore("            } else {")
         val publicClear = publicBranch.indexOf("siteDataCleaner.clearOrigin")
         val publicPreferences = publicBranch.indexOf("clientCertPreferenceCoordinator.requestClear")
         val publicLock = publicBranch.indexOf("onClearSession()")
-        assertTrue("Public cleanup must invalidate before clearing and lock after preference cleanup",
-            publicClear > epochIndex && publicPreferences > publicClear && publicLock > publicPreferences)
+        assertTrue("Public cleanup must lock before fallible browser work",
+            publicLock >= 0 && publicLock < epochIndex && publicClear > epochIndex && publicPreferences > publicClear)
         assertTrue(
             "Closing the certificate session must invalidate the active navigation before deleting profile session state",
             epochIndex >= 0 && clearIndex in (epochIndex + 1) until preferenceIndex,
@@ -359,7 +359,7 @@ class BrowserSecurityRegressionTest {
             preferenceIndex in (clearIndex + 1) until exitIndex,
         )
         assertTrue(
-            "The app may lock the certificate only after browser-session and client-certificate cleanup were requested",
+            "The browser exits only after client-certificate cleanup",
             exitIndex > preferenceIndex,
         )
     }
@@ -942,6 +942,19 @@ class BrowserSecurityRegressionTest {
         // Dialog behavior does not grant camera, microphone, or location access.
         assertTrue(source.contains("request.deny()"))
         assertTrue(source.contains("callback.invoke(origin, false, false)"))
+    }
+
+    @Test
+    fun logoutLocksBeforeFallibleCleanupAndAutomaticPreparationStaysScoped() {
+        val source = projectSource("app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt")
+        val logout = source.substringAfter("        onClearSession = {").substringBefore("        onDeleteAllBrowserData = {")
+        assertTrue(logout.indexOf("onClearSession()") >= 0)
+        assertTrue(logout.indexOf("onClearSession()") < logout.indexOf("abandonClientAuth()"))
+        assertTrue(logout.contains("clearAllSessionCookies = true"))
+        assertTrue(logout.contains("onExitBrowser()"))
+        val automatic = source.substringAfter("fun beginClientCertPreferenceRecovery()").substringBefore("val handleAfirmaRequest")
+        assertTrue(automatic.contains("clearProfileSession(profile, webViewCapabilities)"))
+        assertFalse(automatic.contains("clearAllSessionCookies = true"))
     }
 
     private fun profile(id: String) = BuiltInSiteProfiles.catalog.profiles.single {

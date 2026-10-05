@@ -73,6 +73,7 @@ class SiteDataCleaner(
     fun clearProfileSession(
         profile: SiteProfile,
         capabilities: WebViewProfileCapabilities,
+        clearAllSessionCookies: Boolean = false,
         callback: (SiteClearResult) -> Unit,
     ) {
         val targets = profileSessionTargets(profile)
@@ -87,6 +88,10 @@ class SiteDataCleaner(
                     }
                 }
             }
+        }
+        if (!clearAllSessionCookies) {
+            callback(result)
+            return
         }
         try {
             cookieStore.removeSessionCookies { sessionCookiesRemoved ->

@@ -1049,6 +1049,8 @@ fun BrowserScreen(
             webView?.loadUrl(validatedEntryUrl)
         },
         onClearSession = {
+            // Lock first, even if every subsequent browser cleanup fails.
+            onClearSession()
             cancelPendingCertificateSelection(
                 dev.junta.firmamobile.signing.SigningErrorCode.CERTIFICATE_LOCKED,
             )
@@ -1074,14 +1076,14 @@ fun BrowserScreen(
                 clientCertPreferenceCoordinator.requestClear { _, result ->
                     mainHandler.post {
                         if (!sessionDataClearLease.consume(clearRequest)) return@post
-                        if (result == ClientCertPreferenceClearResult.CLEARED) onClearSession()
+                        if (result == ClientCertPreferenceClearResult.CLEARED) onExitBrowser()
                         else browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
                     }
                 }
             } else {
                 clientAuthPreparing = true
                 val sessionClearRequest = sessionDataClearLease.begin(selectedServiceId)
-                siteDataCleaner.clearProfileSession(profile, webViewCapabilities) { sessionCleared ->
+                siteDataCleaner.clearProfileSession(profile, webViewCapabilities, clearAllSessionCookies = true) { sessionCleared ->
                     mainHandler.post {
                         if (!sessionDataClearLease.consume(sessionClearRequest)) return@post
                         siteClearResult = sessionCleared
@@ -1101,7 +1103,7 @@ fun BrowserScreen(
                                             R.string.browser_clear_session_limited,
                                             android.widget.Toast.LENGTH_LONG).show()
                                     }
-                                    onClearSession()
+                                    onExitBrowser()
                                 } else {
                                     browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
                                     pageLoading = false

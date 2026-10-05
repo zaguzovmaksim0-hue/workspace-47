@@ -42,6 +42,9 @@ interface CertificateUnlockCache {
         now: Instant,
     ): CachedCertificateUnlock?
 
+    /** Immediate in-process denial, without keystore/disk I/O. */
+    fun invalidate() = Unit
+
     fun clear()
 
     /** False means durable revocation could not be verified. */
@@ -142,6 +145,13 @@ class EncryptedCertificateUnlockCache internal constructor(
         }
         return withContext(ioDispatcher) {
             restoreOnIo(reference, now, restoreGeneration)
+        }
+    }
+
+    override fun invalidate() {
+        synchronized(stateLock) {
+            invalidationGeneration.incrementAndGet()
+            restoreBlocked = true
         }
     }
 
@@ -538,6 +548,7 @@ class AndroidKeystoreCertificateUnlockCache(
         now: Instant,
     ): CachedCertificateUnlock? = delegate.restore(reference, now)
 
+    override fun invalidate() = delegate.invalidate()
     override fun clear() = delegate.clear()
     override fun clearAndReport(): Boolean = delegate.clearAndReport()
 

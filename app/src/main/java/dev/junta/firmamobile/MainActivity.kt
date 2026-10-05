@@ -368,13 +368,13 @@ class MainActivity : ComponentActivity() {
         burgosBatchSigningAdapter = BurgosBatchSigningAdapter(
             registry = BuiltInSiteProfiles.runtimeRegistry,
         )
-        val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
-        val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
-        val laPalmaBatchProtocolAdapter = LaPalmaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
-        val huescaBatchProtocolAdapter = HuescaBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
+        val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))
+        val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy()::validate))
+        val laPalmaBatchProtocolAdapter = LaPalmaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.LaPalmaBatchUrlPolicy()::validate))
+        val huescaBatchProtocolAdapter = HuescaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.HuescaBatchUrlPolicy()::validate))
         val lugoBatchProtocolAdapter = LugoBatchProtocolAdapter()
         val caibBatchProtocolAdapter = CaibBatchProtocolAdapter()
-        val burgosBatchProtocolAdapter = BurgosBatchProtocolAdapter(transport = HttpsProfileHttpTransport())
+        val burgosBatchProtocolAdapter = BurgosBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.BurgosBatchUrlPolicy()::validate))
         batchSigningCoordinator = BatchSigningCoordinator(
             certificateSession = app.certificateSession,
             adapter = melillaBatchProtocolAdapter,

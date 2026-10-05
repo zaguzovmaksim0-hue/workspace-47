@@ -14,6 +14,7 @@ sealed interface CertificateUiState {
         val reference: StoredCertificateReference,
         val summary: CertificateSummary?,
         val error: CertificateUiError?,
+        val revocationPending: Boolean = false,
     ) : CertificateUiState
 
     data class Unlocking(
