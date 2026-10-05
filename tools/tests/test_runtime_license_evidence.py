@@ -26,7 +26,7 @@ class RuntimeLicenseEvidenceTest(unittest.TestCase):
     def test_nested_notices_preserved_without_archive_path_extraction(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
-            raw = jar({'../../NOTICE': b'outer', 'classes.jar': jar({'META-INF/LICENSE': b'inner'})})
+            raw = jar({'../../NOTICE': b'outer', 'classes.jar': jar({'META-INF/LICENSE': b'inner', 'org/License.class': b'not a notice'})})
             notices = archive_notices(raw, output)
             self.assertEqual(2, len(notices))
             self.assertEqual({b'outer', b'inner'}, {p.read_bytes() for p in output.iterdir()})
@@ -40,6 +40,18 @@ class RuntimeLicenseEvidenceTest(unittest.TestCase):
             self.assertFalse(report['release_approved'])
             self.assertFalse(report['modules'][0]['cached_evidence_present'])
             self.assertEqual(report, json.loads((root / 'out/inventory.json').read_text()))
+
+    def test_pom_license_supports_namespaced_and_plain_xml(self):
+        for namespace in ('', ' xmlns="http://maven.apache.org/POM/4.0.0"'):
+            with self.subTest(namespace=namespace), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                lock = root / 'lock'; lock.write_text('a:b:1=optimizedRuntimeClasspath\n')
+                module = root / 'cache/a/b/1/hash'; module.mkdir(parents=True)
+                (module / 'b-1.pom').write_text(
+                    f'<project{namespace}><licenses><license><name>MIT</name>'
+                    '<url>https://example.test/license</url></license></licenses></project>')
+                report = inventory(lock, root / 'cache', 'optimizedRuntimeClasspath', root / 'out')
+                self.assertEqual('MIT', report['modules'][0]['poms'][0]['licenses'][0]['name'])
 
     def test_project_license_and_notices_match_approved_holder(self):
         root = Path(__file__).resolve().parents[2]

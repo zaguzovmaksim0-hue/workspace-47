@@ -58,8 +58,16 @@ Mobile ni un paquete completo de avisos de sus dependencias.
 Se observaron dos fuentes: Bebas Neue (recurso renombrado por Android) y
 `assets/com/tom_roush/pdfbox/resources/ttf/LiberationSans-Regular.ttf`.
 El OFL de Bebas Neue existe en el repositorio, pero no se identificó un texto OFL
-completo en las entradas de avisos del APK. La licencia exacta de la fuente
-incorporada por PDFBox también debe verificarse y entregarse.
+completo en las entradas de avisos del APK. Los registros internos de ambas fuentes declaran OFL-1.1 y una URL, no el texto
+completo. Liberation Sans identifica copyright Google 2010 / Red Hat 2012;
+Bebas Neue identifica The Bebas Neue Project Authors 2019, mientras que su
+archivo OFL upstream conserva Dharma Type 2010. NOTICE conserva ambas
+atribuciones de Bebas, sin sustituir una por otra.
+
+Huellas de los archivos de fuente inspeccionados:
+- Bebas Neue: `08e4623805102d819f58601e46e345648846075e363b2ceb23313c2d1c83ec73`
+  (coincide con la fuente seguida por Git).
+- Liberation Sans: `76d04c18ea243f426b7de1f3ad208e927008f961dc5945e5aad352d0dfde8ee8`.
 
 `app/build.gradle.kts` excluye `/META-INF/LICENSE.md`. Esa exclusión requiere una
 copia alternativa verificable de los textos aplicables; no puede suponerse que
@@ -81,6 +89,37 @@ La nueva recogida en CI conserva para `optimized` y `release`:
 3. Avisos LICENSE/NOTICE/COPYING/COPYRIGHT, incluidos los de `classes.jar` dentro
    de AAR, guardados por hash sin extraer rutas de archivo no fiables.
 4. Declaraciones de licencia de POM, y ausencias explícitas.
+
+### Resultado observado del primer ciclo de CI
+
+En el candidato `a65263285327f2093810f4716818cfe0c3679cb6`, el artefacto
+`runtime-license-evidence-a65263285327f2093810f4716818cfe0c3679cb6`
+(run `37348021442`) contiene las 160 coordenadas y 118 AAR/JAR para cada variante,
+sin coordenadas carentes de evidencia de caché. Esto cierra la limitación del
+sondeo local, pero no la revisión de términos o del empaquetado final.
+
+Hallazgos concretos de esos artefactos:
+
+- Los tres JAR Bouncy Castle 1.85 incluyen `META-INF/LICENSE.md` con MIT y
+  copyright 2000–2026 The Legion of the Bouncy Castle Inc. El build excluye esa
+  ruta; falta comprobar/añadir una entrega alternativa íntegra.
+- Jakarta XML Binding 3.0.1 incluye un LICENSE.md de 1.644 bytes que se excluye,
+  aunque su NOTICE.md sí aparece en el APK examinado.
+- Apache Commons Codec 1.18.0 y XML Security 3.0.6 tienen avisos propios de Apache
+  Software Foundation; no se encontraron sus archivos NOTICE en la lista del APK.
+- Los diez componentes Google identity/Play services declaran **Android Software
+  Development Kit License**, no Apache-2.0. Sus AAR contienen
+  `third_party_licenses.json` y `.txt` con atribuciones adicionales. Deben
+  preservarse y revisarse por separado; no están en la lista de avisos del APK.
+- PDFBox Android declara Apache-2.0 en su POM, pero su fuente Liberation Sans tiene
+  OFL-1.1. La licencia del contenedor no basta para todos los recursos incluidos.
+- Stax2 API 4.2.1 identifica BSD de dos cláusulas en su archivo LICENSE, pero
+  remite a un texto externo; un enlace solo no es un bundle verificado completo.
+
+La revisión del colector añadió soporte para POM con y sin namespace XML y
+excluyó archivos `.class` cuyo nombre contiene “Notice” o “License”: esos nombres
+no los convierten en avisos legales. El siguiente candidato repite la evidencia
+con estas correcciones y debe pasar sus propios checks.
 
 **La herramienta produce evidencia, nunca aprobación automática.** Un POM puede
 heredar términos; que un archivo no contenga un aviso no implica ausencia de

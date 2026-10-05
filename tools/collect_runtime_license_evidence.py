@@ -42,7 +42,8 @@ def archive_notices(data, output, prefix=''):
             name = entry.filename
             if entry.is_dir():
                 continue
-            if any(word in name.lower() for word in ('license', 'notice', 'copying', 'copyright')):
+            if (Path(name).suffix.lower() in ('', '.md', '.txt', '.html', '.htm', '.json', '.xml', '.rst')
+                    and any(word in name.lower() for word in ('license', 'notice', 'copying', 'copyright'))):
                 if entry.file_size > MAX_NOTICE_BYTES:
                     raise ValueError(f'Notice too large: {name}')
                 content = archive.read(entry)
@@ -66,11 +67,10 @@ def inventory(lock_path, cache, configuration, output):
         for path in sorted(module_dir.glob('*/*')):
             if path.suffix == '.pom':
                 raw = path.read_bytes()
-                ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
                 tree = ET.fromstring(raw)
-                licenses = [{key: item.findtext('m:' + key, default='', namespaces=ns)
+                licenses = [{key: item.findtext('{*}' + key, default='')
                              for key in ('name', 'url')}
-                            for item in tree.findall('m:licenses/m:license', ns)]
+                            for item in tree.findall('{*}licenses/{*}license')]
                 row['poms'].append({'file': path.name, 'sha256': digest(raw), 'licenses': licenses})
             elif path.suffix in ('.aar', '.jar') and not path.name.endswith(('-sources.jar', '-javadoc.jar')):
                 raw = path.read_bytes()

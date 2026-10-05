@@ -8,7 +8,9 @@ ni sustituye las licencias de componentes de terceros.
 Bebas Neue
 -----------
 Fuente incluida: app/src/main/res/font/bebas_neue_regular.ttf
-Copyright (c) 2010 Dharma Type
+Copyright (c) 2010 Dharma Type (aviso del archivo OFL del proveedor)
+Copyright 2019 The Bebas Neue Project Authors
+(https://github.com/dharmatype/Bebas-Neue; metadatos de la fuente incluida)
 Licencia: SIL Open Font License, Version 1.1
 Texto completo: docs/licenses/BebasNeue-OFL.txt
 
@@ -23,6 +25,12 @@ Bibliotecas y recursos incorporados en binarios
 Las dependencias resueltas por Gradle/Maven conservan sus propias licencias.
 El APK puede incorporar recursos adicionales de esas bibliotecas, como fuentes
 de PDFBox. La licencia del proyecto no los relicencia.
+
+Liberation Sans Regular incluida por PDFBox Android:
+Digitized data copyright (c) 2010 Google Corporation.
+Copyright (c) 2012 Red Hat, Inc.
+Los metadatos de la fuente incluida declaran SIL Open Font License 1.1.
+El paquete de avisos del binario debe incluir el texto completo aplicable.
 
 Este NOTICE del repositorio no es un paquete completo de avisos de un APK/AAB.
 Antes de distribuir un binario, se deben inventariar sus artefactos exactos,
