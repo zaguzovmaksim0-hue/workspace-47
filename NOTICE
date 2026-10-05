@@ -1,53 +1,63 @@
-Firma Mobile — third-party notices
+Firma Mobile
+Copyright 2026 Maksim Zaguzov
 
-This file is a pre-publication notice inventory. It does not replace the license
-text of any third-party component and does not grant rights to material whose
-provenance is still under review. See docs/provenance.md and
-docs/licenses/runtime-dependency-audit.md.
+El material propio del proyecto se distribuye bajo Apache License, Version 2.0.
+El texto completo se encuentra en LICENSE. Este aviso no modifica sus términos
+ni sustituye las licencias de componentes de terceros.
 
 Bebas Neue
 -----------
-Bundled font: app/src/main/res/font/bebas_neue_regular.ttf
-Copyright (c) 2010 Dharma Type
-License: SIL Open Font License, Version 1.1
-License text: docs/licenses/BebasNeue-OFL.txt
+Fuente incluida: app/src/main/res/font/bebas_neue_regular.ttf
+Copyright (c) 2010 Dharma Type (aviso del archivo OFL del proveedor)
+Copyright 2019 The Bebas Neue Project Authors
+(https://github.com/dharmatype/Bebas-Neue; metadatos de la fuente incluida)
+Licencia: SIL Open Font License, Version 1.1
+Texto completo: docs/licenses/BebasNeue-OFL.txt
 
 Gradle Wrapper
 --------------
-The repository contains generated Gradle Wrapper material for Gradle 9.4.1.
-The generated `gradlew` script carries the upstream Apache License 2.0 header
-and SPDX identifier. Gradle documents the Wrapper and Gradle Build Tool as
-licensed under Apache License 2.0; upstream license metadata must remain intact.
+El repositorio incluye Gradle Wrapper para Gradle 9.4.1. Sus archivos conservan
+los avisos originales de Gradle y su licencia Apache-2.0. No se atribuye su
+autoría al titular de Firma Mobile.
 
-Third-party services, names and domains
+Bibliotecas y recursos incorporados en binarios
+----------------------------------------------
+Las dependencias resueltas por Gradle/Maven conservan sus propias licencias.
+El APK puede incorporar recursos adicionales de esas bibliotecas, como fuentes
+de PDFBox. La licencia del proyecto no los relicencia.
+
+Liberation Sans Regular incluida por PDFBox Android:
+Digitized data copyright (c) 2010 Google Corporation.
+Copyright (c) 2012 Red Hat, Inc.
+Los metadatos de la fuente incluida declaran SIL Open Font License 1.1.
+El paquete de avisos del binario debe incluir el texto completo aplicable.
+
+Este NOTICE del repositorio no es un paquete completo de avisos de un APK/AAB.
+Antes de distribuir un binario, se deben inventariar sus artefactos exactos,
+conservar los textos LICENSE/NOTICE y atribuciones aplicables, incluir los
+avisos de fuentes y verificar su entrega junto con ese binario. Véanse
+docs/licenses/runtime-dependency-audit.md y
+docs/public-distribution-review-2026-10-05.md.
+
+Procedencia de recursos del proyecto
+------------------------------------
+Los antiguos recursos visuales de procedencia no resuelta se sustituyeron por
+recursos XML/vectoriales propios; el registro histórico está en
+docs/provenance.md y docs/visual-asset-audit.md. Esta sustitución no constituye
+una declaración de propiedad sobre recursos de terceros añadidos después.
+
+Servicios, marcas y nombres de terceros
 ---------------------------------------
-References to Junta de Andalucia, AutoFirma, Cliente @firma, Spanish public
-administrations, universities, public agencies, public-service domains and
-other named third-party services are descriptive interoperability references.
-Their names, marks, domains, services and software remain subject to their
-respective owners' rights and licenses. No affiliation, sponsorship,
-certification or endorsement is implied.
+Las referencias a Junta de Andalucía, AutoFirma, Cliente @firma, organismos
+públicos, universidades, dominios y servicios describen interoperabilidad.
+Sus nombres, marcas, dominios, servicios y programas pertenecen a sus
+respectivos titulares. Firma Mobile es independiente y no oficial: no se
+implica afiliación, patrocinio, certificación ni respaldo de esos titulares.
 
-Build/runtime dependencies
---------------------------
-Gradle/Maven and Python dependencies are declared in the repository and are
-resolved externally rather than copied into Firma Mobile project source.
-The reviewed dependency families and their upstream license classes are recorded
-in docs/licenses/runtime-dependency-audit.md. Their licenses are not replaced by
-a future project root license.
-
-For source-repository publication, the reviewed externally resolved dependency
-families are not treated as a project-source relicensing blocker. This does not
-constitute binary-release approval.
-
-Before any APK/AAB distribution, the exact final resolved artifacts must be
-inspected and a release third-party notice bundle must preserve all applicable
-license, copyright and NOTICE material required by the dependencies actually
-incorporated in that binary. The family-level audit is only an input to that
-release gate.
-
-Unresolved custom assets
-------------------------
-Custom visual binary assets are not declared project-licensed by this NOTICE.
-Their origin/redistribution rights must be resolved, replaced or removed before
-a repository-wide open-source license is applied.
+Historial de licencia
+---------------------
+Apache-2.0 se restaura para el material propio del proyecto por decisión del
+mantenedor del 5 de octubre de 2026. La entrada ajena «Kai» se introdujo junto
+con un ensayo de compatibilidad no relacionado, retirado del árbol actual.
+La corrección no reescribe el historial ni pretende revocar permisos que
+terceros ya hubieran obtenido válidamente sobre versiones anteriores.

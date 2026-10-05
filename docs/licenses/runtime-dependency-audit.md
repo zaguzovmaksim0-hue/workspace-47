@@ -1,12 +1,18 @@
 # Runtime dependency license audit
 
-**Status:** pre-publication source audit; binary-release verification remains required
+**Status (2026-10-05):** historical family-level source audit; NOT an exact current binary inventory.
+
+The source repository is already public under Apache-2.0. The table below belongs
+to the earlier publication baseline and omits later components, including PDFBox
+Android and Google identity/Play services. Bouncy Castle is now locked at 1.85
+and coroutines at 1.11.0. Do not use this table to approve a current APK.
+See [the current distribution review](../public-distribution-review-2026-10-05.md).
 
 **Reviewed publication baseline:** `oss/publication-readiness-20260811`
 
 This document separates two different compliance questions:
 
-1. **Publishing this repository's source code.** The reviewed Android/Maven/Python dependencies are resolved externally and are not copied into this repository as project source. Their upstream licenses therefore remain their own and are not replaced by a future Junta Firma Mobile project license.
+1. **Publishing this repository's source code.** The reviewed Android/Maven/Python dependencies are resolved externally and are not copied into this repository as project source. Their upstream licenses therefore remain their own and are not replaced by a Firma Mobile project license.
 2. **Distributing an APK/AAB or other binary.** Runtime libraries may be incorporated into the produced application. Before any binary release, the exact final dependency graph and packaged artifacts must be inspected and all required copyright, license and NOTICE material must be preserved or reproduced as required by each upstream license.
 
 This is an engineering provenance/compliance inventory, not a legal opinion or a substitute for inspecting the exact final artifacts.
@@ -36,7 +42,7 @@ The repository's locked runtime graph currently includes the families below. Ver
 
 ## Tooling-only dependency
 
-`tools/requirements.txt` currently pins `PyYAML==6.0.3`. The canonical upstream repository identifies PyYAML as MIT-licensed. It is a development/tooling dependency rather than Android project source and is not relicensed by the project's future root license.
+`tools/requirements.txt` currently pins `PyYAML==6.0.3`. The canonical upstream repository identifies PyYAML as MIT-licensed. It is a development/tooling dependency rather than Android project source and is not relicensed by the project's root license.
 
 The Go relay module currently has no third-party module requirements recorded in `ws024-relay/go.mod`; re-audit if that changes.
 

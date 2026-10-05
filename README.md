@@ -51,7 +51,7 @@ Los cambios se preparan en ramas y se integran mediante pull request después de
 
 ## Licencia y procedencia
 
-El código del proyecto utiliza la [licencia MIT](LICENSE). Los componentes de terceros conservan sus propias licencias y avisos: [NOTICE](NOTICE), [procedencia](docs/provenance.md), [selección de licencia](docs/license-selection.md) y [auditoría de dependencias](docs/licenses/runtime-dependency-audit.md).
+El código del proyecto utiliza la [licencia Apache-2.0](LICENSE). Los componentes de terceros conservan sus propias licencias y avisos: [NOTICE](NOTICE), [procedencia](docs/provenance.md), [selección de licencia](docs/license-selection.md) y [auditoría de dependencias](docs/licenses/runtime-dependency-audit.md).
 
 Las marcas, nombres y dominios de terceros se mencionan únicamente para explicar la interoperabilidad. Las obligaciones de redistribución de cada APK/AAB se comprueban por separado; publicar el código no certifica automáticamente cualquier binario.
 

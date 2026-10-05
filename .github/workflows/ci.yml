@@ -65,6 +65,27 @@ jobs:
         run: ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon
       - name: Build optimized daily-use APK
         run: ./gradlew assembleOptimized --no-daemon
+      - name: Collect locked runtime license evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p app/build/reports/runtime-licenses
+          ./gradlew :app:verifyRuntimeDependencyLocks --no-daemon
+          for variant in optimized release; do
+            ./gradlew :app:dependencies --configuration "${variant}RuntimeClasspath" --no-daemon > "app/build/reports/runtime-licenses/${variant}-graph.txt"
+            python3 tools/collect_runtime_license_evidence.py \
+              --cache "${GRADLE_USER_HOME:-$HOME/.gradle}/caches/modules-2/files-2.1" \
+              --configuration "${variant}RuntimeClasspath" \
+              --output "app/build/reports/runtime-licenses/${variant}"
+          done
+      - name: Retain runtime license evidence (not release approval)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: runtime-license-evidence-${{ env.VERIFY_REF }}
+          path: app/build/reports/runtime-licenses/
+          if-no-files-found: warn
+          retention-days: 7
       - name: Run Android unit tests
         run: ./gradlew testDebugUnitTest testQaUnitTest testOptimizedUnitTest --no-daemon
       - name: Run Android lint
