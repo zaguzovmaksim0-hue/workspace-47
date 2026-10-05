@@ -372,7 +372,7 @@ class CertificateViewModelTest {
     fun forgetClearsRepositorySessionAndUi() = runTest(dispatcher) {
         val selected = reference()
         val gateway = FakeCertificateGateway().apply { current = selected }
-        val session = CertificateSession()
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
         val cache = FakeCertificateUnlockCache()
         val viewModel = viewModel(gateway, session, cache)
         advanceUntilIdle()
@@ -391,7 +391,7 @@ class CertificateViewModelTest {
     fun explicitLockReportsUnverifiedRevocationAndStillLocksIdentity() = runTest(dispatcher) {
         val selected = reference()
         val gateway = FakeCertificateGateway().apply { current = selected }
-        val session = CertificateSession()
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
         val cache = FakeCertificateUnlockCache().apply { clearVerified = false }
         val model = viewModel(gateway, session, cache)
         advanceUntilIdle()
@@ -403,7 +403,7 @@ class CertificateViewModelTest {
 
     private fun viewModel(
         gateway: FakeCertificateGateway,
-        session: CertificateSession = CertificateSession(),
+        session: CertificateSession = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC)),
         cache: CertificateUnlockCache = FakeCertificateUnlockCache(),
     ) = CertificateViewModel(
         gateway = gateway,

@@ -135,6 +135,7 @@ class CertificateSession internal constructor(
     ) {
         require(lease.expiresAt.isAfter(now))
         require(lease.lifetimeNanos <= MonotonicSecurityTime.durationNanos(unlockDuration))
+        identity.certificate.checkValidity(java.util.Date.from(now))
         val currentMonotonic = monotonicNanos()
         require(!lease.isExpiredOrInvalid(currentMonotonic))
         unlockedIdentity = identity
@@ -239,7 +240,10 @@ class CertificateSession internal constructor(
         val lease = unlockLease ?: return
         val civilNow = clock.instant()
         val monotonicNow = runCatching(monotonicNanos).getOrNull()
-        if (!civilNow.isBefore(lease.expiresAt) ||
+        val certificateValid = runCatching {
+            checkNotNull(unlockedIdentity).certificate.checkValidity(java.util.Date.from(civilNow))
+        }.isSuccess
+        if (!certificateValid || !civilNow.isBefore(lease.expiresAt) ||
             monotonicNow == null ||
             lease.isExpiredOrInvalid(monotonicNow)
         ) {

@@ -543,7 +543,7 @@ class SigningCoordinator internal constructor(
     private fun SigningFormat.displayName(): String = when (this) {
         SigningFormat.CADES -> "CAdES"
         SigningFormat.PADES -> "PAdES"
-        SigningFormat.XADES -> "XAdES Detached"
+        SigningFormat.XADES -> "XAdES"
     }
 
     private fun SigningAlgorithm.displayName(): String = when (this) {

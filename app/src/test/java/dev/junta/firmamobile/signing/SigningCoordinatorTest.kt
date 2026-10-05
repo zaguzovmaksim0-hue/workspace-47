@@ -337,7 +337,7 @@ class SigningCoordinatorTest {
         assertEquals(SigningPreparationResult.Ready(REQUEST_ID), localCoordinator.prepare(request, reply))
         val state = localCoordinator.state.value as SigningUiState.AwaitingConfirmation
         assertEquals("Registro Electrónico General (REG-AGE)", state.profileName)
-        assertEquals("XAdES Detached", state.format)
+        assertEquals("XAdES", state.format)
         assertEquals("SHA512withRSA", state.algorithm)
 
         assertEquals(

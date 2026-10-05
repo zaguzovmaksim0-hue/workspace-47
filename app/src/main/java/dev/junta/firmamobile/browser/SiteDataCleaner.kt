@@ -73,16 +73,19 @@ class SiteDataCleaner(
     fun clearProfileSession(
         profile: SiteProfile,
         capabilities: WebViewProfileCapabilities,
-        callback: (Boolean) -> Unit,
+        callback: (SiteClearResult) -> Unit,
     ) {
         val targets = profileSessionTargets(profile)
-        var profileStorageCleared = true
+        var result = SiteClearResult.CLEARED_EXACTLY
         for (target in targets) {
             when (clearOrigin(target, capabilities)) {
-                SiteClearResult.FAILED -> profileStorageCleared = false
-                SiteClearResult.CLEARED_EXACTLY,
-                SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE,
-                -> Unit
+                SiteClearResult.FAILED -> result = SiteClearResult.FAILED
+                SiteClearResult.CLEARED_EXACTLY -> Unit
+                SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE -> {
+                    if (result != SiteClearResult.FAILED) {
+                        result = SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE
+                    }
+                }
             }
         }
         try {
@@ -97,10 +100,10 @@ class SiteDataCleaner(
                 } else {
                     true
                 }
-                callback(profileStorageCleared && sessionCookieDeletionDurable)
+                callback(if (sessionCookieDeletionDurable) result else SiteClearResult.FAILED)
             }
         } catch (_: Exception) {
-            callback(false)
+            callback(SiteClearResult.FAILED)
         }
     }
 

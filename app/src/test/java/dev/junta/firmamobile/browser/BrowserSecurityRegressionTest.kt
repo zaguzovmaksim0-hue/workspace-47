@@ -334,6 +334,10 @@ class BrowserSecurityRegressionTest {
             .substringBefore("        onDeleteAllBrowserData = {")
 
         assertTrue("Clear-session handler must be present", sessionBlock.isNotEmpty())
+        assertTrue("Partial cleanup must stay visible when leaving the browser",
+            sessionBlock.contains("R.string.browser_clear_session_limited"))
+        assertTrue("Partial cleanup must not be coerced to a Boolean success",
+            sessionBlock.contains("sessionCleared == SiteClearResult.FAILED"))
         val epochIndex = sessionBlock.indexOf("advanceNavigationEpoch()")
         val clearIndex = sessionBlock.indexOf("siteDataCleaner.clearProfileSession")
         val profileBranchIndex = sessionBlock.indexOf("            } else {")

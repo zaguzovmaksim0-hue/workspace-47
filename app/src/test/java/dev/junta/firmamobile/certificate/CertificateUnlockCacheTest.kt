@@ -322,9 +322,21 @@ class CertificateUnlockCacheTest {
         }
 
         assertTrue(storage.writeStarted.await(5, TimeUnit.SECONDS))
-        cache.clear()
-        storage.allowWrite.countDown()
-
+        val clear = Thread { cache.clear() }
+        clear.start()
+        try {
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+            while (clear.state != Thread.State.BLOCKED && clear.isAlive && System.nanoTime() < deadline) {
+                Thread.yield()
+            }
+            // Revocation cannot be acknowledged while an older durable commit
+            // is still running. The only contended monitor is persistenceLock.
+            assertEquals(Thread.State.BLOCKED, clear.state)
+        } finally {
+            storage.allowWrite.countDown()
+            clear.join(5_000)
+        }
+        assertFalse(clear.isAlive)
         assertFalse(store.await())
         assertNull(storage.read())
     }
@@ -393,6 +405,35 @@ class CertificateUnlockCacheTest {
             assertArrayEquals("new-synthetic".toCharArray(), it.password)
         }
         assertEquals(2, keys.created)
+    }
+
+    @Test
+    fun cancelledWriterCannotCreateNewKeyAfterAcknowledgedRevocation() = runTest {
+        val storage = AtomicCertificateUnlockRecordStorage(
+            temporaryFolder.newFolder("stale-writer").resolve("unlock.bin"))
+        val keys = RevocableKeyProvider()
+        val started = CountDownLatch(1)
+        val resume = CountDownLatch(1)
+        val old = EncryptedCertificateUnlockCache(storage, keys, {
+            started.countDown()
+            check(resume.await(5, TimeUnit.SECONDS))
+            CertificateUnlockBootTime(1, 1_000_000_000L)
+        }, { 1_000_000_000L })
+        val store = async(Dispatchers.Default) {
+            old.store(reference, "synthetic".toCharArray(), now,
+                now.plus(Duration.ofHours(24)), 1_000_000_000L)
+        }
+        assertTrue(started.await(5, TimeUnit.SECONDS))
+        store.cancel()
+        try {
+            assertTrue(old.clearAndReport())
+        } finally { resume.countDown() }
+        store.join()
+        assertEquals(0, keys.created)
+        assertNull(storage.read())
+        val restarted = EncryptedCertificateUnlockCache(storage, keys,
+            { CertificateUnlockBootTime(1, 1_000_000_001L) }, { 1_000_000_001L })
+        assertNull(restarted.restore(reference, now.plusSeconds(1)))
     }
 
     private class FailedDeletionStorage(private val throwOnClear: Boolean) : CertificateUnlockRecordStorage {

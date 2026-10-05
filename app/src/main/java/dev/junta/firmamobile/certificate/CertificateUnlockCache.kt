@@ -103,6 +103,9 @@ class EncryptedCertificateUnlockCache internal constructor(
 ) : CertificateUnlockCache {
     private val invalidationGeneration = AtomicLong(0)
     private val stateLock = Any()
+    // Serializes durable key creation/write with revocation. A clear is not
+    // acknowledged until an older commit can no longer resurrect its record.
+    private val persistenceLock = Any()
     private var restoreBlocked = false
     private var clearsInProgress = 0
 
@@ -151,9 +154,11 @@ class EncryptedCertificateUnlockCache internal constructor(
             clearsInProgress++
         }
         return try {
-            val revoked = runCatching { keyProvider.revoke() }.getOrDefault(false)
-            val removed = runCatching { storage.clear() }.getOrDefault(false)
-            revoked || removed
+            synchronized(persistenceLock) {
+                val revoked = runCatching { keyProvider.revoke() }.getOrDefault(false)
+                val removed = runCatching { storage.clear() }.getOrDefault(false)
+                revoked || removed
+            }
         } finally {
             synchronized(stateLock) { clearsInProgress-- }
         }
@@ -208,27 +213,30 @@ class EncryptedCertificateUnlockCache internal constructor(
                 bootTime = bootTime,
                 referenceDigest = referenceDigest,
             )
-            val cipher = Cipher.getInstance(TRANSFORMATION)
-            cipher.init(Cipher.ENCRYPT_MODE, keyProvider.getOrCreate())
-            val iv = cipher.iv
-            require(iv.size == GCM_IV_BYTES)
-            cipher.updateAAD(authenticatedHeader)
-            cipherText = cipher.doFinal(plainBytes)
-            require(cipherText.size in MIN_CIPHERTEXT_BYTES..MAX_CIPHERTEXT_BYTES)
-            record = createRecord(authenticatedHeader, iv, cipherText)
-            val written = storage.write(record)
-            when {
-                !written -> {
-                    clear()
-                    false
-                }
-                invalidationGeneration.get() != storeGeneration -> {
-                    clear()
-                    false
-                }
-                else -> synchronized(stateLock) {
-                    if (invalidationGeneration.get() != storeGeneration || clearsInProgress != 0) false
-                    else { restoreBlocked = false; true }
+            synchronized(persistenceLock) {
+                if (invalidationGeneration.get() != storeGeneration) return false
+                val cipher = Cipher.getInstance(TRANSFORMATION)
+                cipher.init(Cipher.ENCRYPT_MODE, keyProvider.getOrCreate())
+                val iv = cipher.iv
+                require(iv.size == GCM_IV_BYTES)
+                cipher.updateAAD(authenticatedHeader)
+                cipherText = cipher.doFinal(plainBytes)
+                require(cipherText.size in MIN_CIPHERTEXT_BYTES..MAX_CIPHERTEXT_BYTES)
+                record = createRecord(authenticatedHeader, iv, cipherText)
+                val written = storage.write(record)
+                when {
+                    !written -> {
+                        clear()
+                        false
+                    }
+                    invalidationGeneration.get() != storeGeneration -> {
+                        clear()
+                        false
+                    }
+                    else -> synchronized(stateLock) {
+                        if (invalidationGeneration.get() != storeGeneration || clearsInProgress != 0) false
+                        else { restoreBlocked = false; true }
+                    }
                 }
             }
         } catch (cancellation: CancellationException) {

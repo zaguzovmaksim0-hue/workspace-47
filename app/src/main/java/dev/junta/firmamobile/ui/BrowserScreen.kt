@@ -687,7 +687,8 @@ fun BrowserScreen(
         siteDataCleaner.clearProfileSession(profile, webViewCapabilities) { sessionCleared ->
             mainHandler.post {
                 if (!sessionDataClearLease.consume(sessionClearRequest)) return@post
-                if (!sessionCleared) {
+                siteClearResult = sessionCleared
+                if (sessionCleared == SiteClearResult.FAILED) {
                     clientAuthPreparing = false
                     browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
                     pageLoading = false
@@ -1083,7 +1084,8 @@ fun BrowserScreen(
                 siteDataCleaner.clearProfileSession(profile, webViewCapabilities) { sessionCleared ->
                     mainHandler.post {
                         if (!sessionDataClearLease.consume(sessionClearRequest)) return@post
-                        if (!sessionCleared) {
+                        siteClearResult = sessionCleared
+                        if (sessionCleared == SiteClearResult.FAILED) {
                             clientAuthPreparing = false
                             browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
                             pageLoading = false
@@ -1094,6 +1096,11 @@ fun BrowserScreen(
                                 if (!clientAuthClearRequest.compareAndSet(completedRequest, null)) return@post
                                 clientAuthPreparing = false
                                 if (result == ClientCertPreferenceClearResult.CLEARED) {
+                                    if (sessionCleared == SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE) {
+                                        android.widget.Toast.makeText(context,
+                                            R.string.browser_clear_session_limited,
+                                            android.widget.Toast.LENGTH_LONG).show()
+                                    }
                                     onClearSession()
                                 } else {
                                     browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
