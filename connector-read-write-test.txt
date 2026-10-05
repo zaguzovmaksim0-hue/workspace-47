@@ -1,3 +1,3 @@
 GitHub connector read/write test
-Version: 1
-Purpose: verify file creation in an isolated test branch.
+Version: 2
+Purpose: verify existing file updates in an isolated test branch.
