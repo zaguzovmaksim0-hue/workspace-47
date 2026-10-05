@@ -265,10 +265,18 @@ internal class AndroidRegionLocationSource(
     override fun availableProviders(): List<String> = candidateProviders().filter(::isProviderEnabled)
 
     override fun recentLocation(): Location? {
-        if (!hasCoarseLocationPermission()) return null
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED
+        ) return null
         val now = android.os.SystemClock.elapsedRealtimeNanos()
         return availableProviders().mapNotNull { provider ->
-            runCatching { locationManager.getLastKnownLocation(provider) }.getOrNull()
+            try {
+                locationManager.getLastKnownLocation(provider)
+            } catch (_: SecurityException) {
+                null // Permission may be revoked after the check above.
+            } catch (_: IllegalArgumentException) {
+                null // A provider can disappear while location settings change.
+            }
         }.filter { isUsableRecentRegionLocation(it, now) }
             .maxByOrNull { it.elapsedRealtimeNanos }
     }
