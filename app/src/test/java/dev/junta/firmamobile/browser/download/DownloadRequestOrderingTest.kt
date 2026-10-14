@@ -5,48 +5,28 @@ import org.junit.Test
 
 class DownloadRequestOrderingTest {
     private var nowNanos = 0L
-    private val evidence = DownloadGetEvidence { nowNanos }
+    private val evidence = DownloadRequestEvidence { nowNanos }
     private val url = "https://download.synthetic.example/file"
 
     @Test
-    fun mainFrameGetSurvivesIgnoredIframePost() {
-        evidence.record(url, "GET", false)
-        assertFalse(evidence.consume(url))
-
-        evidence.record(url, "GET", true)
-        nowNanos += 1_000_000_000L
-        evidence.record(url, "POST", false)
-        evidence.navigationStarted(url)
-
-        assertTrue(evidence.consume(url))
-        assertFalse(evidence.consume(url))
+    fun iframeRequestsAreEvidenceToo() {
+        evidence.record(url, "GET")
+        assertEquals(ObservedMethod.GET, evidence.methodOf(url))
     }
 
     @Test
-    fun actualMainFramePostInvalidatesEarlierGet() {
-        evidence.record(url, "GET", true)
+    fun laterFormPostToTheSamePageAddressIsAPost() {
+        // JSF pages post back to their own address.
+        evidence.record(url, "GET")
         nowNanos += 1_000_000_000L
-        evidence.record(url, "POST", true)
-        evidence.navigationStarted(url)
-
-        assertFalse(evidence.consume(url))
+        evidence.record(url, "POST")
+        assertEquals(ObservedMethod.POST, evidence.methodOf(url))
     }
 
     @Test
-    fun redirectOrDifferentDocumentNavigationInvalidatesOldCandidate() {
-        val redirectedUrl = "$url?redirected=true"
-
-        evidence.record(url, "GET", true)
-        nowNanos += 1_000_000_000L
-        evidence.record(redirectedUrl, "GET", true)
-        assertFalse(evidence.consume(url))
-
+    fun clearForgetsEverything() {
+        evidence.record(url, "POST")
         evidence.clear()
-        evidence.record(url, "GET", true)
-        nowNanos += 1_000_000_000L
-        evidence.navigationStarted(redirectedUrl)
-
-        assertFalse(evidence.consume(url))
-        assertFalse(evidence.consume(redirectedUrl))
+        assertNull(evidence.methodOf(url))
     }
 }

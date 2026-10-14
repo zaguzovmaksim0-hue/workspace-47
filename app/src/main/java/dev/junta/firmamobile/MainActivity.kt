@@ -520,7 +520,11 @@ class MainActivity : ComponentActivity() {
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onShowFileChooser = { view, callback, params -> browserFileChooser.open(view, callback, params) },
                         onDocumentDownload = { view, request ->
-                            if (currentWebView !== view || certificatePanelVisible || request.component?.packageName != packageName ||
+                            // A dedicated certificate session is deliberately not a signing
+                            // view (currentWebView is null); its own visible view may still save.
+                            val ownView = currentWebView === view ||
+                                (currentWebView == null && view.isAttachedToWindow && view.isShown)
+                            if (!ownView || certificatePanelVisible || request.component?.packageName != packageName ||
                                 request.component?.className != dev.junta.firmamobile.browser.download.DocumentDownloadActivity::class.java.name
                             ) false else try {
                                 withBrowserExternalReturn(onToken = { documentDownloadReturnToken = it }) {

@@ -1222,7 +1222,7 @@ fun BrowserScreen(
                                     !nativeAfirma.hasPending && !nativeFallback.hasPending && !nativeRetrieval.hasPending &&
                                     interactivePrompt == null && pendingRequest == null && pendingCertificateSelection == null &&
                                     pendingInPlaceClientAuth == null && pendingClientAuthTarget == null &&
-                                    !clientAuthPreparing && clientAuthGrant == null &&
+                                    !clientAuthPreparing &&
                                     currentClientCertPreferenceState == ClientCertPreferenceBarrierState.IDLE
                             },
                             launch = onDocumentDownload,
@@ -1578,6 +1578,21 @@ fun BrowserScreen(
                             dedicatedClientRef.set(client)
                             dedicatedWebViewRef.set(webView)
                             webView.webViewClient = client
+                            // A download inside the certificate session presents the same
+                            // certificate, only to the exact host and port that was authorized
+                            // and only after the WebView itself has validated and presented it.
+                            val certificateHost = tlsGrant.authorized.target.host
+                            val certificatePort = tlsGrant.authorized.target.port
+                            webView.setDocumentDownloadClientIdentity { host ->
+                                if (certificateHost != null && host.equals(certificateHost, ignoreCase = true) &&
+                                    (certificatePort == -1 || certificatePort == 443)
+                                ) {
+                                    dev.junta.firmamobile.browser.download.ClientTlsIdentity(host) {
+                                        clientCertificateIdentityProvider()
+                                            .takeIf { webViewRef.get() === webView && handler.hasProceeded() }
+                                    }
+                                } else null
+                            }
                             val targetUrl = tlsGrant.authorized.target.toASCIIString()
                             val postBody = pendingClientAuthPostBody.getAndSet(null)
                             val isEuskadiPostTarget =

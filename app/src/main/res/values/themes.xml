@@ -7,4 +7,11 @@
         <item name="android:windowBackground">@color/jfm_paper</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+
+    <!-- Draws opaquely, but the window is translucent so the browser below is
+         only paused: opening the download screen must not count as leaving the
+         app, which would end a certificate session or lock the certificate. -->
+    <style name="Theme.JuntaFirmaMobile.Overlay">
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
 </resources>
