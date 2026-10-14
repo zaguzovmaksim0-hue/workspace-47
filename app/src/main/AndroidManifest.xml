@@ -29,7 +29,8 @@
         <activity
             android:name=".browser.download.DocumentDownloadActivity"
             android:exported="false"
-            android:excludeFromRecents="true" />
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.JuntaFirmaMobile.Overlay" />
     </application>
 
 </manifest>

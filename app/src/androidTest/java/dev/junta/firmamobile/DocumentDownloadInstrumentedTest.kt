@@ -19,6 +19,7 @@ import dev.junta.firmamobile.browser.download.DocumentDownloadActivity
 import dev.junta.firmamobile.browser.download.DocumentDownloadPlan
 import dev.junta.firmamobile.browser.download.DocumentDownloadScreen
 import dev.junta.firmamobile.browser.download.DocumentDownloadState
+import dev.junta.firmamobile.browser.download.DocumentDownloadTickets
 import java.io.ByteArrayInputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -109,6 +110,66 @@ class DocumentDownloadInstrumentedTest {
             scenario.onActivity { (view.parent as? android.view.ViewGroup)?.removeView(view); view.destroy() }
         }
     }
+    @Test fun formPostAttachmentOffersToResubmitTheSameFields() {
+        val page = """<html><head><title>FORM_FIXTURE</title></head><body>
+            <form id='f' method='post' action='/attachment'><input name='field' value='valor 1'>
+            <button id='b' name='btn' value='ok'>Obtener</button></form></body></html>"""
+        val plan = offeredPlan(page, "POST", "document.getElementById('b').click()")
+        try {
+            assertTrue(plan.replaysForm); assertFalse(plan.isInline)
+            assertEquals("https://download.synthetic.example/attachment", plan.url!!.toASCIIString())
+            assertEquals("field=valor+1&btn=ok", String(plan.form!!.body()))
+        } finally { plan.discard() }
+    }
+
+    @Test fun blobAttachmentIsCopiedFromThePageWithoutARequest() {
+        val page = """<html><head><title>BLOB_FIXTURE</title></head><body><button id='b'>Guardar</button><script>
+            document.getElementById('b').onclick = function () {
+              var url = URL.createObjectURL(new Blob(['%PDF-blob-fixture'], { type: 'application/pdf' }));
+              var a = document.createElement('a'); a.href = url; a.download = 'Justificante.pdf';
+              document.body.appendChild(a); a.click(); URL.revokeObjectURL(url);
+            };</script></body></html>"""
+        val plan = offeredPlan(page, null, "document.getElementById('b').click()")
+        try {
+            assertTrue(plan.isInline); assertNull(plan.url)
+            assertEquals("Justificante.pdf", plan.fileName); assertEquals("application/pdf", plan.mimeType)
+            assertEquals("%PDF-blob-fixture", plan.inline!!.file.readText())
+        } finally { plan.discard() }
+    }
+
+    /** Loads [html] at a synthetic HTTPS address, runs [trigger] and returns the plan of the launched offer. */
+    private fun offeredPlan(html: String, documentMethod: String?, trigger: String): DocumentDownloadPlan {
+        val offer = AtomicReference<Intent?>()
+        val ready = AtomicBoolean(false)
+        lateinit var view: TrustedJuntaWebView
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                view = TrustedJuntaWebView(activity)
+                activity.setContentView(view)
+                view.setDocumentDownloadLauncher({ true }) { _, request -> offer.compareAndSet(null, request) }
+                view.webViewClient = object : WebViewClient() {
+                    override fun shouldInterceptRequest(v: WebView, request: WebResourceRequest): WebResourceResponse? {
+                        if (request.url.host != "download.synthetic.example") return null
+                        val document = documentMethod != null && request.url.path == "/attachment" && request.method == documentMethod
+                        val body = if (document) "%PDF-synthetic" else html
+                        return WebResourceResponse(if (document) "application/pdf" else "text/html", "UTF-8", 200, "OK",
+                            if (document) mapOf("Content-Disposition" to "attachment; filename=fixture.pdf") else emptyMap(),
+                            ByteArrayInputStream(body.toByteArray()))
+                    }
+                    override fun onPageFinished(v: WebView, url: String) { if (url.endsWith("/start")) ready.set(true) }
+                }
+                view.loadUrl("https://download.synthetic.example/start")
+            }
+            rule.waitUntil(timeoutMillis = 15_000) { ready.get() }
+            scenario.onActivity { view.evaluateJavascript(trigger, null) }
+            rule.waitUntil(timeoutMillis = 20_000) { offer.get() != null }
+            val ticket = checkNotNull(offer.get()!!.getStringExtra("download-ticket"))
+            val plan = checkNotNull(DocumentDownloadTickets.store.take(ticket))
+            scenario.onActivity { (view.parent as? android.view.ViewGroup)?.removeView(view); view.destroy() }
+            return plan
+        }
+    }
+
     private fun plan() = checkNotNull(DocumentDownloadPlan.create(
         "https://download.synthetic.example/page", "https://download.synthetic.example/document?token=synthetic",
         "Comprobante.pdf", "application/pdf", 123, "Synthetic", CookieLookup { "sid=not-real" }))

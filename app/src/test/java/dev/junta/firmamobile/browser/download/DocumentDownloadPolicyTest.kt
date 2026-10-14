@@ -77,11 +77,14 @@ class DocumentDownloadPolicyTest {
         e.record(URL, "POST"); now += 60_000_000_000L; assertNull(e.methodOf(URL))
         e.record(URL, "POST"); now--; assertNull(e.methodOf(URL))
     }
-    @Test fun evidenceIsBounded() {
+    @Test fun evidenceIsBoundedButKeepsFormSubmissionsLongest() {
         val e = DownloadRequestEvidence { 100 }
         e.record(URL, "POST")
-        repeat(64) { e.record("$URL?n=$it", "GET") }
-        assertNull(e.methodOf(URL)); assertEquals(ObservedMethod.GET, e.methodOf("$URL?n=63"))
+        repeat(200) { e.record("$URL?n=$it", "GET") }
+        assertEquals(ObservedMethod.POST, e.methodOf(URL))
+        assertNull(e.methodOf("$URL?n=0")); assertEquals(ObservedMethod.GET, e.methodOf("$URL?n=199"))
+        repeat(70) { e.record("$URL?p=$it", "POST") }
+        assertNull(e.methodOf(URL)); assertEquals(ObservedMethod.POST, e.methodOf("$URL?p=69"))
     }
     @Test fun unsafeUrlOrSizeDoesNotBecomeAnOffer() {
         for (url in listOf("http://download.example/file", "https://user@download.example/file", "blob:https://download.example/id", "https://127.0.0.1/file", "https://download.example:8443/file")) {
