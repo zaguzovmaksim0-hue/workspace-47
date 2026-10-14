@@ -61,7 +61,8 @@ internal class BrowserDownloadCapture(private val view: WebView) {
 
     internal fun offer(url: String?, userAgent: String?, disposition: String?, mimeType: String?, length: Long): Boolean {
         if (launcher == null || closed || !view.isAttachedToWindow) return false
-        if (!view.isShown || pending != null || !runCatching(canRespond).getOrDefault(false)) {
+        // A dialog over the page (site information, a system prompt) takes window focus.
+        if (!view.isShown || !view.hasWindowFocus() || pending != null || !runCatching(canRespond).getOrDefault(false)) {
             notice(R.string.document_download_busy); return false
         }
         val raw = url ?: return false

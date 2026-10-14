@@ -226,14 +226,14 @@ internal class DocumentDownloadTransport(
         private const val MAX_REDIRECTS = 10
         private val REDIRECT_CODES = setOf(301, 302, 303, 307, 308)
 
-        /** Browser cookies first; a cookie the chain's server just set replaces one with the same name. */
+        /** Browser cookies in their order, including same-named cookies for different paths;
+         * a cookie the chain's server just set replaces the browser's cookies of that name. */
         internal fun cookieHeader(browser: String?, received: List<Cookie>): String? {
-            val pairs = LinkedHashMap<String, String>()
-            browser?.split(';')?.map { it.trim() }?.filter { it.isNotEmpty() }?.forEach { pair ->
-                pairs[pair.substringBefore('=')] = pair
-            }
-            received.forEach { pairs[it.name] = it.name + "=" + it.value }
-            val header = pairs.values.joinToString("; ")
+            val replaced = received.map { it.name }.toSet()
+            val pairs = browser?.split(';')?.map { it.trim() }
+                ?.filter { it.isNotEmpty() && it.substringBefore('=') !in replaced }.orEmpty() +
+                received.map { it.name + "=" + it.value }
+            val header = pairs.joinToString("; ")
             return header.takeIf { it.isNotEmpty() && it.length <= 32768 && it.all { c -> c.code in 0x20..0x7e } }
         }
 

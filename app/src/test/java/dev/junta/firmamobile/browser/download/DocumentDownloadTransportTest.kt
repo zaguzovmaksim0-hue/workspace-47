@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import okhttp3.Dns
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
@@ -48,6 +49,12 @@ class DocumentDownloadTransportTest {
         assertEquals("/download", first.target); assertEquals("/final.pdf", second.target)
         assertEquals("sid=synthetic; hop=chain", second.headers["Cookie"])
         assertEquals(2, asked.size); assertTrue(asked[1].endsWith("/final.pdf"))
+    }
+    @Test fun sameNamedBrowserCookiesForDifferentPathsAreAllSent() {
+        val url = "https://download.example/a/b".toHttpUrl()
+        assertEquals("sid=path; sid=root; x=1", DocumentDownloadTransport.cookieHeader("sid=path; sid=root; x=1", emptyList()))
+        val fresh = checkNotNull(okhttp3.Cookie.parse(url, "sid=new"))
+        assertEquals("x=1; sid=new", DocumentDownloadTransport.cookieHeader("sid=path; sid=root; x=1", listOf(fresh)))
     }
     @Test fun redirectToPlainHttpIsRefused() = fixture { f ->
         f.server.enqueue(MockResponse.Builder().code(302).addHeader("Location", "http://download.example/document").build())
