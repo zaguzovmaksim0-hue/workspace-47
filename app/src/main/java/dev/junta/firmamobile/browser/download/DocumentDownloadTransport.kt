@@ -60,6 +60,8 @@ internal class DocumentDownloadTransport(
     private val dns: Dns = publicDns(),
     private val clientBuilder: () -> OkHttpClient.Builder = { OkHttpClient.Builder() },
     private val trustManager: () -> X509TrustManager = ::systemTrustManager,
+    /** Every hop must be an address the browser could have opened: public HTTPS on 443. */
+    private val admit: (HttpUrl) -> Boolean = { PublicBrowserAddress.parse(it.toString()) != null },
 ) {
     private class HopTag { val sent = AtomicBoolean(false) }
     private sealed interface Outcome {
@@ -81,7 +83,7 @@ internal class DocumentDownloadTransport(
             var url = start
             var post = plan.form != null
             repeat(MAX_REDIRECTS + 1) {
-                if (PublicBrowserAddress.parse(url.toString()) == null) throw DocumentDownloadException(DocumentDownloadProblem.REDIRECT)
+                if (!admit(url)) throw DocumentDownloadException(DocumentDownloadProblem.REDIRECT)
                 val request = request(plan, url, post, received)
                 when (val outcome = exchange(clientFor(client, plan, url.host), request, plan, file, received, progress)) {
                     is Outcome.Done -> return outcome.staged

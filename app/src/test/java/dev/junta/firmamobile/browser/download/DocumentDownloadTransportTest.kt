@@ -171,7 +171,9 @@ class DocumentDownloadTransportTest {
         }
         val transport = DocumentDownloadTransport(dns = dns, clientBuilder = {
             OkHttpClient.Builder().sslSocketFactory(trusted.sslSocketFactory(), trusted.trustManager)
-        }, trustManager = { trusted.trustManager })
+        }, trustManager = { trusted.trustManager },
+            // The fixture server cannot listen on 443; only the port is relaxed.
+            admit = { it.isHttps && it.host == "download.example" })
         fun plan(path: String = "/download", cookies: CookieLookup? = null, page: String = "https://download.example/",
             form: FormSubmission? = null, identity: ClientTlsIdentity? = null): DocumentDownloadPlan {
             // Public entry admission supports 443 only. The test changes only

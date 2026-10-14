@@ -92,10 +92,9 @@ class DocumentDownloadPolicyTest {
     @Test fun fragmentIsDroppedInsteadOfRejected() {
         assertEquals("https://download.example/file", plan(url = "$URL#page=2")!!.url!!.toASCIIString())
     }
-    @Test fun cookiesFollowTheRegistrableDomainLikeABrowser() {
+    @Test fun cookiesStayWithTheSameSite() {
+        // Registrable-domain cases need the Android public suffix list: DownloadSiteScopeTest.
         assertTrue(plan()!!.sendsSession)
-        assertTrue(plan(url = "https://files.download.example/file")!!.sameSite)
-        assertTrue(plan(url = "https://files.download.example/file")!!.sendsSession)
         assertFalse(plan(url = "https://other.example/file")!!.sameSite)
         assertFalse(plan(url = "https://other.example/file")!!.sendsSession)
         assertFalse(plan(cookies = null)!!.sendsSession)
