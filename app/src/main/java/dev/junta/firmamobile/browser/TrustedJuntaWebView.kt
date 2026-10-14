@@ -21,7 +21,7 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
     override fun setWebViewClient(client: WebViewClient) {
         httpAuthClient?.close()
         downloads.clear()
-        val wrapped = HttpAuthWebViewClient(client, downloads::observe, downloads::navigationStarted)
+        val wrapped = HttpAuthWebViewClient(client, downloads::observe)
         httpAuthClient = wrapped
         super.setWebViewClient(wrapped)
     }
@@ -60,6 +60,11 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
 
     fun setDocumentDownloadLauncher(canRespond: () -> Boolean, launch: ((WebView, android.content.Intent) -> Boolean)?) {
         downloads.configure(canRespond, launch)
+    }
+
+    /** [identity] returns the certificate session for a download host, or null. */
+    internal fun setDocumentDownloadClientIdentity(identity: (String) -> dev.junta.firmamobile.browser.download.ClientTlsIdentity?) {
+        downloads.setClientIdentity(identity)
     }
 
     fun setPageProgressListener(listener: (Int) -> Unit) {

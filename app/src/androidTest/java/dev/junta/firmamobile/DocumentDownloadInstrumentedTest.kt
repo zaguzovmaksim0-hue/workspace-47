@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
+import dev.junta.firmamobile.browser.download.CookieLookup
 import dev.junta.firmamobile.browser.download.DocumentDownloadActivity
 import dev.junta.firmamobile.browser.download.DocumentDownloadPlan
 import dev.junta.firmamobile.browser.download.DocumentDownloadScreen
@@ -110,5 +111,5 @@ class DocumentDownloadInstrumentedTest {
     }
     private fun plan() = checkNotNull(DocumentDownloadPlan.create(
         "https://download.synthetic.example/page", "https://download.synthetic.example/document?token=synthetic",
-        "Comprobante.pdf", "application/pdf", 123, "Synthetic", "sid=not-real"))
+        "Comprobante.pdf", "application/pdf", 123, "Synthetic", CookieLookup { "sid=not-real" }))
 }

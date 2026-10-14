@@ -24,7 +24,7 @@ import dev.junta.firmamobile.R
 
 @Composable
 internal fun DocumentDownloadScreen(
-    plan: DocumentDownloadPlan?, state: DocumentDownloadState, received: Long,
+    plan: DocumentDownloadPlan?, state: DocumentDownloadState, received: Long, problem: DocumentDownloadProblem? = null,
     onStart: () -> Unit, onSave: () -> Unit, onClose: () -> Unit,
 ) {
     Surface(Modifier.fillMaxSize()) {
@@ -33,22 +33,32 @@ internal fun DocumentDownloadScreen(
             Text(stringResource(R.string.document_download_title), style = MaterialTheme.typography.headlineSmall)
             if (plan != null) {
                 Text(plan.fileName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag("download-file-name"))
-                Text(stringResource(R.string.document_download_server, plan.targetOrigin))
-                if (plan.sourceOrigin != plan.targetOrigin) Text(stringResource(R.string.document_download_foreign))
+                Text(stringResource(if (plan.isInline) R.string.document_download_inline_source else R.string.document_download_server,
+                    plan.targetOrigin))
+                if (!plan.sameSite) Text(stringResource(R.string.document_download_foreign))
             }
             Text(stringResource(when (state) {
-                DocumentDownloadState.OFFER -> R.string.document_download_offer
+                DocumentDownloadState.OFFER -> if (plan?.replaysForm == true) R.string.document_download_offer_form else R.string.document_download_offer
                 DocumentDownloadState.FETCHING -> R.string.document_download_fetching
                 DocumentDownloadState.READY -> R.string.document_download_ready
                 DocumentDownloadState.PICKING -> R.string.document_download_picking
                 DocumentDownloadState.COPYING -> R.string.document_download_copying
                 DocumentDownloadState.SAVED -> R.string.document_download_saved
                 DocumentDownloadState.SAVE_FAILED -> R.string.document_download_save_failed
-                DocumentDownloadState.FAILED -> R.string.document_download_failed
+                DocumentDownloadState.FAILED -> when (problem) {
+                    DocumentDownloadProblem.AUTHENTICATION -> R.string.document_download_failed_authentication
+                    DocumentDownloadProblem.NOT_DOCUMENT -> R.string.document_download_failed_not_document
+                    DocumentDownloadProblem.TOO_LARGE -> R.string.document_download_failed_too_large
+                    DocumentDownloadProblem.REDIRECT -> R.string.document_download_failed_redirect
+                    else -> R.string.document_download_failed
+                }
                 DocumentDownloadState.EXPIRED -> R.string.document_download_expired
             }), modifier = Modifier.testTag("download-status"))
-            if (state == DocumentDownloadState.OFFER && plan?.cookie != null) {
+            if (state == DocumentDownloadState.OFFER && plan?.sendsSession == true) {
                 Text(stringResource(R.string.document_download_session))
+            }
+            if (state == DocumentDownloadState.OFFER && plan?.clientIdentity != null) {
+                Text(stringResource(R.string.document_download_certificate))
             }
             if (state in setOf(DocumentDownloadState.FETCHING, DocumentDownloadState.COPYING)) {
                 CircularProgressIndicator(Modifier.testTag("download-progress"))
@@ -57,7 +67,7 @@ internal fun DocumentDownloadScreen(
             Spacer(Modifier.height(8.dp))
             if (state == DocumentDownloadState.OFFER && plan != null) Button(
                 onClick = onStart, modifier = Modifier.fillMaxWidth().testTag("download-start"),
-            ) { Text(stringResource(R.string.document_download_start)) }
+            ) { Text(stringResource(if (plan.replaysForm) R.string.document_download_start_form else R.string.document_download_start)) }
             if (state in setOf(DocumentDownloadState.READY, DocumentDownloadState.SAVE_FAILED)) Button(
                 onClick = onSave, modifier = Modifier.fillMaxWidth().testTag("download-save"),
             ) { Text(stringResource(R.string.document_download_save)) }

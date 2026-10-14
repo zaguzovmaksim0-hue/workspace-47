@@ -45,7 +45,7 @@ class DocumentDownloadActivity : ComponentActivity() {
         })[DocumentDownloadModel::class.java]
         setContent {
             dev.junta.firmamobile.ui.theme.JuntaFirmaTheme {
-                DocumentDownloadScreen(model.plan, model.state, model.received,
+                DocumentDownloadScreen(model.plan, model.state, model.received, model.problem,
                     onStart = model::start,
                     onSave = {
                         if (model.beginPicker()) try {
@@ -82,11 +82,18 @@ internal class DocumentDownloadModel(
         DocumentDownloadTransport().fetch(p, dir, progress)
     },
 ) : ViewModel() {
-    var state by mutableStateOf(if (plan == null) DocumentDownloadState.EXPIRED else DocumentDownloadState.OFFER)
+    // A document the page already held needs no request: it is ready to save.
+    var state by mutableStateOf(when {
+        plan == null -> DocumentDownloadState.EXPIRED
+        plan.isInline -> DocumentDownloadState.READY
+        else -> DocumentDownloadState.OFFER
+    })
         private set
-    var received by mutableStateOf(0L)
+    var received by mutableStateOf(plan?.inline?.bytes ?: 0L)
         private set
-    private var staged: StagedDocument? = null
+    var problem by mutableStateOf<DocumentDownloadProblem?>(null)
+        private set
+    private var staged: StagedDocument? = plan?.inline
     private var job: Job? = null
 
     fun start() {
@@ -110,7 +117,13 @@ internal class DocumentDownloadModel(
                 if (state != DocumentDownloadState.FETCHING) { result.close(); return@launch }
                 staged = result; received = result.bytes; state = DocumentDownloadState.READY
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { state = DocumentDownloadState.FAILED }
+            catch (failure: Exception) {
+                problem = (failure as? DocumentDownloadException)?.problem ?: DocumentDownloadProblem.NETWORK
+                state = DocumentDownloadState.FAILED
+            } finally {
+                // A form body is sent at most once; clear it from memory now.
+                request.form?.close()
+            }
         }
     }
     fun beginPicker(): Boolean {
@@ -159,6 +172,7 @@ internal class DocumentDownloadModel(
     fun cancel() {
         state = DocumentDownloadState.EXPIRED
         job?.cancel(); staged?.close(); staged = null
+        plan?.discard()
     }
     override fun onCleared() { cancel() }
 }

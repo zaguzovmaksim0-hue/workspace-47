@@ -59,44 +59,92 @@ class DocumentDownloadPolicyTest {
         assertEquals(1L, BoundedDocumentCopy.copy(odd, out, 16).bytes)
         assertArrayEquals(byteArrayOf(65), out.toByteArray())
     }
-    @Test fun completedGetEvidenceIsConsumedOnce() {
-        val e = DownloadGetEvidence { 100 }
-        e.record(URL, "GET", true); e.navigationStarted(URL)
-        assertTrue(e.consume(URL)); assertFalse(e.consume(URL))
+    @Test fun latestRequestForAnAddressDecidesItsMethodInAnyFrame() {
+        val e = DownloadRequestEvidence { 100 }
+        e.record(URL, "GET"); assertEquals(ObservedMethod.GET, e.methodOf(URL))
+        e.record(URL, "POST"); assertEquals(ObservedMethod.POST, e.methodOf(URL))
+        e.record(URL, "GET"); assertEquals(ObservedMethod.GET, e.methodOf(URL))
+        e.record(URL, "PUT"); assertEquals(ObservedMethod.OTHER, e.methodOf(URL))
     }
-    @Test fun postAndIframeCannotBeReinterpretedAsDownloadGet() {
-        val e = DownloadGetEvidence { 100 }
-        e.record(URL, "POST", true); assertFalse(e.consume(URL))
-        e.record(URL, "GET", false); assertFalse(e.consume(URL))
-        e.record(URL, "GET", true); e.record(URL, "POST", true); assertFalse(e.consume(URL))
-    }
-    @Test fun redirectOrNewPageDoesNotInheritOriginalGetEvidence() {
-        val e = DownloadGetEvidence { 100 }
-        e.record(URL, "GET", true); assertFalse(e.consume(URL + "?new")); assertTrue(e.consume(URL))
-        e.record(URL, "GET", true); e.navigationStarted(URL + "?new"); assertFalse(e.consume(URL))
+    @Test fun unobservedRedirectTargetHasNoEvidenceAndFragmentsDoNotMatter() {
+        val e = DownloadRequestEvidence { 100 }
+        e.record(URL, "POST")
+        assertNull(e.methodOf(URL + "?redirected"))
+        assertEquals(ObservedMethod.POST, e.methodOf(URL + "#page=2"))
     }
     @Test fun evidenceExpiresOrRejectsClockRollback() {
-        var now = 100L; val e = DownloadGetEvidence { now }
-        e.record(URL, "GET", true); now += 30_000_000_000L; assertFalse(e.consume(URL))
-        e.record(URL, "GET", true); now--; assertFalse(e.consume(URL))
+        var now = 100L; val e = DownloadRequestEvidence { now }
+        e.record(URL, "POST"); now += 60_000_000_000L; assertNull(e.methodOf(URL))
+        e.record(URL, "POST"); now--; assertNull(e.methodOf(URL))
+    }
+    @Test fun evidenceIsBounded() {
+        val e = DownloadRequestEvidence { 100 }
+        e.record(URL, "POST")
+        repeat(64) { e.record("$URL?n=$it", "GET") }
+        assertNull(e.methodOf(URL)); assertEquals(ObservedMethod.GET, e.methodOf("$URL?n=63"))
     }
     @Test fun unsafeUrlOrSizeDoesNotBecomeAnOffer() {
-        for (url in listOf("http://download.example/file", "https://user@download.example/file", "blob:https://download.example/id", "https://127.0.0.1/file", URL + "#part")) {
+        for (url in listOf("http://download.example/file", "https://user@download.example/file", "blob:https://download.example/id", "https://127.0.0.1/file", "https://download.example:8443/file")) {
             assertNull(plan(url = url))
         }
         assertNull(plan(length = DocumentDownloadPlan.MAX_BYTES + 1)); assertNull(plan(length = -2))
     }
-    @Test fun cookiesDoNotCrossAnOriginBoundary() {
-        assertEquals("session=synthetic", plan()!!.cookie)
-        assertNull(plan(url = "https://other.example/file")!!.cookie)
-        assertNull(plan(cookie = "session=x\r\nInjected: yes")!!.cookie)
+    @Test fun fragmentIsDroppedInsteadOfRejected() {
+        assertEquals("https://download.example/file", plan(url = "$URL#page=2")!!.url!!.toASCIIString())
+    }
+    @Test fun cookiesFollowTheRegistrableDomainLikeABrowser() {
+        assertTrue(plan()!!.sendsSession)
+        assertTrue(plan(url = "https://files.download.example/file")!!.sameSite)
+        assertTrue(plan(url = "https://files.download.example/file")!!.sendsSession)
+        assertFalse(plan(url = "https://other.example/file")!!.sameSite)
+        assertFalse(plan(url = "https://other.example/file")!!.sendsSession)
+        assertFalse(plan(cookies = null)!!.sendsSession)
         assertEquals("https://download.example", plan()!!.targetOrigin)
+    }
+    @Test fun certificateIsBoundOnlyToItsOwnHost() {
+        val identity = ClientTlsIdentity("download.example") { null }
+        assertNotNull(DocumentDownloadPlan.create(URL, URL, "a.pdf", null, 1, "agent", null, null, identity)!!.clientIdentity)
+        assertNull(DocumentDownloadPlan.create(URL, "https://other.example/a", "a.pdf", null, 1, "agent", null, null, identity)!!.clientIdentity)
+    }
+    @Test fun rejectedPlanDiscardsTheFormItWasGiven() {
+        val form = checkNotNull(FormSubmission.encode(null, null, listOf(FormEntry.Text("a", "b"))))
+        assertNull(DocumentDownloadPlan.create(URL, "http://download.example/x", "a.pdf", null, 1, "agent", null, form))
+        assertThrows(IllegalStateException::class.java) { form.body() }
+    }
+    @Test fun inlineDocumentNeedsNoRequestAndIsDeletedWithItsOffer() {
+        val dir = java.nio.file.Files.createTempDirectory("inline-").toFile()
+        try {
+            val file = StagedDocument.createFile(dir).apply { writeText("%PDF") }
+            val plan = checkNotNull(DocumentDownloadPlan.inline(URL, StagedDocument(file, 4, "x"), "a.pdf", "application/pdf", "agent"))
+            assertTrue(plan.isInline); assertNull(plan.url); assertFalse(plan.sendsSession)
+            val store = DownloadTicketStore { 100 }; val token = checkNotNull(store.offer(plan))
+            store.revoke(token); assertFalse(file.exists())
+        } finally { dir.deleteRecursively() }
+    }
+    @Test fun expiredTicketDeletesItsInlineDocument() {
+        val dir = java.nio.file.Files.createTempDirectory("inline-").toFile()
+        try {
+            var now = 100L; val store = DownloadTicketStore { now }
+            val file = StagedDocument.createFile(dir).apply { writeText("%PDF") }
+            store.offer(checkNotNull(DocumentDownloadPlan.inline(URL, StagedDocument(file, 4, "x"), "a.pdf", null, "agent")))
+            now += 120_000_000_000L
+            assertNotNull(store.offer(plan()!!)); assertFalse(file.exists())
+        } finally { dir.deleteRecursively() }
+    }
+    @Test fun dataAddressDecodesBase64AndPercentEncoding() {
+        val pdf = DataUrlDocument.parse("data:application/pdf;base64,JVBERi0xLjQ=")!!
+        assertEquals("application/pdf", pdf.mimeType); assertEquals("%PDF-1.4", String(pdf.bytes))
+        val text = DataUrlDocument.parse("data:,Hola%20mundo%C3%B1#frag")!!
+        assertNull(text.mimeType); assertEquals("Hola mundoñ", String(text.bytes, Charsets.UTF_8))
+        assertNull(DataUrlDocument.parse("https://download.example/file"))
+        assertNull(DataUrlDocument.parse("data:text/plain;base64,%%%"))
+        assertNull(DataUrlDocument.parse("data:,abcdef", limit = 3))
     }
     @Test fun privateQueryIsPreservedForRequestButNotOriginsOrStringRepresentation() {
         val plan = plan(url = URL + "?token=do-not-display")!!
-        assertTrue(plan.url.toASCIIString().endsWith("?token=do-not-display"))
+        assertTrue(plan.url!!.toASCIIString().endsWith("?token=do-not-display"))
         assertFalse(plan.targetOrigin.contains("token")); assertFalse(plan.toString().contains("token"))
-        assertFalse(plan.toString().contains("session=synthetic"))
+        assertFalse(plan.toString().contains("session"))
     }
     @Test fun malformedHeadersCannotCreateAnInjectableRequest() {
         assertNull(DocumentDownloadPlan.create(URL, URL, "a.pdf", "application/pdf", 1, "agent\r\nx", null))
@@ -112,7 +160,7 @@ class DocumentDownloadPolicyTest {
         val fresh = store.offer(p)!!; store.revoke(old); assertSame(p, store.take(fresh))
         val cancelled = store.offer(p)!!; store.revoke(cancelled); assertNull(store.take(cancelled))
     }
-    private fun plan(url: String = URL, length: Long = 10, cookie: String? = "session=synthetic") =
-        DocumentDownloadPlan.create(URL, url, "test.pdf", "application/pdf", length, "Synthetic Agent", cookie)
+    private fun plan(url: String = URL, length: Long = 10, cookies: CookieLookup? = CookieLookup { "session=synthetic" }) =
+        DocumentDownloadPlan.create(URL, url, "test.pdf", "application/pdf", length, "Synthetic Agent", cookies)
     companion object { private const val URL = "https://download.example/file" }
 }
