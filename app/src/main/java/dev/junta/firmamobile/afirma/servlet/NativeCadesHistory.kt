@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.afirma.servlet
 
+import dev.junta.firmamobile.signing.BundledBouncyCastle
 import java.io.Closeable
 import java.security.MessageDigest
 import org.bouncycastle.asn1.ASN1Encoding
@@ -22,7 +23,6 @@ import org.bouncycastle.cms.CMSProcessableByteArray
 import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.cms.SignerInformation
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /** Supported ordinary CAdES history, not certificate-chain trust, revocation,
  * a trusted signing time, or validation of an absent detached original file. */
@@ -43,7 +43,7 @@ internal class NativeCadesHistory private constructor(
     companion object {
         const val MAX_SIGNERS = 8
         const val MAX_CERTIFICATES = 32
-        private val provider = BouncyCastleProvider()
+        private val provider = BundledBouncyCastle.provider
 
         /** Shape-only admission; cryptographic history verification remains
          * mandatory immediately before creating a new signature. */

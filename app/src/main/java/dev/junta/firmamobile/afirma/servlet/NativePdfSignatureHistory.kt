@@ -7,6 +7,7 @@ import com.tom_roush.pdfbox.cos.COSName
 import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.PDSignature
+import dev.junta.firmamobile.signing.BundledBouncyCastle
 import java.io.ByteArrayInputStream
 import java.security.MessageDigest
 import java.util.Collections
@@ -15,7 +16,6 @@ import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.cms.CMSProcessableByteArray
 import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /** Public verification facts only. Validity is cryptographic, not an attestation
  * of the prior signer's identity, legal status, timestamp or certificate trust. */
@@ -32,7 +32,7 @@ internal data class NativePdfPriorSignature(
  * is rebound to its own signed revision, not trusted solely from the newest xref. */
 internal object NativePdfSignatureHistory {
     const val MAX_SIGNATURES = 8
-    private val provider = BouncyCastleProvider()
+    private val provider = BundledBouncyCastle.provider
 
     fun inspect(pdf: ByteArray, document: PDDocument): List<NativePdfPriorSignature>? = runCatching {
         val current = read(pdf, document, verifyCryptography = true) ?: return null
