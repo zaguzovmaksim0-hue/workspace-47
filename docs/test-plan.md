@@ -282,12 +282,23 @@ Ejecutar en API 36 real o emulador equivalente:
 - SSL error llama `cancel()` y nunca `proceed()`;
 - bridge funciona en origin permitido y no existe en origin externo/subframe;
 - popup/new window arbitrario se rechaza;
-- rotación/recreación conserva WebView state sin conservar contraseña en Bundle;
+- validar los `configChanges` de `MainActivity` del PR #347
+  (`orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode`):
+  rotación, redimensionado/split-screen, cambio de teclado/navegación y tema deben
+  conservar el portal y su WebView en memoria sin recrear la Activity;
+- una recreación real (p. ej., cambio de idioma, escala de fuente o densidad) o muerte
+  del proceso no restaura el estado de WebView; no guardar contraseña ni historial
+  WebView en Bundle (`BrowserSessionStatePolicy`);
 - bloqueo manual obliga a introducir contraseña otra vez;
 - background timeout bloquea identidad;
 - una hoja de confirmación aparece y cancelar no firma;
-- `FLAG_SECURE` permanece inactivo en todos los estados, incluidos password, unlock,
-  certificado desbloqueado, catálogo/WebView y firma, para permitir screenshots;
+- `FLAG_SECURE` permanece inactivo en la ventana principal de `MainActivity` en todos
+  los estados (password, unlock, certificado desbloqueado, catálogo/WebView y firma),
+  para permitir screenshots; las ventanas separadas siguen protegidas: el panel del
+  certificado, el consentimiento nativo de AutoFirma y el consentimiento de
+  client-auth usan `SecureFlagPolicy.SecureOn`, y el diálogo HTTP-auth y
+  `DocumentDownloadActivity` fijan `FLAG_SECURE`; comprobar que esos diálogos sí lo
+  tienen;
 - borrar datos del sitio no afecta otros origins y muestra resultado
   exacto/limitado/fallido;
 - una limpieza confirmada del sitio o global debe avanzar `navigationEpoch` antes de
