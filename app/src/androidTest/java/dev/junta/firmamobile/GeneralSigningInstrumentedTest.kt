@@ -83,7 +83,9 @@ class GeneralSigningInstrumentedTest {
     @Test fun unprofiledPageOffersLocalXadesWithoutAutomaticallyUsingACertificate() {
         withBrowser { scenario, view ->
             offer(scenario, view, "sign", base("XAdES", "synthetic".toByteArray()))
-            rule.onNodeWithText("XAdES", substring = true).assertIsDisplayed()
+            rule.onNodeWithTag("native-afirma-details").assertDoesNotExist()
+            rule.onNodeWithTag("native-afirma-details-toggle").performScrollTo().performClick()
+            rule.onNodeWithText("XAdES", substring = true).performScrollTo().assertIsDisplayed()
             rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed()
             rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
             closeLocally(scenario)

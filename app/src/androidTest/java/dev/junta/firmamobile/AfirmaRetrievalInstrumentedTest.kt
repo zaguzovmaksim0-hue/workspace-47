@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ActivityScenario
@@ -82,6 +83,9 @@ class AfirmaRetrievalInstrumentedTest {
             rule.runOnIdle { assertEquals(1, downloads); assertEquals(0, consentCount); ready.complete(Unit) }
             rule.waitUntil(timeoutMillis = 15_000) { consentCount == 1 }
             rule.onNodeWithTag("afirma-retrieval-dialog").assertDoesNotExist()
+            rule.waitUntil(timeoutMillis = 15_000) {
+                rule.onAllNodesWithTag("native-afirma-unlock").fetchSemanticsNodes().isNotEmpty()
+            }
             rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed().performClick()
             rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
             rule.runOnIdle { assertEquals(1, downloads); assertEquals(1, consentCount); assertEquals(1, unlocks) }

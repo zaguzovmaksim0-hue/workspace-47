@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.ClientCertPreferenceBarrierState
 import dev.junta.firmamobile.browser.NavigationBlockReason
-import dev.junta.firmamobile.browser.SiteClearResult
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.HttpMethod
@@ -111,14 +110,12 @@ class BrowserScreenTest {
             browserError: BrowserErrorCode? = null,
             clientCertPreferenceState: ClientCertPreferenceBarrierState =
                 ClientCertPreferenceBarrierState.IDLE,
-            siteClearResult: SiteClearResult? = null,
             globalClearResult: Boolean? = null,
         ) = browserNoticeLiveRegionMode(
             compatibilityError = compatibilityError,
             blockedReason = blockedReason,
             browserError = browserError,
             clientCertPreferenceState = clientCertPreferenceState,
-            siteClearResult = siteClearResult,
             globalClearResult = globalClearResult,
         )
 
@@ -127,10 +124,6 @@ class BrowserScreenTest {
             mode(clientCertPreferenceState = ClientCertPreferenceBarrierState.CLEARING),
         )
         assertEquals(LiveRegionMode.Polite, mode(globalClearResult = true))
-        assertEquals(
-            LiveRegionMode.Polite,
-            mode(siteClearResult = SiteClearResult.CLEARED_EXACTLY),
-        )
 
         assertEquals(
             LiveRegionMode.Assertive,
@@ -138,10 +131,7 @@ class BrowserScreenTest {
         )
         assertEquals(
             LiveRegionMode.Assertive,
-            mode(
-                compatibilityError = true,
-                siteClearResult = SiteClearResult.CLEARED_EXACTLY,
-            ),
+            mode(compatibilityError = true, globalClearResult = true),
         )
         assertEquals(
             LiveRegionMode.Assertive,
@@ -155,17 +145,7 @@ class BrowserScreenTest {
             ),
         )
         assertEquals(LiveRegionMode.Assertive, mode(globalClearResult = false))
-        assertEquals(
-            LiveRegionMode.Assertive,
-            mode(
-                siteClearResult =
-                    SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE,
-            ),
-        )
-        assertEquals(
-            LiveRegionMode.Assertive,
-            mode(siteClearResult = SiteClearResult.FAILED),
-        )
+        assertEquals(LiveRegionMode.Assertive, mode())
     }
 
     @Test

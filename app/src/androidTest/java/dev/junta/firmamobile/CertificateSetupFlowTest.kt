@@ -99,8 +99,10 @@ class CertificateSetupFlowTest {
                 }
                 assertScreenshotsAllowed(scenario)
 
-                rule.onNodeWithText("Bloquear certificado")
+                rule.onNodeWithContentDescription("Opciones del certificado")
                     .performScrollTo()
+                    .performClick()
+                rule.onNodeWithText("Bloquear certificado")
                     .performClick()
                 rule.onNodeWithContentDescription("Contraseña del certificado")
                     .performScrollTo()
