@@ -7,13 +7,16 @@ Completed:
 - Fail-closed MiniApplet routing when the effective profile is missing (F-02).
 - Private release signing with no debug-key fallback (F-01).
 - `qa` build variant for unverified portal work.
-- Release activation restricted to sensitive `VERIFIED_E2E` profiles (F-04).
+- Release activation (F-04) was originally restricted to sensitive `VERIFIED_E2E` profiles. On 2026-10-05
+  the maintainer deliberately superseded this (`ae6a5e4a`, `docs/release-signing.md`): release builds set
+  `ALLOW_UNVERIFIED_PROFILES=true` and also load unverified (`QA_ONLY`) profiles and the experimental
+  Junta Ovorion profile; the strict `releaseRegistry` stays available as a separate policy.
 - Junta legacy Ovorion, Carné Joven, Aragón SIRAW and Junta Oficina Virtual are
   tracked separately. Carné Joven `CLIENT_TLS_AUTH` was verified on a physical
   device on 2026-07-21; Aragón login CAdES on 2026-07-28; Oficina Virtual
   MiniApplet 1.5 login CAdES on 2026-07-29; UniZAR login CAdES on 2026-07-30.
-  RedSARA remains `QA_ONLY`; historical Ovorion MiniApplet 1.4 is `EXPERIMENTAL`, is available only under
-  QA policy for sensitive operations, and is excluded from release.
+  RedSARA remains `QA_ONLY`; historical Ovorion MiniApplet 1.4 is `EXPERIMENTAL` and, since the 2026-10-05
+  maintainer decision, is also enabled in release builds (see F-04 above).
 - Profile/public-catalog E2E consistency gate (F-15A): every bound profile marked
   `VERIFIED_E2E` must have the exact public metadata pair
   `E2E_VERIFIED / VERIFIED_E2E`, and non-E2E profiles cannot carry that pair.
