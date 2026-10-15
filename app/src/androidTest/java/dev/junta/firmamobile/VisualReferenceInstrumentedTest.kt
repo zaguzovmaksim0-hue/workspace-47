@@ -24,7 +24,7 @@ class VisualReferenceInstrumentedTest {
     fun capturesSafeFirstRunReferenceScreen() {
         TestCertificateDependencies.install().use {
             ActivityScenario.launch(MainActivity::class.java).use {
-                rule.onNodeWithText("Junta Firma Mobile").assertIsDisplayed()
+                rule.onNodeWithText("Firma Mobile").assertIsDisplayed()
                 rule.onNodeWithText("Seleccionar certificado").assertIsDisplayed()
                 rule.onNodeWithText("Inicio").assertDoesNotExist()
                 rule.onNodeWithText("Historial").assertDoesNotExist()

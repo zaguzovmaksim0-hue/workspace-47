@@ -212,6 +212,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         BrowserSessionStatePolicy.discardLegacyWebViewState(savedInstanceState)
         super.onCreate(savedInstanceState)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            window.setHideOverlayWindows(true)
+        }
         beginCatalogStartup()
     }
 

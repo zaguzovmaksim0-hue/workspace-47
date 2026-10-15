@@ -2224,6 +2224,7 @@ private fun CertificateSelectionConfirmationDialog(
         onDismissRequest = onCancel,
         title = { Text("Compartir certificado") },
         text = {
+            FilterObscuredTouches()
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Dominio: $host")
                 Text("Operación: $safeDescription")
@@ -2252,6 +2253,7 @@ private fun ClientAuthConfirmationDialog(
         onDismissRequest = onCancel,
         title = { Text("Acceso con certificado") },
         text = {
+            FilterObscuredTouches()
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Organismo: $organization")
                 Text("Dominio: $host")
@@ -2282,6 +2284,7 @@ private fun AfirmaObservationDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.afirma_request_observed_title)) },
         text = {
+            FilterObscuredTouches()
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.afirma_request_site, request.origin.host))
                 Text(stringResource(R.string.afirma_request_certificate, certificateOwner))
