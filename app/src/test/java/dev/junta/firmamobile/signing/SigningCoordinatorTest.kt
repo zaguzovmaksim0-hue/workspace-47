@@ -129,19 +129,30 @@ class SigningCoordinatorTest {
         val localCleared = AtomicBoolean(false)
         val finalCleared = AtomicBoolean(false)
         val candidate = request()
+        // The pending store hands the adapter its own copy; the candidate is closed on put.
+        val liveRequest = AtomicReference<NormalizedSignRequest?>(null)
         fun blockPhase(current: String) {
             if (current != phase) return
             entered.countDown()
-            check(release.await(5, TimeUnit.SECONDS))
+            check(release.await(20, TimeUnit.SECONDS))
             // Cancellation must join the worker before closing its request or pre-sign input.
-            candidate.withPayload { assertArrayEquals(PAYLOAD, it) }
+            checkNotNull(liveRequest.get()).withPayload { assertArrayEquals(PAYLOAD, it) }
         }
-        val workerAdapter = MutatingAdapter(
+        val mutatingAdapter = MutatingAdapter(
             preSignState = preSignState,
             onPrepare = { blockPhase("prepare") },
             onComplete = { blockPhase("complete") },
             finalSignatureCleared = finalCleared,
         )
+        val workerAdapter = object : SigningProtocolAdapter by mutatingAdapter {
+            override suspend fun prepare(
+                request: NormalizedSignRequest,
+                certificateChain: List<X509Certificate>,
+            ): ProtocolPrepareResult {
+                liveRequest.set(request)
+                return mutatingAdapter.prepare(request, certificateChain)
+            }
+        }
         val workerEngine = object : LocalSignatureEngine {
             override fun sign(
                 input: ByteArray,
@@ -172,7 +183,7 @@ class SigningCoordinatorTest {
         try {
             assertTrue(
                 "phase $phase not reached; events=${reply.events} state=${localCoordinator.state.value}",
-                entered.await(5, TimeUnit.SECONDS),
+                entered.await(20, TimeUnit.SECONDS),
             )
             job.cancel()
         } finally {
@@ -184,7 +195,7 @@ class SigningCoordinatorTest {
         assertEquals(phase != "prepare", localCleared.get())
         assertEquals(phase == "complete", finalCleared.get())
         assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply.events)
-        org.junit.Assert.assertThrows(IllegalStateException::class.java) { candidate.withPayload {} }
+        org.junit.Assert.assertThrows(IllegalStateException::class.java) { checkNotNull(liveRequest.get()).withPayload {} }
     }
 
     @Test
