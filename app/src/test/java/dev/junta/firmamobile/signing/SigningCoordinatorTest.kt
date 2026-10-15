@@ -22,6 +22,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -183,7 +185,8 @@ class SigningCoordinatorTest {
         try {
             assertTrue(
                 "phase $phase not reached; events=${reply.events} state=${localCoordinator.state.value}",
-                entered.await(20, TimeUnit.SECONDS),
+                // Suspend instead of blocking: the caller thread must stay free to resume phase results.
+                withContext(Dispatchers.IO) { entered.await(20, TimeUnit.SECONDS) },
             )
             job.cancel()
         } finally {
