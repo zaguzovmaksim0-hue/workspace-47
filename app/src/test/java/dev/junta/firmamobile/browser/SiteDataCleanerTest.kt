@@ -72,7 +72,7 @@ class SiteDataCleanerTest {
     }
 
     @Test
-    fun malformedCookieMetadataLeavesCookiesUntouchedAndReportsLimitedClear() {
+    fun parentDomainCookiesAreNotExpired() {
         val cookies = FakeCookieStore(
             cookieInfo = listOf("SESSION=secret; Domain=unizar.es; Path=/"),
         )
@@ -88,6 +88,37 @@ class SiteDataCleanerTest {
         assertTrue(cookies.writes.isEmpty())
         assertEquals(0, cookies.flushCalls)
         assertEquals(0, cookies.removeAllCalls)
+    }
+
+    @Test
+    fun parentDomainCookieDoesNotPreventExpiringExactHostCookies() {
+        val cookies = FakeCookieStore(
+            cookieInfo = listOf(
+                "SSO=shared; Domain=.unizar.es; Path=/; Secure",
+                "SESSION=local; Path=/private; Secure; HttpOnly",
+                "PREF=local; Domain=.tramita.unizar.es; Path=/",
+            ),
+        )
+        val storage = FakeSiteWebStorage()
+
+        val result = SiteDataCleaner(cookies, storage).clearOrigin(
+            URI("https://tramita.unizar.es/private"),
+            capabilities(getCookieInfo = true),
+        )
+
+        assertEquals(SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE, result)
+        assertEquals(listOf("https://tramita.unizar.es"), storage.deletedOrigins)
+        assertEquals(
+            listOf(
+                "SESSION=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/private; Secure",
+                "PREF=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; Domain=tramita.unizar.es",
+            ),
+            cookies.writes.map { it.second },
+        )
+        assertEquals(1, cookies.flushCalls)
+        assertEquals(0, cookies.removeAllCalls)
+        assertEquals(0, cookies.removeSessionCalls)
+        assertEquals(0, storage.deleteAllCalls)
     }
 
     @Test

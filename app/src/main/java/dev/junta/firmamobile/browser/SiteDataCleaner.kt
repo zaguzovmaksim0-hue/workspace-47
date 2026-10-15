@@ -7,7 +7,6 @@ import java.net.URI
 import java.util.Locale
 
 enum class SiteClearResult {
-    CLEARED_EXACTLY,
     WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE,
     FAILED,
 }
@@ -52,9 +51,8 @@ class SiteDataCleaner(
         } catch (_: Exception) {
             null
         } ?: return SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE
-        val expirations = cookieInfo.map { cookie ->
+        val expirations = cookieInfo.mapNotNull { cookie ->
             expirationHeader(cookie, site.origin.host)
-                ?: return SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE
         }
         // GET_COOKIE_INFO enumerates a URL, not all paths of an origin.
         // Even an empty result cannot prove that every site cookie is gone.
@@ -77,16 +75,10 @@ class SiteDataCleaner(
         callback: (SiteClearResult) -> Unit,
     ) {
         val targets = profileSessionTargets(profile)
-        var result = SiteClearResult.CLEARED_EXACTLY
+        var result = SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE
         for (target in targets) {
-            when (clearOrigin(target, capabilities)) {
-                SiteClearResult.FAILED -> result = SiteClearResult.FAILED
-                SiteClearResult.CLEARED_EXACTLY -> Unit
-                SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE -> {
-                    if (result != SiteClearResult.FAILED) {
-                        result = SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE
-                    }
-                }
+            if (clearOrigin(target, capabilities) == SiteClearResult.FAILED) {
+                result = SiteClearResult.FAILED
             }
         }
         if (!clearAllSessionCookies) {
