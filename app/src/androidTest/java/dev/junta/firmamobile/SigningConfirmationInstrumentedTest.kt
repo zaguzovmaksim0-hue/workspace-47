@@ -18,7 +18,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodes
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performClick
@@ -74,6 +76,11 @@ class SigningConfirmationInstrumentedTest {
 
             TestCertificateDependencies.install(repository, CertificateSession()).use {
                 ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    // The stored reference loads asynchronously; wait for the unlock form.
+                    rule.waitUntil(timeoutMillis = 15_000) {
+                        rule.onAllNodes(hasContentDescription("Contraseña del certificado"))
+                            .fetchSemanticsNodes().isNotEmpty()
+                    }
                     rule.onNodeWithContentDescription("Contraseña del certificado")
                         .performScrollTo()
                         .performTextInput(TEST_PASSPHRASE)
