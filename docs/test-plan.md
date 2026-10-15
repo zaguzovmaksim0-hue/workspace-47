@@ -282,7 +282,13 @@ Ejecutar en API 36 real o emulador equivalente:
 - SSL error llama `cancel()` y nunca `proceed()`;
 - bridge funciona en origin permitido y no existe en origin externo/subframe;
 - popup/new window arbitrario se rechaza;
-- rotación/recreación conserva WebView state sin conservar contraseña en Bundle;
+- validar los `configChanges` de `MainActivity` del PR #347
+  (`orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode`):
+  rotación, redimensionado/split-screen, cambio de teclado/navegación y tema deben
+  conservar el portal y su WebView en memoria sin recrear la Activity;
+- una recreación real (p. ej., cambio de idioma, escala de fuente o densidad) o muerte
+  del proceso no restaura el estado de WebView; no guardar contraseña ni historial
+  WebView en Bundle (`BrowserSessionStatePolicy`);
 - bloqueo manual obliga a introducir contraseña otra vez;
 - background timeout bloquea identidad;
 - una hoja de confirmación aparece y cancelar no firma;

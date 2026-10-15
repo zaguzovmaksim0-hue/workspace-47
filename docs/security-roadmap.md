@@ -38,9 +38,12 @@ Completed:
   `SHA1withRSA`, exact `precalculatedHashAlgorithm=SHA1` and `serverUrl`;
   Storage/Retrieve, co-sign, counter-sign and document-signing remain blocked.
 - MainActivity screenshot policy supersedes the previous F-05 secure-window behavior
-  (2026-08-28): screenshots are intentionally allowed across the whole application.
-  `FLAG_SECURE` is never applied and is defensively cleared even for password, unlocked
-  certificate, portal WebView and signing states. This is an explicit privacy trade-off;
+  (2026-08-28): screenshots are intentionally allowed in its main window.
+  `WindowSecureFlagPolicy` clears `FLAG_SECURE` even for password, unlocked
+  certificate, portal WebView and signing states. Some separate windows remain protected:
+  selected dialogs including the certificate panel, native AutoFirma consent and client-auth
+  consent use `SecureFlagPolicy.SecureOn`; the HTTP-auth dialog and
+  `DocumentDownloadActivity` explicitly set `FLAG_SECURE`. This is a privacy trade-off;
   sensitive screenshots remain prohibited as persisted QA/repository evidence.
 - Profile-scoped cookie/session hardening completed (F-08): native cookie
   access requires an active `SiteProfile` and an exact declared network endpoint;
@@ -74,7 +77,7 @@ Completed:
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
 - CI and supply-chain gate completed (F-14): GitHub Actions use read-only
-  permissions and exact action commit SHAs; Gradle 9.4.1 wrapper/distribution and
+  permissions and exact action commit SHAs; Gradle 9.7.0 wrapper/distribution and
   resolved artifacts are SHA-256 verified; complete Git history is scanned with
   pinned Gitleaks; Dependabot covers Gradle, Go modules, GitHub Actions and pip at `/tools`; Android APKs
   are checked for alignment, signature count, manifest hardening and forbidden
@@ -115,7 +118,7 @@ Latest completed isolated PR — CI and supply-chain gate (F-14):
 
 - CI separates Android, Python and Go gates and uses `contents: read`, immutable
   action SHAs, bounded timeouts and concurrency cancellation.
-- Gradle 9.4.1 distribution and wrapper JAR are pinned by official SHA-256;
+- Gradle 9.7.0 distribution and wrapper JAR are pinned by official SHA-256;
   dependency verification rejects unrecorded artifacts and contains no wildcard
   trust rule.
 - Android gates run unit tests, lint and APK builds, then verify 16 KiB alignment,
