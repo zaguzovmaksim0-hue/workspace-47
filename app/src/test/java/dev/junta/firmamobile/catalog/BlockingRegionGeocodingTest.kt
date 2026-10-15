@@ -107,6 +107,9 @@ class BlockingRegionGeocodingTest {
     fun geocoderFailureReachesCaller() = runBlocking {
         val failure = IOException("Synthetic geocoder failure")
         val result = runCatching { blockingRegionGeocoding<List<String>> { throw failure } }
-        assertSame(failure, result.exceptionOrNull())
+        // Coroutine stack-trace recovery may hand back a copy; the original stays the cause.
+        val thrown = result.exceptionOrNull()
+        assertTrue(thrown is IOException)
+        assertEquals("Synthetic geocoder failure", thrown?.message)
     }
 }
