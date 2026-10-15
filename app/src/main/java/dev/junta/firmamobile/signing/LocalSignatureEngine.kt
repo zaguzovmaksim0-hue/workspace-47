@@ -5,7 +5,6 @@ import java.security.SecureRandom
 import java.security.Signature
 import java.security.PrivateKey
 import java.security.interfaces.RSAPrivateKey
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 enum class LocalSignatureError {
     INPUT_TOO_LARGE,
@@ -91,7 +90,7 @@ class JcaLocalSignatureEngine internal constructor(
             // provider for this case; never serialize the key or reorder the
             // process providers. Opaque AndroidKeyStore keys retain native JCA
             // dispatch, and no signature is retried through a second provider.
-            Signature.getInstance(algorithm, BouncyCastleProvider())
+            Signature.getInstance(algorithm, BundledBouncyCastle.provider)
         } else Signature.getInstance(algorithm)
 
     private fun verify(

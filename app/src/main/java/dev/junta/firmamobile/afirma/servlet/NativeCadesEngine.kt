@@ -27,14 +27,13 @@ import org.bouncycastle.cms.CMSProcessableByteArray
 import org.bouncycastle.cms.CMSSignedDataGenerator
 import org.bouncycastle.cms.DefaultSignedAttributeTableGenerator
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
 
 internal class NativeCadesEngine(
     private val maxInputBytes: Int = MAX_INPUT_BYTES,
     private val maxOutputBytes: Int = MAX_OUTPUT_BYTES,
-    private val provider: Provider = BouncyCastleProvider(),
+    private val provider: Provider = BundledBouncyCastle.provider,
     private val secureRandom: SecureRandom = SecureRandom(),
     private val clock: Clock = Clock.systemUTC(),
     private val signatureObserver: SensitiveSignatureCopyObserver =

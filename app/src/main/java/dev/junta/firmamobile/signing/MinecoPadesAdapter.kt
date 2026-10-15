@@ -1,21 +1,22 @@
 package dev.junta.firmamobile.signing
 
+import com.tom_roush.pdfbox.io.MemoryUsageSetting
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.ExternalSigningSupport
 import com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.PDSignature
 import com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.SignatureOptions
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.Provider
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.util.Calendar
 import java.util.TimeZone
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /** Exact authenticated MINECO Instancia Genérica MiniApplet PAdES contract. QA-only until physical E2E. */
 class MinecoPadesAdapter(
     private val clock: Clock = Clock.systemUTC(),
-    private val provider: Provider = BouncyCastleProvider(),
+    private val provider: Provider = BundledBouncyCastle.provider,
 ) : SigningProtocolAdapter {
     override val id: SigningProtocolId = ID
 
@@ -104,7 +105,10 @@ class MinecoPadesAdapter(
     ): ProtocolPrepareResult {
         val sourcePdf = pdfBytes.copyOf()
         val document = try {
-            PDDocument.load(sourcePdf)
+            PDDocument.load(
+                ByteArrayInputStream(sourcePdf),
+                MemoryUsageSetting.setupMainMemoryOnly(16L * 1024 * 1024),
+            )
         } catch (error: Exception) {
             sourcePdf.fill(0)
             throw error
@@ -181,7 +185,10 @@ class MinecoPadesAdapter(
 
     private fun isValidSignedPdf(bytes: ByteArray, initialSignatureCount: Int): Boolean = runCatching {
         require(bytes.size in 5..MAX_OUTPUT_PDF_BYTES && bytes.startsWithPdfHeader())
-        PDDocument.load(bytes).use { document ->
+        PDDocument.load(
+            ByteArrayInputStream(bytes),
+            MemoryUsageSetting.setupMainMemoryOnly(16L * 1024 * 1024),
+        ).use { document ->
             require(!document.isEncrypted)
             val signatures = document.signatureDictionaries
             require(signatures.size == initialSignatureCount + 1)

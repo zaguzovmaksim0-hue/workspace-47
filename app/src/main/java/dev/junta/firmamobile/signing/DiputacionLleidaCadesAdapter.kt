@@ -3,12 +3,11 @@ package dev.junta.firmamobile.signing
 import java.security.Provider
 import java.security.cert.X509Certificate
 import java.time.Clock
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /** Local detached CAdES adapter for Diputació de Lleida's exact certificate-login contract. */
 class DiputacionLleidaCadesAdapter internal constructor(
     private val clock: Clock = Clock.systemUTC(),
-    private val provider: Provider = BouncyCastleProvider(),
+    private val provider: Provider = BundledBouncyCastle.provider,
 ) : SigningProtocolAdapter {
     override val id: SigningProtocolId = ID
 

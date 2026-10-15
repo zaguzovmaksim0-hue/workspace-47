@@ -9,12 +9,11 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import org.bouncycastle.asn1.ASN1InputStream
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /** Local detached PAdES adapter for ACCEDA's observed doSignSolicitud contract. */
 class AccedaPadesAdapter internal constructor(
     private val clock: Clock = Clock.systemUTC(),
-    private val provider: Provider = BouncyCastleProvider(),
+    private val provider: Provider = BundledBouncyCastle.provider,
 ) : SigningProtocolAdapter {
     override val id: SigningProtocolId = ID
 
@@ -199,7 +198,7 @@ internal object PadesDetachedCodec {
         pdfBytes: ByteArray,
         certificateChain: List<X509Certificate>,
         clock: Clock,
-        provider: Provider = BouncyCastleProvider(),
+        provider: Provider = BundledBouncyCastle.provider,
         signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
     ): PadesPreSignMaterial {
         require(pdfBytes.size in 32..MAX_PDF_SIZE)
@@ -445,7 +444,7 @@ internal object PadesDetachedCodec {
         placeholderCms: ByteArray,
         signingCertificateFingerprint: ByteArray,
         signatureValue: ByteArray,
-        provider: Provider = BouncyCastleProvider(),
+        provider: Provider = BundledBouncyCastle.provider,
         signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
     ): ByteArray {
         val cmsBytes = CadesDetachedCodec.complete(
@@ -479,7 +478,7 @@ internal object PadesDetachedCodec {
     internal fun validate(
         signatureDocument: ByteArray,
         expectedCertificateFingerprint: ByteArray? = null,
-        provider: Provider = BouncyCastleProvider(),
+        provider: Provider = BundledBouncyCastle.provider,
         signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
     ): Boolean = runCatching {
         require(signatureDocument.size in 32..MAX_PDF_SIZE)

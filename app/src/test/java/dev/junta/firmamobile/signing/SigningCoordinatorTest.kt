@@ -21,10 +21,17 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -45,6 +52,154 @@ class SigningCoordinatorTest {
         clock = clock,
         expiryScheduler = expiryScheduler,
     )
+
+    @Test
+    fun confirmPhasesRunOffCallerButValidationAndDeliveryStayOnCaller() = runBlocking {
+        val caller = Thread.currentThread()
+        val phases = mutableListOf<String>()
+        val workerAdapter = object : SigningProtocolAdapter by adapter {
+            override suspend fun prepare(
+                request: NormalizedSignRequest,
+                certificateChain: List<X509Certificate>,
+            ): ProtocolPrepareResult {
+                assertNotSame(caller, Thread.currentThread())
+                phases += "prepare"
+                return adapter.prepare(request, certificateChain)
+            }
+
+            override suspend fun complete(
+                request: NormalizedSignRequest,
+                preSign: PreSignResult,
+                localSignature: LocalSignature,
+            ): ProtocolCompletionResult {
+                assertNotSame(caller, Thread.currentThread())
+                phases += "complete"
+                return adapter.complete(request, preSign, localSignature)
+            }
+        }
+        val workerEngine = object : LocalSignatureEngine {
+            override fun sign(
+                input: ByteArray,
+                identity: UnlockedIdentity,
+                algorithm: SigningAlgorithm,
+            ): LocalSignatureResult {
+                assertNotSame(caller, Thread.currentThread())
+                phases += "sign"
+                return engine.sign(input, identity, algorithm)
+            }
+        }
+        val localCoordinator = SigningCoordinator(
+            certificateSession = session,
+            adapter = workerAdapter,
+            localSignatureEngine = workerEngine,
+            currentOrigin = { assertSame(caller, Thread.currentThread()); PORTAL_ORIGIN },
+            currentNavigationEpoch = { assertSame(caller, Thread.currentThread()); 0L },
+            currentPageUrl = { assertSame(caller, Thread.currentThread()); PAGE_URL },
+            clock = clock,
+            expiryScheduler = expiryScheduler,
+        )
+        val recordedReply = RecordingReply(REQUEST_ID)
+        val reply = object : SigningReplySink by recordedReply {
+            override fun success(signature: LocalSignature, certificateDer: ByteArray): Boolean {
+                assertSame(caller, Thread.currentThread())
+                return recordedReply.success(signature, certificateDer)
+            }
+        }
+        localCoordinator.prepare(request(pageUrl = PAGE_URL), reply)
+
+        assertEquals(SigningExecutionResult.Delivered(REQUEST_ID), localCoordinator.confirm(REQUEST_ID))
+        assertEquals(listOf("prepare", "sign", "complete"), phases)
+        assertEquals(listOf("success"), recordedReply.events)
+    }
+
+    @Test
+    fun cancellationDuringPrepareClosesLatePreSignBeforeReleasingRequest() =
+        assertCancellationDiscardsPhase("prepare")
+
+    @Test
+    fun cancellationDuringLocalSignClearsLateSignatureBeforeReleasingRequest() =
+        assertCancellationDiscardsPhase("sign")
+
+    @Test
+    fun cancellationDuringCompleteClearsLateFinalSignatureBeforeReleasingRequest() =
+        assertCancellationDiscardsPhase("complete")
+
+    private fun assertCancellationDiscardsPhase(phase: String): Unit = runBlocking {
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val preSignState = TrackingPreSignState()
+        val localCleared = AtomicBoolean(false)
+        val finalCleared = AtomicBoolean(false)
+        val candidate = request()
+        // The pending store hands the adapter its own copy; the candidate is closed on put.
+        val liveRequest = AtomicReference<NormalizedSignRequest?>(null)
+        fun blockPhase(current: String) {
+            if (current != phase) return
+            entered.countDown()
+            check(release.await(20, TimeUnit.SECONDS))
+            // Cancellation must join the worker before closing its request or pre-sign input.
+            checkNotNull(liveRequest.get()).withPayload { assertArrayEquals(PAYLOAD, it) }
+        }
+        val mutatingAdapter = MutatingAdapter(
+            preSignState = preSignState,
+            onPrepare = { blockPhase("prepare") },
+            onComplete = { blockPhase("complete") },
+            finalSignatureCleared = finalCleared,
+        )
+        val workerAdapter = object : SigningProtocolAdapter by mutatingAdapter {
+            override suspend fun prepare(
+                request: NormalizedSignRequest,
+                certificateChain: List<X509Certificate>,
+            ): ProtocolPrepareResult {
+                liveRequest.set(request)
+                return mutatingAdapter.prepare(request, certificateChain)
+            }
+        }
+        val workerEngine = object : LocalSignatureEngine {
+            override fun sign(
+                input: ByteArray,
+                identity: UnlockedIdentity,
+                algorithm: SigningAlgorithm,
+            ): LocalSignatureResult {
+                blockPhase("sign")
+                assertArrayEquals(PRE_SIGN_INPUT, input)
+                return LocalSignatureResult.Success(
+                    LocalSignature(LOCAL_SIGNATURE.copyOf(), SensitiveSignatureCopyObserver(localCleared::set)),
+                )
+            }
+        }
+        val localCoordinator = SigningCoordinator(
+            certificateSession = session,
+            adapter = workerAdapter,
+            localSignatureEngine = workerEngine,
+            currentOrigin = { PORTAL_ORIGIN },
+            clock = clock,
+            expiryScheduler = expiryScheduler,
+        )
+        val reply = RecordingReply(REQUEST_ID)
+        localCoordinator.prepare(candidate, reply)
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            val delivered = localCoordinator.confirm(REQUEST_ID)
+            error("Cancelled result delivered: $delivered events=${reply.events} state=${localCoordinator.state.value}")
+        }
+        try {
+            assertTrue(
+                "phase $phase not reached; events=${reply.events} state=${localCoordinator.state.value}",
+                // Suspend instead of blocking: the caller thread must stay free to resume phase results.
+                withContext(Dispatchers.IO) { entered.await(20, TimeUnit.SECONDS) },
+            )
+            job.cancel()
+        } finally {
+            release.countDown()
+            job.cancelAndJoin()
+        }
+
+        assertTrue(preSignState.closed.get())
+        assertEquals(phase != "prepare", localCleared.get())
+        assertEquals(phase == "complete", finalCleared.get())
+        assertEquals(listOf("failure:NAVIGATION_CHANGED"), reply.events)
+        org.junit.Assert.assertThrows(IllegalStateException::class.java) { checkNotNull(liveRequest.get()).withPayload {} }
+    }
 
     @Test
     fun preparePublishesOnlySafeConfirmationAndDoesNotStartSigning() {
