@@ -68,6 +68,7 @@ internal fun NativeAfirmaConsentDialog(
             }
         },
         text = {
+            FilterObscuredTouches()
             Column(Modifier.fillMaxWidth().heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(when (prompt.details.operation) {
