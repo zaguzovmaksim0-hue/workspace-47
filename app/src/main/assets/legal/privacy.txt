@@ -1,5 +1,5 @@
 Política de privacidad de Firma Mobile
-Actualización: 5 de octubre de 2026
+Actualización: 15 de octubre de 2026
 
 Proyecto: Firma Mobile. Mantenedor: Maksim Zaguzov.
 Aplicación independiente y no oficial para Android. Esta política describe la aplicación publicada por este proyecto, no las políticas de los portales visitados ni las de Android, Google o el proveedor de archivos elegido.
