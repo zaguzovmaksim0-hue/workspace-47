@@ -36,6 +36,9 @@ class DocumentDownloadActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            window.setHideOverlayWindows(true)
+        }
         model = ViewModelProvider(this, object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T = DocumentDownloadModel(
@@ -45,6 +48,7 @@ class DocumentDownloadActivity : ComponentActivity() {
         })[DocumentDownloadModel::class.java]
         setContent {
             dev.junta.firmamobile.ui.theme.JuntaFirmaTheme {
+                dev.junta.firmamobile.ui.FilterObscuredTouches()
                 DocumentDownloadScreen(model.plan, model.state, model.received, model.problem,
                     onStart = model::start,
                     onSave = {
