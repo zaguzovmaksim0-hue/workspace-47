@@ -39,7 +39,6 @@ import dev.junta.firmamobile.R
 internal class HttpAuthWebViewClient(
     private val delegate: WebViewClient,
     private val observeDownloadRequest: (WebResourceRequest) -> Unit = {},
-    private val downloadNavigation: (String) -> Unit = {},
 ) : WebViewClient() {
     private var epoch = 0L
     private var closed = false
@@ -180,7 +179,7 @@ internal class HttpAuthWebViewClient(
     fun close() { closed = true; controller.close(); release() }
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-        controller.invalidate(); epoch++; downloadNavigation(url); delegate.onPageStarted(view, url, favicon)
+        controller.invalidate(); epoch++; delegate.onPageStarted(view, url, favicon)
     }
     override fun onPageFinished(view: WebView, url: String) = delegate.onPageFinished(view, url)
     override fun onPageCommitVisible(view: WebView, url: String) = delegate.onPageCommitVisible(view, url)

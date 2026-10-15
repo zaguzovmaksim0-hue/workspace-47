@@ -1163,7 +1163,6 @@ fun BrowserScreen(
                         blockedReason = blockedReason,
                         browserError = browserError,
                         clientCertPreferenceState = clientCertPreferenceState,
-                        siteClearResult = siteClearResult,
                         globalClearResult = globalClearResult,
                     ),
                     onRetry = when {
@@ -2134,7 +2133,6 @@ internal fun browserNoticeLiveRegionMode(
     blockedReason: NavigationBlockReason?,
     browserError: BrowserErrorCode?,
     clientCertPreferenceState: ClientCertPreferenceBarrierState,
-    siteClearResult: SiteClearResult?,
     globalClearResult: Boolean?,
 ): LiveRegionMode = when {
     clientCertPreferenceState == ClientCertPreferenceBarrierState.CLEARING -> LiveRegionMode.Polite
@@ -2144,8 +2142,6 @@ internal fun browserNoticeLiveRegionMode(
     blockedReason != null -> LiveRegionMode.Assertive
     globalClearResult == true -> LiveRegionMode.Polite
     globalClearResult == false -> LiveRegionMode.Assertive
-    siteClearResult == SiteClearResult.CLEARED_EXACTLY -> LiveRegionMode.Polite
-    siteClearResult != null -> LiveRegionMode.Assertive
     else -> LiveRegionMode.Assertive
 }
 
@@ -2156,8 +2152,6 @@ private fun browserDataNotice(
 ): String? = when {
     globalClearResult == true -> stringResource(R.string.browser_delete_all_data_success)
     globalClearResult == false -> stringResource(R.string.browser_delete_all_data_failed)
-    siteClearResult == SiteClearResult.CLEARED_EXACTLY ->
-        stringResource(R.string.browser_clear_current_site_success)
     siteClearResult == SiteClearResult.WEB_STORAGE_CLEARED_COOKIE_CLEAR_UNAVAILABLE ->
         stringResource(R.string.browser_clear_current_site_limited)
     siteClearResult == SiteClearResult.FAILED ->
