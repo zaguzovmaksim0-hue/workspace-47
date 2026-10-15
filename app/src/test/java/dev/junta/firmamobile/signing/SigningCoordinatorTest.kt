@@ -166,11 +166,14 @@ class SigningCoordinatorTest {
         val reply = RecordingReply(REQUEST_ID)
         localCoordinator.prepare(candidate, reply)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            localCoordinator.confirm(REQUEST_ID)
-            error("Cancelled result delivered")
+            val delivered = localCoordinator.confirm(REQUEST_ID)
+            error("Cancelled result delivered: $delivered events=${reply.events} state=${localCoordinator.state.value}")
         }
         try {
-            assertTrue(entered.await(5, TimeUnit.SECONDS))
+            assertTrue(
+                "phase $phase not reached; events=${reply.events} state=${localCoordinator.state.value}",
+                entered.await(5, TimeUnit.SECONDS),
+            )
             job.cancel()
         } finally {
             release.countDown()
