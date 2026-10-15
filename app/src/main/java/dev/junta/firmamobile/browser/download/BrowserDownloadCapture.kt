@@ -69,16 +69,13 @@ internal class BrowserDownloadCapture(private val view: WebView) {
         val page = view.url?.takeIf { PublicBrowserAddress.parse(it.substringBefore('#')) != null }
             ?: run { notice(R.string.document_download_unsupported); return false }
         val guessedName = runCatching { URLUtil.guessFileName(raw, disposition, mimeType) }.getOrNull()
-        return when {
-            raw.regionMatches(0, "data:", 0, 5, ignoreCase = true) -> offerData(page, raw, guessedName, mimeType, userAgent)
-            raw.regionMatches(0, "blob:", 0, 5, ignoreCase = true) -> start(BlobRead(page, raw, disposition, mimeType, userAgent))
-            else -> when (evidence.methodOf(raw)) {
-                ObservedMethod.POST -> start(FormRead(page, raw, guessedName, mimeType, length, userAgent))
-                ObservedMethod.OTHER -> { notice(R.string.document_download_unsupported); false }
-                // An unobserved address is the target of a redirect, which is a GET.
-                ObservedMethod.GET, null -> deliver(DocumentDownloadPlan.create(page, raw, guessedName, mimeType, length,
-                    userAgent, browserCookies, null, identityFor(raw)))
-            }
+        return when (selectBrowserDownloadRoute(raw, evidence.methodOf(raw))) {
+            BrowserDownloadRoute.DATA -> offerData(page, raw, guessedName, mimeType, userAgent)
+            BrowserDownloadRoute.BLOB -> start(BlobRead(page, raw, disposition, mimeType, userAgent))
+            BrowserDownloadRoute.POST -> start(FormRead(page, raw, guessedName, mimeType, length, userAgent))
+            BrowserDownloadRoute.UNSUPPORTED -> { notice(R.string.document_download_unsupported); false }
+            BrowserDownloadRoute.GET -> deliver(DocumentDownloadPlan.create(page, raw, guessedName, mimeType, length,
+                userAgent, browserCookies, null, identityFor(raw)))
         }
     }
 
