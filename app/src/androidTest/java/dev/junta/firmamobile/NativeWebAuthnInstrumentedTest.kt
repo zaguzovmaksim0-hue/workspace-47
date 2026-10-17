@@ -1,6 +1,7 @@
 package dev.junta.firmamobile
 
 import android.webkit.WebView
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -66,7 +67,7 @@ class NativeWebAuthnInstrumentedTest {
 
     @Test fun enabledEngineIsNotPresentedAsCredentialProviderApproval() {
         var external = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { it.setContent { WebAuthnStatusButton(WebAuthnEngineState.ENABLED_PROVIDER_AUTHORIZATION_UNKNOWN) { external++ } } }
             rule.onNodeWithTag("webauthn-status").performClick()
             rule.onNodeWithTag("webauthn-status-dialog").assertIsDisplayed()
@@ -78,7 +79,7 @@ class NativeWebAuthnInstrumentedTest {
     }
     @Test fun unsupportedEngineLeavesAnExplicitExternalBrowserOption() {
         var external = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { it.setContent { WebAuthnStatusButton(WebAuthnEngineState.UNSUPPORTED) { external++ } } }
             rule.onNodeWithTag("webauthn-status").performClick()
             rule.onNodeWithText("no anuncia soporte", substring = true).assertIsDisplayed()

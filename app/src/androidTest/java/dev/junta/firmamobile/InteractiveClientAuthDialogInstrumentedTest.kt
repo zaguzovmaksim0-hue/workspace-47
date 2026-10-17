@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -24,7 +25,7 @@ class InteractiveClientAuthDialogInstrumentedTest {
 
     @Test fun lockedPromptOffersUnlockWithoutInvokingCertificateConfirmation() {
         var unlocked = 0; var confirmed = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 activity.setContent {
                     InteractiveClientAuthDialog(
@@ -41,7 +42,7 @@ class InteractiveClientAuthDialogInstrumentedTest {
 
     @Test fun readyPromptSeparatesTheRequestingServerFromTheOpenPage() {
         var confirmed = 0; var unlocked = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 activity.setContent {
                     InteractiveClientAuthDialog(
@@ -59,7 +60,7 @@ class InteractiveClientAuthDialogInstrumentedTest {
 
     @Test fun incompatibleCertificateCannotBeSentAndCancelIsExplicit() {
         var confirmed = 0; var canceled = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 activity.setContent {
                     InteractiveClientAuthDialog(

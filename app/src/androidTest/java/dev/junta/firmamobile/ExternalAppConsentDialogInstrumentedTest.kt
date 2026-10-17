@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -56,7 +57,7 @@ class ExternalAppConsentDialogInstrumentedTest {
 
     private fun withDialog(fallbackHost: String?, check: (Calls) -> Unit) {
         val calls = Calls()
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 activity.setContent {
                     MaterialTheme {
