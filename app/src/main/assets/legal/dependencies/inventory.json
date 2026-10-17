@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "configuration": "optimizedRuntimeClasspath",
-  "lock_sha256": "a9b41fa47db07a7d6f4336176b80d81f0f2c3ff6aedfcd9e659b54372ebfa289",
+  "lock_sha256": "6ae621985e5b24f09c5dc5b99a2ffe80eabe7ed93d4ca1811255a2df97aebfa0",
   "release_approved": false,
   "limitations": [
     "Cache evidence is not a resolved-artifact selection proof.",
@@ -1963,35 +1963,6 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0",
-      "artifacts": [
-        {
-          "file": "lifecycle-livedata-core-ktx-2.10.0.aar",
-          "sha256": "5f18429749a183e19178d8665ae42bf7b6310b50358ae9e0e0cc452afd6e0bc3",
-          "notices": [
-            {
-              "entry": "META-INF/androidx/lifecycle/lifecycle-livedata-core-ktx/LICENSE.txt",
-              "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0",
-              "bytes": 10175
-            }
-          ]
-        }
-      ],
-      "poms": [
-        {
-          "file": "lifecycle-livedata-core-ktx-2.10.0.pom",
-          "sha256": "d982082c3279eeb9c187d9897665ca9a90d3443f35dadc689261f4b27c72d9ac",
-          "licenses": [
-            {
-              "name": "The Apache Software License, Version 2.0",
-              "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-            }
-          ]
-        }
-      ],
-      "cached_evidence_present": true
-    },
-    {
       "coordinate": "androidx.lifecycle:lifecycle-livedata-core:2.10.0",
       "artifacts": [
         {
@@ -2010,35 +1981,6 @@
         {
           "file": "lifecycle-livedata-core-2.10.0.pom",
           "sha256": "4bed5e91cd2a7c01558320b6a176dbb867fca3c4c697db948e203be45f910d64",
-          "licenses": [
-            {
-              "name": "The Apache Software License, Version 2.0",
-              "url": "http://www.apache.org/licenses/LICENSE-2.0.txt"
-            }
-          ]
-        }
-      ],
-      "cached_evidence_present": true
-    },
-    {
-      "coordinate": "androidx.lifecycle:lifecycle-livedata:2.10.0",
-      "artifacts": [
-        {
-          "file": "lifecycle-livedata-2.10.0.aar",
-          "sha256": "3e8c009fc88da1c52e4ed05a81269d5ac9bd405046f300307f5e3a17e201a6df",
-          "notices": [
-            {
-              "entry": "META-INF/androidx/lifecycle/lifecycle-livedata/LICENSE.txt",
-              "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0",
-              "bytes": 10175
-            }
-          ]
-        }
-      ],
-      "poms": [
-        {
-          "file": "lifecycle-livedata-2.10.0.pom",
-          "sha256": "b6b93686c55a1ca8ec20e7d84a5fe341267e5dac6e390fb1cca398383111eb08",
           "licenses": [
             {
               "name": "The Apache Software License, Version 2.0",
@@ -2350,18 +2292,18 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "androidx.loader:loader:1.0.0",
+      "coordinate": "androidx.loader:loader:1.1.0",
       "artifacts": [
         {
-          "file": "loader-1.0.0.aar",
-          "sha256": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025",
+          "file": "loader-1.1.0.aar",
+          "sha256": "a83b597cd2409dc177f7f932f7c4082ef7b5508b69b6c4ba71607e75dbd99971",
           "notices": []
         }
       ],
       "poms": [
         {
-          "file": "loader-1.0.0.pom",
-          "sha256": "c978d550808b47434aa49a63164110a50b55b0bcc6160a93a2e37d5110df8c5e",
+          "file": "loader-1.1.0.pom",
+          "sha256": "2c74ecc13bd93b8c2a48340057f3fd083b88ff51e9169ae70d63f998d686a2dc",
           "licenses": [
             {
               "name": "The Apache Software License, Version 2.0",
@@ -3325,18 +3267,18 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "com.squareup.okhttp3:okhttp-android:5.4.0",
+      "coordinate": "com.squareup.okhttp3:okhttp-android:5.5.0",
       "artifacts": [
         {
           "file": "okhttp.aar",
-          "sha256": "0e9cbf6c7c373a5f0b0cde7f773185eb69b485faa19f76bcfab3310badbda901",
+          "sha256": "6c7fd12f092e64ca2eae0b8a8023900c0d7ffec57888cf8abc8085c6f42e1dcc",
           "notices": []
         }
       ],
       "poms": [
         {
-          "file": "okhttp-android-5.4.0.pom",
-          "sha256": "d1fe80686be7c3840c0ca98c9dee54b3051e434b21944771a677683633c008f0",
+          "file": "okhttp-android-5.5.0.pom",
+          "sha256": "9e707dd79d04b92a6da7f3fdd135ac6f55ff97e462e0c4daed29c6e894c965b4",
           "licenses": [
             {
               "name": "The Apache Software License, Version 2.0",
@@ -3348,12 +3290,12 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "com.squareup.okhttp3:okhttp:5.4.0",
+      "coordinate": "com.squareup.okhttp3:okhttp:5.5.0",
       "artifacts": [],
       "poms": [
         {
-          "file": "okhttp-5.4.0.pom",
-          "sha256": "ebee6842d0b5b700ab7e015fddcc3f1e575d92b31a76f7b62eb9026c3388b88b",
+          "file": "okhttp-5.5.0.pom",
+          "sha256": "1e5299d973d19a225d741795d28c64298105fffe2e060f07282d2b24a4a1da37",
           "licenses": [
             {
               "name": "The Apache Software License, Version 2.0",
@@ -3365,18 +3307,18 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "com.squareup.okio:okio-jvm:3.17.0",
+      "coordinate": "com.squareup.okio:okio-jvm:3.18.1",
       "artifacts": [
         {
-          "file": "okio-jvm-3.17.0.jar",
-          "sha256": "3b13dcc3e1573047c2d507fc4f7fcb0bb0cbcd9d395da21d20e09406e2cd6a73",
+          "file": "okio-jvm-3.18.1.jar",
+          "sha256": "b97b640557a650d15411f2be29aef558c4e422a83653cb18ba494311dbed18be",
           "notices": []
         }
       ],
       "poms": [
         {
-          "file": "okio-jvm-3.17.0.pom",
-          "sha256": "e4e44237a66f4091bc0f5b1d5a2bbe228ac014ab3c0f918cd6fc02ba31999030",
+          "file": "okio-jvm-3.18.1.pom",
+          "sha256": "6457712bf7dfdfa0d1b25a303600288c34a1ff8613d55c24c8c99bcc63301dd0",
           "licenses": [
             {
               "name": "The Apache Software License, Version 2.0",
@@ -3388,12 +3330,12 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "com.squareup.okio:okio:3.17.0",
+      "coordinate": "com.squareup.okio:okio:3.18.1",
       "artifacts": [],
       "poms": [
         {
-          "file": "okio-3.17.0.pom",
-          "sha256": "15b4831e84f5ca52dd37c1d6e1709a2907e2e9bc2a9c3ea13f282031de0c0135",
+          "file": "okio-3.18.1.pom",
+          "sha256": "3320a24236b2b43db1515b56587b18a8a1cdf238f4465e20e3e19e5f4fd10214",
           "licenses": [
             {
               "name": "The Apache Software License, Version 2.0",
