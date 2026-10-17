@@ -3,6 +3,8 @@ package dev.junta.firmamobile
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -45,6 +47,10 @@ class NativeAfirmaConsentInstrumentedTest {
                     onConfirm = { confirmed++ }, onUnlock = {}, onCancel = { canceled++ }, onDismiss = {})
             } }
             rule.runOnIdle { assertEquals(0, confirmed) }
+            rule.waitUntil(timeoutMillis = 5_000) {
+                rule.onAllNodes(hasTestTag("native-afirma-confirm") and isEnabled())
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
             rule.onNodeWithTag("native-afirma-confirm").assertIsDisplayed().performClick()
             rule.runOnIdle { assertEquals(1, confirmed); assertEquals(0, canceled) }
         }
