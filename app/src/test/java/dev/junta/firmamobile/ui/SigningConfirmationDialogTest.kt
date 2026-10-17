@@ -1,6 +1,5 @@
 package dev.junta.firmamobile.ui
 
-import android.os.Looper
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -12,13 +11,11 @@ import dev.junta.firmamobile.signing.SigningUiState
 import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
@@ -79,11 +76,11 @@ class SigningConfirmationDialogTest {
         val confirm = rule.onNodeWithText("Firmar")
         confirm.assertIsNotEnabled()
         rule.onNodeWithText("Cancelar").assertIsEnabled()
-        shadowOf(Looper.getMainLooper()).idleFor(599, TimeUnit.MILLISECONDS)
+        rule.mainClock.advanceTimeBy(1, ignoreFrameDuration = true)
+        rule.waitForIdle()
         rule.mainClock.advanceTimeBy(599, ignoreFrameDuration = true)
         rule.waitForIdle()
         confirm.assertIsNotEnabled()
-        shadowOf(Looper.getMainLooper()).idleFor(1, TimeUnit.MILLISECONDS)
         rule.mainClock.advanceTimeBy(1, ignoreFrameDuration = true)
         rule.waitForIdle()
         confirm.assertIsEnabled()
