@@ -1,6 +1,6 @@
 [versions]
 agp = "9.3.1"
-compose-compiler = "2.3.10"
+compose-compiler = "2.4.10"
 compose-bom = "2026.06.00"
 activity = "1.13.0"
 core = "1.18.0"
