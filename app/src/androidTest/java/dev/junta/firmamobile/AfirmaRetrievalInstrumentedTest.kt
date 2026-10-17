@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -49,7 +50,7 @@ class AfirmaRetrievalInstrumentedTest {
     @Test fun decryptedDescriptorOpensFreshSigningReviewWithoutUsingACertificateOrSigning() {
         val ready = CompletableDeferred<Unit>()
         var downloads = 0; var consentCount = 0; var unlocks = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 val scope = rememberCoroutineScope()
                 val owner = remember { Any() }
@@ -106,7 +107,7 @@ class AfirmaRetrievalInstrumentedTest {
     @Test fun canceledLoadingOffersCloseNotRetryAndNeverHandoffsToSigning() {
         val ready = CompletableDeferred<Unit>()
         var downloads = 0; var handoffs = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 val scope = rememberCoroutineScope(); val owner = remember { Any() }
                 val prompt = remember { mutableStateOf<AfirmaRetrievalPrompt?>(null) }

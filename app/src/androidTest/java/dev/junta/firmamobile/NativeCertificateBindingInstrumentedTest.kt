@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -66,7 +67,7 @@ class NativeCertificateBindingInstrumentedTest {
         val operation = NativeAfirmaOperation(invocation(expected), AfirmaResultTransport { _, _, _ -> sends++; error("No network in UI fixture") }, Clock.fixed(now, ZoneOffset.UTC))
         try {
             val prompt = AfirmaConsentPrompt(UUID.randomUUID(), operation.details, AfirmaConsentPhase.REVIEW, null, AfirmaConsentProblem.LOCKED)
-            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
                 scenario.onActivity { activity -> activity.setContent {
                     NativeAfirmaConsentDialog(prompt, onConfirm = { confirmations++ }, onUnlock = { unlocks++ }, onCancel = {}, onDismiss = {})
                 } }
