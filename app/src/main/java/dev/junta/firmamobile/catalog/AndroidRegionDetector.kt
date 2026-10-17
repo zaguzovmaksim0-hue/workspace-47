@@ -17,10 +17,8 @@ import java.io.IOException
 import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface RegionDetectionResult {
@@ -401,7 +399,7 @@ internal class AndroidRegionGeocoder(
         geocoder: Geocoder,
         location: Location,
         maxResults: Int,
-    ): List<Address> = withContext(Dispatchers.IO) {
+    ): List<Address> = blockingRegionGeocoding {
         geocoder.getFromLocation(location.latitude, location.longitude, maxResults).orEmpty()
     }
 

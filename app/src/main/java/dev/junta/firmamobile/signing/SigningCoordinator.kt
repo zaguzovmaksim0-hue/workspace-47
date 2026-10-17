@@ -19,9 +19,11 @@ import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 
 sealed interface SigningUiState {
     data object Idle : SigningUiState
@@ -211,7 +213,11 @@ class SigningCoordinator internal constructor(
             }
             val identity = certificateSession.identityForSigning(operation.certificateSnapshot)
                 ?: return fail(operation, SigningErrorCode.CERTIFICATE_LOCKED)
-            val preSign = when (val prepared = operation.adapter.prepare(request, identity.chain)) {
+            val preSign = when (
+                val prepared = runPhase(discard = { result: ProtocolPrepareResult ->
+                    if (result is ProtocolPrepareResult.Success) result.preSign.close()
+                }) { operation.adapter.prepare(request, identity.chain) }
+            ) {
                 is ProtocolPrepareResult.Failure -> return fail(operation, prepared.code)
                 is ProtocolPrepareResult.Success -> prepared.preSign
             }
@@ -220,8 +226,12 @@ class SigningCoordinator internal constructor(
                     return fail(operation, code)
                 }
                 val localSignature = when (
-                    val local = ownedPreSign.withBytesToSign { bytes ->
-                        localSignatureEngine.sign(bytes, identity, request.algorithm)
+                    val local = runPhase(discard = { result: LocalSignatureResult ->
+                        if (result is LocalSignatureResult.Success) result.signature.close()
+                    }) {
+                        ownedPreSign.withBytesToSign { bytes ->
+                            localSignatureEngine.sign(bytes, identity, request.algorithm)
+                        }
                     }
                 ) {
                     is LocalSignatureResult.Failure -> {
@@ -233,7 +243,9 @@ class SigningCoordinator internal constructor(
                     operationValidationError(operation, identity)?.let { code ->
                         return fail(operation, code)
                     }
-                    operation.adapter.complete(request, ownedPreSign, localSignature)
+                    runPhase(discard = { result: ProtocolCompletionResult ->
+                        if (result is ProtocolCompletionResult.Success) result.signature.close()
+                    }) { operation.adapter.complete(request, ownedPreSign, localSignature) }
                 } finally {
                     localSignature.close()
                 }
@@ -301,6 +313,20 @@ class SigningCoordinator internal constructor(
             synchronized(this) {
                 if (active === operation) active = null
             }
+        }
+    }
+
+    /** Keep validation on the caller and close results lost on cancellation at dispatcher return. */
+    private suspend fun <T : Any> runPhase(discard: (T) -> Unit, block: suspend () -> T): T {
+        val produced = AtomicReference<T?>(null)
+        try {
+            val result = withContext(Dispatchers.Default) {
+                block().also { produced.set(it) }
+            }
+            produced.set(null)
+            return result
+        } finally {
+            produced.getAndSet(null)?.let(discard)
         }
     }
 

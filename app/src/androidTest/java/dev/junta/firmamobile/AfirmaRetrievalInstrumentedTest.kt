@@ -8,8 +8,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.printToString
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.junta.firmamobile.afirma.servlet.*
@@ -82,6 +84,17 @@ class AfirmaRetrievalInstrumentedTest {
             rule.runOnIdle { assertEquals(1, downloads); assertEquals(0, consentCount); ready.complete(Unit) }
             rule.waitUntil(timeoutMillis = 15_000) { consentCount == 1 }
             rule.onNodeWithTag("afirma-retrieval-dialog").assertDoesNotExist()
+            try {
+                rule.waitUntil(timeoutMillis = 15_000) {
+                    rule.onAllNodesWithTag("native-afirma-unlock").fetchSemanticsNodes().isNotEmpty()
+                }
+            } catch (error: androidx.compose.ui.test.ComposeTimeoutException) {
+                throw AssertionError(
+                    "unlock button missing; consent=$consentCount unlocks=$unlocks tree=" +
+                        rule.onAllNodes(androidx.compose.ui.test.isRoot()).printToString(),
+                    error,
+                )
+            }
             rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed().performClick()
             rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
             rule.runOnIdle { assertEquals(1, downloads); assertEquals(1, consentCount); assertEquals(1, unlocks) }

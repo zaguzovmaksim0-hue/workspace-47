@@ -31,6 +31,7 @@ internal fun InteractiveClientAuthDialog(
         properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
         title = { Text(stringResource(R.string.interactive_tls_title)) },
         text = {
+            FilterObscuredTouches()
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),

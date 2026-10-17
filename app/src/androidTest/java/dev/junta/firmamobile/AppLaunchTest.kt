@@ -21,7 +21,7 @@ class AppLaunchTest {
     fun showsRequiredFirstRunCopy() {
         TestCertificateDependencies.install().use {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                rule.onNodeWithText("Junta Firma Mobile").assertIsDisplayed()
+                rule.onNodeWithText("Firma Mobile").assertIsDisplayed()
                 rule.onNodeWithText("Cliente no oficial para uso personal").assertIsDisplayed()
                 rule.onNodeWithText("Certificado digital").assertIsDisplayed()
                 rule.onNodeWithText("Selecciona tu archivo .p12 o .pfx.").assertIsDisplayed()
