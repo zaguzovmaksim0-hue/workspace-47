@@ -95,6 +95,11 @@
     <string name="signing_site">Sitio: %1$s</string>
     <string name="signing_profile">Perfil: %1$s</string>
     <string name="signing_support_level">Nivel de soporte: %1$s</string>
+    <string name="compatibility_status_verified_e2e">Verificada en escenario real</string>
+    <string name="compatibility_status_verified_contract">Verificada por contrato, sin prueba real</string>
+    <string name="compatibility_status_experimental">Experimental</string>
+    <string name="compatibility_status_browse_only">Solo navegación</string>
+    <string name="compatibility_status_unsupported">No compatible</string>
     <string name="signing_operation">Operación: %1$s</string>
     <string name="signing_certificate">Certificado: %1$s</string>
     <string name="signing_format">Formato: %1$s</string>
@@ -194,6 +199,13 @@
     <string name="external_handoff_unavailable_title">No se pudo abrir la aplicación</string>
     <string name="external_handoff_unavailable_copy">No hay una aplicación compatible instalada o el enlace no es válido. La página permanece abierta; puedes volver al menú y abrir el trámite en el navegador.</string>
     <string name="interactive_tls_title">Acceso con certificado</string>
+    <string name="certificate_selection_title">Compartir certificado</string>
+    <string name="certificate_selection_domain">Dominio: %1$s</string>
+    <string name="certificate_selection_public_only">Solo se compartirá el certificado público; la clave privada no sale del dispositivo.</string>
+    <string name="certificate_selection_confirm">Compartir</string>
+    <string name="client_auth_organization">Organismo: %1$s</string>
+    <string name="client_auth_tls_operation">autenticación TLS con certificado</string>
+    <string name="client_auth_certificate_only_domain">El certificado solo se enviará al dominio exacto confirmado.</string>
     <string name="interactive_tls_server">Servidor que solicita el certificado: %1$s</string>
     <string name="interactive_tls_page">Página abierta: %1$s</string>
     <string name="interactive_tls_operation">Es una petición de identificación TLS, no una firma de documentos. Puede proceder de un recurso de la página.</string>

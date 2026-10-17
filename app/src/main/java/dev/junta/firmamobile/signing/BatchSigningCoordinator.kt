@@ -4,6 +4,7 @@ import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.CertificateSigningSnapshot
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.security.MonotonicSecurityTime
@@ -27,7 +28,7 @@ internal class BatchSigningCoordinator(
     private val monotonicNanos: () -> Long = MonotonicSecurityTime::nowNanos,
     private val expiryScheduler: SigningExpiryScheduler,
     private val profileDisplayName: String,
-    private val supportLevel: String,
+    private val compatibilityStatus: CompatibilityStatus,
     private val profileRegistry: SiteProfileRegistry? = null,
     private val phaseExecutor: BatchPhaseExecutor = BatchPhaseExecutor(),
 ) : AutoCloseable {
@@ -39,7 +40,6 @@ internal class BatchSigningCoordinator(
 
     init {
         require(profileDisplayName.isNotBlank())
-        require(supportLevel.isNotBlank())
     }
 
     @Synchronized
@@ -114,7 +114,7 @@ internal class BatchSigningCoordinator(
             requestId = request.requestId,
             siteHost = request.context.origin.host,
             profileName = profile?.displayName ?: profileDisplayName,
-            supportLevel = profile?.compatibilityStatus?.name ?: supportLevel,
+            compatibilityStatus = profile?.compatibilityStatus ?: compatibilityStatus,
             safeDescription = batchDescription(request.documents.size),
             format = request.format.displayName(),
             algorithm = request.algorithm.displayName(),

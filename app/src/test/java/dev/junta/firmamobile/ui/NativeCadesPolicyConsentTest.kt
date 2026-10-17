@@ -44,6 +44,8 @@ class NativeCadesPolicyConsentTest {
         show(prompt(details().copy(signaturePolicySummary = "1.2.3.4 · SHA-256 · synthetic"), false))
         rule.onNodeWithTag("native-cades-policy-notice").performScrollTo().assertIsDisplayed()
         rule.runOnIdle { assertEquals(0, confirmations) }
+        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
+        rule.waitForIdle()
         rule.onNodeWithTag("native-afirma-confirm").performClick()
         rule.runOnIdle { assertEquals(1, confirmations); assertEquals(0, unlocks) }
     }

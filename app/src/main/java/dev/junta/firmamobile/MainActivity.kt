@@ -412,7 +412,7 @@ class MainActivity : ComponentActivity() {
             currentNavigationEpoch = { currentNavigationEpoch },
             expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
             profileDisplayName = melillaProfile.displayName,
-            supportLevel = melillaProfile.compatibilityStatus.name,
+            compatibilityStatus = melillaProfile.compatibilityStatus,
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )
         catalogRepository = repository
