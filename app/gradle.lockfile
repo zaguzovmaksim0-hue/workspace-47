@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :app:dependencies --write-locks
 androidx.activity:activity-compose:1.13.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.activity:activity-ktx:1.13.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.activity:activity:1.13.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
@@ -88,9 +89,7 @@ androidx.legacy:legacy-support-core-utils:1.0.0=debugRuntimeClasspath,optimizedR
 androidx.lifecycle:lifecycle-common-java8:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.lifecycle:lifecycle-common-jvm:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.lifecycle:lifecycle-common:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.lifecycle:lifecycle-livedata-core:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-androidx.lifecycle:lifecycle-livedata:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.lifecycle:lifecycle-process:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.lifecycle:lifecycle-runtime-android:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.lifecycle:lifecycle-runtime-compose-android:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
@@ -103,7 +102,7 @@ androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0=debugRuntimeClasspath,optimize
 androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.lifecycle:lifecycle-viewmodel-savedstate:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.lifecycle:lifecycle-viewmodel:2.10.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-androidx.loader:loader:1.0.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
+androidx.loader:loader:1.1.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.localbroadcastmanager:localbroadcastmanager:1.0.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.navigationevent:navigationevent-android:1.0.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 androidx.navigationevent:navigationevent-compose-android:1.0.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
@@ -139,10 +138,10 @@ com.google.android.gms:play-services-identity-credentials:16.0.0-alpha08=debugRu
 com.google.android.gms:play-services-tasks:18.2.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 com.google.android.libraries.identity.googleid:googleid:1.1.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 com.google.guava:listenablefuture:1.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-com.squareup.okhttp3:okhttp-android:5.4.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-com.squareup.okhttp3:okhttp:5.4.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-com.squareup.okio:okio-jvm:3.17.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
-com.squareup.okio:okio:3.17.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
+com.squareup.okhttp3:okhttp-android:5.5.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
+com.squareup.okhttp3:okhttp:5.5.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
+com.squareup.okio:okio-jvm:3.18.1=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
+com.squareup.okio:okio:3.18.1=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 com.tom-roush:pdfbox-android:2.0.27.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 commons-codec:commons-codec:1.18.0=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
 jakarta.xml.bind:jakarta.xml.bind-api:3.0.1=debugRuntimeClasspath,optimizedRuntimeClasspath,qaRuntimeClasspath,releaseRuntimeClasspath
