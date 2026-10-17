@@ -133,7 +133,8 @@ class CatalogSimplicityTest {
         rule.setContent {
             JuntaFirmaTheme {
                 PortalCatalogScreen(state.value, {}, {}, { locations++ }, {}, {}, {}, { favorites += it },
-                    { opened += it.portalId }, {}, {}, onOpenCompatibilityPortal = { compatibility += it.portalId })
+                    { opened += it.portalId }, {}, {}, false, {},
+                    onOpenCompatibilityPortal = { compatibility += it.portalId })
             }
         }
     }
