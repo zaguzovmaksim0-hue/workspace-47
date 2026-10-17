@@ -3,12 +3,11 @@ package dev.junta.firmamobile.signing
 import java.security.Provider
 import java.security.cert.X509Certificate
 import java.time.Clock
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /** QA-only local detached CAdES adapter for DGT's equipment-verification call. */
 class DgtVerificationCadesAdapter internal constructor(
     private val clock: Clock = Clock.systemUTC(),
-    private val provider: Provider = BouncyCastleProvider(),
+    private val provider: Provider = BundledBouncyCastle.provider,
 ) : SigningProtocolAdapter {
     override val id: SigningProtocolId = ID
 

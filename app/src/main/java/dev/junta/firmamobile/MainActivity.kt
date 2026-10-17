@@ -212,6 +212,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         BrowserSessionStatePolicy.discardLegacyWebViewState(savedInstanceState)
         super.onCreate(savedInstanceState)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            window.setHideOverlayWindows(true)
+        }
         beginCatalogStartup()
     }
 
@@ -520,7 +523,11 @@ class MainActivity : ComponentActivity() {
                         clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
                         onShowFileChooser = { view, callback, params -> browserFileChooser.open(view, callback, params) },
                         onDocumentDownload = { view, request ->
-                            if (currentWebView !== view || certificatePanelVisible || request.component?.packageName != packageName ||
+                            // A dedicated certificate session is deliberately not a signing
+                            // view (currentWebView is null); its own visible view may still save.
+                            val ownView = currentWebView === view ||
+                                (currentWebView == null && view.isAttachedToWindow && view.isShown)
+                            if (!ownView || certificatePanelVisible || request.component?.packageName != packageName ||
                                 request.component?.className != dev.junta.firmamobile.browser.download.DocumentDownloadActivity::class.java.name
                             ) false else try {
                                 withBrowserExternalReturn(onToken = { documentDownloadReturnToken = it }) {

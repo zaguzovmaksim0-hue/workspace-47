@@ -4,12 +4,11 @@ import java.security.Provider
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.util.Base64
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 /** QA-only local detached CAdES adapter for Consell d'Eivissa Instancia General. */
 class EivissaCadesDetachedAdapter internal constructor(
     private val clock: Clock = Clock.systemUTC(),
-    private val provider: Provider = BouncyCastleProvider(),
+    private val provider: Provider = BundledBouncyCastle.provider,
 ) : SigningProtocolAdapter {
     override val id: SigningProtocolId = ID
 

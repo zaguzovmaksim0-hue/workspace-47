@@ -18,6 +18,7 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -120,7 +121,9 @@ class PublicBrowserInstrumentedTest {
             }
             awaitConsent("native-afirma-unlock", scenario, current) { "native callback invoked once" }
             rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed()
-            rule.onNodeWithText("PDF · PAdES", substring = true).assertIsDisplayed()
+            rule.onNodeWithTag("native-afirma-details").assertDoesNotExist()
+            rule.onNodeWithTag("native-afirma-details-toggle").performScrollTo().performClick()
+            rule.onNodeWithText("PDF · PAdES", substring = true).performScrollTo().assertIsDisplayed()
             rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
             // Lifecycle interruption is local; do not invoke server-notifying
             // cancellation against a real storage endpoint in this test.

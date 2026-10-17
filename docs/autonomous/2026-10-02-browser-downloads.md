@@ -1,5 +1,19 @@
 # Explicit browser document download and save
 
+## Revision 2026-10-14: real-site download coverage
+
+Physical use showed that almost no administrative download reached the save screen. Government sites deliver documents through form POSTs (JSF "Obtener justificante"), redirects, iframes, `blob:`/`data:` addresses produced by page scripts, and certificate-authenticated sessions. All of these were rejected, several of them without any message. This revision changes the policy below. The earlier text further down is kept as history, and where they disagree this section wins.
+
+- **Evidence.** `DownloadRequestEvidence` records the method of recent requests from every frame. The newest request for an address decides its method. An address that was never observed is the target of a server redirect, so it is fetched with GET. A fragment is dropped, not rejected.
+- **Redirects.** Up to 10 HTTPS hops are followed manually. Every hop is re-admitted through `PublicBrowserAddress`, public-DNS validation, and a one-network-attempt tag, so `503 Retry-After:0` still cannot repeat a request. 301/302/303 turn a POST into a GET; 307/308 keep it. A redirect to `http:` fails.
+- **Cookies.** Browser cookies are read from `CookieManager` per hop, but only while the hop is on the same registrable domain as the page (OkHttp `topPrivateDomain`). Cookies set by servers inside the chain are kept in a per-download jar and never written back into the WebView. `Referer` follows strict-origin-when-cross-origin.
+- **Form POST.** A document-start helper (`DownloadPageScript`, top HTTPS frame only) records the last submitted POST form: its fields, submitter, enctype, and charset. It records nothing else and sends nothing anywhere. When the download address was last requested with POST, the app reads that record once, rebuilds the body in the page charset (urlencoded, multipart or text/plain, at most 2 MiB), and shows a separate warning that the form will be SENT AGAIN. A form with a selected file is not replayed. The body is zeroed after the single request.
+- **blob: and data:.** The helper keeps references to the page's recent Blob objects (max 16, max 64 MiB held), so a page that revokes its object URL immediately can still be saved. The app copies the Blob through evaluateJavascript chunks into a private staged file. `data:` addresses are decoded natively. Neither makes a network request, and the staged file is owned by the ticket: expiry, revocation or a rejected launch deletes it.
+- **Certificate sessions.** Downloads are allowed during a dedicated client-certificate session. The unlocked identity is read at request time and presented only to the exact authorized host. A locked session fails with AUTHENTICATION instead of sending the request without the certificate.
+- **No silent drops.** A busy browser (signature, certificate dialog, popup, pending download), a failed launch, an unrebuildable form or an unavailable Blob each show a toast. The failure screen distinguishes authentication, HTML-instead-of-document, size and redirect problems.
+
+Remaining limits after this revision: every path is still a NEW request, because Android does not expose the response that Chromium consumed. Single-use links can therefore still fail. Blobs created inside iframes, forms submitted into another window, uploads with files, HTTP-authenticated downloads, mTLS hosts outside a dedicated certificate session, and documents over 32 MiB are not supported.
+
 ## Scope
 
 Continue PR338 from verified installed `8ae0a332749fce19bf296b86577729f1c1d38e83`. Previously no DownloadListener was installed. This slice offers a bounded download of a direct public HTTPS attachment whose actual main-frame request was observed as GET. It stages the file privately, then lets the user select a new destination using Android ACTION_CREATE_DOCUMENT.
