@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -82,7 +83,7 @@ class NativePdfCoSignInstrumentedTest {
         try {
             assertEquals("cosign", operation.details.operation)
             val prompt = AfirmaConsentPrompt(UUID.randomUUID(), operation.details, AfirmaConsentPhase.REVIEW, null, AfirmaConsentProblem.LOCKED)
-            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
                 scenario.onActivity { activity -> activity.setContent {
                     NativeAfirmaConsentDialog(prompt, onConfirm = { confirmed++ }, onUnlock = { unlocked++ }, onCancel = {}, onDismiss = {})
                 } }

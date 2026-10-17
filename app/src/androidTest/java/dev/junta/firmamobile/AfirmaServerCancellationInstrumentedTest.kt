@@ -1,6 +1,7 @@
 package dev.junta.firmamobile
 
 import android.view.KeyEvent
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
@@ -35,7 +36,7 @@ class AfirmaServerCancellationInstrumentedTest {
 
     @Test fun lockedReviewCancellationDoesNotUnlockOrConfirm() = runTest {
         var confirmed = 0; var unlocked = 0; var canceled = 0; var dismissed = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             lateinit var notice: String
             scenario.onActivity { activity ->
                 notice = activity.getString(R.string.native_afirma_cancel_notice)
@@ -63,7 +64,7 @@ class AfirmaServerCancellationInstrumentedTest {
 
     @Test fun cancellingOffersOnlyLocalStop() = runTest {
         var confirmed = 0; var unlocked = 0; var stopped = 0; var dismissed = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             lateinit var progress: String
             lateinit var warning: String
             scenario.onActivity { activity ->
@@ -102,7 +103,7 @@ class AfirmaServerCancellationInstrumentedTest {
         )
         val current = mutableStateOf(prompt(AfirmaConsentPhase.FINISHED, receipts.first().first))
         var confirmed = 0; var unlocked = 0; var canceled = 0; var closed = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             lateinit var messages: List<String>
             scenario.onActivity { activity ->
                 messages = receipts.map { activity.getString(it.second) }
@@ -134,7 +135,7 @@ class AfirmaServerCancellationInstrumentedTest {
     @Test fun reviewDismissalIsLocalAndExplicitCancellationRemovesSigningActions() = runTest {
         val current = mutableStateOf(prompt(AfirmaConsentPhase.REVIEW))
         var confirmed = 0; var unlocked = 0; var canceled = 0; var dismissed = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 activity.setContent {
                     NativeAfirmaConsentDialog(

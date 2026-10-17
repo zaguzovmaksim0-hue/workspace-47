@@ -9,6 +9,7 @@ import dev.junta.firmamobile.network.TunnelRouteDurationBucket
 import dev.junta.firmamobile.network.TunnelRouteEvent
 import dev.junta.firmamobile.network.TunnelRouteStage
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.profile.CompatibilityStatus
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.time.Duration
@@ -212,7 +213,7 @@ class SigningCoordinatorTest {
         assertEquals(REQUEST_ID, state.requestId)
         assertEquals("www.juntadeandalucia.es", state.siteHost)
         assertEquals("Junta de Andalucía", state.profileName)
-        assertEquals("EXPERIMENTAL", state.supportLevel)
+        assertEquals(CompatibilityStatus.EXPERIMENTAL, state.compatibilityStatus)
         assertEquals("Autenticación con certificado", state.safeDescription)
         assertEquals("CAdES", state.format)
         assertEquals("SHA256withRSA", state.algorithm)

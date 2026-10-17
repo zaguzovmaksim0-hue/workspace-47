@@ -1,6 +1,7 @@
 package dev.junta.firmamobile
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -59,6 +60,7 @@ import dev.junta.firmamobile.network.TunnelRouteObserver
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.Capability
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.ProfileScopePreferences
 import dev.junta.firmamobile.profile.ProtocolOperation
 import dev.junta.firmamobile.signing.BatchSigningCoordinator
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
@@ -119,12 +121,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private class AppRestarter(private val activity: MainActivity) {
+        fun restart() {
+            activity.startActivity(
+                Intent.makeRestartActivityTask(
+                    ComponentName(activity, MainActivity::class.java),
+                ),
+            )
+            Runtime.getRuntime().exit(0)
+        }
+    }
+
     private class PendingExternalApp(
         val token: UUID,
         val sourceHost: String,
         val target: dev.junta.firmamobile.browser.ExternalAppLink,
     )
     private var pendingExternalApp by mutableStateOf<PendingExternalApp?>(null)
+    private val profileScopePreferences by lazy { ProfileScopePreferences(applicationContext) }
     private val externalAppConsent by lazy {
         dev.junta.firmamobile.browser.ExternalAppConsentLease<WebView>(
             isCurrent = { view, epoch -> view === currentWebView && epoch == currentNavigationEpoch },
@@ -398,7 +412,7 @@ class MainActivity : ComponentActivity() {
             currentNavigationEpoch = { currentNavigationEpoch },
             expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
             profileDisplayName = melillaProfile.displayName,
-            supportLevel = melillaProfile.compatibilityStatus.name,
+            compatibilityStatus = melillaProfile.compatibilityStatus,
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )
         catalogRepository = repository
@@ -552,6 +566,12 @@ class MainActivity : ComponentActivity() {
                 } else if (destination == AppDestination.Catalog) {
                     PortalCatalogScreen(
                         state = catalogState.value,
+                        verifiedOnly = profileScopePreferences.verifiedOnly(),
+                        onVerifiedOnlyChange = { requestedValue ->
+                            if (profileScopePreferences.setVerifiedOnly(requestedValue)) {
+                                AppRestarter(this).restart()
+                            }
+                        },
                         onSearchTextChange = catalogViewModel::updateSearchText,
                         onSelectRegion = catalogViewModel::selectRegion,
                         onUseLocation = {

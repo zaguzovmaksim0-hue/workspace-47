@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.State
@@ -125,14 +126,14 @@ class NativeBatchResultDetailsInstrumentedTest {
         ),
     )
 
-    private fun assertText(activity: MainActivity, resource: Int, vararg args: Any) {
+    private fun assertText(activity: ComponentActivity, resource: Int, vararg args: Any) {
         val expected = activity.getString(resource, *args)
         composeRule.onNodeWithText(expected).assertTextEquals(expected)
     }
 
-    private fun withDetails(receipt: State<NativeBatchReceipt>, check: (MainActivity) -> Unit) {
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            lateinit var activity: MainActivity
+    private fun withDetails(receipt: State<NativeBatchReceipt>, check: (ComponentActivity) -> Unit) {
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
+            lateinit var activity: ComponentActivity
             scenario.onActivity {
                 activity = it
                 it.setContent {

@@ -16,6 +16,8 @@ import dev.junta.firmamobile.certificate.PreferencesCertificateReferenceStore
 import dev.junta.firmamobile.certificate.certificateReferenceDataStore
 import dev.junta.firmamobile.network.BuildVariantSecureTunnelRuntimeFactory
 import dev.junta.firmamobile.network.SecureTunnelRuntime
+import dev.junta.firmamobile.profile.ProfileScopePreferences
+import dev.junta.firmamobile.profile.RuntimeProfileScope
 import dev.junta.firmamobile.security.ApplicationSanitizedLoggerFactory
 import dev.junta.firmamobile.security.SanitizedLogSink
 import dev.junta.firmamobile.security.SanitizedLogger
@@ -57,6 +59,7 @@ class JuntaFirmaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        RuntimeProfileScope.configure(ProfileScopePreferences(this).verifiedOnly())
         PDFBoxResourceLoader.init(this)
         sanitizedLogger = ApplicationSanitizedLoggerFactory.create(
             filesDirectory = filesDir,

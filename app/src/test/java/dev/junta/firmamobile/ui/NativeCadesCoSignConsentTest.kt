@@ -45,6 +45,8 @@ class NativeCadesCoSignConsentTest {
         val value=prompt("cosign","CAdES · co-sign · attached",locked=false)
         rule.setContent { JuntaFirmaTheme { NativeAfirmaConsentDialog(value,{confirmed++},{unlocked++},{},{}) } }
         rule.runOnIdle { assertEquals(0,confirmed) }
+        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
+        rule.waitForIdle()
         rule.onNodeWithTag("native-afirma-confirm").performClick()
         rule.runOnIdle { assertEquals(1,confirmed);assertEquals(0,unlocked) }
     }

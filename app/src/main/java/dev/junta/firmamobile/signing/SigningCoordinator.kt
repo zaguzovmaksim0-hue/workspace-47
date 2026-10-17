@@ -8,6 +8,7 @@ import dev.junta.firmamobile.network.TunnelRouteEvent
 import dev.junta.firmamobile.network.TunnelRouteStage
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.ProtocolOperation
 import dev.junta.firmamobile.profile.SignatureAlgorithm as ProfileSignatureAlgorithm
@@ -32,7 +33,7 @@ sealed interface SigningUiState {
         val requestId: UUID,
         val siteHost: String,
         val profileName: String,
-        val supportLevel: String,
+        val compatibilityStatus: CompatibilityStatus,
         val safeDescription: String,
         val format: String,
         val algorithm: String,
@@ -167,7 +168,7 @@ class SigningCoordinator internal constructor(
             requestId = summary.requestId,
             siteHost = summary.context.origin.host,
             profileName = profile.displayName,
-            supportLevel = profile.compatibilityStatus.name,
+            compatibilityStatus = profile.compatibilityStatus,
             safeDescription = summary.safeDescription,
             format = summary.format.displayName(),
             algorithm = summary.algorithm.displayName(),

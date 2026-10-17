@@ -50,6 +50,8 @@ class NativePrecalculatedHashConsentTest {
         rule.onNodeWithTag("native-afirma-details-toggle").performScrollTo().performClick()
         rule.onNodeWithText("SHA-256 de los bytes recibidos, no del documento original: " + "a".repeat(64)).performScrollTo().assertIsDisplayed()
         rule.runOnIdle { assertEquals(0, confirmations) }
+        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
+        rule.waitForIdle()
         rule.onNodeWithTag("native-afirma-confirm").performClick()
         rule.runOnIdle { assertEquals(1, confirmations); assertEquals(0, unlocks) }
     }

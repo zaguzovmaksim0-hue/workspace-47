@@ -141,6 +141,16 @@ class SiteProfileRegistry(
     }
 }
 
+/**
+ * Provides cached catalog registries for build and runtime profile policy.
+ *
+ * [qaRegistry] includes all catalog profiles, including [ProfileActivation.QA_ONLY] profiles.
+ * It is used by debug, qa, and optimized builds, and by release where
+ * `BuildConfig.ALLOW_UNVERIFIED_PROFILES` is `true`.
+ *
+ * [releaseRegistry] contains only profiles that are [ProfileActivation.ENABLED] and either have
+ * no sensitive capability or are [CompatibilityStatus.VERIFIED_E2E].
+ */
 object BuiltInSiteProfiles {
     val catalog: SiteProfileCatalog by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         SiteProfileCatalogParser.parse(JSON)
@@ -151,9 +161,14 @@ object BuiltInSiteProfiles {
     val qaRegistry: SiteProfileRegistry by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         SiteProfileRegistry(catalog, BuildTrustPolicy.QA)
     }
-    val runtimeRegistry: SiteProfileRegistry by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        if (BuildConfig.ALLOW_QA_PROFILES || BuildConfig.ALLOW_UNVERIFIED_PROFILES) qaRegistry else releaseRegistry
-    }
+    val runtimeRegistry: SiteProfileRegistry
+        get() = if (RuntimeProfileScope.verifiedOnly()) {
+            releaseRegistry
+        } else if (BuildConfig.ALLOW_QA_PROFILES || BuildConfig.ALLOW_UNVERIFIED_PROFILES) {
+            qaRegistry
+        } else {
+            releaseRegistry
+        }
 
     val JSON: String = BuildConfig.SITE_PROFILE_CATALOG_JSON
 }

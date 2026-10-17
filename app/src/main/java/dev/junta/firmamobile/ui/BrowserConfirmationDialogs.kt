@@ -133,20 +133,23 @@ internal fun CertificateSelectionConfirmationDialog(
     onContinue: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    val confirmArmed = rememberConsentArmed(Unit)
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text("Compartir certificado") },
+        title = { Text(stringResource(R.string.certificate_selection_title)) },
         text = {
             FilterObscuredTouches()
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Dominio: $host")
-                Text("Operación: $safeDescription")
-                Text("Certificado: $certificateOwner")
-                Text("Solo se compartirá el certificado público; la clave privada no sale del dispositivo.")
+                Text(stringResource(R.string.certificate_selection_domain, host))
+                Text(stringResource(R.string.signing_operation, safeDescription))
+                Text(stringResource(R.string.signing_certificate, certificateOwner))
+                Text(stringResource(R.string.certificate_selection_public_only))
             }
         },
         confirmButton = {
-            TextButton(onClick = onContinue) { Text("Compartir") }
+            TextButton(onClick = onContinue, enabled = confirmArmed) {
+                Text(stringResource(R.string.certificate_selection_confirm))
+            }
         },
         dismissButton = {
             TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
@@ -162,21 +165,29 @@ internal fun ClientAuthConfirmationDialog(
     onContinue: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    val confirmArmed = rememberConsentArmed(host)
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text("Acceso con certificado") },
+        title = { Text(stringResource(R.string.interactive_tls_title)) },
         text = {
             FilterObscuredTouches()
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Organismo: $organization")
-                Text("Dominio: $host")
-                Text("Operación: autenticación TLS con certificado")
-                Text("Certificado: $certificateOwner")
-                Text("El certificado solo se enviará al dominio exacto confirmado.")
+                Text(stringResource(R.string.client_auth_organization, organization))
+                Text(stringResource(R.string.certificate_selection_domain, host))
+                Text(
+                    stringResource(
+                        R.string.signing_operation,
+                        stringResource(R.string.client_auth_tls_operation),
+                    ),
+                )
+                Text(stringResource(R.string.signing_certificate, certificateOwner))
+                Text(stringResource(R.string.client_auth_certificate_only_domain))
             }
         },
         confirmButton = {
-            TextButton(onClick = onContinue) { Text("Continuar") }
+            TextButton(onClick = onContinue, enabled = confirmArmed) {
+                Text(stringResource(R.string.continue_to_portal))
+            }
         },
         dismissButton = {
             TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
