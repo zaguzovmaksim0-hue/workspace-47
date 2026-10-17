@@ -45,7 +45,7 @@ internal fun NativeAfirmaConsentDialog(
     onDismiss: () -> Unit,
 ) {
     var detailsExpanded by remember(prompt.token) { mutableStateOf(false) }
-    val confirmArmed = rememberConsentArmed(prompt.token)
+    val confirmArmed = rememberConsentArmed(prompt.token to prompt.canConfirm)
     val finished = prompt.phase == AfirmaConsentPhase.FINISHED
     val review = prompt.phase == AfirmaConsentPhase.REVIEW
     val cancelling = prompt.phase == AfirmaConsentPhase.CANCELLING
