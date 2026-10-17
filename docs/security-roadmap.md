@@ -80,7 +80,7 @@ Completed:
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
 - CI and supply-chain gate completed (F-14): GitHub Actions use read-only
-  permissions and exact action commit SHAs; Gradle 9.7.0 wrapper/distribution and
+  permissions and exact action commit SHAs; Gradle 9.7.1 wrapper/distribution and
   resolved artifacts are SHA-256 verified; complete Git history is scanned with
   pinned Gitleaks; Dependabot covers Gradle, Go modules, GitHub Actions and pip at `/tools`; Android APKs
   are checked for alignment, signature count, manifest hardening and forbidden
@@ -121,7 +121,7 @@ Latest completed isolated PR — CI and supply-chain gate (F-14):
 
 - CI separates Android, Python and Go gates and uses `contents: read`, immutable
   action SHAs, bounded timeouts and concurrency cancellation.
-- Gradle 9.7.0 distribution and wrapper JAR are pinned by official SHA-256;
+- Gradle 9.7.1 distribution and wrapper JAR are pinned by official SHA-256;
   dependency verification rejects unrecorded artifacts and contains no wildcard
   trust rule.
 - Android gates run unit tests, lint and APK builds, then verify 16 KiB alignment,
