@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import dev.junta.firmamobile.testing.createComposeRule
@@ -69,6 +70,37 @@ class PortalCatalogScreenTest {
             .performClick()
 
         rule.runOnIdle { assertEquals(true, backRequested) }
+    }
+
+    @Test
+    fun `verified only switch confirms once and cancel leaves the persisted value unchanged`() {
+        var persistedVerifiedOnly = false
+        val requestedValues = mutableListOf<Boolean>()
+        setCatalogContent(
+            state = stateFor(),
+            verifiedOnly = persistedVerifiedOnly,
+            onVerifiedOnlyChange = {
+                requestedValues += it
+                persistedVerifiedOnly = it
+            },
+        )
+
+        val switch = rule.onNodeWithTag("profile-scope-verified-only")
+        switch.assertIsOff().performClick()
+        rule.onNodeWithText("Reiniciar la aplicación").assertIsDisplayed()
+        rule.onNodeWithText("Cancelar").performClick()
+        switch.assertIsOff()
+        rule.runOnIdle {
+            assertFalse(persistedVerifiedOnly)
+            assertTrue(requestedValues.isEmpty())
+        }
+
+        switch.performClick()
+        rule.onNodeWithText("Reiniciar").performClick()
+        rule.runOnIdle {
+            assertEquals(listOf(true), requestedValues)
+            assertTrue(persistedVerifiedOnly)
+        }
     }
 
     @Test
@@ -319,6 +351,8 @@ class PortalCatalogScreenTest {
                         onOpenPortal = {},
                         onBackToCertificate = {},
                         onUserMessageShown = {},
+                        verifiedOnly = false,
+                        onVerifiedOnlyChange = {},
                     )
                 }
             }
@@ -368,6 +402,8 @@ class PortalCatalogScreenTest {
 
     private fun setCatalogContent(
         state: PortalCatalogUiState,
+        verifiedOnly: Boolean = false,
+        onVerifiedOnlyChange: (Boolean) -> Unit = {},
         onSelectRegion: (PortalRegionCode) -> Unit = {},
         onUseLocation: () -> Unit = {},
         onOpenLocationSettings: () -> Unit = {},
@@ -388,6 +424,8 @@ class PortalCatalogScreenTest {
                     onOpenPortal = onOpenPortal,
                     onBackToCertificate = onBackToCertificate,
                     onUserMessageShown = {},
+                    verifiedOnly = verifiedOnly,
+                    onVerifiedOnlyChange = onVerifiedOnlyChange,
                 )
             }
         }

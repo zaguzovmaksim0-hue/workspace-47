@@ -182,7 +182,8 @@ class CatalogAddressScreenTest {
                     state = ui.value, onSearchTextChange = { ui.value = ui.value.copy(searchText = it) },
                     onSelectRegion = {}, onUseLocation = {}, onOpenLocationSettings = {}, onOpenAppSettings = {},
                     onDismissLocationMessage = {}, onToggleFavorite = {}, onOpenPortal = { portalOpens++ },
-                    onBackToCertificate = {}, onUserMessageShown = {}, onOpenPublicWeb = { opened += it },
+                    onBackToCertificate = {}, onUserMessageShown = {}, verifiedOnly = false,
+                    onVerifiedOnlyChange = {}, onOpenPublicWeb = { opened += it },
                 )
             }
         }

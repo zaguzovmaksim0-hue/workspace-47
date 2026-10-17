@@ -34,6 +34,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -87,6 +88,8 @@ fun PortalCatalogScreen(
     onOpenPortal: (PortalCatalogItem) -> Unit,
     onBackToCertificate: () -> Unit,
     onUserMessageShown: () -> Unit,
+    verifiedOnly: Boolean,
+    onVerifiedOnlyChange: (Boolean) -> Unit,
     onOpenPublicWeb: ((java.net.URI) -> Unit)? = null,
     onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)? = null,
 ) {
@@ -146,7 +149,13 @@ fun PortalCatalogScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item(key = "catalog-header", contentType = "catalog-header") { CatalogHeader(onBackToCertificate) }
+            item(key = "catalog-header", contentType = "catalog-header") {
+                CatalogHeader(
+                    onBackToCertificate = onBackToCertificate,
+                    verifiedOnly = verifiedOnly,
+                    onVerifiedOnlyChange = onVerifiedOnlyChange,
+                )
+            }
             if (onOpenPublicWeb != null) {
                 item(key = "catalog-address", contentType = "catalog-address") {
                     CatalogAddressCard(
@@ -329,9 +338,15 @@ fun PortalCatalogScreen(
 }
 
 @Composable
-private fun CatalogHeader(onBackToCertificate: () -> Unit) {
+private fun CatalogHeader(
+    onBackToCertificate: () -> Unit,
+    verifiedOnly: Boolean,
+    onVerifiedOnlyChange: (Boolean) -> Unit,
+) {
     val backLabel = stringResource(R.string.catalog_back_to_certificate)
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    val verifiedOnlyLabel = stringResource(R.string.profile_scope_verified_only_title)
+    var requestedVerifiedOnly by remember { mutableStateOf<Boolean?>(null) }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -356,6 +371,56 @@ private fun CatalogHeader(onBackToCertificate: () -> Unit) {
             text = stringResource(R.string.catalog_subtitle),
             color = JuntaMutedInk,
             style = MaterialTheme.typography.bodyMedium,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = verifiedOnlyLabel,
+                    color = JuntaInk,
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = stringResource(R.string.profile_scope_verified_only_copy),
+                    color = JuntaMutedInk,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Switch(
+                checked = verifiedOnly,
+                onCheckedChange = { requestedVerifiedOnly = it },
+                modifier = Modifier
+                    .semantics { contentDescription = verifiedOnlyLabel }
+                    .testTag("profile-scope-verified-only"),
+            )
+        }
+    }
+    requestedVerifiedOnly?.let { requestedValue ->
+        AlertDialog(
+            onDismissRequest = { requestedVerifiedOnly = null },
+            title = { Text(stringResource(R.string.profile_scope_restart_title)) },
+            text = { Text(stringResource(R.string.profile_scope_restart_copy)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        requestedVerifiedOnly = null
+                        onVerifiedOnlyChange(requestedValue)
+                    },
+                ) {
+                    Text(stringResource(R.string.profile_scope_restart_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { requestedVerifiedOnly = null }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
         )
     }
 }
