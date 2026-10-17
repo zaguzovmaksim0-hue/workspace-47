@@ -5,6 +5,7 @@ import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
+import dev.junta.firmamobile.profile.CompatibilityStatus
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.time.Duration
@@ -33,7 +34,7 @@ class BatchSigningCoordinatorTest {
         currentNavigationEpoch = { NAVIGATION_EPOCH },
         expiryScheduler = expiryScheduler,
         profileDisplayName = "Sede Electrónica de Melilla",
-        supportLevel = "VERIFIED_CONTRACT",
+        compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT,
     )
 
     @Test
@@ -47,7 +48,7 @@ class BatchSigningCoordinatorTest {
         assertEquals(REQUEST_ID, state.requestId)
         assertEquals("sede.melilla.es", state.siteHost)
         assertEquals("Sede Electrónica de Melilla", state.profileName)
-        assertEquals("VERIFIED_CONTRACT", state.supportLevel)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, state.compatibilityStatus)
         assertEquals("Firma por lotes (2 documentos)", state.safeDescription)
         assertEquals("CAdES", state.format)
         assertEquals("SHA256withRSA", state.algorithm)
@@ -75,7 +76,7 @@ class BatchSigningCoordinatorTest {
             currentNavigationEpoch = { NAVIGATION_EPOCH },
             expiryScheduler = RecordingExpiryScheduler(),
             profileDisplayName = "must-not-be-shown",
-            supportLevel = "must-not-be-shown",
+            compatibilityStatus = CompatibilityStatus.EXPERIMENTAL,
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )
         val reply = RecordingBatchReply(REQUEST_ID, timeline)
@@ -87,7 +88,7 @@ class BatchSigningCoordinatorTest {
             )
             val state = registryCoordinator.state.value as SigningUiState.AwaitingConfirmation
             assertEquals("Ciudad Autónoma de Melilla — Sede Electrónica", state.profileName)
-            assertEquals("VERIFIED_CONTRACT", state.supportLevel)
+            assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, state.compatibilityStatus)
         } finally {
             registryCoordinator.close()
         }
@@ -113,7 +114,7 @@ class BatchSigningCoordinatorTest {
             currentNavigationEpoch = { NAVIGATION_EPOCH },
             expiryScheduler = RecordingExpiryScheduler(),
             profileDisplayName = "STA batch test",
-            supportLevel = "VERIFIED_CONTRACT",
+            compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT,
         )
         val secondaryRequestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174199")
         val secondaryRequest = request(
@@ -216,7 +217,7 @@ class BatchSigningCoordinatorTest {
             currentNavigationEpoch = { NAVIGATION_EPOCH },
             expiryScheduler = RecordingExpiryScheduler(),
             profileDisplayName = "Sede Electrónica de Melilla",
-            supportLevel = "VERIFIED_CONTRACT",
+            compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT,
         )
         val reply = RecordingBatchReply(REQUEST_ID, ownershipTimeline)
 

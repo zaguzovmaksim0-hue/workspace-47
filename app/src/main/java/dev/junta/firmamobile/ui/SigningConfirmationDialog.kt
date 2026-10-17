@@ -11,9 +11,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.junta.firmamobile.R
-import dev.junta.firmamobile.signing.SigningUiState
 import androidx.compose.ui.res.stringResource
+import dev.junta.firmamobile.R
+import dev.junta.firmamobile.profile.CompatibilityStatus
+import dev.junta.firmamobile.signing.SigningUiState
 
 @Composable
 internal fun SigningConfirmationDialog(
@@ -21,6 +22,7 @@ internal fun SigningConfirmationDialog(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    val confirmArmed = rememberConsentArmed(state.requestId)
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text(stringResource(R.string.signing_confirmation_title)) },
@@ -32,8 +34,13 @@ internal fun SigningConfirmationDialog(
             ) {
                 Text(stringResource(R.string.signing_site, state.siteHost))
                 Text(stringResource(R.string.signing_profile, state.profileName))
-                Text(stringResource(R.string.signing_support_level, state.supportLevel))
-                if (state.supportLevel != "VERIFIED_E2E") {
+                Text(
+                    stringResource(
+                        R.string.signing_support_level,
+                        stringResource(compatibilityStatusLabelRes(state.compatibilityStatus)),
+                    ),
+                )
+                if (state.compatibilityStatus != CompatibilityStatus.VERIFIED_E2E) {
                     Text(stringResource(R.string.compatibility_unverified_operation))
                 }
                 Text(stringResource(R.string.signing_operation, state.safeDescription))
@@ -49,7 +56,7 @@ internal fun SigningConfirmationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
+            TextButton(onClick = onConfirm, enabled = confirmArmed) {
                 Text(stringResource(R.string.signing_confirm))
             }
         },
