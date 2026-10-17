@@ -186,9 +186,9 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("android-emulator-state-${{ env.VERIFY_REF }}", source)
         self.assertIn("timeout-minutes:", source)
         self.assertIn('GO_VERSION: "1.26.9"', source)
-        self.assertIn("android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699", source)
+        self.assertIn("android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd", source)
         self.assertIn("ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d", source)
-        self.assertIn("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", source)
+        self.assertIn("actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9", source)
         self.assertIn("if: failure()", source)
         self.assertIn("app/build/reports/androidTests/connected/qa/", source)
         self.assertIn("app/build/outputs/androidTest-results/connected/qa/", source)
@@ -220,7 +220,7 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("gitleaks git --redact --no-banner", source)
         self.assertIn("github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8", source)
         self.assertIn('go-version: "1.26.9"', source)
-        self.assertIn("android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699", source)
+        self.assertIn("android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd", source)
         gradle_verify = "./gradlew :app:verifyRuntimeDependencyLocks --no-daemon"
         osv_install = "Install pinned OSV-Scanner"
         self.assertIn(gradle_verify, source)
@@ -475,7 +475,7 @@ class CiPolicyTest(unittest.TestCase):
 
     def test_gradle_wrapper_distribution_is_checksum_pinned(self) -> None:
         source = self.read(GRADLE_WRAPPER_PROPERTIES)
-        self.assertRegex(source, r"(?m)^distributionUrl=https\\://services\.gradle\.org/distributions/gradle-9\.7\.0-bin\.zip$")
+        self.assertRegex(source, r"(?m)^distributionUrl=https\\://services\.gradle\.org/distributions/gradle-9\.7\.1-bin\.zip$")
         self.assertRegex(source, r"(?m)^distributionSha256Sum=[0-9a-f]{64}$")
         wrapper_sha256 = hashlib.sha256(GRADLE_WRAPPER_JAR.read_bytes()).hexdigest()
         self.assertEqual(
