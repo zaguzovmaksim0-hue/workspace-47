@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -30,8 +31,8 @@ class NativeBatchFinishedDialogInstrumentedTest {
             NativeBatchReceipt.Entry("Document $it", if (it == 32) "ERROR_POST" else "DONE_AND_SAVED", if (it == 32) "Synthetic service failure" else null)
         })
         var closed = 0; var signed = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            lateinit var activity: MainActivity
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
+            lateinit var activity: ComponentActivity
             scenario.onActivity { a ->
                 activity = a
                 a.setContent {
@@ -56,7 +57,7 @@ class NativeBatchFinishedDialogInstrumentedTest {
     @Test fun anInProgressOperationDoesNotPublishATerminalResultView() {
         val receipt = NativeBatchReceipt(NativeBatchReceipt.Origin.LOCAL,
             listOf(NativeBatchReceipt.Entry("Document 1", "DONE_AND_SAVED", null)))
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 activity.setContent {
                     NativeAfirmaConsentDialog(prompt(receipt, AfirmaConsentPhase.SENDING, null),

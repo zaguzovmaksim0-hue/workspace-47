@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -25,7 +26,7 @@ class NativeAfirmaConsentInstrumentedTest {
 
     @Test fun lockedReviewOnlyOpensCertificatePanelAndDoesNotConfirm() {
         var unlocked = 0; var confirmed = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 NativeAfirmaConsentDialog(prompt(AfirmaConsentPhase.REVIEW, AfirmaConsentProblem.LOCKED),
                     onConfirm = { confirmed++ }, onUnlock = { unlocked++ }, onCancel = {}, onDismiss = {})
@@ -38,7 +39,7 @@ class NativeAfirmaConsentInstrumentedTest {
 
     @Test fun readyDocumentRequiresTheExplicitSignAndSendAction() {
         var confirmed = 0; var canceled = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 NativeAfirmaConsentDialog(prompt(AfirmaConsentPhase.REVIEW, null),
                     onConfirm = { confirmed++ }, onUnlock = {}, onCancel = { canceled++ }, onDismiss = {})
@@ -51,7 +52,7 @@ class NativeAfirmaConsentInstrumentedTest {
 
     @Test fun sendingHasNoRetryOrSecondConfirmationAction() {
         var canceled = 0; var confirmed = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 NativeAfirmaConsentDialog(prompt(AfirmaConsentPhase.SENDING, null),
                     onConfirm = { confirmed++ }, onUnlock = {}, onCancel = { canceled++ }, onDismiss = {})
@@ -65,7 +66,7 @@ class NativeAfirmaConsentInstrumentedTest {
 
     @Test fun uncertainReceiptIsDismissedOnlyByTheCloseActionNotRetried() {
         var closed = 0; var confirmed = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 NativeAfirmaConsentDialog(prompt(AfirmaConsentPhase.FINISHED, AfirmaConsentProblem.UNCERTAIN),
                     onConfirm = { confirmed++ }, onUnlock = {}, onCancel = {}, onDismiss = { closed++ })

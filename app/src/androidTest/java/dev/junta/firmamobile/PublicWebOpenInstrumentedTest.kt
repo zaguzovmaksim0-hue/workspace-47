@@ -1,7 +1,8 @@
 package dev.junta.firmamobile
 
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -29,7 +30,7 @@ class PublicWebOpenInstrumentedTest {
 
     @Test fun dialogRejectsUnsafeInputAndPreservesTheAcceptedRequestAddress() {
         var selected: URI? = null
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent { PublicWebOpenDialog({ selected = it }, {}) } }
             rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
             for (input in listOf("http://public.example", "https://user@public.example", "https://127.0.0.1/")) {

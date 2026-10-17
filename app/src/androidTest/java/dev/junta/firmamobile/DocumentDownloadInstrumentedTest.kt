@@ -6,6 +6,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -34,7 +35,7 @@ class DocumentDownloadInstrumentedTest {
 
     @Test fun reviewIsExplicitAndContainsNoSilentDownloadOrSaveAction() {
         var downloads = 0; var saves = 0; var closes = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 DocumentDownloadScreen(plan(), DocumentDownloadState.OFFER, 0,
                     onStart = { downloads++ }, onSave = { saves++ }, onClose = { closes++ })
@@ -49,7 +50,7 @@ class DocumentDownloadInstrumentedTest {
 
     @Test fun preparedDocumentOffersOnlyLocalSavingNotAnotherNetworkRequest() {
         var saves = 0
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity -> activity.setContent {
                 DocumentDownloadScreen(plan(), DocumentDownloadState.READY, 123,
                     onStart = { error("No second GET") }, onSave = { saves++ }, onClose = {})

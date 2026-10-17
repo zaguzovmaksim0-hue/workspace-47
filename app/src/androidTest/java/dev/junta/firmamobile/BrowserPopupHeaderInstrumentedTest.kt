@@ -1,6 +1,7 @@
 // BrowserPopupHeaderInstrumentedTest.kt
 package dev.junta.firmamobile
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
@@ -36,7 +37,7 @@ class BrowserPopupHeaderInstrumentedTest {
         val closeCalls = AtomicInteger(0)
         lateinit var title: String
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 title = activity.getString(R.string.browser_popup_title)
                 activity.setContent {
@@ -76,7 +77,7 @@ class BrowserPopupHeaderInstrumentedTest {
         lateinit var title: String
         lateinit var closeText: String
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 title = activity.getString(R.string.browser_popup_title)
                 closeText = activity.getString(R.string.browser_popup_close)

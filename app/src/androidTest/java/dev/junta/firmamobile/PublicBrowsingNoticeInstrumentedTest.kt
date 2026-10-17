@@ -1,5 +1,6 @@
 package dev.junta.firmamobile
 
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
@@ -50,7 +51,7 @@ class PublicBrowsingNoticeInstrumentedTest {
         fontScale: Float? = null,
         assertions: (String, String) -> Unit
     ) {
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             lateinit var title: String
             lateinit var explanation: String
             scenario.onActivity { activity ->
