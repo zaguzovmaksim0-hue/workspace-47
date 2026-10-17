@@ -81,7 +81,7 @@ jobs:
           done
       - name: Retain runtime license evidence (not release approval)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: runtime-license-evidence-${{ env.VERIFY_REF }}
           path: app/build/reports/runtime-licenses/
@@ -105,7 +105,7 @@ jobs:
           (cd app/build/outputs/apk/release && sha256sum app-release.apk > SHA256SUMS)
           rm -f "$JFM_RELEASE_STORE_FILE"
       - name: Retain release candidate for private verification and signing
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: firmamobile-release-candidate-${{ env.VERIFY_REF }}
           path: app/build/outputs/apk/release/
@@ -120,7 +120,7 @@ jobs:
       - name: Verify Android artifacts
         run: scripts/ci/verify-android-artifacts.sh
       - name: Retain optimized candidate
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: firmamobile-optimized-${{ env.VERIFY_REF }}
           path: app/build/outputs/apk/optimized/app-optimized.apk
@@ -133,7 +133,7 @@ jobs:
           printf '%s\n' "$VERIFY_REF" > app/build/outputs/apk/qa/SOURCE_COMMIT.txt
           (cd app/build/outputs/apk/qa && sha256sum app-qa.apk > SHA256SUMS)
       - name: Retain verified QA candidate
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: firmamobile-qa-${{ env.VERIFY_REF }}
           path: |
@@ -144,7 +144,7 @@ jobs:
           retention-days: 3
       - name: Retain Android unit and lint reports
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-unit-lint-${{ env.VERIFY_REF }}
           path: |
@@ -213,7 +213,7 @@ jobs:
           script: bash scripts/run-android-instrumentation-ci.sh
       - name: Upload instrumentation failure report
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-instrumentation-failure-${{ env.VERIFY_REF }}
           path: |
@@ -224,7 +224,7 @@ jobs:
 
       - name: Upload emulator precondition and window diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-emulator-state-${{ env.VERIFY_REF }}
           path: app/build/outputs/instrumentation-device-state/
