@@ -67,6 +67,8 @@ The exact workflow result for the current PR head is authoritative. A pass from 
 
 The emulator job is for repository instrumentation tests using synthetic fixtures, local WebView content and test doubles. It must not be extended to import a real user PKCS#12, authenticate to a private account, sign a real document, submit a government form, upload a real file, make a payment, or perform another administrative action.
 
+The opt-in release R8 smoke launches the minified release APK on an API 36 emulator and checks startup/catalog initialization only; it does not exercise signing, BouncyCastle, or XML security paths.
+
 Physical-device E2E remains separate when a feature genuinely requires device KeyChain/WebView/provider behavior or an operator-controlled authenticated flow.
 
 ## Failure and fallback policy
