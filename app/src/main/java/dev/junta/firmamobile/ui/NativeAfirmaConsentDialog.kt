@@ -45,6 +45,7 @@ internal fun NativeAfirmaConsentDialog(
     onDismiss: () -> Unit,
 ) {
     var detailsExpanded by remember(prompt.token) { mutableStateOf(false) }
+    val confirmArmed = rememberConsentArmed(prompt.token)
     val finished = prompt.phase == AfirmaConsentPhase.FINISHED
     val review = prompt.phase == AfirmaConsentPhase.REVIEW
     val cancelling = prompt.phase == AfirmaConsentPhase.CANCELLING
@@ -187,6 +188,7 @@ internal fun NativeAfirmaConsentDialog(
                 review && prompt.canConfirm -> ConsentPrimaryButton(
                     text = stringResource(if (prompt.details.operation == "selectcert") R.string.native_afirma_send_certificate else R.string.native_afirma_sign_and_send),
                     onClick = onConfirm, modifier = Modifier.testTag("native-afirma-confirm"),
+                    enabled = confirmArmed,
                 )
                 review -> ConsentPrimaryButton(
                     text = stringResource(R.string.interactive_tls_unlock),
@@ -219,8 +221,13 @@ private fun ConsentIdentityField(label: String, value: String) {
 }
 
 @Composable
-private fun ConsentPrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(onClick = onClick, modifier = modifier.fillMaxWidth().heightIn(min = 50.dp),
+private fun ConsentPrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    Button(onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth().heightIn(min = 50.dp),
         shape = JuntaPanelShape) {
         Text(text, style = MaterialTheme.typography.labelLarge)
     }

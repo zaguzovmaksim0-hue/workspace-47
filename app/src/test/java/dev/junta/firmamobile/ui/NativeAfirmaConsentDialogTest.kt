@@ -45,8 +45,28 @@ class NativeAfirmaConsentDialogTest {
         rule.onNodeWithTag("native-afirma-details-toggle").performScrollTo().performClick()
         rule.runOnIdle { state.value = prompt(); assertEquals(0, actions) }
         rule.onNodeWithTag("native-afirma-details").assertDoesNotExist()
+        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
+        rule.waitForIdle()
         rule.onNodeWithTag("native-afirma-confirm").assertIsDisplayed().performClick()
         rule.runOnIdle { assertEquals(1, actions) }
+    }
+
+    @Test fun confirmArmsAfterDelayAndCancelRemainsEnabled() {
+        rule.mainClock.autoAdvance = false
+        rule.setContent { JuntaFirmaTheme {
+            NativeAfirmaConsentDialog(prompt(), {}, {}, {}, {})
+        } }
+        rule.waitForIdle()
+
+        val confirm = rule.onNodeWithTag("native-afirma-confirm")
+        confirm.assertIsNotEnabled()
+        rule.onNodeWithTag("native-afirma-cancel").assertIsEnabled()
+        rule.mainClock.advanceTimeBy(599, ignoreFrameDuration = true)
+        rule.waitForIdle()
+        confirm.assertIsNotEnabled()
+        rule.mainClock.advanceTimeBy(1, ignoreFrameDuration = true)
+        rule.waitForIdle()
+        confirm.assertIsEnabled()
     }
 
     @Test fun lockedCertificateOnlyUnlocksAndSendingNeverOffersSigningAgain() {

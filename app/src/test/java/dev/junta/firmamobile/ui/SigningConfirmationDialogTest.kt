@@ -1,11 +1,14 @@
 package dev.junta.firmamobile.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import dev.junta.firmamobile.testing.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import dev.junta.firmamobile.signing.SigningUiState
+import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import java.util.UUID
 import org.junit.Assert.assertEquals
@@ -41,7 +44,7 @@ class SigningConfirmationDialogTest {
         rule.onNodeWithText("Solicitud de firma").assertIsDisplayed()
         rule.onNodeWithText("Sitio: www.juntadeandalucia.es").assertIsDisplayed()
         rule.onNodeWithText("Perfil: Junta de Andalucía").assertIsDisplayed()
-        rule.onNodeWithText("Nivel de soporte: VERIFIED_E2E").assertIsDisplayed()
+        rule.onNodeWithText("Nivel de soporte: Verificada en escenario real").assertIsDisplayed()
         rule.onNodeWithText("Operación: Autenticación con certificado").assertIsDisplayed()
         rule.onNodeWithText("Certificado: Persona de Prueba").assertIsDisplayed()
         rule.onNodeWithText("Formato: CAdES").assertIsDisplayed()
@@ -50,8 +53,35 @@ class SigningConfirmationDialogTest {
         rule.onNodeWithText(RAW_PAYLOAD).assertDoesNotExist()
         rule.runOnIdle { assertEquals(emptyList<String>(), events) }
 
+        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
+        rule.waitForIdle()
         rule.onNodeWithText("Firmar").performClick()
         rule.runOnIdle { assertEquals(listOf("confirm"), events) }
+    }
+
+    @Test
+    fun confirmArmsAfterDelayAndCancelRemainsEnabled() {
+        rule.mainClock.autoAdvance = false
+        rule.setContent {
+            JuntaFirmaTheme {
+                SigningConfirmationDialog(
+                    state = state(requiresLegacySha1Warning = false),
+                    onConfirm = {},
+                    onCancel = {},
+                )
+            }
+        }
+        rule.waitForIdle()
+
+        val confirm = rule.onNodeWithText("Firmar")
+        confirm.assertIsNotEnabled()
+        rule.onNodeWithText("Cancelar").assertIsEnabled()
+        rule.mainClock.advanceTimeBy(599, ignoreFrameDuration = true)
+        rule.waitForIdle()
+        confirm.assertIsNotEnabled()
+        rule.mainClock.advanceTimeBy(1, ignoreFrameDuration = true)
+        rule.waitForIdle()
+        confirm.assertIsEnabled()
     }
 
     @Test
@@ -78,7 +108,7 @@ class SigningConfirmationDialogTest {
             requestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174000"),
             siteHost = "www.juntadeandalucia.es",
             profileName = "Junta de Andalucía",
-            supportLevel = "VERIFIED_E2E",
+            compatibilityStatus = CompatibilityStatus.VERIFIED_E2E,
             safeDescription = "Autenticación con certificado",
             format = "CAdES",
             algorithm = if (requiresLegacySha1Warning) "SHA1withRSA" else "SHA256withRSA",

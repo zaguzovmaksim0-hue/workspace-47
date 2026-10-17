@@ -27,6 +27,8 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.onAllNodes
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -276,6 +278,10 @@ class SigningConfirmationInstrumentedTest {
                         assertEquals(0, ignored)
                     }
                     rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    rule.waitUntil(timeoutMillis = 5_000) {
+                        rule.onAllNodes(hasTestTag("interactive-client-auth-confirm") and isEnabled())
+                            .fetchSemanticsNodes().isNotEmpty()
+                    }
                     rule.onNodeWithTag("interactive-client-auth-confirm").assertIsDisplayed().performClick()
                     scenario.onActivity { activity ->
                         assertEquals(1, proceeded)

@@ -12,7 +12,9 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodes
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -1175,6 +1177,11 @@ class RealE2eInstrumentedTest {
                 clientAuthConfirmations++
                 result.clientAuthConfirmed = true
                 result.level = maxOf(result.level, 3)
+                rule.waitUntil(timeoutMillis = 5_000) {
+                    rule.onAllNodes(
+                        hasText("Continuar", substring = false, ignoreCase = false) and isEnabled(),
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }
                 rule.onNodeWithText("Continuar").performClick()
             }
 
@@ -1183,6 +1190,11 @@ class RealE2eInstrumentedTest {
             ) {
                 result.certificateSelectionObserved = true
                 result.level = maxOf(result.level, 3)
+                rule.waitUntil(timeoutMillis = 5_000) {
+                    rule.onAllNodes(
+                        hasText("Compartir", substring = false, ignoreCase = false) and isEnabled(),
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }
                 rule.onNodeWithText("Compartir").performClick()
                 result.publicCertificateShared = true
                 certificateSelectionHandled = true
@@ -1301,6 +1313,16 @@ class RealE2eInstrumentedTest {
         val exactDialogButton =
             exactSigningLabel and hasClickAction() and hasAnyAncestor(isDialog())
         val exactTextButton = exactSigningLabel and hasClickAction()
+        rule.waitUntil(timeoutMillis = 5_000) {
+            rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty() ||
+                rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = false)
+                    .fetchSemanticsNodes().isNotEmpty() ||
+                rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty() ||
+                rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = false)
+                    .fetchSemanticsNodes().isNotEmpty()
+        }
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             if (performSigningConfirmationAction(exactDialogButton, useUnmergedTree = true)) {
