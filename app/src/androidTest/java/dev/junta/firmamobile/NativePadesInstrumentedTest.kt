@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -93,7 +94,9 @@ class NativePadesInstrumentedTest {
                 scenario.onActivity { activity -> activity.setContent {
                     NativeAfirmaConsentDialog(prompt, onConfirm = { confirmed++ }, onUnlock = { unlock++ }, onCancel = {}, onDismiss = {})
                 } }
-                rule.onNodeWithText("PDF · PAdES", substring = true).assertIsDisplayed()
+                rule.onNodeWithTag("native-afirma-details").assertDoesNotExist()
+                rule.onNodeWithTag("native-afirma-details-toggle").performScrollTo().performClick()
+                rule.onNodeWithText("PDF · PAdES", substring = true).performScrollTo().assertIsDisplayed()
                 rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed().performClick()
                 rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
                 rule.runOnIdle { assertEquals(1, unlock); assertEquals(0, confirmed); assertEquals(0, sent) }

@@ -66,7 +66,11 @@ class UniversalCatalogBrowserInstrumentedTest {
             // A reviewed profile exists in metadata, but is no longer another
             // visible primary action on every user-facing card.
             rule.onNodeWithTag("catalog-open-profile-$portalId").assertDoesNotExist()
-            rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-open-$portalId"))
+            // The search filters asynchronously; keep scrolling until the filtered card is composed.
+            rule.waitUntil(timeoutMillis = 15_000) {
+                runCatching { rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-open-$portalId")) }
+                rule.onAllNodes(hasTestTag("catalog-open-$portalId")).fetchSemanticsNodes().isNotEmpty()
+            }
             rule.onNodeWithTag("catalog-open-$portalId").performClick()
             rule.onNodeWithTag("public-browsing-notice").assertDoesNotExist()
             rule.onNodeWithContentDescription("Más opciones").performClick()

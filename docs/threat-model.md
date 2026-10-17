@@ -271,7 +271,7 @@ keystore.
 **Controles:** workflows con `contents: read`, sin `pull_request_target` y con
 Actions fijadas a SHA de 40 caracteres; Gradle 9.4.1 wrapper/distribution y
 artifacts resueltos verificados por SHA-256 sin trusted wildcard; Gitleaks pinned
-sobre historial completo; Dependabot para Gradle, Go y Actions; CI Go 1.26.6 con
+sobre historial completo; Dependabot para Gradle, Go y Actions; CI Go 1.26.9 con
 race/vet/build/`govulncheck`; locking Gradle `STRICT` limitado a los tres
 runtime classpaths instalables; OSV pinned sobre el runtime lock Android y los
 manifests Python/Go explícitos. Release no acepta debug-key fallback y falla
@@ -314,7 +314,9 @@ AEAT usa `DIRECT_FROM_SOURCE`: solo una petición main-frame moderna desde la UR
 source completa puede autorizar el target completo `www1:443/MdcAcceso`; query,
 fragment, userinfo, non-443, path alternativo y repetición del mismo grant fallan
 cerrados. Carné Joven conserva separadamente `REDIRECT_AFTER_SOURCE`. El profile
-AEAT es `VERIFIED_CONTRACT / QA_ONLY`; release no lo carga antes del E2E físico.
+AEAT es `VERIFIED_CONTRACT / QA_ONLY`; el release estricto (`releaseRegistry`) no lo carga antes del E2E físico, pero
+los builds release actuales usan `ALLOW_UNVERIFIED_PROFILES=true` por decisión del
+mantenedor (2026-10-05, `docs/release-signing.md`) y sí cargan los perfiles `QA_ONLY`.
 La entrega final vuelve a validar host/port, epoch, TTL, key type, validez,
 keyUsage, EKU e issuer no vacío antes de `ClientCertRequest.proceed`. El TTL de la
 transición pendiente, la supresión de replay directo y el grant confirmado usan tiempo
@@ -323,7 +325,7 @@ El reloj civil se conserva únicamente para comprobar la vigencia X.509 del cert
 **Verificación:** tests hostiles de transición directa, query vacía, suffix-host,
 encoded path, legacy/subframe/wrong-source y consumo único; tests del request
 handler para RSA con issuer coincidente y rechazo de issuer vacío; registry tests
-que demuestran ausencia completa del profile/origins en release.
+que demuestran ausencia completa del profile/origins en el registry release estricto.
 
 ### T14. Contenido WebView solicita geolocalización o capacidad del dispositivo
 

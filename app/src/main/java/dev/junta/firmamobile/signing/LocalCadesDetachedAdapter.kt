@@ -43,7 +43,6 @@ import org.bouncycastle.cms.CMSSignedDataGenerator
 import org.bouncycastle.cms.DefaultSignedAttributeTableGenerator
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
@@ -51,7 +50,7 @@ import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
 /** Local detached CAdES adapter for Aragón SIRAW's observed MiniApplet login contract. */
 class LocalCadesDetachedAdapter internal constructor(
     private val clock: Clock = Clock.systemUTC(),
-    private val provider: Provider = BouncyCastleProvider(),
+    private val provider: Provider = BundledBouncyCastle.provider,
 ) : SigningProtocolAdapter {
     override val id: SigningProtocolId = ID
 
@@ -188,7 +187,7 @@ internal object CadesDetachedCodec {
         expectedContentBytes: Int,
         certificateChain: List<X509Certificate>,
         clock: Clock,
-        provider: Provider = BouncyCastleProvider(),
+        provider: Provider = BundledBouncyCastle.provider,
         signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
         signaturePolicy: CadesSignaturePolicy? = null,
     ): CadesPreSignMaterial {
@@ -255,7 +254,7 @@ internal object CadesDetachedCodec {
         expectedContentBytes: Int,
         signingCertificateFingerprint: ByteArray,
         signatureValue: ByteArray,
-        provider: Provider = BouncyCastleProvider(),
+        provider: Provider = BundledBouncyCastle.provider,
         signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
         signaturePolicy: CadesSignaturePolicy? = null,
     ): ByteArray {
@@ -308,7 +307,7 @@ internal object CadesDetachedCodec {
         detachedContent: ByteArray,
         expectedContentBytes: Int,
         expectedCertificateFingerprint: ByteArray? = null,
-        provider: Provider = BouncyCastleProvider(),
+        provider: Provider = BundledBouncyCastle.provider,
         signingAlgorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
         signaturePolicy: CadesSignaturePolicy? = null,
     ): Boolean = runCatching {

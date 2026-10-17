@@ -25,6 +25,7 @@ internal fun SigningConfirmationDialog(
         onDismissRequest = onCancel,
         title = { Text(stringResource(R.string.signing_confirmation_title)) },
         text = {
+            FilterObscuredTouches()
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp),

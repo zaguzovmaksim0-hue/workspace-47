@@ -7,13 +7,16 @@ Completed:
 - Fail-closed MiniApplet routing when the effective profile is missing (F-02).
 - Private release signing with no debug-key fallback (F-01).
 - `qa` build variant for unverified portal work.
-- Release activation restricted to sensitive `VERIFIED_E2E` profiles (F-04).
+- Release activation (F-04) was originally restricted to sensitive `VERIFIED_E2E` profiles. On 2026-10-05
+  the maintainer deliberately superseded this (`ae6a5e4a`, `docs/release-signing.md`): release builds set
+  `ALLOW_UNVERIFIED_PROFILES=true` and also load unverified (`QA_ONLY`) profiles and the experimental
+  Junta Ovorion profile; the strict `releaseRegistry` stays available as a separate policy.
 - Junta legacy Ovorion, Carné Joven, Aragón SIRAW and Junta Oficina Virtual are
   tracked separately. Carné Joven `CLIENT_TLS_AUTH` was verified on a physical
   device on 2026-07-21; Aragón login CAdES on 2026-07-28; Oficina Virtual
   MiniApplet 1.5 login CAdES on 2026-07-29; UniZAR login CAdES on 2026-07-30.
-  RedSARA remains `QA_ONLY`; historical Ovorion MiniApplet 1.4 is `EXPERIMENTAL`, is available only under
-  QA policy for sensitive operations, and is excluded from release.
+  RedSARA remains `QA_ONLY`; historical Ovorion MiniApplet 1.4 is `EXPERIMENTAL` and, since the 2026-10-05
+  maintainer decision, is also enabled in release builds (see F-04 above).
 - Profile/public-catalog E2E consistency gate (F-15A): every bound profile marked
   `VERIFIED_E2E` must have the exact public metadata pair
   `E2E_VERIFIED / VERIFIED_E2E`, and non-E2E profiles cannot carry that pair.
@@ -38,9 +41,12 @@ Completed:
   `SHA1withRSA`, exact `precalculatedHashAlgorithm=SHA1` and `serverUrl`;
   Storage/Retrieve, co-sign, counter-sign and document-signing remain blocked.
 - MainActivity screenshot policy supersedes the previous F-05 secure-window behavior
-  (2026-08-28): screenshots are intentionally allowed across the whole application.
-  `FLAG_SECURE` is never applied and is defensively cleared even for password, unlocked
-  certificate, portal WebView and signing states. This is an explicit privacy trade-off;
+  (2026-08-28): screenshots are intentionally allowed in its main window.
+  `WindowSecureFlagPolicy` clears `FLAG_SECURE` even for password, unlocked
+  certificate, portal WebView and signing states. Some separate windows remain protected:
+  selected dialogs including the certificate panel, native AutoFirma consent and client-auth
+  consent use `SecureFlagPolicy.SecureOn`; the HTTP-auth dialog and
+  `DocumentDownloadActivity` explicitly set `FLAG_SECURE`. This is a privacy trade-off;
   sensitive screenshots remain prohibited as persisted QA/repository evidence.
 - Profile-scoped cookie/session hardening completed (F-08): native cookie
   access requires an active `SiteProfile` and an exact declared network endpoint;
@@ -74,12 +80,12 @@ Completed:
 - Identical in-flight MiniApplet signing calls are coalesced without invoking the
   portal error callback; any differing concurrent request remains fail-closed.
 - CI and supply-chain gate completed (F-14): GitHub Actions use read-only
-  permissions and exact action commit SHAs; Gradle 9.4.1 wrapper/distribution and
+  permissions and exact action commit SHAs; Gradle 9.7.0 wrapper/distribution and
   resolved artifacts are SHA-256 verified; complete Git history is scanned with
   pinned Gitleaks; Dependabot covers Gradle, Go modules, GitHub Actions and pip at `/tools`; Android APKs
   are checked for alignment, signature count, manifest hardening and forbidden
   canaries; release still fails closed without the private signing key. CI and the
-  module manifest are pinned to patched Go 1.26.6; OSV scans the explicit Python
+  module manifest are pinned to patched Go 1.26.9; OSV scans the explicit Python
   and Go manifests.
 
 Completed isolated PR — public IPv6 DNS results (F-17):
@@ -115,7 +121,7 @@ Latest completed isolated PR — CI and supply-chain gate (F-14):
 
 - CI separates Android, Python and Go gates and uses `contents: read`, immutable
   action SHAs, bounded timeouts and concurrency cancellation.
-- Gradle 9.4.1 distribution and wrapper JAR are pinned by official SHA-256;
+- Gradle 9.7.0 distribution and wrapper JAR are pinned by official SHA-256;
   dependency verification rejects unrecorded artifacts and contains no wildcard
   trust rule.
 - Android gates run unit tests, lint and APK builds, then verify 16 KiB alignment,
@@ -125,7 +131,7 @@ Latest completed isolated PR — CI and supply-chain gate (F-14):
 - Gitleaks 8.30.1 scans complete history with redaction; its exact Linux x64
   archive checksum is verified before execution.
 - Dependabot covers Gradle, Go modules, GitHub Actions and pip at `/tools`. CI and the
-  module manifest use the patched 1.26.6 toolchain; `govulncheck` and OSV cover the relay and the explicit
+  module manifest use the patched 1.26.9 toolchain; `govulncheck` and OSV cover the relay and the explicit
   Python/Go manifests.
 - OSV intentionally does not parse `gradle/verification-metadata.xml` as a runtime
   lockfile: it is an integrity checksum ledger containing build-tool artifacts.
