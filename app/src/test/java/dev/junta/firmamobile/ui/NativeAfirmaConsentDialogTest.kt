@@ -1,16 +1,19 @@
 package dev.junta.firmamobile.ui
 
+import android.os.Looper
 import androidx.compose.runtime.mutableStateOf
 import dev.junta.firmamobile.testing.createComposeRule
 import androidx.compose.ui.test.*
 import dev.junta.firmamobile.afirma.servlet.*
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
@@ -61,9 +64,11 @@ class NativeAfirmaConsentDialogTest {
         val confirm = rule.onNodeWithTag("native-afirma-confirm")
         confirm.assertIsNotEnabled()
         rule.onNodeWithTag("native-afirma-cancel").assertIsEnabled()
+        shadowOf(Looper.getMainLooper()).idleFor(599, TimeUnit.MILLISECONDS)
         rule.mainClock.advanceTimeBy(599, ignoreFrameDuration = true)
         rule.waitForIdle()
         confirm.assertIsNotEnabled()
+        shadowOf(Looper.getMainLooper()).idleFor(1, TimeUnit.MILLISECONDS)
         rule.mainClock.advanceTimeBy(1, ignoreFrameDuration = true)
         rule.waitForIdle()
         confirm.assertIsEnabled()
