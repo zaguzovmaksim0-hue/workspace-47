@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    # Daily synthetic verification on the default branch; cron is UTC.
+    - cron: '23 2 * * *'
   workflow_dispatch:
     inputs:
       run_instrumentation:
@@ -19,7 +22,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -188,8 +191,8 @@ jobs:
 
   android-instrumented:
     name: Android emulator instrumentation
-    # Emulator execution requires an explicit manual opt-in; merges stay non-E2E.
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_instrumentation }}
+    # Nightly synthetic checks or explicit manual opt-in; PRs/pushes stay non-E2E.
+    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_instrumentation) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -259,7 +262,7 @@ jobs:
 
   android-release-r8-smoke:
     name: Android release R8 startup smoke
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_instrumentation }}
+    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_instrumentation) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
