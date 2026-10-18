@@ -93,8 +93,7 @@ class SigningDocumentConsentTest {
         rule.onNodeWithTag("signing-document-sha256").assertDoesNotExist()
         rule.onNodeWithText("SHA-1", substring = true).assertExists()
         rule.onNodeWithText("Firmar").assertIsNotEnabled()
-        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
-        rule.waitForIdle()
+        advanceThroughArmingFrames()
         rule.onNodeWithText("Firmar").assertIsEnabled()
     }
 
@@ -107,17 +106,20 @@ class SigningDocumentConsentTest {
             JuntaFirmaTheme { SigningConfirmationDialog(confirmation, onConfirm = {}, onCancel = {}) }
         }
         rule.onNodeWithTag("signing-document-sha256").assertExists()
-        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
-        rule.waitForIdle()
+        rule.onNodeWithText("Firmar").assertIsNotEnabled()
+        advanceThroughArmingFrames()
         rule.onNodeWithText("Firmar").assertIsEnabled()
         rule.runOnIdle {
             originalEvidence.close()
             confirmation = state().copy(requestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174001"))
         }
+        rule.mainClock.advanceTimeByFrame()
         rule.onNodeWithTag("signing-document-unavailable").assertExists()
         rule.onNodeWithTag("signing-document-sha256").assertDoesNotExist()
         rule.onNodeWithText(EXPECTED_PDF_SHA256, substring = true).assertDoesNotExist()
         rule.onNodeWithText("Firmar").assertIsNotEnabled()
+        advanceThroughArmingFrames()
+        rule.onNodeWithText("Firmar").assertIsEnabled()
     }
 
     @Test
@@ -138,6 +140,17 @@ class SigningDocumentConsentTest {
         rule.onNodeWithTag("signing-batch-documents-toggle").performScrollTo().performClick()
         rule.onNodeWithText("Documento 1 · ID: identifier").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("private-reference", substring = true).assertDoesNotExist()
+    }
+
+    private fun advanceThroughArmingFrames() {
+        // Start the delay coroutine, then publish enabled semantics on a subsequent Compose frame.
+        rule.mainClock.advanceTimeByFrame()
+        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS - ARMING_CHECK_MARGIN_MS)
+        rule.waitForIdle()
+        rule.onNodeWithText("Firmar").assertIsNotEnabled()
+        rule.mainClock.advanceTimeBy(ARMING_CHECK_MARGIN_MS)
+        rule.mainClock.advanceTimeByFrame()
+        rule.waitForIdle()
     }
 
     private fun state(evidence: DocumentConsentEvidence = DocumentConsentEvidence.unavailable()) =
@@ -162,6 +175,7 @@ class SigningDocumentConsentTest {
     }
 
     private companion object {
+        const val ARMING_CHECK_MARGIN_MS = 100L
         val REQUEST_ID: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174000")
         val PDF = "%PDF-1.7\nsynthetic consent document\n%%EOF\n".encodeToByteArray()
         const val EXPECTED_PDF_SHA256 = "e5fe40f17d151fafa3c4d3142e359b308694d512ff3227d48cfd6fb092e7cc8e"

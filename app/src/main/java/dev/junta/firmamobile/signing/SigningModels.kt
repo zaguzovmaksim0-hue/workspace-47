@@ -74,8 +74,8 @@ class NormalizedSignRequest internal constructor(
     payload: ByteArray,
     internal val observedAtMonotonicNanos: Long = MonotonicSecurityTime.nowNanos(),
     private val payloadObserver: SensitiveSigningCopyObserver = SensitiveSigningCopyObserver {},
-    internal val documentConsentOwner: DocumentConsentOwner = DocumentConsentOwner(),
 ) : Closeable {
+    internal val documentConsentOwner: DocumentConsentOwner = DocumentConsentOwner()
     private var ownedPayload: ByteArray? = payload
 
     internal val payloadSize: Int

@@ -21,9 +21,9 @@ class ActualDocumentMetadata internal constructor(
     fun sha256ForDisplay(): String? = ownedDigest?.let { bytes ->
         buildString(bytes.size * 2) {
             for (byte in bytes) {
-                val value = byte.toInt() and 0xff
-                append(HEX[value ushr 4])
-                append(HEX[value and 0x0f])
+                val value = byte.toInt() and BYTE_MASK
+                append(HEX[value ushr NIBBLE_BITS])
+                append(HEX[value and NIBBLE_MASK])
             }
         }
     }
@@ -36,7 +36,12 @@ class ActualDocumentMetadata internal constructor(
 
     override fun toString(): String = "ActualDocumentMetadata(redacted)"
 
-    private companion object { const val HEX = "0123456789abcdef" }
+    private companion object {
+        const val HEX = "0123456789abcdef"
+        const val BYTE_MASK = 0xff
+        const val NIBBLE_BITS = 4
+        const val NIBBLE_MASK = 0x0f
+    }
 }
 
 /**
@@ -57,8 +62,8 @@ class DocumentConsentEvidence private constructor(
 
     /** Pure local verification, including the exact envelope; never re-decode/refetch at consent. */
     @Synchronized
-    internal fun matches(request: NormalizedSignRequest): Boolean =
-        !closed && (ownedBinding?.matches(request) ?: true)
+    internal fun matches(request: NormalizedSignRequest, lineage: DocumentConsentLineage? = null): Boolean =
+        !closed && (ownedBinding?.matches(request, lineage) ?: true)
 
     /** Remove display hashes immediately when the consent UI is dismissed, before signing work. */
     @Synchronized
@@ -91,15 +96,15 @@ class DocumentConsentEvidence private constructor(
             require(envelope.size in 1..PendingSignRequestStore.MAX_PAYLOAD_BYTES)
             require(document.size in 1..envelope.size)
             val binding = RequestBinding(request, sha256(envelope), observer)
+            var retainedBinding = false
             return try {
                 DocumentConsentEvidence(
                     SigningPayloadKind.ENVELOPE,
                     binding,
                     ActualDocumentMetadata(document.size, sha256(document), observer),
-                )
-            } catch (error: Exception) {
-                binding.close()
-                throw error
+                ).also { retainedBinding = true }
+            } finally {
+                if (!retainedBinding) binding.close()
             }
         }
     }
@@ -120,15 +125,18 @@ class DocumentConsentEvidence private constructor(
         private val observedAtMonotonicNanos = request.observedAtMonotonicNanos
         private var ownedFingerprint: ByteArray? = fingerprint
 
-        fun matches(request: NormalizedSignRequest): Boolean {
+        fun matches(request: NormalizedSignRequest, lineage: DocumentConsentLineage?): Boolean {
             val expected = ownedFingerprint ?: return false
-            if (owner !== request.documentConsentOwner || requestId != request.requestId ||
-                protocolId != request.protocolId || context != request.context ||
-                algorithm != request.algorithm || format != request.format ||
-                description != request.safeDescription ||
-                observedAtMonotonicNanos != request.observedAtMonotonicNanos
-            ) return false
-            return runCatching {
+            val ownerMatches = if (lineage == null) {
+                owner === request.documentConsentOwner
+            } else {
+                lineage.isFor(owner, request)
+            }
+            val requestMatches = ownerMatches && requestId == request.requestId &&
+                protocolId == request.protocolId && context == request.context
+            val operationMatches = algorithm == request.algorithm && format == request.format &&
+                description == request.safeDescription && observedAtMonotonicNanos == request.observedAtMonotonicNanos
+            return requestMatches && operationMatches && runCatching {
                 request.withPayload { payload ->
                     val current = sha256(payload)
                     try { MessageDigest.isEqual(expected, current) } finally { current.fill(0) }

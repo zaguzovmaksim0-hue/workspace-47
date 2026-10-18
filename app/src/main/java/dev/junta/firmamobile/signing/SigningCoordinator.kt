@@ -226,14 +226,15 @@ class SigningCoordinator internal constructor(
             if (consumed is PendingConsumeResult.Rejected) {
                 return fail(operation, consumed.error.toSigningError())
             }
-            val request = (consumed as PendingConsumeResult.Accepted).request
+            val accepted = consumed as PendingConsumeResult.Accepted
+            val request = accepted.request
             acceptedRequest = request
             if (!isActive(operation) || !originStillMatches(operation)) {
                 return fail(operation, SigningErrorCode.NAVIGATION_CHANGED)
             }
             // The store retained the exact request lineage; verify all fields and envelope locally.
             // Never ask an adapter to produce replacement evidence after consent.
-            val consentMatches = operation.documentConsent.matches(request)
+            val consentMatches = operation.documentConsent.matches(request, accepted.documentConsentLineage)
             operation.documentConsent.close()
             if (!consentMatches) return fail(operation, SigningErrorCode.PAYLOAD_CHANGED)
             val identity = certificateSession.identityForSigning(operation.certificateSnapshot)

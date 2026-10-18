@@ -49,28 +49,37 @@ class DocumentConsentEvidenceTest {
     fun changesToAnyBoundFieldOrEnvelopeInvalidateEvidence() {
         val document = "%PDF-synthetic".encodeToByteArray()
         val envelope = MiniAppletPayloadCodec.encode(document, "fixed=true")
-        val owner = DocumentConsentOwner()
-        request(envelope, owner = owner).use { original ->
+        request(envelope).use { original ->
             DocumentConsentEvidence.fromEnvelope(original, envelope, document).use { evidence ->
+                // Synthetic memory-tamper only: no constructor/setter can reassign request ownership.
                 val variants = listOf(
-                    request(envelope.copyOf(), owner = owner, id = UUID.randomUUID()),
-                    request(envelope.copyOf(), owner = owner, protocolId = SigningProtocolId("other-v1")),
-                    request(envelope.copyOf(), owner = owner, algorithm = SigningAlgorithm.SHA512_WITH_RSA),
-                    request(envelope.copyOf(), owner = owner, format = SigningFormat.CADES),
-                    request(envelope.copyOf(), owner = owner, description = "different"),
-                    request(envelope.copyOf(), owner = owner, monotonicNanos = 1_001L),
-                    request(envelope.copyOf(), owner = owner, context = CONTEXT.copy(profileId = "other")),
-                    request(envelope.copyOf(), owner = owner, context = CONTEXT.copy(profileVersion = 2)),
-                    request(envelope.copyOf(), owner = owner, context = CONTEXT.copy(origin = TrustedOrigin("https", "other.invalid", 443))),
-                    request(envelope.copyOf(), owner = owner, context = CONTEXT.copy(navigationId = NavigationId("other"))),
-                    request(envelope.copyOf(), owner = owner, context = CONTEXT.copy(navigationEpoch = 1L)),
-                    request(envelope.copyOf(), owner = owner, context = CONTEXT.copy(observedAt = CONTEXT.observedAt.plusSeconds(1))),
-                    request(envelope.copyOf(), owner = owner, context = CONTEXT.copy(pageUrl = "https://document.invalid/other")),
-                    request(envelope.copyOf().also { it[it.lastIndex] = 0 }, owner = owner),
+                    "requestId" to UUID.randomUUID(),
+                    "protocolId" to "other-v1",
+                    "algorithm" to SigningAlgorithm.SHA512_WITH_RSA,
+                    "format" to SigningFormat.CADES,
+                    "safeDescription" to "different",
+                    "observedAtMonotonicNanos" to 1_001L,
+                    "context" to CONTEXT.copy(profileId = "other"),
+                    "context" to CONTEXT.copy(profileVersion = 2),
+                    "context" to CONTEXT.copy(origin = TrustedOrigin("https", "other.invalid", 443)),
+                    "context" to CONTEXT.copy(navigationId = NavigationId("other")),
+                    "context" to CONTEXT.copy(navigationEpoch = 1L),
+                    "context" to CONTEXT.copy(observedAt = CONTEXT.observedAt.plusSeconds(1)),
+                    "context" to CONTEXT.copy(pageUrl = "https://document.invalid/other"),
                 )
-                variants.forEachIndexed { index, changed ->
-                    changed.use { assertFalse("bound field $index", evidence.matches(it)) }
+                variants.forEachIndexed { index, (name, changed) ->
+                    val field = NormalizedSignRequest::class.java.getDeclaredField(name).apply { isAccessible = true }
+                    val before = field.get(original)
+                    try {
+                        field.set(original, changed)
+                        assertFalse("bound field $index", evidence.matches(original))
+                    } finally {
+                        field.set(original, before)
+                    }
+                    assertTrue(evidence.matches(original))
                 }
+                original.withPayload { it[it.lastIndex] = 0 }
+                assertFalse(evidence.matches(original))
             }
         }
     }
@@ -95,14 +104,50 @@ class DocumentConsentEvidenceTest {
                 payloadFingerprint = fingerprint,
             )) as PendingConsumeResult.Accepted
             result.request.use { consumed ->
-                assertTrue(evidence.matches(consumed))
+                assertFalse(evidence.matches(consumed))
+                assertTrue(evidence.matches(consumed, result.documentConsentLineage))
                 assertFalse(summary.toString().contains(evidence.actualDocument!!.sha256ForDisplay()!!))
                 consumed.withPayload { it[it.lastIndex] = 0 }
-                assertFalse(evidence.matches(consumed))
+                assertFalse(evidence.matches(consumed, result.documentConsentLineage))
             }
         }
         fingerprint.fill(0)
         assertNull(store.peek())
+    }
+
+    @Test
+    fun forgedForeignCopiedAndReplayedLineageFailClosed() {
+        val (evidence, accepted) = pendingEvidence()
+        val (foreignEvidence, foreignAccepted) = pendingEvidence()
+        try {
+            val consumed = accepted.request
+            val lineage = checkNotNull(accepted.documentConsentLineage)
+            assertTrue(evidence.matches(consumed, lineage))
+            assertFalse(evidence.matches(consumed, object : DocumentConsentLineage {}))
+            assertFalse(evidence.matches(consumed, foreignAccepted.documentConsentLineage))
+            assertFalse(evidence.matches(foreignAccepted.request, lineage))
+            request(consumed.payloadCopy()).use { reconstructed ->
+                val copied = accepted.copy(request = reconstructed)
+                assertFalse(evidence.matches(copied.request, copied.documentConsentLineage))
+            }
+            consumed.withPayload { envelope ->
+                MiniAppletPayloadCodec.withDecoded(envelope) { document, _ ->
+                    DocumentConsentEvidence.fromEnvelope(consumed, envelope, document).use { freshEvidence ->
+                        assertTrue(freshEvidence.matches(consumed))
+                        assertFalse(freshEvidence.matches(consumed, lineage))
+                    }
+                }
+            }
+            evidence.close()
+            assertFalse(evidence.matches(consumed, lineage))
+            consumed.close()
+            assertFalse(evidence.matches(consumed, lineage))
+        } finally {
+            evidence.close()
+            foreignEvidence.close()
+            accepted.request.close()
+            foreignAccepted.request.close()
+        }
     }
 
     @Test
@@ -173,6 +218,29 @@ class DocumentConsentEvidenceTest {
         }
     }
 
+    private fun pendingEvidence(): Pair<DocumentConsentEvidence, PendingConsumeResult.Accepted> {
+        val document = "%PDF-synthetic".encodeToByteArray()
+        val envelope = MiniAppletPayloadCodec.encode(document, "fixed=true")
+        val request = request(envelope)
+        val evidence = DocumentConsentEvidence.fromEnvelope(request, envelope, document)
+        val fingerprint = MessageDigest.getInstance("SHA-256").digest(envelope)
+        val store = PendingSignRequestStore(monotonicNanos = { 1_000L })
+        val summary = store.put(request)
+        return try {
+            val accepted = store.consume(PendingValidationContext(
+                requestId = summary.requestId,
+                profileId = summary.context.profileId,
+                profileVersion = summary.context.profileVersion,
+                origin = summary.context.origin,
+                navigationId = summary.context.navigationId,
+                payloadFingerprint = fingerprint,
+            )) as PendingConsumeResult.Accepted
+            evidence to accepted
+        } finally {
+            fingerprint.fill(0)
+        }
+    }
+
     private fun request(
         payload: ByteArray,
         id: UUID = REQUEST_ID,
@@ -181,7 +249,6 @@ class DocumentConsentEvidenceTest {
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA,
         format: SigningFormat = SigningFormat.PADES,
         description: String = "Synthetic document operation",
-        owner: DocumentConsentOwner = DocumentConsentOwner(),
         monotonicNanos: Long = 1_000L,
     ) = NormalizedSignRequest(
         requestId = id,
@@ -192,7 +259,6 @@ class DocumentConsentEvidenceTest {
         safeDescription = description,
         payload = payload,
         observedAtMonotonicNanos = monotonicNanos,
-        documentConsentOwner = owner,
     )
 
     private fun sha256(bytes: ByteArray): String =
