@@ -29,6 +29,32 @@ env:
   PYTHON_VERSION: "3.13"
 
 jobs:
+  detekt:
+    name: Kotlin static analysis (detekt)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.VERIFY_REF }}
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Check Kotlin sources against reviewed baseline
+        run: bash scripts/ci/detekt.sh
+      - name: Retain detekt reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: detekt-reports
+          path: app/build/reports/detekt/
+          if-no-files-found: warn
+          retention-days: 3
+
   android:
     name: Android unit, lint, APK
     runs-on: ubuntu-24.04
