@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compatibility_feedback_title">Jakinarazi bateragarritasuna</string>
+    <string name="compatibility_feedback_intro">Txostenak Firma Mobile aplikazioaren bertsioa, bertsio-kodea eta Android-en API maila baino ez ditu jasotzen. Ez da automatikoki bidaltzen, eta aplikazioak ez du intzidentziarik sortzen.</string>
+    <string name="compatibility_feedback_preview">Txostenaren aurrebista</string>
+    <string name="compatibility_feedback_privacy">Ez dira ziurtagiriak, identifikatzaileak, dokumentuak, helbideak edo historia sartzen. Kopiatzean, erakutsitako txostena soilik jartzen da arbelean.</string>
+    <string name="compatibility_feedback_copy">Kopiatu txostena</string>
+    <string name="compatibility_feedback_open">Ireki GitHub-eko inprimakia</string>
+    <string name="compatibility_feedback_copied">Txostena kopiatu da.</string>
+    <string name="compatibility_feedback_copy_failed">Ezin izan da txostena kopiatu.</string>
+    <string name="compatibility_feedback_confirm_title">GitHub ireki?</string>
+    <string name="compatibility_feedback_confirm_message">github.com/zaguzovmaksim0-hue/workspace-47/issues/new irekiko da, aurrebistako txostena URLan sartuta. Ez da intzidentziarik automatikoki sortuko: GitHub-en berrikusi eta argitaratu beharko duzu. GitHub-ek bisita jasoko du, eta zure IParekin edo saioarekin lotu dezake. Argitaratutako intzidentzia publikoa izango da. Ez gehitu datu pertsonalik, ziurtagiririk, dokumenturik edo helbide pribaturik.</string>
+    <string name="compatibility_feedback_confirm_open">Jarraitu GitHub-era</string>
+    <string name="compatibility_feedback_open_failed">Ezin izan da GitHub ireki. Txostena kopiatu eta GitHub zeure kabuz ireki dezakezu.</string>
+</resources>

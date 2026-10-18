@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_batch_details_show">Ikusi dokumentu bakoitzaren emaitzak</string>
+    <string name="native_batch_details_hide">Ezkutatu dokumentu bakoitzaren emaitzak</string>
+    <string name="native_batch_origin_local">Eragiketa lokalaren emaitzak. Sinadura sortu izanak ez du frogatzen guneak jaso edo gorde duenik. Erantzunaren entrega bereiz adierazten da; ez du administrazioak onartu duenik baieztatzen.</string>
+    <string name="native_batch_origin_service">Urruneko zerbitzua duen sorta: zerbitzuak jakinarazitako egoerak eta bezero honek agian saltatu dituen elementuak. Guneari egindako entrega bereiz adierazten da. Ez du administrazioaren onarpena frogatzen, ezta ondorio partzialak desegiten ere.</string>
+    <string name="native_batch_id">%1$d. Dokumentua: %2$s</string>
+    <string name="native_batch_status">Emaitzaren kodea: %1$s</string>
+    <string name="native_batch_description">Jasotako deskribapena: %1$s</string>
+    <string name="native_batch_status_done">Sinadura amaitu da; gordetze-egoera adierazitako jatorriaren araberakoa da.</string>
+    <string name="native_batch_status_pending_save">Sinadura sortu da; ez da gorde denik baieztatu.</string>
+    <string name="native_batch_status_save_skipped">Sinadura sortu da; gordetzeko urratsa saltatu da.</string>
+    <string name="native_batch_status_save_failed">Errorea emaitza gordetzean.</string>
+    <string name="native_batch_status_pre_failed">Errorea prestaketan edo sinadura lokalean.</string>
+    <string name="native_batch_status_post_failed">Errorea zerbitzuaren amaierako urratsean.</string>
+    <string name="native_batch_status_skipped">Dokumentua saltatu da.</string>
+    <string name="native_batch_status_not_started">Dokumentua ez da hasi.</string>
+    <string name="native_batch_status_rollback">Zerbitzuak gordetzea atzera bota duela adierazi du.</string>
+    <string name="native_batch_status_failed">Zerbitzuak emaitza negatiboa adierazi du.</string>
+    <string name="native_batch_status_other">Kontsultatu emaitzaren jatorriak jakinarazitako kodea.</string>
+</resources>

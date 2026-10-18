@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_multiphase_service">Sinadura-zerbitzua: %1$s</string>
+    <string name="native_multiphase_count">Sortako dokumentuak: %1$d</string>
+    <string name="native_multiphase_delegated">Eskuordetutako sinadura: baieztatzean, ziurtagiri publikoa eta datuak edo erreferentziak adierazitako zerbitzura bidaliko dira. Zerbitzuak zure gakoak sinatuko dituen PRE datuak prestatzen ditu; telefonoak ezin du frogatu PRE opaku bat erakutsitako dokumentuari dagokionik. Jarraitu soilik zerbitzu horretaz fidatzen bazara. Sorta bat partzialki amaitu daiteke, edo zerbitzuak erantzuna itzuli aurretik gorde dezake.</string>
+    <string name="native_multiphase_cosign">Gehitu sinadura dokumentuari</string>
+    <string name="native_multiphase_countersign">Kontrasinadura zerbitzuaren bidez</string>
+    <string name="native_multiphase_batch">Sortakako sinadura</string>
+    <string name="webauthn_status_label">Passkeys / WebAuthn</string>
+    <string name="webauthn_unsupported">WebView honek ez du WebAuthn-en jatorrizko euskarria iragartzen. Kanpoko nabigatzailean jarrai dezakezu.</string>
+    <string name="webauthn_configuration_failed">Ezin izan da WebAuthn motorra aktibatu. Ohiko nabigazioak erabilgarri jarraitzen du.</string>
+    <string name="webauthn_provider_unknown">Nabigatzailearen jatorrizko WebAuthn motorra aktibatu da. Kredentzial-hornitzaileak aplikazio honetarako duen baimena ez dago oraindik baieztatuta; baliteke passkey batzuk erabilgarri ez egotea.</string>
+    <string name="webauthn_no_success_claim">Motorra aktibatzeak ez du esan nahi saioa hasi denik edo Google Password Manager-en onarpena jaso denik. Ez da webgunearen jatorria JavaScript bidez imitatzen.</string>
+    <string name="webauthn_external_browser">Jarraitu kanpoko nabigatzailean</string>
+    <string name="webauthn_close">Itxi</string>
+</resources>

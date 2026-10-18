@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_cades_provided_hash_notice">Egoitzak %1$s aztarna bat bidali du, ez jatorrizko dokumentua. Aztarna hori sinatuko da, berriro kalkulatu gabe. Aplikazio honek ezin du egiaztatu zein dokumentu adierazten duen; berrikusi izapidea egoitzan baieztatu aurretik. Emaitza CAdES sinadura bereizi bat izango da.</string>
+    <string name="native_cades_provided_hash_batch">Eskaera honek egoitzak kalkulatutako aztarna duten %1$d elementu ditu. Ez dira haien jatorrizko dokumentuak jaso, eta haien edukia ezin da hemen egiaztatu. Gainerako elementuek ohiko eragiketari eusten diote.</string>
+    <string name="native_cades_provided_hash_size">Jasotako aztarna: %1$d byte; jatorrizko dokumentuaren tamaina ezezaguna da.</string>
+    <string name="native_cades_received_hash_fingerprint">Jasotako byteen SHA-256, ez jatorrizko dokumentuarena: %1$s</string>
+</resources>
