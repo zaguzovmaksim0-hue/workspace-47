@@ -30,3 +30,6 @@ qa-credentials.json
 *.pcap
 *.pcapng
 *.log
+
+# Verified local distribution output
+/dist/

@@ -1,0 +1,82 @@
+name: Signed daily APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: signed-daily-apk
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    name: Build and sign persistent daily APK
+    if: github.ref == 'refs/heads/main'
+    environment: daily-signing
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact trusted main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Require green CI and security on this exact commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for workflow in ci.yml security.yml; do
+            gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" --commit "$GITHUB_SHA" --event push --limit 1 --json status,conclusion |
+              python3 -c 'import json,sys; r=json.load(sys.stdin); sys.exit(0 if r and r[0]["status"]=="completed" and r[0]["conclusion"]=="success" else "Exact-commit CI/security must pass before daily signing")'
+          done
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Install Android API 36 toolchain
+        run: |
+          set -euo pipefail
+          set +o pipefail
+          yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Build tested optimized payload without distribution secrets
+        run: ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration :app:verifyRuntimeDependencyLocks assembleOptimized testOptimizedUnitTest lintOptimized --no-daemon
+      - name: Sign with persistent daily key
+        env:
+          JFM_DAILY_KEYSTORE_BASE64: ${{ secrets.JFM_DAILY_KEYSTORE_BASE64 }}
+          JFM_DAILY_STORE_PASSWORD: ${{ secrets.JFM_DAILY_STORE_PASSWORD }}
+          JFM_DAILY_KEY_ALIAS: ${{ secrets.JFM_DAILY_KEY_ALIAS }}
+          JFM_DAILY_KEY_PASSWORD: ${{ secrets.JFM_DAILY_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          export JFM_DAILY_STORE_FILE="$RUNNER_TEMP/firmamobile-daily.p12"
+          trap 'rm -f "$JFM_DAILY_STORE_FILE"' EXIT
+          : "${JFM_DAILY_KEYSTORE_BASE64:?Missing persistent daily keystore}"
+          printf '%s' "$JFM_DAILY_KEYSTORE_BASE64" | base64 --decode > "$JFM_DAILY_STORE_FILE"
+          unset JFM_DAILY_KEYSTORE_BASE64
+          bash scripts/ci/sign-daily-apk.sh app/build/outputs/apk/optimized/app-optimized.apk dist/daily/firmamobile-daily.apk
+          printf '%s\n' "$GITHUB_SHA" > dist/daily/COMMIT.txt
+      - name: Remove temporary keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firmamobile-daily.p12"
+      - name: Retain verified signed daily APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: firmamobile-daily-${{ github.sha }}
+          path: dist/daily/
+          if-no-files-found: error
+          retention-days: 14

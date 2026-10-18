@@ -20,4 +20,8 @@ Bloquear el certificado no elimina el archivo, no lo revoca ante su emisor y no 
 
 La versión visible de uso diario es **0.2.11**. `optimized` es una denominación interna de compilación; incluye perfiles experimentales, utiliza transporte directo y no habilita los controles de depuración. El paquete permanece `dev.junta.firmamobile`.
 
+El APK para este canal se obtiene con **Actions → Signed daily APK → Run workflow → main**, después de que CI y seguridad estén verdes para ese commit. El artefacto `firmamobile-daily-…` contiene `firmamobile-daily.apk`, su SHA-256, el commit y el informe público del certificado. La firma permanente se verifica contra `config/signing/daily-cert-sha256.txt`. Los APK `optimized` de CI sin este paso siguen siendo artefactos de prueba con firma debug, no actualizaciones de este canal.
+
+Al cambiar desde una firma anterior a este nuevo canal puede ser necesario reinstalar una sola vez. Desinstalar elimina los datos locales y la configuración: conserva antes el archivo original de tu certificado y su contraseña fuera de la aplicación. No borres una instalación hasta tener verificado el nuevo APK. Las futuras actualizaciones de este canal deben conservar la misma clave y el mismo paquete.
+
 Una compilación de desarrollo no debe confundirse con una distribución pública `release`, que exige su propia configuración de firma y revisión de obligaciones de terceros. Consulta [la política de seguridad](../SECURITY.md) y [la configuración de firma](release-signing.md).
