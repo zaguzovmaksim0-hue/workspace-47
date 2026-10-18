@@ -26,11 +26,32 @@ This change has no E2E acceptance claim. Use the exact PR-head ordinary CI and
 security checks for integration; do not run real portal authentication or final
 permanent-key distribution as part of dependency maintenance.
 
+## Compose BOM 2026.09.00 candidate
+
+The replacement for #260 starts from main after #370, retaining OkHttp 5.5.0
+and Okio 3.18.1. It merges the generated Compose 2026.09.00 lock graph and
+reviewed artifact evidence from #260, preserves the four current HTTP-stack
+modules and their license evidence, and regenerates the legal index. Strict
+Gradle resolution and legal verification in CI must confirm the combined graph.
+
+All 63 added SHA-256 entries were independently checked by downloading their
+artifacts from Google Maven. Gradle module metadata resolves Android variant
+logical names (for example `animation.aar`) to their actual published URLs.
+Of the 21 checked AARs, 13 require compile API37 and eight require API34. The
+compile prerequisite was merged in #370; no new SDK or runtime-policy change
+is needed here. Material3 remains 1.4.0; the core Compose runtime family becomes
+1.12.1, with regression checks for the reviewed BOM/runtime combination.
+
+The previous failure was an AAR metadata gate, not evidence of passing UI/E2E
+behavior: [old CI](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/39065930277).
+No temporary metadata-generation workflow, verification bypass, final signing
+or device installation is included. The current no-E2E restriction still applies.
+
 ## Remaining open work (not included)
 
 | PR | Observed blocker / disposition |
 | --- | --- |
-| #260 Compose BOM 2026.09.00 | Previous CI reports nine AAR metadata issues requiring compile API37. Rebase and review its own lock/checksum/legal changes after the compile prerequisite; no blanket approval from this candidate. |
+| #260 Compose BOM 2026.09.00 | Replacement candidate described above; original PR remains open until the replacement passes exact-head CI/security and is merged. |
 | #259 Compose compiler 2.4.21 | Previous CI rejects unverified plugin-marker POM; temporary metadata workflow is still in its diff. Requires reviewed metadata generation and Kotlin/AGP compatibility checks; never disable dependency verification to merge it. |
 | #249, #311, #314, #317, #319 | QA/real-E2E control and portal recipes. Deferred under the current no-E2E instruction; neither merged nor closed by this dependency candidate. |
 | #369 authenticated saved unlock | Separate draft awaiting physical authenticated-Keystore acceptance; not silently included or marked complete here. |
