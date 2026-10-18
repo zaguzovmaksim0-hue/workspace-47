@@ -43,13 +43,17 @@ class CanariasAfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            canariasCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                canarias = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            canariasCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                canarias = false,
+            ),
         )
 
         assertTrue(enabled.contains("const canariasCompatibilityEnabled = true"))
