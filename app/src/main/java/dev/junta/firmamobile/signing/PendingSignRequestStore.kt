@@ -31,10 +31,29 @@ data class PendingValidationContext(
 )
 
 sealed interface PendingConsumeResult {
-    data class Accepted(val request: NormalizedSignRequest) : PendingConsumeResult
+    data class Accepted(
+        val request: NormalizedSignRequest,
+        internal val documentConsentLineage: DocumentConsentLineage? = null,
+    ) : PendingConsumeResult
 
     data class Rejected(val error: ConsumeError) : PendingConsumeResult
 }
+
+/** Opaque capability; only the store's private issued implementation is accepted. */
+interface DocumentConsentLineage
+
+private class IssuedDocumentConsentLineage(
+    private val originalOwner: DocumentConsentOwner,
+    private val consumedOwner: DocumentConsentOwner,
+) : DocumentConsentLineage {
+    fun isFor(owner: DocumentConsentOwner, request: NormalizedSignRequest): Boolean =
+        originalOwner === owner && consumedOwner === request.documentConsentOwner
+
+    override fun toString(): String = "DocumentConsentLineage(redacted)"
+}
+
+internal fun DocumentConsentLineage.isFor(owner: DocumentConsentOwner, request: NormalizedSignRequest): Boolean =
+    (this as? IssuedDocumentConsentLineage)?.isFor(owner, request) == true
 
 data class PendingSignSummary(
     val requestId: UUID,
@@ -119,6 +138,7 @@ class PendingSignRequestStore internal constructor(
         )
         pending = StoredRequest(
             protocolId = request.protocolId,
+            documentConsentOwner = request.documentConsentOwner,
             summary = summary,
             payload = payload,
             fingerprint = fingerprint,
@@ -186,7 +206,10 @@ class PendingSignRequestStore internal constructor(
             payloadObserver = observer,
         )
         clearPending(ConsumeError.ALREADY_CONSUMED)
-        return PendingConsumeResult.Accepted(accepted)
+        return PendingConsumeResult.Accepted(
+            accepted,
+            IssuedDocumentConsentLineage(current.documentConsentOwner, accepted.documentConsentOwner),
+        )
     }
 
     @Synchronized
@@ -224,6 +247,7 @@ class PendingSignRequestStore internal constructor(
 
     private data class StoredRequest(
         val protocolId: SigningProtocolId,
+        val documentConsentOwner: DocumentConsentOwner,
         val summary: PendingSignSummary,
         val payload: ByteArray,
         val fingerprint: ByteArray,
