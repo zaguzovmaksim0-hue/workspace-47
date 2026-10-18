@@ -27,7 +27,7 @@ if [[ ! -f "$jar" ]]; then
 fi
 verify_jar "$jar" || { echo 'Cached detekt checksum mismatch; remove the corrupt cache file' >&2; exit 1; }
 java -Xmx512m -jar "$jar" \
-  --input app/src/main/java \
+  --input app/src/main/java,app/src/release/java \
   --build-upon-default-config --base-path "$ROOT" \
   --baseline config/detekt/baseline.xml --max-issues 0 \
   --report xml:app/build/reports/detekt/detekt.xml \

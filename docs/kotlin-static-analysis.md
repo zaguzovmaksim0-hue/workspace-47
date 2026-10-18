@@ -1,6 +1,7 @@
 # Kotlin static analysis
 
-CI runs the standalone detekt 1.23.8 CLI against `app/src/main/java`:
+CI runs the standalone detekt 1.23.8 CLI against `app/src/main/java` and `app/src/release/java` (the latter is also
+included in the optimized/daily variant):
 
 ```sh
 bash scripts/ci/detekt.sh

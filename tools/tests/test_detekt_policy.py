@@ -19,6 +19,10 @@ class DetektPolicyTest(unittest.TestCase):
         self.assertIn('--input app/src/main/java', script)
         self.assertNotIn('|| true', script)
 
+    def test_daily_and_release_source_sets_are_analyzed(self):
+        script = (ROOT / 'scripts/ci/detekt.sh').read_text()
+        self.assertIn('--input app/src/main/java,app/src/release/java', script)
+
     def test_corrupt_cached_jar_fails_before_execution(self):
         with tempfile.TemporaryDirectory() as cache:
             jar = Path(cache) / 'firmamobile/detekt/1.23.8/detekt-cli-1.23.8-all.jar'
