@@ -13,6 +13,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -135,6 +136,11 @@ class BrowserPopupInstrumentedTest {
         val views = Collections.synchronizedList(mutableListOf<WebView>())
         val decorated = Collections.newSetFromMap(IdentityHashMap<WebView, Boolean>())
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            // Let MainActivity finish its asynchronous catalog startup before replacing
+            // its content, otherwise initializeReadyContent can dispose our WebView.
+            rule.waitUntil(timeoutMillis = 15_000) {
+                runCatching { rule.onNodeWithText("Firma Mobile").assertIsDisplayed() }.isSuccess
+            }
             scenario.onActivity { activity ->
                 val app = activity.application as JuntaFirmaApplication
                 activity.setContent {
