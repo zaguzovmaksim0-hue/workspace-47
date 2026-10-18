@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="http_auth_title">Server authentication</string>
+    <string name="http_auth_server">Server: %1$s</string>
+    <string name="http_auth_page">Open page: %1$s</string>
+    <string name="http_auth_realm">Realm specified by the server: %1$s</string>
+    <string name="http_auth_explanation">The server is requesting a username and password; it may be for a resource on the page. The certificate is not used and no document is signed. The app does not save these details, although WebView may keep the session active.</string>
+    <string name="http_auth_username">Username</string>
+    <string name="http_auth_password">Password</string>
+    <string name="http_auth_confirm">Continue</string>
+    <string name="http_auth_cancel">Cancel</string>
+    <string name="http_auth_invalid_input">Check the username and password: the username cannot be empty or exceed 1024 characters; the password allows up to 4096.</string>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_cades_cosign_action">Add my signature to the already signed document</string>
+    <string name="native_cades_cosign_notice">Previous signatures will be checked and preserved when the new one is added. If the CAdES file does not contain the original document, the same verified digest will be signed: the document contents will not have been read or checked here. This does not establish the trust or revocation status of the previous certificates.</string>
+</resources>

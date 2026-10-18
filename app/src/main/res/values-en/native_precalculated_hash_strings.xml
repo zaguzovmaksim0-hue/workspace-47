@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_cades_provided_hash_notice">The site has sent a %1$s digest, not the original document. That digest will be signed without recalculating it. This app cannot verify which document it represents; check the procedure on the site before confirming. The result will be a detached CAdES signature.</string>
+    <string name="native_cades_provided_hash_batch">This request includes %1$d item(s) with a digest calculated by the site. Their original documents have not been received and their contents cannot be checked here. The other items retain their normal operation.</string>
+    <string name="native_cades_provided_hash_size">Received digest: %1$d bytes; original document size unknown.</string>
+    <string name="native_cades_received_hash_fingerprint">SHA-256 of the received bytes, not of the original document: %1$s</string>
+</resources>

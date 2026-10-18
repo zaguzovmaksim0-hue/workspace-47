@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_afirma_pdf_cosign">Add a signature to the already signed PDF</string>
+    <string name="native_afirma_pdf_prior_signatures">Supported previous signatures will be checked before the new one is added. Checking their integrity does not establish the identity or trust of their certificates. No signature is replaced.</string>
+</resources>
