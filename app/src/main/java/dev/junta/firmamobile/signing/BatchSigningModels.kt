@@ -1,6 +1,8 @@
 package dev.junta.firmamobile.signing
 
+import dev.junta.firmamobile.afirma.servlet.NativeBatchDisplayText
 import java.io.Closeable
+import java.util.Collections
 import java.util.UUID
 
 /** Formats observed in AutoFirma JSON batch contracts. */
@@ -21,6 +23,20 @@ data class NormalizedBatchSigningDocument(
         require(dataReference.isNotEmpty() && dataReference.length <= MAX_BATCH_URL_CHARS)
         require(suboperation == null || suboperation.isSafeBatchValue())
     }
+}
+
+/** Display-only identifiers in request order, not document content or data references. */
+class BatchSigningDocumentReview internal constructor(documents: List<NormalizedBatchSigningDocument>) {
+    val documentLabels: List<String>
+
+    init {
+        require(documents.size in 1..MAX_BATCH_DOCUMENTS)
+        documentLabels = Collections.unmodifiableList(
+            documents.map { NativeBatchDisplayText.bounded(it.id, MAX_BATCH_DOCUMENT_LABEL_CODE_POINTS) },
+        )
+    }
+
+    override fun toString(): String = "BatchSigningDocumentReview(count=${documentLabels.size})"
 }
 
 class NormalizedBatchSigningRequest internal constructor(
@@ -152,3 +168,4 @@ private fun String.isSafeBatchValue(): Boolean =
 internal const val MAX_BATCH_DOCUMENTS = 128
 internal const val MAX_BATCH_URL_CHARS = 8_192
 private const val MAX_BATCH_VALUE_CHARS = 1_024
+private const val MAX_BATCH_DOCUMENT_LABEL_CODE_POINTS = 256
