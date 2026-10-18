@@ -26,6 +26,14 @@ class LocalizedResourcesTest {
     private val translatedLanguages = listOf("en", "ca", "gl", "eu")
 
     @Test
+    fun ordinaryRobolectricFixturesUseExplicitSpanishBaseline() {
+        val context = RuntimeEnvironment.getApplication<android.app.Application>()
+        assertEquals("es", context.resources.configuration.locales[0].language)
+        assertEquals("Selecciona tu archivo .p12 o .pfx.", context.getString(R.string.certificate_copy))
+        assertNotEquals(context.getString(R.string.certificate_copy), localizedContext("en").getString(R.string.certificate_copy))
+    }
+
+    @Test
     fun supportedLanguagesResolveTranslatedSecurityAndExpirationText() {
         val spanish = localizedContext("es")
         for (language in translatedLanguages) {

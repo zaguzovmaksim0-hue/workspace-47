@@ -19,3 +19,7 @@ python -m unittest discover -s tools/tests -p 'test_*.py' -v
 ```
 
 Android compilation, resource processing, lint and resource-selection tests require the normal exact-head CI. Do not treat XML parsing alone as a successful Android build.
+
+## Deterministic test language
+
+Existing Robolectric UI/copy regressions assert Spanish wording and now explicitly select `es-rES` in test-only configuration, including display-size/night overrides. Their assertions remain unchanged. This avoids silently changing their subject when the host JVM defaults to English. Dedicated locale tests still create separate explicit English, Catalan, Galician and Basque contexts on API 28/33; production locale selection is not forced.
