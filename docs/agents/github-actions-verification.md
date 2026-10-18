@@ -56,6 +56,9 @@ The current CI/security workflows provide the broad candidate gate:
   - `connectedQaAndroidTest`
   - Runs only when manually dispatched with `run_instrumentation: true`; skipped on ordinary PRs and pushes. This is not part of the default no-E2E gate.
   - synthetic/local instrumentation only; no real user certificate or administrative submission
+- **Kotlin static analysis (detekt)**
+  - checksum-pinned standalone CLI; fails on findings outside the reviewed baseline
+  - source-level production Kotlin checks; see `docs/kotlin-static-analysis.md`
 - **Python catalog and policy tests**
 - **Go relay tests, race detector, vet, build and govulncheck**
 - **Git history secret scan**
