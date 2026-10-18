@@ -31,7 +31,7 @@ import dev.junta.firmamobile.R
 import dev.junta.firmamobile.feedback.CompatibilityFeedbackReport
 
 @Composable
-internal fun CompatibilityFeedbackPane(
+internal fun compatibilityFeedbackPane(
     report: CompatibilityFeedbackReport,
     onCopy: (CompatibilityFeedbackReport) -> Boolean,
     onOpenIssue: (CompatibilityFeedbackReport) -> Boolean,
@@ -81,35 +81,43 @@ internal fun CompatibilityFeedbackPane(
     }
 
     if (confirmOpen) {
-        AlertDialog(
-            onDismissRequest = { confirmOpen = false },
-            modifier = Modifier.testTag("compatibility-feedback-confirmation"),
-            title = { Text(stringResource(R.string.compatibility_feedback_confirm_title)) },
-            text = {
-                Text(
-                    text = stringResource(R.string.compatibility_feedback_confirm_message),
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmOpen = false
-                        statusResource = if (onOpenIssue(report)) null else R.string.compatibility_feedback_open_failed
-                    },
-                    modifier = Modifier.heightIn(min = 48.dp).testTag("compatibility-feedback-confirm-open"),
-                ) {
-                    Text(stringResource(R.string.compatibility_feedback_confirm_open))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { confirmOpen = false },
-                    modifier = Modifier.heightIn(min = 48.dp).testTag("compatibility-feedback-cancel"),
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
+        compatibilityFeedbackConfirmation(
+            onDismiss = { confirmOpen = false },
+            onConfirm = {
+                confirmOpen = false
+                statusResource = if (onOpenIssue(report)) null else R.string.compatibility_feedback_open_failed
             },
         )
     }
+}
+
+@Composable
+private fun compatibilityFeedbackConfirmation(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag("compatibility-feedback-confirmation"),
+        title = { Text(stringResource(R.string.compatibility_feedback_confirm_title)) },
+        text = {
+            Text(
+                text = stringResource(R.string.compatibility_feedback_confirm_message),
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                modifier = Modifier.heightIn(min = 48.dp).testTag("compatibility-feedback-confirm-open"),
+            ) {
+                Text(stringResource(R.string.compatibility_feedback_confirm_open))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = 48.dp).testTag("compatibility-feedback-cancel"),
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }

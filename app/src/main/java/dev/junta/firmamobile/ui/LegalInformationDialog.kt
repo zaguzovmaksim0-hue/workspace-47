@@ -93,7 +93,7 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                     }
                     section == "feedback" -> {
                         val report = remember { currentCompatibilityFeedbackReport() }
-                        CompatibilityFeedbackPane(
+                        compatibilityFeedbackPane(
                             report = report,
                             onCopy = { copyCompatibilityFeedback(context, it) },
                             onOpenIssue = { openCompatibilityFeedback(context, it) },
@@ -141,8 +141,11 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                                 Text(stringResource(R.string.legal_about))
                             }
-                            TextButton(onClick = { section = "feedback" },
-                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("legal-compatibility-feedback")) {
+                            TextButton(
+                                onClick = { section = "feedback" },
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                                    .testTag("legal-compatibility-feedback"),
+                            ) {
                                 Text(stringResource(R.string.compatibility_feedback_title))
                             }
                         }

@@ -47,7 +47,7 @@ class CompatibilityFeedbackPaneTest {
         val events = mutableListOf<String>()
         rule.setContent {
             JuntaFirmaTheme {
-                CompatibilityFeedbackPane(
+                compatibilityFeedbackPane(
                     report = report,
                     onCopy = { events += "copy"; true },
                     onOpenIssue = { events += "open"; true },
@@ -75,7 +75,7 @@ class CompatibilityFeedbackPaneTest {
         rule.setContent {
             JuntaFirmaTheme {
                 Box(Modifier.fillMaxWidth().height(260.dp)) {
-                    CompatibilityFeedbackPane(
+                    compatibilityFeedbackPane(
                         report = report,
                         onCopy = { copied += it.body; true },
                         onOpenIssue = { opened += it.issueFormUrl(); true },
@@ -101,7 +101,7 @@ class CompatibilityFeedbackPaneTest {
         val events = mutableListOf<String>()
         rule.setContent {
             JuntaFirmaTheme {
-                CompatibilityFeedbackPane(
+                compatibilityFeedbackPane(
                     report = report,
                     onCopy = { events += "copy"; true },
                     onOpenIssue = { events += it.issueFormUrl(); true },
@@ -128,7 +128,7 @@ class CompatibilityFeedbackPaneTest {
         val events = mutableListOf<String>()
         rule.setContent {
             JuntaFirmaTheme {
-                CompatibilityFeedbackPane(
+                compatibilityFeedbackPane(
                     report = report,
                     onCopy = { events += "copy"; true },
                     onOpenIssue = { events += it.issueFormUrl(); true },
@@ -149,7 +149,7 @@ class CompatibilityFeedbackPaneTest {
         val events = mutableListOf<String>()
         rule.setContent {
             JuntaFirmaTheme {
-                CompatibilityFeedbackPane(
+                compatibilityFeedbackPane(
                     report = report(),
                     onCopy = { events += "copy"; false },
                     onOpenIssue = { events += "open"; false },

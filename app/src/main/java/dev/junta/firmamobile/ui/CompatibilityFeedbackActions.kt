@@ -19,7 +19,9 @@ internal fun copyCompatibilityFeedback(context: Context, report: CompatibilityFe
     try {
         val clipboard = context.getSystemService(ClipboardManager::class.java)
         if (clipboard == null) false else {
-            clipboard.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.compatibility_feedback_preview), report.body))
+            clipboard.setPrimaryClip(
+                ClipData.newPlainText(context.getString(R.string.compatibility_feedback_preview), report.body),
+            )
             true
         }
     } catch (_: RuntimeException) {

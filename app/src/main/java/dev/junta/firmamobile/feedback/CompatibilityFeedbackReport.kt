@@ -9,6 +9,10 @@ internal class CompatibilityFeedbackReport private constructor(val body: String)
             URLEncoder.encode(body, "UTF-8")
 
     companion object {
+        private const val MAX_APP_VERSION_LENGTH = 32
+        private const val VERSION_COMPONENT_COUNT = 3
+        private const val MAX_VERSION_COMPONENT_LENGTH = 9
+
         fun build(appVersion: String, versionCode: Int, androidApi: Int): CompatibilityFeedbackReport =
             CompatibilityFeedbackReport(buildString {
                 if (isAllowedVersion(appVersion)) append("appVersion: $appVersion\n")
@@ -19,10 +23,10 @@ internal class CompatibilityFeedbackReport private constructor(val body: String)
         // Accept only the app's numeric release version or its configured QA suffix.
         // Unknown values are omitted whole, never truncated or regex-redacted.
         private fun isAllowedVersion(value: String): Boolean {
-            if (value.length !in 1..32) return false
+            if (value.length !in 1..MAX_APP_VERSION_LENGTH) return false
             val parts = value.removeSuffix("-qa").split('.')
-            return parts.size == 3 && parts.all { part ->
-                part.length in 1..9 && part.all { it in '0'..'9' }
+            return parts.size == VERSION_COMPONENT_COUNT && parts.all { part ->
+                part.length in 1..MAX_VERSION_COMPONENT_LENGTH && part.all { it in '0'..'9' }
             }
         }
     }
