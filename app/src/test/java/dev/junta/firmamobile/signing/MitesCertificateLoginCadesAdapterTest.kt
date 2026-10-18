@@ -3,12 +3,14 @@ package dev.junta.firmamobile.signing
 import dev.junta.firmamobile.browser.NavigationId
 import dev.junta.firmamobile.network.TrustedOrigin
 import java.net.URI
+import java.security.MessageDigest
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -42,6 +44,52 @@ class MitesCertificateLoginCadesAdapterTest {
             ),
             SigningErrorCode.PROTOCOL_FAILED,
         )
+    }
+
+    @Test
+    fun signsTheExactChallengeWithSha512AndRejectsTamperingAndReplay() = runTest {
+        val challenge = "abcdefghij".encodeToByteArray()
+        request(challenge.copyOf()).use { request ->
+            val prepared = adapter.prepare(request, identity.chain) as ProtocolPrepareResult.Success
+            prepared.preSign.use { preSign ->
+                val local = preSign.withBytesToSign { bytes ->
+                    JcaLocalSignatureEngine().sign(bytes, identity, SigningAlgorithm.SHA512_WITH_RSA)
+                } as LocalSignatureResult.Success
+                local.signature.use { signature ->
+                    val completed = adapter.complete(request, preSign, signature) as ProtocolCompletionResult.Success
+                    completed.signature.use { result ->
+                        result.withBytes { document ->
+                            val fingerprint = MessageDigest.getInstance("SHA-256").digest(identity.certificate.encoded)
+                            try {
+                                assertTrue(CadesDetachedCodec.validate(
+                                    signatureDocument = document,
+                                    detachedContent = challenge,
+                                    expectedContentBytes = MitesCertificateLoginCadesAdapter.CHALLENGE_BYTES,
+                                    expectedCertificateFingerprint = fingerprint,
+                                    signingAlgorithm = SigningAlgorithm.SHA512_WITH_RSA,
+                                ))
+                                val tampered = challenge.copyOf().also { it[0] = 'f'.code.toByte() }
+                                assertFalse(CadesDetachedCodec.validate(
+                                    signatureDocument = document,
+                                    detachedContent = tampered,
+                                    expectedContentBytes = MitesCertificateLoginCadesAdapter.CHALLENGE_BYTES,
+                                    expectedCertificateFingerprint = fingerprint,
+                                    signingAlgorithm = SigningAlgorithm.SHA512_WITH_RSA,
+                                ))
+                                tampered.fill(0)
+                            } finally {
+                                fingerprint.fill(0)
+                            }
+                        }
+                    }
+                    assertEquals(
+                        ProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED),
+                        adapter.complete(request, preSign, signature),
+                    )
+                }
+            }
+        }
+        challenge.fill(0)
     }
 
     private suspend fun assertFailure(
