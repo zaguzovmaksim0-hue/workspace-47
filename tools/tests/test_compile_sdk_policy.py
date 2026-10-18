@@ -12,6 +12,13 @@ class CompileSdkPolicyTest(unittest.TestCase):
         for name, value in [('compileSdk', 37), ('targetSdk', 36), ('minSdk', 26)]:
             self.assertRegex(text, rf'\b{name}\s*=\s*{value}\b')
 
+    def test_canonical_spec_matches_android_platform_contract(self):
+        build = (ROOT / 'app/build.gradle.kts').read_text()
+        spec = (ROOT / 'docs/spec.md').read_text()
+        for name in ['compileSdk', 'targetSdk', 'minSdk']:
+            value = re.search(rf'\b{name}\s*=\s*(\d+)\b', build).group(1)
+            self.assertIn(f'`{name} = {value}`', spec, name)
+
     def test_each_build_workflow_installs_compile_platform(self):
         for name in ['ci.yml', 'security.yml', 'daily-apk.yml']:
             text = (ROOT / '.github/workflows' / name).read_text()
