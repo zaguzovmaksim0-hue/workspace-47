@@ -51,10 +51,10 @@ The current CI/security workflows provide the broad candidate gate:
   - `assembleQaAndroidTest`
   - Android artifact verification
   - release-signing fail-closed verification
-- **Android emulator instrumentation (optional explicit manual opt-in)**
+- **Android emulator instrumentation (nightly or explicit manual opt-in)**
   - API 36 x86_64 emulator on a standard GitHub-hosted Ubuntu runner
   - `connectedQaAndroidTest`
-  - Runs only when manually dispatched with `run_instrumentation: true`; skipped on ordinary PRs and pushes. This is not part of the default no-E2E gate.
+  - Runs nightly at 02:23 UTC on the default branch, or when manually dispatched with `run_instrumentation: true`; skipped on ordinary PRs and pushes. This is not part of the default no-E2E gate. Scheduled and manual runs use separate concurrency groups from push verification so they cannot cancel its exact-SHA evidence. GitHub schedules can be delayed and run only after this configuration reaches the default branch.
   - synthetic/local instrumentation only; no real user certificate or administrative submission
 - **Kotlin static analysis (detekt)**
   - checksum-pinned standalone CLI; fails on findings outside the reviewed baseline
@@ -70,7 +70,9 @@ The exact workflow result for the current PR head is authoritative. A pass from 
 
 The emulator job is for repository instrumentation tests using synthetic fixtures, local WebView content and test doubles. It must not be extended to import a real user PKCS#12, authenticate to a private account, sign a real document, submit a government form, upload a real file, make a payment, or perform another administrative action.
 
-The opt-in release R8 smoke launches the minified release APK on an API 36 emulator and checks startup/catalog initialization only; it does not exercise signing, BouncyCastle, or XML security paths.
+The nightly/manual release R8 smoke launches the minified release APK on an API 36 emulator and checks startup/catalog initialization only; it does not exercise signing, BouncyCastle, or XML security paths.
+
+Nightly CI also runs the ordinary automated gates and the release R8 startup smoke. It uses only disposable CI signing material, never the `daily-signing` environment or permanent distribution key. No final signed daily APK is produced or installed. Inspect the CI Actions run and its failed-job reports/diagnostic artifacts if a nightly check fails; do not mask a failure with retries or `continue-on-error`. The schedule itself cannot be demonstrated before merge; a manual opt-in run on the exact candidate SHA validates the same emulator jobs.
 
 Physical-device E2E remains separate when a feature genuinely requires device KeyChain/WebView/provider behavior or an operator-controlled authenticated flow.
 

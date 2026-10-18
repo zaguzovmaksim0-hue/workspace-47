@@ -1,4 +1,4 @@
-"""Keep emulator opt-in explicit while preserving the default unit/build gates."""
+"""Keep nightly/manual emulator checks separate from ordinary unit/build gates."""
 from pathlib import Path
 import re
 import unittest
@@ -7,13 +7,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class OperatorVerificationScopeTest(unittest.TestCase):
-    def test_only_explicit_manual_opt_in_runs_instrumentation(self):
+    def test_only_nightly_or_explicit_manual_opt_in_runs_instrumentation(self):
         text = (ROOT / ".github/workflows/ci.yml").read_text()
         job = text.split("  android-instrumented:\n", 1)[1].split("\n  python:", 1)[0]
         condition = re.search(r"^    if: (.+)$", job, re.M)
         self.assertIsNotNone(condition)
         self.assertEqual(
-            "${{ github.event_name == 'workflow_dispatch' && inputs.run_instrumentation }}",
+            "${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_instrumentation) }}",
             condition.group(1),
         )
         self.assertIn("script: bash scripts/run-android-instrumentation-ci.sh", job)
@@ -26,8 +26,11 @@ class OperatorVerificationScopeTest(unittest.TestCase):
             ("push", True, False),
             ("workflow_dispatch", False, False),
             ("workflow_dispatch", True, True),
+            ("schedule", False, True),
+            ("schedule", True, True),
+            ("repository_dispatch", True, False),
         ]:
-            run = event == "workflow_dispatch" and opt_in
+            run = event == "schedule" or (event == "workflow_dispatch" and opt_in)
             self.assertEqual(expected, run)
         self.assertIn("type: boolean", text)
         self.assertIn("default: false", text)
