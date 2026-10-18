@@ -97,12 +97,17 @@ internal fun interface CertificateUnlockBootTimeSource {
     fun read(): CertificateUnlockBootTime?
 }
 
+// API 26/27 cannot bind this password cache to the device-unlocked state.
+internal fun supportsPersistentCertificateUnlock(sdkInt: Int): Boolean =
+    sdkInt >= android.os.Build.VERSION_CODES.P
+
 class EncryptedCertificateUnlockCache internal constructor(
     private val storage: CertificateUnlockRecordStorage,
     private val keyProvider: CertificateUnlockKeyProvider,
     private val bootTimeSource: CertificateUnlockBootTimeSource,
     private val sessionMonotonicNanos: () -> Long,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val persistentCacheAllowed: Boolean = true,
 ) : CertificateUnlockCache {
     private val invalidationGeneration = AtomicLong(0)
     private val stateLock = Any()
@@ -119,19 +124,24 @@ class EncryptedCertificateUnlockCache internal constructor(
         expiresAt: Instant,
         observedAtMonotonicNanos: Long,
     ): Boolean {
-        val storeGeneration = synchronized(stateLock) {
-            if (clearsInProgress != 0) return false
-            invalidationGeneration.get()
-        }
-        return withContext(ioDispatcher) {
-            storeOnIo(
-                reference,
-                password,
-                issuedAt,
-                expiresAt,
-                observedAtMonotonicNanos,
-                storeGeneration,
-            )
+        return if (!persistentCacheAllowed) {
+            withContext(ioDispatcher) { clearAndReport() }
+            false
+        } else {
+            val storeGeneration = synchronized(stateLock) {
+                if (clearsInProgress != 0) return false
+                invalidationGeneration.get()
+            }
+            withContext(ioDispatcher) {
+                storeOnIo(
+                    reference,
+                    password,
+                    issuedAt,
+                    expiresAt,
+                    observedAtMonotonicNanos,
+                    storeGeneration,
+                )
+            }
         }
     }
 
@@ -139,12 +149,17 @@ class EncryptedCertificateUnlockCache internal constructor(
         reference: StoredCertificateReference,
         now: Instant,
     ): CachedCertificateUnlock? {
-        val restoreGeneration = synchronized(stateLock) {
-            if (restoreBlocked || clearsInProgress != 0) return null
-            invalidationGeneration.get()
-        }
-        return withContext(ioDispatcher) {
-            restoreOnIo(reference, now, restoreGeneration)
+        return if (!persistentCacheAllowed) {
+            withContext(ioDispatcher) { clearAndReport() }
+            null
+        } else {
+            val restoreGeneration = synchronized(stateLock) {
+                if (restoreBlocked || clearsInProgress != 0) return null
+                invalidationGeneration.get()
+            }
+            withContext(ioDispatcher) {
+                restoreOnIo(reference, now, restoreGeneration)
+            }
         }
     }
 
@@ -527,6 +542,7 @@ class AndroidKeystoreCertificateUnlockCache(
         bootTimeSource = AndroidCertificateUnlockBootTimeSource(context),
         sessionMonotonicNanos = android.os.SystemClock::elapsedRealtimeNanos,
         ioDispatcher = ioDispatcher,
+        persistentCacheAllowed = supportsPersistentCertificateUnlock(android.os.Build.VERSION.SDK_INT),
     )
 
     override suspend fun store(
@@ -636,6 +652,7 @@ internal class AtomicCertificateUnlockRecordStorage(
 internal class AndroidKeystoreCertificateUnlockKeyProvider : CertificateUnlockKeyProvider {
     @Synchronized
     override fun getExisting(): SecretKey? {
+        check(supportsPersistentCertificateUnlock(android.os.Build.VERSION.SDK_INT))
         val store = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         return store.getKey(KEY_ALIAS, null) as? SecretKey
     }
@@ -649,6 +666,7 @@ internal class AndroidKeystoreCertificateUnlockKeyProvider : CertificateUnlockKe
 
     @Synchronized
     override fun getOrCreate(): SecretKey {
+        check(supportsPersistentCertificateUnlock(android.os.Build.VERSION.SDK_INT))
         val keyStore = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         val existing = runCatching { keyStore.getKey(KEY_ALIAS, null) as? SecretKey }.getOrNull()
         if (existing != null) return existing
