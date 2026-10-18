@@ -185,7 +185,7 @@ val verifyReleaseSigning by tasks.registering {
 
 android {
     namespace = "dev.junta.firmamobile"
-    compileSdk = 36
+    compileSdk = 37
 
     // Instrumented security tests must exercise the installable QA variant,
     // not the default debug variant.
