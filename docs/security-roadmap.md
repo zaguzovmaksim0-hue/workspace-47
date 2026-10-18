@@ -2,6 +2,13 @@
 
 Completed:
 
+- Persistent certificate-password unlock caching is disabled on Android 8/8.1 (API 26/27),
+  where `setUnlockedDeviceRequired` is unavailable. Store/restore deny before reading,
+  decrypting or creating a key, and attempt legacy record/key revocation on the I/O dispatcher.
+  Cleanup failure never re-enables persistence. In-memory unlock sessions remain unchanged.
+  API 28+ keeps the existing encrypted cache; this API floor does **not** add biometric/PIN
+  authentication, configurable retention, or validate OEM KeyStore behavior on a physical device.
+
 - Trust lifecycle and effective top-level profile binding.
 - Junta tri-phase filter contract and real E2E signing.
 - Fail-closed MiniApplet routing when the effective profile is missing (F-02).
