@@ -120,15 +120,7 @@ class CertificateViewModel(
                             observedAtMonotonicNanos = lease.observedAtMonotonicNanos,
                         )
                         ensureActive()
-                        if (!persisted && !withContext(ioDispatcher) { unlockCache.clearAndReport() }) {
-                            session.lock()
-                            restoreSuppressed = true
-                            mutableState.value = locked.copy(
-                                error = CertificateUiError.STORAGE_FAILURE,
-                                revocationPending = true,
-                            )
-                            return@launch
-                        }
+                        if (!persisted && !clearFailedPersistence(locked)) return@launch
                         ensureActive()
                         session.unlock(result.identity, lease)
                         restoreSuppressed = false
@@ -155,6 +147,14 @@ class CertificateViewModel(
         }
         unlockJob.invokeOnCompletion { password.fill('\u0000') }
         operationJob = unlockJob
+    }
+
+    private suspend fun clearFailedPersistence(locked: CertificateUiState.Locked): Boolean {
+        if (withContext(ioDispatcher) { unlockCache.clearAndReport() }) return true
+        session.lock()
+        restoreSuppressed = true
+        mutableState.value = locked.copy(error = CertificateUiError.STORAGE_FAILURE, revocationPending = true)
+        return false
     }
 
     fun lock() {
