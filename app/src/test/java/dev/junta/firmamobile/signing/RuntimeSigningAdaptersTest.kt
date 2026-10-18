@@ -1,6 +1,8 @@
 package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.network.HttpsProfileHttpTransport
+import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.ProtocolOperation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -11,7 +13,7 @@ class RuntimeSigningAdaptersTest {
     fun ordinaryIndexResolvesAllBuiltInAdapters() {
         val adapters = ordinaryAdapters()
 
-        assertEquals(25, adapters.all.size)
+        assertEquals(26, adapters.all.size)
         assertTrue(adapters.resolve(JuntaTriPhaseAdapter.ID) is JuntaTriPhaseAdapter)
         assertTrue(adapters.resolve(JuntaOfvirtualTriPhaseAdapter.ID) is JuntaOfvirtualTriPhaseAdapter)
         assertTrue(adapters.resolve(LocalXadesDetachedAdapter.ID) is LocalXadesDetachedAdapter)
@@ -37,6 +39,18 @@ class RuntimeSigningAdaptersTest {
         assertTrue(adapters.resolve(PoliciaXadesDetachedAdapter.ID) is PoliciaXadesDetachedAdapter)
         assertTrue(adapters.resolve(UnizarTriPhaseAdapter.ID) is UnizarTriPhaseAdapter)
         assertTrue(adapters.resolve(AccedaPadesAdapter.ID) is AccedaPadesAdapter)
+    }
+
+    @Test
+    fun cantabriaRegistryBindingResolvesToRuntimeAdapter() {
+        val id = SigningProtocolId("cantabria-rec-cert-login-cades-v1")
+
+        val binding = BuiltInProtocolAdapterRegistry.registry.resolve(
+            ProfileId("cantabria-rec-cert-login"),
+            ProtocolOperation.SIGN,
+        )
+        assertEquals(id, binding?.signingProtocolId)
+        assertTrue(ordinaryAdapters().resolve(id) is CantabriaRecCertificateLoginCadesAdapter)
     }
 
     @Test
