@@ -141,7 +141,7 @@ remote-peer verification; no se registra la dirección resuelta.
 esperado durante la ventana de desbloqueo.
 **Controles:** la clave privada y los bytes PKCS#12 no se persisten por este
 mecanismo y `PrivateKey.encoded` no se consulta. Tras un desbloqueo manual
-correcto, la contraseña puede persistir durante un máximo de 24 horas únicamente
+correcto, solo en API 28+, la contraseña puede persistir durante un máximo de 24 horas únicamente
 como ciphertext autenticado AES-256-GCM en `noBackupFilesDir`, nunca en texto
 plano ni Preferences/logs. El registro `JFMUC002` queda ligado mediante AAD a la referencia
 del certificado, a los timestamps civiles originales de emisión/expiración y a la
@@ -166,7 +166,15 @@ carecen de evidencia de mismo arranque y se eliminan en restore, lo que puede ex
 una única reentrada de contraseña tras la actualización. Los buffers temporales
 `CharArray`/`ByteArray` en claro se limpian best-effort.
 
-**Semántica lifecycle:** bloqueo manual, clear session, cambio u olvido del
+**Límite de plataforma:** en API 26–27 la persistencia del desbloqueo está
+deshabilitada: store devuelve false y restore devuelve null antes de leer un
+registro u obtener una clave. Ambos intentan revocar la clave y eliminar cualquier
+registro anterior en el dispatcher de IO. Si la limpieza falla, la restauración
+sigue denegada. La sesión en memoria no cambia; tras process death o al liberar
+esa identidad por memory pressure se exige introducir otra vez la contraseña.
+Esta política no añade biometría/PIN ni un selector de duración.
+
+**Semántica lifecycle (cache persistente solo en API 28+):** bloqueo manual, clear session, cambio u olvido del
 certificado, expiración, reference mismatch, ciphertext malformado/manipulado o
 unlock cacheado fallido eliminan el registro. Background, process death y force-stop
 no eliminan por sí solos un registro todavía válido **durante el mismo device boot**;
@@ -181,8 +189,10 @@ una frontera de bloqueo para la restauración automática**.
 
 **Riesgo residual:** antes de expirar el registro, código que ejecute con los
 privilegios de la app en un dispositivo elegible y desbloqueado puede intentar
-activar la recuperación local. En API 26–27 no existe la protección adicional
-`setUnlockedDeviceRequired(true)` usada por este provider desde API 28. Un
+activar la recuperación local en API 28+. En API 26–27 no se permite recuperar
+la contraseña desde disco porque falta `setUnlockedDeviceRequired(true)`; la
+eliminación de registros/claves legacy es best-effort, no una garantía de borrado
+forense. Un
 dispositivo/root con control del proceso sigue fuera de la garantía. Recuperar la
 identidad no omite la confirmación independiente exigida para cada solicitud de
 firma. La correspondencia de clave se prueba firmando un nonce, no exportando
