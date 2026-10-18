@@ -113,7 +113,7 @@ jobs:
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Verify Android runtime dependency lock
         run: ./gradlew :app:verifyRuntimeDependencyLocks --no-daemon
       - name: Set up Go

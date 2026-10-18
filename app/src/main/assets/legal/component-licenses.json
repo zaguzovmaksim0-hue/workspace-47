@@ -281,15 +281,7 @@
   "androidx.lifecycle:lifecycle-common:2.10.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0": [
-    "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
-    "legal/upstream/Apache-2.0.txt"
-  ],
   "androidx.lifecycle:lifecycle-livedata-core:2.10.0": [
-    "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
-    "legal/upstream/Apache-2.0.txt"
-  ],
-  "androidx.lifecycle:lifecycle-livedata:2.10.0": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
@@ -337,7 +329,7 @@
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.loader:loader:1.0.0": [
+  "androidx.loader:loader:1.1.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "androidx.localbroadcastmanager:localbroadcastmanager:1.0.0": [
@@ -477,16 +469,16 @@
   "com.google.guava:listenablefuture:1.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "com.squareup.okhttp3:okhttp-android:5.4.0": [
+  "com.squareup.okhttp3:okhttp-android:5.5.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "com.squareup.okhttp3:okhttp:5.4.0": [
+  "com.squareup.okhttp3:okhttp:5.5.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "com.squareup.okio:okio-jvm:3.17.0": [
+  "com.squareup.okio:okio-jvm:3.18.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "com.squareup.okio:okio:3.17.0": [
+  "com.squareup.okio:okio:3.18.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "com.tom-roush:pdfbox-android:2.0.27.0": [
