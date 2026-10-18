@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="catalog_open_site">Obre el lloc</string>
+    <string name="catalog_site_options">Opcions del lloc</string>
+    <string name="catalog_options_hint">Mantén premuda una seu per veure’n les opcions.</string>
+    <string name="catalog_options_close">Tanca</string>
+    <string name="catalog_loading">Carregant seus…</string>
+</resources>

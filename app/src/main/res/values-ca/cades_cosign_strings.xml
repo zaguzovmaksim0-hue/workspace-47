@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_cades_cosign_action">Afegeix la meva signatura al document ja signat</string>
+    <string name="native_cades_cosign_notice">Es comprovaran les signatures anteriors i es conservaran en afegir-ne la nova. Si el fitxer CAdES no conté el document original, se signarà la mateixa empremta verificada: el contingut del document no s’haurà llegit ni comprovat aquí. Això no acredita la confiança ni l’estat de revocació dels certificats anteriors.</string>
+</resources>

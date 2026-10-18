@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="certificate_expiration_soon_title">El teu certificat caduca aviat</string>
+    <string name="certificate_expiration_week_title">El teu certificat caduca en els pròxims 7 dies</string>
+    <string name="certificate_expiration_today_title">El teu certificat caduca avui</string>
+    <string name="certificate_expiration_expired_title">El teu certificat ha caducat</string>
+    <plurals name="certificate_expiration_days">
+        <item quantity="one">Queda %1$d dia natural. Caduca el %2$s. Consulta’n la renovació amb l’entitat emissora.</item>
+        <item quantity="other">Queden %1$d dies naturals. Caduca el %2$s. Consulta’n la renovació amb l’entitat emissora.</item>
+    </plurals>
+    <string name="certificate_expiration_timestamp_copy">Data i hora de caducitat: %1$s. Consulta’n la renovació amb l’entitat emissora.</string>
+</resources>
