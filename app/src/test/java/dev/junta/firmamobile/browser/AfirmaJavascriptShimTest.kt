@@ -32,6 +32,45 @@ class AfirmaJavascriptShimTest {
     }
 
     @Test
+    fun shimReplacesEveryPlaceholderWithDefaultAndEnabledFlags() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val defaults = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+        )
+        val allEnabled = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            flags = AfirmaShimCompatibilityFlags(
+                ugr = true,
+                cantabria = true,
+                jccm = true,
+                jccmRegistro = true,
+                sevillaAtse = true,
+                airef = true,
+                cdti = true,
+                policia = true,
+                granCanaria = true,
+                fuerteventura = true,
+                canarias = true,
+                mineco = true,
+                melillaBatch = true,
+                lugoBatch = true,
+                caibBatch = true,
+                isciiiCertificateSelection = true,
+                valenciaCertificateSelection = true,
+                xuntaGalicia = true,
+                euskadiClientAuthPost = true,
+                acceda = true,
+                badajoz = true,
+            ),
+        )
+
+        assertFalse(defaults.contains("__JFM_"))
+        assertFalse(allEnabled.contains("__JFM_"))
+    }
+
+    @Test
     fun shimDoesNotExposeSecretsOrHardcodePortalCallbacks() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(context)
@@ -160,7 +199,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            melillaBatchCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                melillaBatch = true,
+            ),
         )
 
         assertTrue(
@@ -191,7 +232,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            melillaBatchCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                melillaBatch = true,
+            ),
         )
 
         assertTrue(disabled.contains("const melillaBatchCompatibilityEnabled = false"))
@@ -210,7 +253,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            melillaBatchCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                melillaBatch = true,
+            ),
             staBatchOrigin = HuescaBatchBridgeAdapter.SOURCE_ORIGIN,
         )
 
@@ -231,7 +276,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            lugoBatchCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                lugoBatch = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
@@ -261,7 +308,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            ugrCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                ugr = true,
+            ),
         )
 
         assertTrue(script.contains("const ugrCompatibilityEnabled = true"))
@@ -286,13 +335,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            jccmCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                jccm = true,
+            ),
         )
         val generic = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            jccmCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                jccm = false,
+            ),
         )
 
         assertTrue(jccm.contains("const jccmCompatibilityEnabled = true"))
@@ -314,7 +367,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            jccmRegistroCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                jccmRegistro = true,
+            ),
         )
         val flags = WebMessageBridge.shimCompatibilityFlags(
             profileId = dev.junta.firmamobile.profile.ProfileId("jccm-registro-generico"),
@@ -358,7 +413,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            sevillaAtseCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                sevillaAtse = true,
+            ),
         )
 
         assertTrue(script.contains("const sevillaAtseCompatibilityEnabled = true"))
@@ -391,13 +448,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            airefCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                airef = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            airefCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                airef = false,
+            ),
         )
 
         assertTrue(enabled.contains("const airefCompatibilityEnabled = true"))
@@ -460,13 +521,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            cdtiCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                cdti = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            cdtiCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                cdti = false,
+            ),
         )
 
         assertTrue(enabled.contains("const cdtiCompatibilityEnabled = true"))
@@ -489,13 +554,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            isciiiCertificateSelectionEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                isciiiCertificateSelection = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            isciiiCertificateSelectionEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                isciiiCertificateSelection = false,
+            ),
         )
 
         assertTrue(enabled.contains("const iSel = true"))
@@ -521,7 +590,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            ugrCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                ugr = false,
+            ),
         )
 
         assertTrue(script.contains("const ugrCompatibilityEnabled = false"))
@@ -537,15 +608,19 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            ugrCompatibilityEnabled = false,
-            cantabriaCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                ugr = false,
+                cantabria = true,
+            ),
         )
         val generic = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            ugrCompatibilityEnabled = false,
-            cantabriaCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                ugr = false,
+                cantabria = false,
+            ),
         )
 
         assertTrue(enabled.contains("const cantabriaCompatibilityEnabled = true"))
@@ -584,13 +659,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            valenciaCertificateSelectionEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                valenciaCertificateSelection = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            valenciaCertificateSelectionEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                valenciaCertificateSelection = false,
+            ),
         )
 
         assertTrue(enabled.contains("const vSel = true"))
@@ -631,13 +710,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            granCanariaCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                granCanaria = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            granCanariaCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                granCanaria = false,
+            ),
         )
 
         assertTrue(enabled.contains("const granCanariaCompatibilityEnabled = true"))
@@ -656,13 +739,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            fuerteventuraCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                fuerteventura = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            fuerteventuraCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                fuerteventura = false,
+            ),
         )
 
         assertTrue(enabled.contains("const fuerteventuraCompatibilityEnabled = true"))
@@ -682,13 +769,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            minecoCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                mineco = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            minecoCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                mineco = false,
+            ),
         )
 
         assertTrue(enabled.contains("const minecoCompatibilityEnabled = true"))
@@ -708,7 +799,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            policiaCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                policia = true,
+            ),
         )
 
         assertTrue(script.contains("const policiaCompatibilityEnabled = true"))
@@ -726,7 +819,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            lugoBatchCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                lugoBatch = true,
+            ),
         )
         val fallback = script
             .substringAfter("  } else {\n    wrapMiniApplet(\n      window.AutoScript,", missingDelimiterValue = "")
@@ -742,13 +837,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            xuntaGaliciaCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                xuntaGalicia = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = true,
-            xuntaGaliciaCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                xuntaGalicia = false,
+            ),
         )
         assertTrue(enabled.contains("const xSel = true"))
         assertTrue(disabled.contains("const xSel = false"))
@@ -786,13 +885,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            accedaCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                acceda = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            accedaCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                acceda = false,
+            ),
         )
 
         assertTrue(enabled.contains("const accedaCompatibilityEnabled = true"))
@@ -810,13 +913,17 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            badajozCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                badajoz = true,
+            ),
         )
         val disabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            badajozCompatibilityEnabled = false,
+            flags = AfirmaShimCompatibilityFlags(
+                badajoz = false,
+            ),
         )
         val flags = WebMessageBridge.shimCompatibilityFlags(
             profileId = dev.junta.firmamobile.profile.ProfileId("diputacion-badajoz-portal"),
@@ -840,7 +947,9 @@ class AfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            badajozCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                badajoz = true,
+            ),
         )
         assertTrue(enabled.contains("const startHookGuard ="))
         assertTrue(enabled.contains("window.setInterval(repairCurrentSigningLibraries, 500)"))

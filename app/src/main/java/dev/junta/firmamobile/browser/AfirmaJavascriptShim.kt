@@ -6,6 +6,30 @@ import dev.junta.firmamobile.R
 import java.net.URI
 import org.json.JSONObject
 
+internal data class AfirmaShimCompatibilityFlags(
+    val ugr: Boolean = false,
+    val cantabria: Boolean = false,
+    val jccm: Boolean = false,
+    val jccmRegistro: Boolean = false,
+    val sevillaAtse: Boolean = false,
+    val airef: Boolean = false,
+    val cdti: Boolean = false,
+    val policia: Boolean = false,
+    val granCanaria: Boolean = false,
+    val fuerteventura: Boolean = false,
+    val canarias: Boolean = false,
+    val mineco: Boolean = false,
+    val melillaBatch: Boolean = false,
+    val lugoBatch: Boolean = false,
+    val caibBatch: Boolean = false,
+    val isciiiCertificateSelection: Boolean = false,
+    val valenciaCertificateSelection: Boolean = false,
+    val xuntaGalicia: Boolean = false,
+    val euskadiClientAuthPost: Boolean = false,
+    val acceda: Boolean = false,
+    val badajoz: Boolean = false,
+)
+
 object AfirmaJavascriptShim {
     const val MAX_SCRIPT_CHARS = 96 * 1024
 
@@ -15,55 +39,22 @@ object AfirmaJavascriptShim {
         BuildConfig.ALLOW_QA_PROFILES,
     )
 
-    fun load(
+    internal fun load(
         context: Context,
         mode: MiniAppletBridgeMode,
         qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
-        ugrCompatibilityEnabled: Boolean = false,
-        cantabriaCompatibilityEnabled: Boolean = false,
-        jccmCompatibilityEnabled: Boolean = false,
-        jccmRegistroCompatibilityEnabled: Boolean = false,
-        sevillaAtseCompatibilityEnabled: Boolean = false,
-        airefCompatibilityEnabled: Boolean = false,
-        cdtiCompatibilityEnabled: Boolean = false,
-        policiaCompatibilityEnabled: Boolean = false,
-        granCanariaCompatibilityEnabled: Boolean = false,
-        fuerteventuraCompatibilityEnabled: Boolean = false,
-        canariasCompatibilityEnabled: Boolean = false,
-        minecoCompatibilityEnabled: Boolean = false,
-        melillaBatchCompatibilityEnabled: Boolean = false,
-        lugoBatchCompatibilityEnabled: Boolean = false,
-        caibBatchCompatibilityEnabled: Boolean = false,
+        flags: AfirmaShimCompatibilityFlags = AfirmaShimCompatibilityFlags(),
         staBatchOrigin: String = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
-        isciiiCertificateSelectionEnabled: Boolean = false,
-        valenciaCertificateSelectionEnabled: Boolean = false,
-        xuntaGaliciaCompatibilityEnabled: Boolean = false,
-        euskadiClientAuthPostEnabled: Boolean = false,
-        accedaCompatibilityEnabled: Boolean = false,
-        badajozCompatibilityEnabled: Boolean = false,
     ): String {
         val script = context.resources.openRawResource(R.raw.afirma_shim)
             .bufferedReader(Charsets.UTF_8)
             .use { it.readText() }
         check(script.countOccurrences(MODE_PLACEHOLDER) == 1)
         check(script.countOccurrences(QA_DIAGNOSTICS_PLACEHOLDER) == 1)
-        check(script.countOccurrences(UGR_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(CANTABRIA_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(JCCM_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(JCCM_REGISTRO_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(AIREF_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(CDTI_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(POLICIA_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(FUERTEVENTURA_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(CANARIAS_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(MINECO_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(LUGO_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(CAIB_BATCH_COMPATIBILITY_PLACEHOLDER) == 1)
+        FLAG_PLACEHOLDERS.forEach { (placeholder, _) ->
+            check(script.countOccurrences(placeholder) == 1)
+        }
         check(script.countOccurrences(STA_BATCH_ORIGIN_PLACEHOLDER) == 1)
-        check(script.countOccurrences(ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
         val batchOrigin = URI(staBatchOrigin)
         require(
             !batchOrigin.isOpaque && batchOrigin.scheme == "https" && batchOrigin.host != null &&
@@ -71,12 +62,7 @@ object AfirmaJavascriptShim {
                 (batchOrigin.rawPath.isNullOrEmpty() || batchOrigin.rawPath == "/") &&
                 batchOrigin.rawQuery == null && batchOrigin.rawFragment == null
         )
-        check(script.countOccurrences(VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER) == 1)
-        check(script.countOccurrences(XUNTA_GALICIA_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(EUSKADI_CLIENT_AUTH_POST_PLACEHOLDER) == 1)
-        check(script.countOccurrences(ACCEDA_COMPATIBILITY_PLACEHOLDER) == 1)
-        check(script.countOccurrences(BADAJOZ_COMPATIBILITY_PLACEHOLDER) == 1)
-        val configured = script
+        var configured = script
             .replace(
                 MODE_PLACEHOLDER,
                 if (mode == MiniAppletBridgeMode.FUNCTIONAL) "true" else "false",
@@ -85,91 +71,16 @@ object AfirmaJavascriptShim {
                 QA_DIAGNOSTICS_PLACEHOLDER,
                 if (qaDiagnosticsEnabled) "true" else "false",
             )
-            .replace(
-                UGR_COMPATIBILITY_PLACEHOLDER,
-                if (ugrCompatibilityEnabled) "true" else "false",
+        FLAG_PLACEHOLDERS.forEach { (placeholder, enabled) ->
+            configured = configured.replace(
+                placeholder,
+                if (enabled(flags)) "true" else "false",
             )
-            .replace(
-                CANTABRIA_COMPATIBILITY_PLACEHOLDER,
-                if (cantabriaCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                JCCM_COMPATIBILITY_PLACEHOLDER,
-                if (jccmCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                JCCM_REGISTRO_COMPATIBILITY_PLACEHOLDER,
-                if (jccmRegistroCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER,
-                if (sevillaAtseCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                AIREF_COMPATIBILITY_PLACEHOLDER,
-                if (airefCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                CDTI_COMPATIBILITY_PLACEHOLDER,
-                if (cdtiCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                POLICIA_COMPATIBILITY_PLACEHOLDER,
-                if (policiaCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER,
-                if (granCanariaCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                FUERTEVENTURA_COMPATIBILITY_PLACEHOLDER,
-                if (fuerteventuraCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                CANARIAS_COMPATIBILITY_PLACEHOLDER,
-                if (canariasCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                MINECO_COMPATIBILITY_PLACEHOLDER,
-                if (minecoCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER,
-                if (melillaBatchCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                LUGO_BATCH_COMPATIBILITY_PLACEHOLDER,
-                if (lugoBatchCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                CAIB_BATCH_COMPATIBILITY_PLACEHOLDER,
-                if (caibBatchCompatibilityEnabled) "true" else "false",
-            )
-            .replace(STA_BATCH_ORIGIN_PLACEHOLDER, JSONObject.quote(staBatchOrigin.removeSuffix("/")))
-            .replace(
-                ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER,
-                if (isciiiCertificateSelectionEnabled) "true" else "false",
-            )
-            .replace(
-                VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER,
-                if (valenciaCertificateSelectionEnabled) "true" else "false",
-            )
-            .replace(
-                XUNTA_GALICIA_COMPATIBILITY_PLACEHOLDER,
-                if (xuntaGaliciaCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                EUSKADI_CLIENT_AUTH_POST_PLACEHOLDER,
-                if (euskadiClientAuthPostEnabled) "true" else "false",
-            )
-            .replace(
-                ACCEDA_COMPATIBILITY_PLACEHOLDER,
-                if (accedaCompatibilityEnabled) "true" else "false",
-            )
-            .replace(
-                BADAJOZ_COMPATIBILITY_PLACEHOLDER,
-                if (badajozCompatibilityEnabled) "true" else "false",
-            )
+        }
+        configured = configured.replace(
+            STA_BATCH_ORIGIN_PLACEHOLDER,
+            JSONObject.quote(staBatchOrigin.removeSuffix("/")),
+        )
         check(configured.isNotBlank() && configured.length <= MAX_SCRIPT_CHARS)
         return configured
     }
@@ -220,6 +131,31 @@ object AfirmaJavascriptShim {
         "__JFM_ACCEDA_COMPATIBILITY_ENABLED__"
     private const val BADAJOZ_COMPATIBILITY_PLACEHOLDER =
         "__JFM_BADAJOZ_COMPATIBILITY_ENABLED__"
+
+    private val FLAG_PLACEHOLDERS: List<Pair<String, (AfirmaShimCompatibilityFlags) -> Boolean>> =
+        listOf(
+            UGR_COMPATIBILITY_PLACEHOLDER to { it.ugr },
+            CANTABRIA_COMPATIBILITY_PLACEHOLDER to { it.cantabria },
+            JCCM_COMPATIBILITY_PLACEHOLDER to { it.jccm },
+            JCCM_REGISTRO_COMPATIBILITY_PLACEHOLDER to { it.jccmRegistro },
+            SEVILLA_ATSE_COMPATIBILITY_PLACEHOLDER to { it.sevillaAtse },
+            AIREF_COMPATIBILITY_PLACEHOLDER to { it.airef },
+            CDTI_COMPATIBILITY_PLACEHOLDER to { it.cdti },
+            POLICIA_COMPATIBILITY_PLACEHOLDER to { it.policia },
+            GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER to { it.granCanaria },
+            FUERTEVENTURA_COMPATIBILITY_PLACEHOLDER to { it.fuerteventura },
+            CANARIAS_COMPATIBILITY_PLACEHOLDER to { it.canarias },
+            MINECO_COMPATIBILITY_PLACEHOLDER to { it.mineco },
+            MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER to { it.melillaBatch },
+            LUGO_BATCH_COMPATIBILITY_PLACEHOLDER to { it.lugoBatch },
+            CAIB_BATCH_COMPATIBILITY_PLACEHOLDER to { it.caibBatch },
+            ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER to { it.isciiiCertificateSelection },
+            VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER to { it.valenciaCertificateSelection },
+            XUNTA_GALICIA_COMPATIBILITY_PLACEHOLDER to { it.xuntaGalicia },
+            EUSKADI_CLIENT_AUTH_POST_PLACEHOLDER to { it.euskadiClientAuthPost },
+            ACCEDA_COMPATIBILITY_PLACEHOLDER to { it.acceda },
+            BADAJOZ_COMPATIBILITY_PLACEHOLDER to { it.badajoz },
+        )
 }
 
 enum class MiniAppletBridgeMode {

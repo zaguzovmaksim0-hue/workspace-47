@@ -23,7 +23,9 @@ class EuskadiAfirmaJavascriptShimTest {
         val enabled = AfirmaJavascriptShim.load(
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
-            euskadiClientAuthPostEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                euskadiClientAuthPost = true,
+            ),
         )
         assertTrue(enabled.contains("const euskadiClientAuthPostEnabled = true"))
         assertTrue(enabled.contains(EuskadiClientAuthPostBridgeAdapter.SOURCE_PAGE))

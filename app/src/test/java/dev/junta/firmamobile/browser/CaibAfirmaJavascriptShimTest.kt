@@ -23,7 +23,9 @@ class CaibAfirmaJavascriptShimTest {
             context = context,
             mode = MiniAppletBridgeMode.FUNCTIONAL,
             qaDiagnosticsEnabled = false,
-            caibBatchCompatibilityEnabled = true,
+            flags = AfirmaShimCompatibilityFlags(
+                caibBatch = true,
+            ),
             staBatchOrigin = CaibBatchBridgeAdapter.SOURCE_ORIGIN,
         )
         val disabled = AfirmaJavascriptShim.load(
