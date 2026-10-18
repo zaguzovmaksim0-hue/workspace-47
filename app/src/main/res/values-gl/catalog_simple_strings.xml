@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="catalog_open_site">Abrir sitio</string>
+    <string name="catalog_site_options">Opcións do sitio</string>
+    <string name="catalog_options_hint">Mantén premida unha sede para ver as súas opcións.</string>
+    <string name="catalog_options_close">Pechar</string>
+    <string name="catalog_loading">Cargando sedes…</string>
+</resources>

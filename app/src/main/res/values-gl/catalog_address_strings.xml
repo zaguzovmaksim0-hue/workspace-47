@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="catalog_address_title">Abre o teu enderezo</string>
+    <string name="catalog_address_hint">Escribe ou pega un enderezo. Engadimos https:// se falta.</string>
+    <string name="catalog_address_label">Enderezo da web</string>
+    <string name="catalog_address_paste">Pegar</string>
+    <string name="catalog_address_clear">Limpar</string>
+    <string name="catalog_address_open">Abrir</string>
+    <string name="catalog_address_opening">Abrindo…</string>
+    <string name="catalog_address_required">Escribe un enderezo para continuar.</string>
+    <string name="catalog_address_invalid">Introduce un enderezo HTTPS público válido, sen usuario nin contrasinal.</string>
+    <string name="catalog_address_too_long">O enderezo é demasiado longo. Non se abrirá unha versión recortada.</string>
+    <string name="catalog_address_clipboard_empty">Non hai un enderezo de texto para pegar. Tamén podes escribilo.</string>
+    <string name="catalog_address_destination">Destino: %1$s</string>
+    <string name="catalog_address_back_to_top">↑ Enderezo</string>
+    <string name="catalog_search_clear">Limpar a busca do catálogo</string>
+</resources>
