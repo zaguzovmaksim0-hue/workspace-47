@@ -60,8 +60,7 @@ class CantabriaRecCertificateLoginCadesAdapter internal constructor(
             return ProtocolCompletionResult.Failure(SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
         val state = preSign.consumeState(request) as? CadesPreSignState
-            ?: return ProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
-        return state.use { ownedState ->
+        return state?.use { ownedState ->
             try {
                 val result = localSignature.withBytes { signature ->
                     CadesDetachedCodec.complete(
@@ -78,7 +77,7 @@ class CantabriaRecCertificateLoginCadesAdapter internal constructor(
             } catch (_: Exception) {
                 ProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
             }
-        }
+        } ?: ProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
     }
 
     private fun NormalizedSignRequest.matchesContract(): Boolean =
@@ -112,7 +111,7 @@ class CantabriaRecCertificateLoginCadesAdapter internal constructor(
 
         internal fun isExactChallenge(data: ByteArray): Boolean =
             data.size == CHALLENGE_BYTES && data.all { byte ->
-                byte.toInt() in 0x30..0x39 || byte.toInt() in 0x61..0x66
+                byte.toInt() in '0'.code..'9'.code || byte.toInt() in 'a'.code..'f'.code
             }
     }
 }
