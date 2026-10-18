@@ -112,13 +112,23 @@ class CertificateViewModel(
                         val issuedAt = clock.instant()
                         val expiresAt = issuedAt.plus(duration)
                         val lease = session.createUnlockLease(expiresAt, duration)
-                        unlockCache.store(
+                        val persisted = unlockCache.store(
                             reference = locked.reference,
                             password = password,
                             issuedAt = issuedAt,
                             expiresAt = expiresAt,
                             observedAtMonotonicNanos = lease.observedAtMonotonicNanos,
                         )
+                        ensureActive()
+                        if (!persisted && !withContext(ioDispatcher) { unlockCache.clearAndReport() }) {
+                            session.lock()
+                            restoreSuppressed = true
+                            mutableState.value = locked.copy(
+                                error = CertificateUiError.STORAGE_FAILURE,
+                                revocationPending = true,
+                            )
+                            return@launch
+                        }
                         ensureActive()
                         session.unlock(result.identity, lease)
                         restoreSuppressed = false
@@ -190,6 +200,12 @@ class CertificateViewModel(
     }
 
     fun onAppBackgrounded() {
+        // Native credential UI may temporarily cover the host. The controller
+        // resumes only the same live/resumed host, with a bounded timeout.
+        if (unlockCache.isAwaitingAuthentication) {
+            session.onAppBackgrounded()
+            return
+        }
         cancelUnlockOperation()
         session.onAppBackgrounded()
         if (session.identityForSigning() != null) return
@@ -235,6 +251,8 @@ class CertificateViewModel(
         if (reference == null) {
             clearCache()
             CertificateUiState.NoCertificate()
+        } else if (unlockCache.requiresExplicitRestore) {
+            reference.toLockedState()
         } else {
             restore(reference)
         }
@@ -244,9 +262,17 @@ class CertificateViewModel(
         CertificateUiState.NoCertificate(CertificateUiError.STORAGE_FAILURE)
     }
 
-    private fun restoreFromCache(reference: StoredCertificateReference) {
+    fun restoreSavedUnlock() {
+        val locked = mutableState.value as? CertificateUiState.Locked ?: return
+        if (locked.revocationPending || restoreSuppressed || revocationJob?.isActive == true) return
+        restoreFromCache(locked.reference, explicit = true)
+    }
+
+    private fun restoreFromCache(reference: StoredCertificateReference, explicit: Boolean = false) {
         if (restoreSuppressed || revocationJob?.isActive == true) return
+        if (unlockCache.requiresExplicitRestore && !explicit) return
         cancelCurrentOperation()
+        if (explicit) mutableState.value = CertificateUiState.Unlocking(reference, reference.summary)
         operationJob = viewModelScope.launch {
             mutableState.value = restore(reference)
         }

@@ -21,7 +21,8 @@ El nombre visible es **Firma Mobile** y la versión de uso diario es **0.2.11**.
 
 ## Certificados y privacidad
 
-El certificado y su contraseña se procesan localmente. En cada desbloqueo manual se eligen 15 minutos (por defecto), 1 hora o 24 horas. En API 28+ la aplicación puede conservarlo mediante una caché cifrada sin renovar el vencimiento al restaurarlo; la opción de bloqueo del menú del certificado permite finalizarlo antes. Bloquear no elimina el archivo ni revoca el certificado ante su emisor, y no garantiza cerrar una sesión ya abierta en un portal.
+El certificado y su contraseña se procesan localmente. En cada desbloqueo manual se eligen 15 minutos (por defecto), 1 hora o 24 horas. En API 30+ la aplicación puede conservarlo mediante una caché cifrada sin renovar el vencimiento al restaurarlo; la opción de bloqueo del menú del certificado permite finalizarlo antes. Bloquear no elimina el archivo ni revoca el certificado ante su emisor, y no garantiza cerrar una sesión ya abierta en un portal.
+La recuperación guardada requiere confirmación nativa biométrica/PIN por operación; Android 8–10 conserva solo la sesión en memoria. Aceptación física pendiente.
 
 Cada operación de firma requiere confirmación. No deben incorporarse al repositorio certificados reales, contraseñas, cookies, documentos privados ni capturas autenticadas. Las pruebas emplean datos sintéticos; consulta [las reglas de las muestras de prueba](docs/test-fixtures.md).
 

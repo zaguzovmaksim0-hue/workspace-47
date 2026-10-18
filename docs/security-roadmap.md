@@ -1,18 +1,28 @@
 # Security hardening roadmap
 
+Implemented, pending physical-device acceptance:
+
+- API 30+ saved unlock uses a per-operation Android Keystore authentication key and
+  native CryptoObject prompt (strong biometrics or device PIN/pattern/password) for
+  save and explicit restore. No automatic restore on startup/foreground/memory pressure.
+  Save cancellation keeps only memory; restore cancellation stays locked and permits retry.
+  Old v1 key/file is removed before the next persistence operation, never migrated.
+  Android 8–10 (API 26–29) is memory-only. Physical PIN/biometric, cancellation,
+  background, process death and OEM KeyStore checks remain required before distribution.
+
 Completed:
 
 - Manual certificate unlock offers a per-unlock retention choice: 15 minutes (default),
   1 hour or 24 hours. The same chosen duration controls the in-memory lease and persisted
   expiry; restore never renews the original lease. This is not an inactivity/sliding timeout,
-  does not persist the menu choice as a global preference, and does not add biometric/PIN.
+  does not persist the menu choice as a global preference.
 
 - Persistent certificate-password unlock caching is disabled on Android 8/8.1 (API 26/27),
   where `setUnlockedDeviceRequired` is unavailable. Store/restore deny before reading,
   decrypting or creating a key, and attempt legacy record/key revocation on the I/O dispatcher.
   Cleanup failure never re-enables persistence. In-memory unlock sessions remain unchanged.
-  API 28+ keeps the existing encrypted cache; this API floor does **not** add biometric/PIN
-  authentication or validate OEM KeyStore behavior on a physical device.
+  That original API floor is superseded by the API 30+ authenticated design above;
+  neither unit tests nor this historical floor validate physical OEM KeyStore behavior.
 
 - Trust lifecycle and effective top-level profile binding.
 - Junta tri-phase filter contract and real E2E signing.
