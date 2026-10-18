@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "configuration": "optimizedRuntimeClasspath",
-  "lock_sha256": "791fcd980d0a054b4a8522bb18292ab49162e65b83d1ce20b85344f366e9a0f0",
+  "lock_sha256": "d99d3e95c9b7172158bab87b1ea383183f8668c687c6b916ef943a81b92dd3c3",
   "release_approved": false,
   "limitations": [
     "Cache evidence is not a resolved-artifact selection proof.",
@@ -2632,11 +2632,11 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "androidx.webkit:webkit:1.16.0",
+      "coordinate": "androidx.webkit:webkit:1.17.1",
       "artifacts": [
         {
-          "file": "webkit-1.16.0.aar",
-          "sha256": "031706e8350a0b238aac2ed705189ec01267cdce02a3d51d8b6a13f41bab1201",
+          "file": "webkit-1.17.1.aar",
+          "sha256": "29dc7a9a32614828c97cf85951eb43c9e455157ab411e5e77d2ca4e72da28a36",
           "notices": [
             {
               "entry": "META-INF/androidx/webkit/webkit/LICENSE.txt",
@@ -2648,8 +2648,8 @@
       ],
       "poms": [
         {
-          "file": "webkit-1.16.0.pom",
-          "sha256": "e6686db4a9b05faf40298b67450ebc45395955fa52c585d6922b6bd810ad9302",
+          "file": "webkit-1.17.1.pom",
+          "sha256": "b5294d03f04cf806e975afe48a67e70180e6a1e74086e7e62a1fe64c4a636bae",
           "licenses": [
             {
               "name": "The Apache Software License, Version 2.0",
