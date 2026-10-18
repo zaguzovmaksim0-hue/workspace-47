@@ -51,14 +51,10 @@ object AfirmaJavascriptShim {
             .use { it.readText() }
         check(script.countOccurrences(MODE_PLACEHOLDER) == 1)
         check(script.countOccurrences(QA_DIAGNOSTICS_PLACEHOLDER) == 1)
-        FLAG_PLACEHOLDERS
-            .takeWhile { it.first != ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER }
-            .forEach { (placeholder, _) -> check(script.countOccurrences(placeholder) == 1) }
+        FLAG_PLACEHOLDERS.forEach { (placeholder, _) ->
+            check(script.countOccurrences(placeholder) == 1)
+        }
         check(script.countOccurrences(STA_BATCH_ORIGIN_PLACEHOLDER) == 1)
-        FLAG_PLACEHOLDERS
-            .dropWhile { it.first != ISCIII_CERTIFICATE_SELECTION_PLACEHOLDER }
-            .take(1)
-            .forEach { (placeholder, _) -> check(script.countOccurrences(placeholder) == 1) }
         val batchOrigin = URI(staBatchOrigin)
         require(
             !batchOrigin.isOpaque && batchOrigin.scheme == "https" && batchOrigin.host != null &&
@@ -66,9 +62,6 @@ object AfirmaJavascriptShim {
                 (batchOrigin.rawPath.isNullOrEmpty() || batchOrigin.rawPath == "/") &&
                 batchOrigin.rawQuery == null && batchOrigin.rawFragment == null
         )
-        FLAG_PLACEHOLDERS
-            .dropWhile { it.first != VALENCIA_CERTIFICATE_SELECTION_PLACEHOLDER }
-            .forEach { (placeholder, _) -> check(script.countOccurrences(placeholder) == 1) }
         var configured = script
             .replace(
                 MODE_PLACEHOLDER,
