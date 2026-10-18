@@ -120,6 +120,7 @@ internal class BatchSigningCoordinator(
             algorithm = request.algorithm.displayName(),
             certificateOwner = certificateSnapshot.summary.ownerName,
             requiresLegacySha1Warning = request.algorithm == SigningAlgorithm.SHA1_WITH_RSA,
+            batchDocumentReview = BatchSigningDocumentReview(request.documents),
         )
         return SigningPreparationResult.Ready(request.requestId)
     }

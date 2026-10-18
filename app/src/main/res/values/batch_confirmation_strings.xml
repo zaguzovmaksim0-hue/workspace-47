@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="signing_batch_document_count">
+        <item quantity="one">%1$d documento en el lote</item>
+        <item quantity="other">%1$d documentos en el lote</item>
+    </plurals>
+    <string name="signing_batch_documents_show">Ver documentos</string>
+    <string name="signing_batch_documents_hide">Ocultar documentos</string>
+    <string name="signing_batch_documents_explanation">Identificadores facilitados por el sitio; no son una vista previa del contenido de los documentos.</string>
+    <string name="signing_batch_document_number">Documento %1$d</string>
+    <string name="signing_batch_document_identifier">Documento %1$d · ID: %2$s</string>
+</resources>
