@@ -27,7 +27,7 @@ class LocalizedResourcesTest {
 
     @Test
     fun ordinaryRobolectricFixturesUseExplicitSpanishBaseline() {
-        val context = RuntimeEnvironment.getApplication<android.app.Application>()
+        val context = RuntimeEnvironment.getApplication()
         assertEquals("es", context.resources.configuration.locales[0].language)
         assertEquals("Selecciona tu archivo .p12 o .pfx.", context.getString(R.string.certificate_copy))
         assertNotEquals(context.getString(R.string.certificate_copy), localizedContext("en").getString(R.string.certificate_copy))
