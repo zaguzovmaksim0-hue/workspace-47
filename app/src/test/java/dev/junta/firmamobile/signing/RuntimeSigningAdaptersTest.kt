@@ -40,6 +40,13 @@ class RuntimeSigningAdaptersTest {
     }
 
     @Test
+    fun cantabriaRegistryBindingResolvesToRuntimeAdapter() {
+        val id = SigningProtocolId("cantabria-rec-cert-login-cades-v1")
+
+        assertEquals(id, ordinaryAdapters().resolve(id)?.id)
+    }
+
+    @Test
     fun batchIndexResolvesAllBuiltInAdapters() {
         val adapters = RuntimeSigningAdapters.batch()
 
