@@ -50,6 +50,7 @@ class BatchSigningCoordinatorTest {
         assertEquals("Sede Electrónica de Melilla", state.profileName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, state.compatibilityStatus)
         assertEquals("Firma por lotes (2 documentos)", state.safeDescription)
+        assertEquals(listOf("doc-a", "doc-b"), state.batchDocumentReview?.documentLabels)
         assertEquals("CAdES", state.format)
         assertEquals("SHA256withRSA", state.algorithm)
         assertEquals(identity.summary.ownerName, state.certificateOwner)
@@ -64,6 +65,87 @@ class BatchSigningCoordinatorTest {
         assertFalse(rendered.contains(POST_URL))
         assertFalse(rendered.contains("doc-a"))
         assertFalse(rendered.contains("doc-b"))
+    }
+
+    @Test
+    fun preparePublishesBoundedIdentifiersInRequestOrderWithoutReferencesOrInputs() {
+        val documents = listOf(
+            NormalizedBatchSigningDocument(
+                "z-last", "https://example.invalid/private?token=secret", BatchSigningFormat.CADES,
+            ),
+            NormalizedBatchSigningDocument(
+                "\u202Ereport-\u2066A\u2069", "secret-document-content", BatchSigningFormat.PADES,
+            ),
+            NormalizedBatchSigningDocument(
+                "\uD83D\uDE00".repeat(256) + "tail", "secret-digest-or-envelope", BatchSigningFormat.XADES,
+            ),
+            NormalizedBatchSigningDocument("\u2066", "secret-reference", BatchSigningFormat.CADES),
+        )
+        val reply = RecordingBatchReply(REQUEST_ID, timeline)
+
+        assertEquals(
+            SigningPreparationResult.Ready(REQUEST_ID),
+            coordinator.prepare(request(documents = documents), reply),
+        )
+
+        val state = coordinator.state.value as SigningUiState.AwaitingConfirmation
+        val review = checkNotNull(state.batchDocumentReview)
+        assertEquals(
+            listOf("z-last", "report-A", "\uD83D\uDE00".repeat(255) + "\u2026", ""),
+            review.documentLabels,
+        )
+        assertEquals("Firma por lotes (4 documentos)", state.safeDescription)
+        assertEquals("BatchSigningDocumentReview(count=4)", review.toString())
+        documents.forEach { document ->
+            assertFalse(review.documentLabels.any { it.contains(document.dataReference) })
+            assertFalse(state.toString().contains(document.dataReference))
+        }
+        assertTrue(adapter.events.isEmpty())
+        assertTrue(engine.events.isEmpty())
+        assertTrue(reply.events.isEmpty())
+        assertTrue(timeline.isEmpty())
+    }
+
+    @Test
+    fun aSingleDocumentBatchStillPublishesAReview() {
+        val documents = listOf(
+            NormalizedBatchSigningDocument("only-doc", "secret-reference", BatchSigningFormat.CADES),
+        )
+        val reply = RecordingBatchReply(REQUEST_ID, timeline)
+
+        assertEquals(
+            SigningPreparationResult.Ready(REQUEST_ID),
+            coordinator.prepare(request(documents = documents), reply),
+        )
+
+        val state = coordinator.state.value as SigningUiState.AwaitingConfirmation
+        assertEquals(listOf("only-doc"), state.batchDocumentReview?.documentLabels)
+        assertEquals("Firma por lotes (1 documento)", state.safeDescription)
+        assertTrue(timeline.isEmpty())
+    }
+
+    @Test
+    fun prepareKeepsEveryDocumentAtTheBatchLimitAndPublishesAnImmutableSnapshot() {
+        val documents = (1..128).map { index ->
+            NormalizedBatchSigningDocument("doc-$index", "secret-reference-$index", BatchSigningFormat.CADES)
+        }
+        val reply = RecordingBatchReply(REQUEST_ID, timeline)
+        assertEquals(
+            SigningPreparationResult.Ready(REQUEST_ID),
+            coordinator.prepare(request(documents = documents), reply),
+        )
+
+        val state = coordinator.state.value as SigningUiState.AwaitingConfirmation
+        val labels = checkNotNull(state.batchDocumentReview).documentLabels
+        assertEquals(128, labels.size)
+        assertEquals("doc-1", labels.first())
+        assertEquals("doc-128", labels.last())
+        assertEquals("Firma por lotes (128 documentos)", state.safeDescription)
+        org.junit.Assert.assertThrows(UnsupportedOperationException::class.java) {
+            (labels as MutableList<String>).clear()
+        }
+        assertEquals(128, labels.size)
+        assertTrue(timeline.isEmpty())
     }
 
     @Test
@@ -250,6 +332,7 @@ class BatchSigningCoordinatorTest {
     private fun request(
         requestId: UUID = REQUEST_ID,
         protocolId: SigningProtocolId = MelillaBatchProtocolAdapter.ID,
+        documents: List<NormalizedBatchSigningDocument>? = null,
     ): NormalizedBatchSigningRequest = NormalizedBatchSigningRequest(
         requestId = requestId,
         protocolId = protocolId,
@@ -268,7 +351,7 @@ class BatchSigningCoordinatorTest {
         operationId = OPERATION_ID,
         preSignerUrl = PRE_URL,
         postSignerUrl = POST_URL,
-        documents = listOf(
+        documents = documents ?: listOf(
             NormalizedBatchSigningDocument(
                 id = "doc-a",
                 dataReference = "https://sede.melilla.es/sta/AutofirmaLote/getdata/${OPERATION_ID}/doc-a",

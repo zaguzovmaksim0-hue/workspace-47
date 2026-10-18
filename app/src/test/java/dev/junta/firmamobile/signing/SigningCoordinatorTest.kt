@@ -34,6 +34,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -215,6 +216,7 @@ class SigningCoordinatorTest {
         assertEquals("Junta de Andalucía", state.profileName)
         assertEquals(CompatibilityStatus.EXPERIMENTAL, state.compatibilityStatus)
         assertEquals("Autenticación con certificado", state.safeDescription)
+        assertNull(state.batchDocumentReview)
         assertEquals("CAdES", state.format)
         assertEquals("SHA256withRSA", state.algorithm)
         assertEquals(identity.summary.ownerName, state.certificateOwner)
