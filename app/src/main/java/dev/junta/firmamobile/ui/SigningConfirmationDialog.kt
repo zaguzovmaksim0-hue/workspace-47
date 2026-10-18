@@ -18,6 +18,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.SecureFlagPolicy
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.signing.SigningUiState
@@ -31,6 +33,7 @@ internal fun SigningConfirmationDialog(
     val confirmArmed = rememberConsentArmed(state.requestId)
     AlertDialog(
         onDismissRequest = onCancel,
+        properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
         title = { Text(stringResource(R.string.signing_confirmation_title)) },
         text = {
             FilterObscuredTouches()
@@ -59,6 +62,7 @@ internal fun SigningConfirmationDialog(
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
+                if (state.batchDocumentReview == null) SigningDocumentConsent(state.documentConsent)
                 BatchSigningDocuments(state)
             }
         },

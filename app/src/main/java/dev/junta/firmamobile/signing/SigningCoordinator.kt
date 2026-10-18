@@ -40,6 +40,7 @@ sealed interface SigningUiState {
         val certificateOwner: String,
         val requiresLegacySha1Warning: Boolean,
         val batchDocumentReview: BatchSigningDocumentReview? = null,
+        val documentConsent: DocumentConsentEvidence = DocumentConsentEvidence.unavailable(),
     ) : SigningUiState
 
     data class Signing(val requestId: UUID) : SigningUiState
@@ -127,9 +128,23 @@ class SigningCoordinator internal constructor(
             certificateSnapshot.close()
             return reject(request, reply, SigningErrorCode.INVALID_REQUEST)
         }
+        val documentConsent = try {
+            operationAdapter.documentConsent(request)
+        } catch (_: Exception) {
+            payloadFingerprint.fill(0)
+            certificateSnapshot.close()
+            return reject(request, reply, SigningErrorCode.INVALID_REQUEST)
+        }
+        if (!documentConsent.matches(request)) {
+            documentConsent.close()
+            payloadFingerprint.fill(0)
+            certificateSnapshot.close()
+            return reject(request, reply, SigningErrorCode.PAYLOAD_CHANGED)
+        }
         val summary = try {
             pendingStore.put(request)
         } catch (_: Exception) {
+            documentConsent.close()
             payloadFingerprint.fill(0)
             certificateSnapshot.close()
             return reject(request, reply, SigningErrorCode.INVALID_REQUEST)
@@ -140,6 +155,7 @@ class SigningCoordinator internal constructor(
             certificateSnapshot = certificateSnapshot,
             reply = reply,
             adapter = operationAdapter,
+            documentConsent = documentConsent,
         )
         val expiryDelay = MonotonicSecurityTime.remaining(
             summary.observedAtMonotonicNanos,
@@ -175,6 +191,7 @@ class SigningCoordinator internal constructor(
             algorithm = summary.algorithm.displayName(),
             certificateOwner = certificateSnapshot.summary.ownerName,
             requiresLegacySha1Warning = summary.algorithm == SigningAlgorithm.SHA1_WITH_RSA,
+            documentConsent = documentConsent,
         )
         return SigningPreparationResult.Ready(summary.requestId)
     }
@@ -184,6 +201,7 @@ class SigningCoordinator internal constructor(
             val candidate = pending
             if (candidate == null || candidate.summary.requestId != requestId) return@synchronized null
             candidate.cancelExpiry()
+            candidate.documentConsent.dismissDisplay()
             pending = null
             active = candidate
             mutableState.value = SigningUiState.Signing(requestId)
@@ -213,6 +231,11 @@ class SigningCoordinator internal constructor(
             if (!isActive(operation) || !originStillMatches(operation)) {
                 return fail(operation, SigningErrorCode.NAVIGATION_CHANGED)
             }
+            // The store retained the exact request lineage; verify all fields and envelope locally.
+            // Never ask an adapter to produce replacement evidence after consent.
+            val consentMatches = operation.documentConsent.matches(request)
+            operation.documentConsent.close()
+            if (!consentMatches) return fail(operation, SigningErrorCode.PAYLOAD_CHANGED)
             val identity = certificateSession.identityForSigning(operation.certificateSnapshot)
                 ?: return fail(operation, SigningErrorCode.CERTIFICATE_LOCKED)
             val preSign = when (
@@ -374,6 +397,7 @@ class SigningCoordinator internal constructor(
                 ?: active?.takeIf { requestId == null || it.summary.requestId == requestId }
                 ?: return false
             if (!candidate.claimCancellation(reason.code)) return false
+            candidate.documentConsent.close()
             if (pending === candidate) {
                 pending = null
                 pendingStore.clear(ConsumeError.CANCELLED)
@@ -587,6 +611,7 @@ class SigningCoordinator internal constructor(
         val certificateSnapshot: CertificateSigningSnapshot,
         val reply: SigningReplySink,
         val adapter: SigningProtocolAdapter,
+        val documentConsent: DocumentConsentEvidence,
     ) {
         private val terminalClaim = AtomicReference<TerminalClaim?>(null)
         private var expiryHandle: SigningExpiryHandle? = null
@@ -623,6 +648,7 @@ class SigningCoordinator internal constructor(
             expiryHandle?.cancel()
             expiryHandle = null
             payloadFingerprint.fill(0)
+            documentConsent.close()
             certificateSnapshot.close()
         }
     }

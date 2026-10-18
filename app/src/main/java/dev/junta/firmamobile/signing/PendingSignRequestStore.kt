@@ -119,6 +119,7 @@ class PendingSignRequestStore internal constructor(
         )
         pending = StoredRequest(
             protocolId = request.protocolId,
+            documentConsentOwner = request.documentConsentOwner,
             summary = summary,
             payload = payload,
             fingerprint = fingerprint,
@@ -184,6 +185,7 @@ class PendingSignRequestStore internal constructor(
             payload = acceptedPayload,
             observedAtMonotonicNanos = current.summary.observedAtMonotonicNanos,
             payloadObserver = observer,
+            documentConsentOwner = current.documentConsentOwner,
         )
         clearPending(ConsumeError.ALREADY_CONSUMED)
         return PendingConsumeResult.Accepted(accepted)
@@ -224,6 +226,7 @@ class PendingSignRequestStore internal constructor(
 
     private data class StoredRequest(
         val protocolId: SigningProtocolId,
+        val documentConsentOwner: DocumentConsentOwner,
         val summary: PendingSignSummary,
         val payload: ByteArray,
         val fingerprint: ByteArray,
