@@ -2,12 +2,17 @@
 
 Completed:
 
+- Manual certificate unlock offers a per-unlock retention choice: 15 minutes (default),
+  1 hour or 24 hours. The same chosen duration controls the in-memory lease and persisted
+  expiry; restore never renews the original lease. This is not an inactivity/sliding timeout,
+  does not persist the menu choice as a global preference, and does not add biometric/PIN.
+
 - Persistent certificate-password unlock caching is disabled on Android 8/8.1 (API 26/27),
   where `setUnlockedDeviceRequired` is unavailable. Store/restore deny before reading,
   decrypting or creating a key, and attempt legacy record/key revocation on the I/O dispatcher.
   Cleanup failure never re-enables persistence. In-memory unlock sessions remain unchanged.
   API 28+ keeps the existing encrypted cache; this API floor does **not** add biometric/PIN
-  authentication, configurable retention, or validate OEM KeyStore behavior on a physical device.
+  authentication or validate OEM KeyStore behavior on a physical device.
 
 - Trust lifecycle and effective top-level profile binding.
 - Junta tri-phase filter contract and real E2E signing.

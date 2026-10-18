@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.testTag
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.certificate.CertificateUnlockRetention
 import dev.junta.firmamobile.certificate.CertificateSummary
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
@@ -59,7 +60,7 @@ import java.time.format.DateTimeFormatter
 fun AppRoot(
     state: CertificateUiState = CertificateUiState.NoCertificate(),
     onSelectCertificate: () -> Unit = {},
-    onUnlock: (CharArray) -> Unit = {},
+    onUnlock: (CharArray, CertificateUnlockRetention) -> Unit = { _, _ -> },
     onLock: () -> Unit = {},
     onForget: () -> Unit = {},
     onContinue: () -> Unit = {},
@@ -124,7 +125,7 @@ fun AppRoot(
 private fun CertificatePanel(
     state: CertificateUiState,
     onSelectCertificate: () -> Unit,
-    onUnlock: (CharArray) -> Unit,
+    onUnlock: (CharArray, CertificateUnlockRetention) -> Unit,
     onLock: () -> Unit,
     onForget: () -> Unit,
     onContinue: () -> Unit,
@@ -243,28 +244,13 @@ private fun NoCertificate(
 @Composable
 private fun LockedCertificate(
     state: CertificateUiState.Locked,
-    onUnlock: (CharArray) -> Unit,
+    onUnlock: (CharArray, CertificateUnlockRetention) -> Unit,
     onSelectCertificate: () -> Unit,
     onForget: () -> Unit,
 ) {
-    Text(
-        text = stringResource(
-            R.string.certificate_selected,
-            state.reference.displayName,
-        ),
-        color = JuntaInk,
-        style = MaterialTheme.typography.titleMedium,
-    )
-    state.summary?.let {
-        Spacer(modifier = Modifier.height(8.dp))
-        CertificateSummaryDetails(it)
-    }
-    state.error?.let {
-        Spacer(modifier = Modifier.height(12.dp))
-        CertificateError(it)
-    }
-    Spacer(modifier = Modifier.height(10.dp))
-
+    LockedCertificateHeading(state)
+    var retention by remember(state.reference.uri) { mutableStateOf(CertificateUnlockRetention.FIFTEEN_MINUTES) }
+    CertificateUnlockRetentionSelector(retention, !state.revocationPending) { retention = it }
     val passwordState = remember(state.reference.uri) { TextFieldState() }
     DisposableEffect(passwordState) {
         onDispose { passwordState.clearText() }
@@ -290,7 +276,7 @@ private fun LockedCertificate(
                 passwordState.text[index]
             }
             passwordState.clearText()
-            onUnlock(password)
+            onUnlock(password, retention)
         },
         enabled = passwordState.text.isNotEmpty() && !state.revocationPending,
     )
@@ -304,6 +290,29 @@ private fun LockedCertificate(
         text = stringResource(R.string.forget_certificate),
         onClick = onForget,
     )
+}
+
+// Compose UI entry points use PascalCase by convention.
+@Suppress("FunctionNaming")
+@Composable
+private fun LockedCertificateHeading(state: CertificateUiState.Locked) {
+    Text(
+        text = stringResource(
+            R.string.certificate_selected,
+            state.reference.displayName,
+        ),
+        color = JuntaInk,
+        style = MaterialTheme.typography.titleMedium,
+    )
+    state.summary?.let {
+        Spacer(modifier = Modifier.height(8.dp))
+        CertificateSummaryDetails(it)
+    }
+    state.error?.let {
+        Spacer(modifier = Modifier.height(12.dp))
+        CertificateError(it)
+    }
+    Spacer(modifier = Modifier.height(10.dp))
 }
 
 @Composable

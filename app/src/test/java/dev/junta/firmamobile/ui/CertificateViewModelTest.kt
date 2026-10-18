@@ -3,6 +3,7 @@ package dev.junta.firmamobile.ui
 import android.net.Uri
 import dev.junta.firmamobile.certificate.CachedCertificateUnlock
 import dev.junta.firmamobile.certificate.CertificateGateway
+import dev.junta.firmamobile.certificate.CertificateUnlockRetention
 import dev.junta.firmamobile.certificate.CertificateUnlockCache
 import dev.junta.firmamobile.certificate.CertificateUnlockLease
 import dev.junta.firmamobile.certificate.CertificateLoadResult
@@ -429,6 +430,52 @@ class CertificateViewModelTest {
         assertTrue(cache.clearCalls > clears)
         assertEquals(restores, cache.restoreCalls)
         assertTrue(!(model.state.value as CertificateUiState.Locked).revocationPending)
+    }
+
+    @Test
+    fun eachRetentionChoiceControlsBothPersistedExpiryAndSessionLease() = runTest(dispatcher) {
+        for (retention in CertificateUnlockRetention.entries) {
+            val identity = validIdentity()
+            val selected = reference()
+            val gateway = FakeCertificateGateway().apply {
+                current = selected
+                unlockResult = CertificateLoadResult.Success(identity)
+            }
+            val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
+            val cache = FakeCertificateUnlockCache()
+            val model = viewModel(gateway, session, cache)
+            advanceUntilIdle()
+            val password = TestCertificateFactory.password()
+            model.unlock(password, retention)
+            advanceUntilIdle()
+            val expectedExpiry = TestCertificateFactory.now.plus(retention.duration)
+            assertEquals(expectedExpiry, cache.storedExpiry)
+            val state = session.state() as dev.junta.firmamobile.certificate.CertificateSessionState.Unlocked
+            assertEquals(expectedExpiry, state.expiresAt)
+            assertArrayEquals(CharArray(password.size), password)
+            model.lock()
+            advanceUntilIdle()
+        }
+    }
+
+    @Test
+    fun productionDefaultUnlockDurationIsFifteenMinutes() = runTest(dispatcher) {
+        val gateway = FakeCertificateGateway().apply {
+            current = reference()
+            unlockResult = CertificateLoadResult.Success(validIdentity())
+        }
+        val cache = FakeCertificateUnlockCache()
+        val model = CertificateViewModel(
+            gateway = gateway,
+            session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC)),
+            unlockCache = cache,
+            clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
+            ioDispatcher = dispatcher,
+        )
+        advanceUntilIdle()
+        model.unlock(TestCertificateFactory.password())
+        advanceUntilIdle()
+        assertEquals(TestCertificateFactory.now.plus(Duration.ofMinutes(15)), cache.storedExpiry)
     }
 
     private fun viewModel(

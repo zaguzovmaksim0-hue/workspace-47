@@ -10,6 +10,7 @@ import dev.junta.firmamobile.certificate.CertificateLoadResult
 import dev.junta.firmamobile.certificate.CertificateSelectionErrorCode
 import dev.junta.firmamobile.certificate.CertificateSelectionResult
 import dev.junta.firmamobile.certificate.CertificateSession
+import dev.junta.firmamobile.certificate.CertificateUnlockRetention
 import dev.junta.firmamobile.certificate.CertificateUnlockCache
 import dev.junta.firmamobile.certificate.NoOpCertificateUnlockCache
 import dev.junta.firmamobile.certificate.StoredCertificateReference
@@ -34,7 +35,7 @@ class CertificateViewModel(
     private val session: CertificateSession,
     private val unlockCache: CertificateUnlockCache = NoOpCertificateUnlockCache,
     private val clock: Clock = Clock.systemUTC(),
-    private val unlockDuration: Duration = Duration.ofHours(24),
+    private val unlockDuration: Duration = CertificateUnlockRetention.FIFTEEN_MINUTES.duration,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow<CertificateUiState>(
@@ -90,7 +91,12 @@ class CertificateViewModel(
         }
     }
 
-    fun unlock(password: CharArray) {
+    fun unlock(password: CharArray) = unlockForDuration(password, unlockDuration)
+
+    fun unlock(password: CharArray, retention: CertificateUnlockRetention) =
+        unlockForDuration(password, retention.duration)
+
+    private fun unlockForDuration(password: CharArray, duration: Duration) {
         val locked = mutableState.value as? CertificateUiState.Locked
         if (locked == null || locked.revocationPending || revocationJob?.isActive == true) {
             password.fill('\u0000')
@@ -104,8 +110,8 @@ class CertificateViewModel(
                     is CertificateLoadResult.Success -> {
                         ensureActive()
                         val issuedAt = clock.instant()
-                        val expiresAt = issuedAt.plus(unlockDuration)
-                        val lease = session.createUnlockLease(expiresAt, unlockDuration)
+                        val expiresAt = issuedAt.plus(duration)
+                        val lease = session.createUnlockLease(expiresAt, duration)
                         unlockCache.store(
                             reference = locked.reference,
                             password = password,

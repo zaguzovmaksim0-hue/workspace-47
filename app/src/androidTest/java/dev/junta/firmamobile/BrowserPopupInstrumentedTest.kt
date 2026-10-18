@@ -262,7 +262,15 @@ class BrowserPopupInstrumentedTest {
         if (id == "open") {
             // The event is not retried and window.open is never called directly
             // from evaluateJavascript. Inspect the single original DOM click.
-            assertEquals("\"1:true\"", evaluate(view, "window.fixtureClicks+':'+window.fixtureTrustedClick"))
+            // dispatchTouchEvent returning only queues Chromium's input work.
+            // Observe the original trusted DOM click, not merely native UP delivery.
+            // No second tap, programmatic click, or window.open is introduced.
+            var clickState = "\"0:false\""
+            rule.waitUntil(timeoutMillis = 5_000) {
+                clickState = evaluate(view, "window.fixtureClicks+':'+window.fixtureTrustedClick")
+                clickState != "\"0:false\""
+            }
+            assertEquals("The one original DOM click must remain trusted", "\"1:true\"", clickState)
         }
     }
     private inner class FixtureClient(private val original: WebViewClient) : WebViewClient() {

@@ -12,11 +12,11 @@
     <string name="certificate_status_loading_title">Preparando el almacén seguro</string>
     <string name="certificate_status_loading_copy">Comprobando si existe un certificado seleccionado.</string>
     <string name="certificate_status_locked_title">Certificado protegido</string>
-    <string name="certificate_status_locked_copy">Introduce la contraseña para mantener el certificado desbloqueado durante 24 horas en este dispositivo.</string>
+    <string name="certificate_status_locked_copy">Introduce la contraseña y elige el plazo de desbloqueo en este dispositivo.</string>
     <string name="certificate_status_unlocking_title">Verificando certificado</string>
     <string name="certificate_status_unlocking_copy">La identidad se está comprobando localmente.</string>
     <string name="certificate_status_unlocked_title">Certificado listo</string>
-    <string name="certificate_status_unlocked_copy">No tendrás que volver a introducir la contraseña durante 24 horas, salvo que bloquees, cambies o elimines el certificado.</string>
+    <string name="certificate_status_unlocked_copy">La sesión caduca al terminar el plazo elegido. Bloquear, cambiar o eliminar el certificado también cierra la sesión.</string>
     <string name="certificate_loading">Cargando certificado…</string>
     <string name="certificate_selected">Certificado seleccionado: %1$s</string>
     <string name="certificate_password">Contraseña del certificado</string>
@@ -297,4 +297,8 @@
     <string name="compatibility_unverified_short">Compatibilidad de firma no confirmada</string>
     <string name="compatibility_unverified_operation">Esta operación no tiene compatibilidad confirmada en un escenario real. Comprueba el resultado y el justificante del portal antes de repetirla.</string>
     <string name="compatibility_operation_notice">La compatibilidad depende del portal y de la operación. Algunas funciones no se han verificado en escenarios reales; comprueba siempre el resultado emitido por el organismo.</string>
+    <string name="certificate_retention_label">Plazo de desbloqueo: %1$s</string>
+    <string name="certificate_retention_fifteen_minutes">15 minutos</string>
+    <string name="certificate_retention_one_hour">1 hora</string>
+    <string name="certificate_retention_one_day">24 horas</string>
 </resources>

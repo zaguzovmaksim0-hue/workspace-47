@@ -172,7 +172,9 @@ registro u obtener una clave. Ambos intentan revocar la clave y eliminar cualqui
 registro anterior en el dispatcher de IO. Si la limpieza falla, la restauración
 sigue denegada. La sesión en memoria no cambia; tras process death o al liberar
 esa identidad por memory pressure se exige introducir otra vez la contraseña.
-Esta política no añade biometría/PIN ni un selector de duración.
+El plazo se elige en cada desbloqueo manual: 15 minutos (por defecto), 1 hora o 24 horas.
+Cambiar la selección solo afecta al siguiente desbloqueo; restore conserva el vencimiento
+original sin renovarlo. Esta política todavía no añade biometría/PIN.
 
 **Semántica lifecycle (cache persistente solo en API 28+):** bloqueo manual, clear session, cambio u olvido del
 certificado, expiración, reference mismatch, ciphertext malformado/manipulado o
