@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -113,7 +114,13 @@ class SigningDocumentConsentTest {
             originalEvidence.close()
             confirmation = state().copy(requestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174001"))
         }
-        rule.mainClock.advanceTimeByFrame()
+        // A paused clock must publish the changed snapshot before checking its new semantics.
+        // Bound that synchronization below the arming margin; do not wait through consent arming.
+        rule.waitForIdle()
+        rule.mainClock.advanceTimeUntil(timeoutMillis = ARMING_CHECK_MARGIN_MS / 2) {
+            rule.onAllNodesWithTag("signing-document-unavailable").fetchSemanticsNodes().size == 1
+        }
+        rule.waitForIdle()
         rule.onNodeWithTag("signing-document-unavailable").assertExists()
         rule.onNodeWithTag("signing-document-sha256").assertDoesNotExist()
         rule.onNodeWithText(EXPECTED_PDF_SHA256, substring = true).assertDoesNotExist()
