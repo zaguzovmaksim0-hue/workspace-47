@@ -115,7 +115,8 @@ class SigningConfirmationDialogTest {
 
     @Test
     fun batchReviewStartsCollapsedAndTogglesWithoutConsenting() {
-        rule.mainClock.autoAdvance = false
+        // Keep scrolling on the advancing clock; the separate delay test covers arming.
+        // Reviewing documents must stay inert even when confirmation is already armed.
         val events = mutableListOf<String>()
         rule.setContent {
             JuntaFirmaTheme {
@@ -130,6 +131,10 @@ class SigningConfirmationDialogTest {
             }
         }
 
+        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
+        rule.waitForIdle()
+        rule.onNodeWithText("Firmar").assertIsEnabled()
+
         rule.onNodeWithTag("signing-batch-documents-count").performScrollTo()
             .assertTextEquals("3 documentos en el lote")
         rule.onNodeWithTag("signing-batch-documents").assertDoesNotExist()
@@ -141,15 +146,14 @@ class SigningConfirmationDialogTest {
         rule.onNodeWithText(RAW_REFERENCE, substring = true).assertDoesNotExist()
         rule.onNodeWithText(RAW_PAYLOAD, substring = true).assertDoesNotExist()
         rule.onNodeWithText("\u202Ereport-\u2066A\u2069", substring = true).assertDoesNotExist()
-        rule.onNodeWithText("Firmar").assertIsNotEnabled()
+        rule.onNodeWithText("Firmar").assertIsEnabled()
         rule.onNodeWithText("Cancelar").assertIsEnabled()
         rule.runOnIdle { assertEquals(emptyList<String>(), events) }
 
         rule.onNodeWithTag("signing-batch-documents-toggle").performScrollTo().performClick()
         rule.onNodeWithTag("signing-batch-documents").assertDoesNotExist()
-        rule.onNodeWithText("Firmar").assertIsNotEnabled()
-        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
-        rule.waitForIdle()
+        rule.onNodeWithText("Firmar").assertIsEnabled()
+        rule.runOnIdle { assertEquals(emptyList<String>(), events) }
         rule.onNodeWithText("Firmar").assertIsEnabled().performClick()
         rule.runOnIdle { assertEquals(listOf("confirm"), events) }
     }
