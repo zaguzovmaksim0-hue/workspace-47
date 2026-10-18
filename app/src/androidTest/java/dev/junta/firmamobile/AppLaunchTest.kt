@@ -21,6 +21,10 @@ class AppLaunchTest {
     fun showsRequiredFirstRunCopy() {
         TestCertificateDependencies.install().use {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                // Catalog startup is asynchronous and is not a Compose idling resource.
+                rule.waitUntil(timeoutMillis = 15_000) {
+                    runCatching { rule.onNodeWithText("Firma Mobile").assertIsDisplayed() }.isSuccess
+                }
                 rule.onNodeWithText("Firma Mobile").assertIsDisplayed()
                 rule.onNodeWithText("Cliente no oficial para uso personal").assertIsDisplayed()
                 rule.onNodeWithText("Certificado digital").assertIsDisplayed()

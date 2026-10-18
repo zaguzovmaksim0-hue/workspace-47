@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -459,6 +460,11 @@ class SigningConfirmationInstrumentedTest {
 
             TestCertificateDependencies.install(repository, CertificateSession()).use {
                 ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    // The password field is composed only after catalog startup completes.
+                    rule.waitUntil(timeoutMillis = 15_000) {
+                        rule.onAllNodesWithContentDescription("Contraseña del certificado")
+                            .fetchSemanticsNodes().isNotEmpty()
+                    }
                     rule.onNodeWithContentDescription("Contraseña del certificado")
                         .performScrollTo()
                         .performTextInput(TEST_PASSPHRASE)
