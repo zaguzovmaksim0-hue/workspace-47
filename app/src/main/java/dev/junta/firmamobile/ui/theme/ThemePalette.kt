@@ -56,12 +56,14 @@ internal enum class JuntaThemeVariant(val dynamic: Boolean) {
     DYNAMIC_DARK(true),
 }
 
+private const val DYNAMIC_COLOR_MIN_SDK = 31
+
 internal fun selectJuntaTheme(
     darkTheme: Boolean,
     dynamicColor: Boolean,
     sdkInt: Int,
 ): JuntaThemeVariant = when {
-    dynamicColor && sdkInt >= 31 -> {
+    dynamicColor && sdkInt >= DYNAMIC_COLOR_MIN_SDK -> {
         if (darkTheme) JuntaThemeVariant.DYNAMIC_DARK else JuntaThemeVariant.DYNAMIC_LIGHT
     }
     darkTheme -> JuntaThemeVariant.DARK

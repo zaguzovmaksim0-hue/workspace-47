@@ -88,7 +88,7 @@ class JuntaFirmaThemeTest {
     @Test
     @Config(sdk = [31], qualifiers = "notnight")
     fun explicitDarkAndDynamicOptOutUseTheStaticDarkPalette() {
-        rule.setContent { JuntaFirmaTheme(darkTheme = true, dynamicColor = false) { ThemeProbe() } }
+        rule.setContent { juntaFirmaTheme(darkTheme = true, dynamicColor = false) { ThemeProbe() } }
         rule.runOnIdle {
             assertSame(JuntaDarkColorScheme, snapshot.scheme)
             assertEquals(JuntaDarkPalette, snapshot.palette)
@@ -100,7 +100,7 @@ class JuntaFirmaThemeTest {
     @Config(sdk = [30], qualifiers = "notnight")
     fun changingThemeUpdatesCustomColorsWithoutStaleGlobalTokens() {
         var dark by mutableStateOf(false)
-        rule.setContent { JuntaFirmaTheme(darkTheme = dark, dynamicColor = false) { ThemeProbe() } }
+        rule.setContent { juntaFirmaTheme(darkTheme = dark, dynamicColor = false) { ThemeProbe() } }
         rule.runOnIdle {
             assertEquals(JuntaLightPalette, snapshot.palette)
             dark = true

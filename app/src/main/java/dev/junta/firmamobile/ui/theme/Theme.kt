@@ -118,7 +118,9 @@ private fun ColorScheme.juntaPalette() = JuntaPalette(
     onError = onError.argb(),
 )
 
-private fun Color.argb(): Long = toArgb().toLong() and 0xFFFFFFFFL
+private const val UNSIGNED_ARGB_MASK = 0xFFFFFFFFL
+
+private fun Color.argb(): Long = toArgb().toLong() and UNSIGNED_ARGB_MASK
 
 private val JuntaTypography = Typography(
     displayLarge = TextStyle(
@@ -183,9 +185,18 @@ private val JuntaShapes = Shapes(
 )
 
 @Composable
-fun JuntaFirmaTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+fun JuntaFirmaTheme(content: @Composable () -> Unit) {
+    juntaFirmaTheme(
+        darkTheme = isSystemInDarkTheme(),
+        dynamicColor = true,
+        content = content,
+    )
+}
+
+@Composable
+internal fun juntaFirmaTheme(
+    darkTheme: Boolean,
+    dynamicColor: Boolean,
     content: @Composable () -> Unit,
 ) {
     val variant = selectJuntaTheme(darkTheme, dynamicColor, Build.VERSION.SDK_INT)
