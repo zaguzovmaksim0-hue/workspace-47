@@ -40,12 +40,12 @@ jobs:
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
           sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
-      - name: Generate candidate metadata and compile all variants
+      - name: Generate candidate metadata and compile non-release variants
         run: >-
           ./gradlew --write-verification-metadata sha256 --write-locks
           :app:verifyRuntimeDependencyLocks
           :app:compileDebugKotlin :app:compileQaKotlin
-          :app:compileOptimizedKotlin :app:compileReleaseKotlin
+          :app:compileOptimizedKotlin
           --no-daemon --console=plain
       - name: Collect updated runtime license evidence
         shell: bash
