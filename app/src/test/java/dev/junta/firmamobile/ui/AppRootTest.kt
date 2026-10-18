@@ -107,7 +107,7 @@ class AppRootTest {
             JuntaFirmaTheme {
                 AppRoot(
                     state = CertificateUiState.Locked(reference(), null, null),
-                    onUnlock = { submitted = it.copyOf() },
+                    onUnlock = { password, _ -> submitted = password.copyOf() },
                 )
             }
         }
@@ -123,6 +123,26 @@ class AppRootTest {
             check(submitted.contentEquals("secret-canary".toCharArray()))
         }
         rule.onNodeWithText("secret-canary").assertDoesNotExist()
+    }
+
+    @Test
+    fun retentionDefaultsToFifteenMinutesAndSubmitsChosenHourWithPassword() {
+        var chosen: dev.junta.firmamobile.certificate.CertificateUnlockRetention? = null
+        rule.setContent {
+            JuntaFirmaTheme {
+                AppRoot(
+                    state = CertificateUiState.Locked(reference(), null, null),
+                    onUnlock = { password, retention -> password.fill('\u0000'); chosen = retention },
+                )
+            }
+        }
+        rule.onNodeWithText("Plazo de desbloqueo: 15 minutos").assertExists()
+        rule.onNodeWithTag("certificate-retention-menu").performScrollTo().performClick()
+        rule.onNodeWithTag("certificate-retention-ONE_HOUR").performClick()
+        rule.onNodeWithText("Plazo de desbloqueo: 1 hora").assertExists()
+        rule.onNodeWithContentDescription("Contraseña del certificado").performScrollTo().performTextInput("synthetic")
+        rule.onNodeWithText("Desbloquear certificado").performScrollTo().performClick()
+        rule.runOnIdle { check(chosen == dev.junta.firmamobile.certificate.CertificateUnlockRetention.ONE_HOUR) }
     }
 
     @Test
