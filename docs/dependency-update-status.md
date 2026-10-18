@@ -80,3 +80,40 @@ vendored evidence so a later version edit cannot silently retain old stdlib.
 
 The outstanding PR list is not proof that their changes are absent from every
 later branch. Inspect each diff against current main before integrating it.
+
+## WebKit 1.17.1 stable candidate
+
+This isolated update starts from main `5cb79e778aa8ffaf633d9123abb0607d8f97fe9a`.
+Google Maven metadata lists 1.17.1 as the newest stable version; 1.18.0-rc01
+is deliberately not selected. Upstream 1.17.1 removes Kotlin from the library
+to address compiler compatibility. The 1.17.0 API removals/deprecations were
+checked against app sources; no affected API use was found.
+
+Primary sources:
+- https://developer.android.com/jetpack/androidx/releases/webkit
+- https://dl.google.com/dl/android/maven2/androidx/webkit/webkit/maven-metadata.xml
+- https://dl.google.com/dl/android/maven2/androidx/webkit/webkit/1.17.1/webkit-1.17.1.module
+
+The AAR, Gradle module metadata and POM were downloaded independently from
+Google Maven and SHA-256 pinned additively; old verification entries remain.
+The AAR requires minSdk 24, compile SDK 33 and AGP 7.2.0, below this app's
+existing minSdk 26, compile SDK 37 and AGP 9.3.1. No SDK change is included.
+The API/runtime module variants declare annotation 1.8.1,
+annotation-experimental 1.3.0, core 1.1.0 and jspecify 1.0.0; all are already
+covered by equal or newer runtime locks. Canonical CI must validate actual
+resolution and packaging rather than treating this metadata inspection as a
+resolved-graph proof.
+
+Only WebKit changes in the four runtime lock configurations. Its vendored
+license row was regenerated from the downloaded AAR/POM using the repository
+collector in an isolated evidence directory, then the legal index was rebuilt.
+Embedded notice bytes are unchanged. This is not a fresh full Gradle cache
+inventory: optimized/release CI inventory comparison remains required.
+`release_approved` remains false. No verification bypass, workflow change,
+E2E, portal acceptance, permanent-key signing or device installation is included.
+
+The policy regression first failed on the unchanged dependency (three failures
+out of five tests), then passed with the candidate. Fourteen focused policy,
+legal-bundle and collector tests pass locally. Full Gradle unit/lint/build,
+strict verification, resolved license evidence and security gates belong to
+exact-head canonical CI before integration.
