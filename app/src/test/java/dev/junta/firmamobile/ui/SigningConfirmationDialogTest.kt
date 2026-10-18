@@ -1,14 +1,22 @@
 package dev.junta.firmamobile.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import dev.junta.firmamobile.testing.createComposeRule
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import dev.junta.firmamobile.signing.SigningUiState
 import dev.junta.firmamobile.profile.CompatibilityStatus
+import dev.junta.firmamobile.signing.BatchSigningDocumentReview
+import dev.junta.firmamobile.signing.BatchSigningFormat
+import dev.junta.firmamobile.signing.NormalizedBatchSigningDocument
+import dev.junta.firmamobile.signing.SigningUiState
+import dev.junta.firmamobile.testing.createComposeRule
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import java.util.UUID
 import org.junit.Assert.assertEquals
@@ -51,6 +59,8 @@ class SigningConfirmationDialogTest {
         rule.onNodeWithText("Algoritmo: SHA1withRSA").assertIsDisplayed()
         rule.onNodeWithText("SHA-1", substring = true).performScrollTo().assertIsDisplayed()
         rule.onNodeWithText(RAW_PAYLOAD).assertDoesNotExist()
+        rule.onNodeWithTag("signing-batch-documents-toggle").assertDoesNotExist()
+        rule.onNodeWithTag("signing-batch-documents-count").assertDoesNotExist()
         rule.runOnIdle { assertEquals(emptyList<String>(), events) }
 
         rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
@@ -103,6 +113,111 @@ class SigningConfirmationDialogTest {
         rule.onNodeWithText("SHA-1", substring = true).assertDoesNotExist()
     }
 
+    @Test
+    fun batchReviewStartsCollapsedAndTogglesWithoutConsenting() {
+        rule.mainClock.autoAdvance = false
+        val events = mutableListOf<String>()
+        rule.setContent {
+            JuntaFirmaTheme {
+                SigningConfirmationDialog(
+                    state = batchState(listOf("doc-z", "\u202Ereport-\u2066A\u2069", "\u2066")).copy(
+                        algorithm = "SHA1withRSA",
+                        requiresLegacySha1Warning = true,
+                    ),
+                    onConfirm = { events += "confirm" },
+                    onCancel = { events += "cancel" },
+                )
+            }
+        }
+
+        rule.onNodeWithTag("signing-batch-documents-count").performScrollTo()
+            .assertTextEquals("3 documentos en el lote")
+        rule.onNodeWithTag("signing-batch-documents").assertDoesNotExist()
+        rule.onNodeWithTag("signing-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithText("Documento 1 · ID: doc-z").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Documento 2 · ID: report-A").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Documento 3").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("SHA-1", substring = true).performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText(RAW_REFERENCE, substring = true).assertDoesNotExist()
+        rule.onNodeWithText(RAW_PAYLOAD, substring = true).assertDoesNotExist()
+        rule.onNodeWithText("\u202Ereport-\u2066A\u2069", substring = true).assertDoesNotExist()
+        rule.onNodeWithText("Firmar").assertIsNotEnabled()
+        rule.onNodeWithText("Cancelar").assertIsEnabled()
+        rule.runOnIdle { assertEquals(emptyList<String>(), events) }
+
+        rule.onNodeWithTag("signing-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithTag("signing-batch-documents").assertDoesNotExist()
+        rule.onNodeWithText("Firmar").assertIsNotEnabled()
+        rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
+        rule.waitForIdle()
+        rule.onNodeWithText("Firmar").assertIsEnabled().performClick()
+        rule.runOnIdle { assertEquals(listOf("confirm"), events) }
+    }
+
+    @Test
+    fun aNewBatchRequestStartsCollapsedAndUsesTheSingularCount() {
+        var confirmation by mutableStateOf(batchState(listOf("doc-a", "doc-b")))
+        rule.setContent {
+            JuntaFirmaTheme {
+                SigningConfirmationDialog(confirmation, onConfirm = {}, onCancel = {})
+            }
+        }
+        rule.onNodeWithTag("signing-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithTag("signing-batch-document-0").performScrollTo().assertIsDisplayed()
+
+        rule.runOnIdle {
+            confirmation = batchState(listOf("new-doc")).copy(
+                requestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174001"),
+            )
+        }
+
+        rule.onNodeWithTag("signing-batch-documents-count").performScrollTo()
+            .assertTextEquals("1 documento en el lote")
+        rule.onNodeWithTag("signing-batch-documents").assertDoesNotExist()
+        rule.onNodeWithText("Ver documentos").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("signing-batch-documents-toggle").performClick()
+        rule.onNodeWithText("Documento 1 · ID: new-doc").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Documento 1 · ID: doc-a").assertDoesNotExist()
+    }
+
+    @Test
+    fun aLongBatchKeepsItsLastDocumentScrollableAndCancelAvailable() {
+        val events = mutableListOf<String>()
+        rule.setContent {
+            JuntaFirmaTheme {
+                SigningConfirmationDialog(
+                    state = batchState((1..128).map { "doc-$it" }),
+                    onConfirm = { events += "confirm" },
+                    onCancel = { events += "cancel" },
+                )
+            }
+        }
+
+        rule.onNodeWithTag("signing-batch-documents-count").performScrollTo()
+            .assertTextEquals("128 documentos en el lote")
+        rule.onNodeWithTag("signing-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithText("Documento 1 · ID: doc-1").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Documento 128 · ID: doc-128").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText(RAW_REFERENCE, substring = true).assertDoesNotExist()
+        rule.onNodeWithText(RAW_PAYLOAD, substring = true).assertDoesNotExist()
+        rule.runOnIdle { assertEquals(emptyList<String>(), events) }
+        rule.onNodeWithText("Cancelar").assertIsEnabled().performClick()
+        rule.runOnIdle { assertEquals(listOf("cancel"), events) }
+    }
+
+    private fun batchState(ids: List<String>) = state(requiresLegacySha1Warning = false).copy(
+        safeDescription = "Firma por lotes",
+        batchDocumentReview = BatchSigningDocumentReview(
+            ids.mapIndexed { index, id ->
+                NormalizedBatchSigningDocument(
+                    id = id,
+                    dataReference = if (index == 0) RAW_REFERENCE else RAW_PAYLOAD,
+                    format = BatchSigningFormat.CADES,
+                )
+            },
+        ),
+    )
+
     private fun state(requiresLegacySha1Warning: Boolean) =
         SigningUiState.AwaitingConfirmation(
             requestId = UUID.fromString("123e4567-e89b-42d3-a456-426614174000"),
@@ -118,5 +233,6 @@ class SigningConfirmationDialogTest {
 
     private companion object {
         const val RAW_PAYLOAD = "synthetic-secret-payload-base64"
+        const val RAW_REFERENCE = "https://example.invalid/private.pdf?token=synthetic-secret"
     }
 }

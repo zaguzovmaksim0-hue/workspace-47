@@ -39,6 +39,7 @@ sealed interface SigningUiState {
         val algorithm: String,
         val certificateOwner: String,
         val requiresLegacySha1Warning: Boolean,
+        val batchDocumentReview: BatchSigningDocumentReview? = null,
     ) : SigningUiState
 
     data class Signing(val requestId: UUID) : SigningUiState

@@ -9,9 +9,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.signing.SigningUiState
@@ -53,6 +59,7 @@ internal fun SigningConfirmationDialog(
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
+                BatchSigningDocuments(state)
             }
         },
         confirmButton = {
@@ -66,4 +73,48 @@ internal fun SigningConfirmationDialog(
             }
         },
     )
+}
+
+@Suppress("FunctionNaming") // Compose UI naming convention, as in other UI components.
+@Composable
+private fun BatchSigningDocuments(state: SigningUiState.AwaitingConfirmation) {
+    val review = state.batchDocumentReview ?: return
+    var expanded by remember(state.requestId) { mutableStateOf(false) }
+    Text(
+        text = pluralStringResource(
+            R.plurals.signing_batch_document_count,
+            review.documentLabels.size,
+            review.documentLabels.size,
+        ),
+        modifier = Modifier.testTag("signing-batch-documents-count"),
+    )
+    TextButton(
+        onClick = { expanded = !expanded },
+        modifier = Modifier.testTag("signing-batch-documents-toggle"),
+    ) {
+        Text(
+            stringResource(
+                if (expanded) R.string.signing_batch_documents_hide
+                else R.string.signing_batch_documents_show,
+            ),
+        )
+    }
+    if (expanded) {
+        Column(
+            modifier = Modifier.testTag("signing-batch-documents"),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(stringResource(R.string.signing_batch_documents_explanation))
+            review.documentLabels.forEachIndexed { index, label ->
+                Text(
+                    text = if (label.isEmpty()) {
+                        stringResource(R.string.signing_batch_document_number, index + 1)
+                    } else {
+                        stringResource(R.string.signing_batch_document_identifier, index + 1, label)
+                    },
+                    modifier = Modifier.testTag("signing-batch-document-$index"),
+                )
+            }
+        }
+    }
 }
