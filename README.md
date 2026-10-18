@@ -38,7 +38,7 @@ El catálogo se genera con `tools/generate_public_portal_catalog.py` a partir de
 
 ## Desarrollo y comprobaciones
 
-Utiliza el Gradle Wrapper del repositorio y Java 17. GitHub Actions es el entorno principal para comprobar el **SHA exacto** de cada candidato: pruebas Android Debug, QA y Optimized, lint, APK, Python, Go y análisis de seguridad. La instrumentación con emulador requiere activación manual explícita. Las pruebas locales acotadas no sustituyen ese ciclo.
+Utiliza el Gradle Wrapper del repositorio: Java 17 para el runtime de Gradle y el nivel de código Java; las tareas de pruebas unitarias del host seleccionan un toolchain Java 21, según `app/build.gradle.kts`. GitHub Actions es el entorno principal para comprobar el **SHA exacto** de cada candidato: pruebas Android Debug, QA y Optimized, lint, APK, Python, Go y análisis de seguridad. La instrumentación con emulador requiere activación manual explícita. Las pruebas locales acotadas no sustituyen ese ciclo.
 
 ```bash
 ./gradlew testOptimizedUnitTest
