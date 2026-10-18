@@ -60,7 +60,7 @@ class ProtocolProbeActivity : ComponentActivity() {
             setPadding(dp(16), dp(12), dp(16), dp(12))
         }
         hostView = TextView(this).apply {
-            text = BrowserAddressPresentation.hostOf(currentUrl)
+            text = BrowserAddressPresentation.hostOf(currentUrl, getString(R.string.browser_address_unavailable))
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             setPadding(dp(16), dp(8), dp(8), dp(8))
@@ -181,7 +181,7 @@ class ProtocolProbeActivity : ComponentActivity() {
 
     private fun updatePageUrl(url: String) {
         currentUrl = url
-        hostView.text = BrowserAddressPresentation.hostOf(url)
+        hostView.text = BrowserAddressPresentation.hostOf(url, getString(R.string.browser_address_unavailable))
         if (detailsExpanded) urlDetailsView.text = url
     }
 
