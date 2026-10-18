@@ -34,6 +34,7 @@ internal object RuntimeSigningAdapters {
             UgrCadesDetachedAdapter(),
             JccmCertificateLoginProbeCadesAdapter(),
             MitesCertificateLoginCadesAdapter(),
+            CantabriaRecCertificateLoginCadesAdapter(),
             GranCanariaPadesAdapter(),
             FuerteventuraPadesAdapter(),
             XuntaPadesTriPhaseAdapter(),

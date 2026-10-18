@@ -116,11 +116,11 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = TransportesXadesEnvelopedAdapter.ID,
             ),
             ProtocolAdapterBinding(
-                profileId = ProfileId("cantabria-rec-cert-login"),
+                profileId = ProfileId(CantabriaRecCertificateLoginCadesAdapter.PROFILE_ID),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
                 callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
-                signingProtocolId = SigningProtocolId("cantabria-rec-cert-login-cades-v1"),
+                signingProtocolId = CantabriaRecCertificateLoginCadesAdapter.ID,
             ),
             ProtocolAdapterBinding(
                 profileId = ProfileId(FuerteventuraPadesAdapter.PROFILE_ID),
