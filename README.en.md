@@ -83,7 +83,7 @@ Release builds intentionally require private signing configuration and must not 
 
 Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024-relay/`.
 
-Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Current broad candidate verification runs on the exact pull-request head through GitHub Actions, including Android unit/lint/APK gates; API 36 emulator instrumentation is available only through an explicit manual opt-in; see [`docs/agents/github-actions-verification.md`](docs/agents/github-actions-verification.md). Agents may use narrow local tests for development feedback, while Codex Cloud is no longer the default verification route. The former one-shot Termux publication runner is retired.
+Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Current broad candidate verification runs on the exact pull-request head through GitHub Actions, including Android unit/lint/APK gates; API 36 emulator instrumentation runs on the default branch nightly schedule or through an explicit manual opt-in, not on ordinary PR/push runs; see [`docs/agents/github-actions-verification.md`](docs/agents/github-actions-verification.md). Agents may use narrow local tests for development feedback, while Codex Cloud is no longer the default verification route. The former one-shot Termux publication runner is retired.
 
 ## Historical publication candidate
 
