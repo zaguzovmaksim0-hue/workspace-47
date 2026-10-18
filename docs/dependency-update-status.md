@@ -47,12 +47,34 @@ behavior: [old CI](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/ru
 No temporary metadata-generation workflow, verification bypass, final signing
 or device installation is included. The current no-E2E restriction still applies.
 
+## Compose Compiler 2.4.21 candidate
+
+The replacement for #259 starts from main after #371. Metadata was generated in
+an isolated temporary read-only CI workflow, then all 73 added SHA-256 entries
+were independently verified by downloading their files from Maven Central.
+No existing checksum was removed or changed. The temporary workflow is removed
+before integration; canonical CI still enforces strict dependency verification.
+
+Compose Compiler brings Kotlin build dependencies to 2.4.21. The only runtime
+lock change is kotlin-stdlib 2.3.10 to 2.4.21 across debug, qa, optimized and
+release. The old jdk7/jdk8 compatibility stubs remain unchanged. Fresh optimized
+and release license inventories have identical modules: only the stdlib row
+changes, with its Apache-2.0 POM evidence. The legal index is regenerated;
+release_approved stays false and this is not a legal/distribution approval.
+
+Debug, qa and optimized Kotlin compilation passed in the isolated generation
+run: [metadata evidence](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/39132590967).
+Release signing is not bypassed there: release compilation/build and unit/lint
+validation belong to canonical CI with its disposable CI key. Exact-head CI and
+security must pass before integration. No E2E, permanent-key release or device
+installation is included. Regression checks bind compiler, runtime lock and
+vendored evidence so a later version edit cannot silently retain old stdlib.
+
 ## Remaining open work (not included)
 
 | PR | Observed blocker / disposition |
 | --- | --- |
-| #260 Compose BOM 2026.09.00 | Replacement candidate described above; original PR remains open until the replacement passes exact-head CI/security and is merged. |
-| #259 Compose compiler 2.4.21 | Previous CI rejects unverified plugin-marker POM; temporary metadata workflow is still in its diff. Requires reviewed metadata generation and Kotlin/AGP compatibility checks; never disable dependency verification to merge it. |
+| #259 Compose compiler 2.4.21 | Replacement #372 described above; original stays open until exact-head CI/security pass and the replacement merges. |
 | #249, #311, #314, #317, #319 | QA/real-E2E control and portal recipes. Deferred under the current no-E2E instruction; neither merged nor closed by this dependency candidate. |
 | #369 authenticated saved unlock | Separate draft awaiting physical authenticated-Keystore acceptance; not silently included or marked complete here. |
 

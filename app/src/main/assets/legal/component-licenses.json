@@ -501,7 +501,7 @@
   "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "org.jetbrains.kotlin:kotlin-stdlib:2.3.10": [
+  "org.jetbrains.kotlin:kotlin-stdlib:2.4.21": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0": [
