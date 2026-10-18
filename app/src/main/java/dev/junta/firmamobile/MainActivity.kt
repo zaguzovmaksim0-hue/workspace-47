@@ -64,15 +64,11 @@ import dev.junta.firmamobile.profile.ProfileScopePreferences
 import dev.junta.firmamobile.profile.ProtocolOperation
 import dev.junta.firmamobile.signing.BatchSigningCoordinator
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
-import dev.junta.firmamobile.signing.CoroutineSigningExpiryScheduler
-import dev.junta.firmamobile.signing.JcaLocalSignatureEngine
 import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
-import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
-import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
-import dev.junta.firmamobile.signing.RuntimeSigningAdapters
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningErrorCode
+import dev.junta.firmamobile.signing.SigningModule
 import dev.junta.firmamobile.signing.SigningPreparationResult
 import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.SigningUiState
@@ -256,14 +252,13 @@ class MainActivity : ComponentActivity() {
             endpoint = URI(JuntaOfvirtualTriPhaseAdapter.ENDPOINT),
             observer = routeObserver,
         )
-        val ordinaryAdapters = RuntimeSigningAdapters.ordinary(
+        val signingModule = SigningModule(
+            certificateSession = app.certificateSession,
+            scope = lifecycleScope,
+        )
+        signingCoordinator = signingModule.ordinary(
             directJuntaTransport = directJuntaTransport,
             ofvirtualTransport = ofvirtualTransport,
-        )
-        signingCoordinator = SigningCoordinator(
-            certificateSession = app.certificateSession,
-            adapter = checkNotNull(ordinaryAdapters.resolve(JuntaTriPhaseAdapter.ID)),
-            localSignatureEngine = JcaLocalSignatureEngine(),
             currentOrigin = originProvider@{
                 val selectedProfileId = (destination as? AppDestination.Browser)?.profileId
                     ?: return@originProvider null
@@ -278,8 +273,6 @@ class MainActivity : ComponentActivity() {
             },
             currentNavigationEpoch = { currentNavigationEpoch },
             currentPageUrl = { currentWebView?.url },
-            expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
-            adapterResolver = ordinaryAdapters::resolve,
         )
         val melillaProfile = checkNotNull(
             BuiltInSiteProfiles.catalog.profiles.singleOrNull {
@@ -307,15 +300,9 @@ class MainActivity : ComponentActivity() {
         burgosBatchSigningAdapter = BurgosBatchSigningAdapter(
             registry = BuiltInSiteProfiles.runtimeRegistry,
         )
-        val batchAdapters = RuntimeSigningAdapters.batch()
-        batchSigningCoordinator = BatchSigningCoordinator(
-            certificateSession = app.certificateSession,
-            adapter = checkNotNull(batchAdapters.resolve(MelillaBatchProtocolAdapter.ID)),
-            adapterResolver = batchAdapters::resolve,
-            localSignatureEngine = JcaLocalSignatureEngine(),
+        batchSigningCoordinator = signingModule.batch(
             currentOrigin = { currentSigningOrigin() },
             currentNavigationEpoch = { currentNavigationEpoch },
-            expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
             profileDisplayName = melillaProfile.displayName,
             compatibilityStatus = melillaProfile.compatibilityStatus,
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
