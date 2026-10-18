@@ -4,6 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -48,6 +50,7 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
     }
     val title = document?.title ?: when (section) {
         "licenses" -> stringResource(R.string.legal_licenses)
+        "feedback" -> stringResource(R.string.compatibility_feedback_title)
         else -> stringResource(R.string.legal_information)
     }
     Dialog(onDismissRequest = { back() }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
@@ -88,6 +91,15 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                             items(chunks.size) { index -> Text(chunks[index], style = MaterialTheme.typography.bodyMedium) }
                         }
                     }
+                    section == "feedback" -> {
+                        val report = remember { currentCompatibilityFeedbackReport() }
+                        compatibilityFeedbackPane(
+                            report = report,
+                            onCopy = { copyCompatibilityFeedback(context, it) },
+                            onOpenIssue = { openCompatibilityFeedback(context, it) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                     section == "licenses" -> {
                         val documents by produceState<List<LegalDocument>?>(null) {
                             value = withContext(Dispatchers.IO) {
@@ -116,17 +128,26 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
                         }
                     }
                     else -> {
-                        TextButton(onClick = { document = LegalDocument(privacyTitle, "legal/privacy.txt") },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                            Text(stringResource(R.string.legal_privacy))
-                        }
-                        TextButton(onClick = { section = "licenses" },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                            Text(stringResource(R.string.legal_licenses))
-                        }
-                        TextButton(onClick = { document = LegalDocument(aboutTitle, "legal/about.txt") },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                            Text(stringResource(R.string.legal_about))
+                        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                            TextButton(onClick = { document = LegalDocument(privacyTitle, "legal/privacy.txt") },
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                                Text(stringResource(R.string.legal_privacy))
+                            }
+                            TextButton(onClick = { section = "licenses" },
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                                Text(stringResource(R.string.legal_licenses))
+                            }
+                            TextButton(onClick = { document = LegalDocument(aboutTitle, "legal/about.txt") },
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                                Text(stringResource(R.string.legal_about))
+                            }
+                            TextButton(
+                                onClick = { section = "feedback" },
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                                    .testTag("legal-compatibility-feedback"),
+                            ) {
+                                Text(stringResource(R.string.compatibility_feedback_title))
+                            }
                         }
                     }
                 }

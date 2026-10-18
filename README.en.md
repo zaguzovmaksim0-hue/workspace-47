@@ -8,6 +8,33 @@ Firma Mobile is an Android client and interoperability project for certificate-b
 
 The project is experimental. Compatibility is recorded per exact profile and operation; the repository does not claim universal support for every Spanish public portal or every operation exposed by a supported portal.
 
+## Getting started
+
+- [Installation and first steps (Spanish)](docs/instalacion.md)
+- [Version 0.2.11 changes](CHANGELOG.md)
+- [Technical documentation](docs/README.md)
+- [Security policy](SECURITY.md)
+- [Privacy policy (Spanish)](docs/privacidad.md)
+- [Contributing](CONTRIBUTING.md)
+
+The visible name is **Firma Mobile** and the daily-use version is **0.2.11**.
+The Android application ID remains `dev.junta.firmamobile` for update continuity.
+The internal `optimized` build-type name is not part of the visible version.
+
+## Certificates and privacy
+
+Certificate and password processing stays local. Each manual unlock selects a
+session lifetime of 15 minutes (the default), one hour or 24 hours. On API 28+
+an encrypted cache can restore the certificate without extending that deadline.
+The certificate menu's lock action ends the local session early; it does not
+delete the original file, revoke the certificate or guarantee logout from an
+already authenticated portal. This cache is not a claim that the private key
+has been imported as a non-exportable AndroidKeyStore/StrongBox key.
+
+Every signing operation requires confirmation. Tests use synthetic data; never
+commit real certificates, passwords, cookies, private documents or authenticated
+captures. See [test-fixture rules](docs/test-fixtures.md).
+
 ## Security model
 
 Core design principles are fail-closed:
@@ -42,39 +69,29 @@ See [the documentation index](docs/README.md) for current engineering guidance, 
 
 ## Build
 
-Use the repository Gradle Wrapper. The Android build is configured around Java 17 and the Android/Gradle tooling declared in the repository.
+Use the repository Gradle Wrapper. The Gradle runtime and Java source/target baseline use Java 17. Host unit-test tasks select a Java 21 toolchain, as declared in `app/build.gradle.kts`; use the repository toolchain configuration and the exact versions pinned by CI.
 
 Typical development checks:
 
 ```bash
-./gradlew testDebugUnitTest
-./gradlew lintDebug
-./gradlew assembleDebug
+./gradlew testOptimizedUnitTest
+./gradlew lintOptimized
+./gradlew assembleOptimized
 ```
 
-Release builds intentionally require private signing configuration and must not fall back to a committed debug key. See `keystore.properties.example` and `app/build.gradle.kts`.
+Release builds intentionally require private signing configuration and must not fall back to a committed debug key. See [release signing](docs/release-signing.md), `keystore.properties.example` and `app/build.gradle.kts`. Ordinary CI uses disposable test signing material, not the permanent distribution key.
 
 Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024-relay/`.
 
-Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Current broad candidate verification runs on the exact pull-request head through GitHub Actions, including Android unit/lint/APK gates; API 36 emulator instrumentation is available only through an explicit manual opt-in; see [`docs/agents/github-actions-verification.md`](docs/agents/github-actions-verification.md). Agents may use narrow local tests for development feedback, while Codex Cloud is no longer the default verification route. The former one-shot Termux publication runner is retired.
+Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/building-on-termux.md). Current broad candidate verification runs on the exact pull-request head through GitHub Actions, including Android unit/lint/APK gates; API 36 emulator instrumentation runs on the default branch nightly schedule or through an explicit manual opt-in, not on ordinary PR/push runs; see [`docs/agents/github-actions-verification.md`](docs/agents/github-actions-verification.md). Agents may use narrow local tests for development feedback, while Codex Cloud is no longer the default verification route. The former one-shot Termux publication runner is retired.
 
 ## Historical publication candidate
 
-The source-publication candidate is based on product commit `4bf6afb000dbab8f6f767d8ea05a1a00e2d563cb`, the last autonomous product checkpoint with recorded Codex Cloud acceptance. Later autonomous TDD RED work was deliberately excluded.
-
-Final private pre-publication verification was completed at candidate SHA `6b5a2ab13497c6c623a223b4a951338f822ccba6`:
-
-- Gitleaks 8.30.1 scanned the full history/all refs: 424 commits, 0 findings, exit 0;
-- publication visual-resource policy: PASS;
-- Debug and QA unit tests: 656/656 each, no failures/errors;
-- Debug/QA lint: PASS;
-- Debug, QA and QA AndroidTest assemblies: PASS;
-- Android artifact verification: PASS;
-- release-signing fail-closed verification: PASS;
-- Python policy/catalog tests: 113 tests, 1 skipped, 0 failures;
-- Go relay test, vet and build: PASS. Native Go `-race` is not supported on Android/arm64 and is optional supporting evidence, not a source-publication blocker.
-
-See [`docs/oss-publication-status.md`](docs/oss-publication-status.md) for the publication record.
+Historical publication acceptance, source SHAs and dated verification counts
+are preserved in [the publication record](docs/oss-publication-status.md). They
+are historical evidence, not current-branch test results or proof that current
+portals work. Use exact-head CI and the scoped compatibility records for new
+changes. No historical evidence files are removed by this README refresh.
 
 ## Test-only credentials
 
@@ -100,4 +117,4 @@ Separately licensed third-party material remains under its own terms and is not 
 
 The existing author/committer email metadata was explicitly accepted for publication. The maintainer also explicitly confirmed the five source-rights/no-unlicensed-copy statements in [`docs/maintainer-source-attestation.md`](docs/maintainer-source-attestation.md) on 2026-08-12.
 
-Source-publication gates are complete. Binary APK/AAB redistribution remains a separate compliance step because exact packaged dependency/NOTICE obligations must be checked for each release artifact.
+The historical source-publication record documents its completed gates. Binary APK/AAB redistribution remains a separate compliance step because exact packaged dependency/NOTICE obligations must be checked for each release artifact.

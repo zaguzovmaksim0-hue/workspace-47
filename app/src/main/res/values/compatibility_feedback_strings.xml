@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compatibility_feedback_title">Informar de compatibilidad</string>
+    <string name="compatibility_feedback_intro">El informe solo incluye la versión de Firma Mobile, su código de versión y el nivel API de Android. No se envía automáticamente ni se crea ninguna incidencia desde la aplicación.</string>
+    <string name="compatibility_feedback_preview">Vista previa del informe</string>
+    <string name="compatibility_feedback_privacy">No se incluyen certificados, identificadores, documentos, direcciones ni historial. Copiar coloca únicamente el informe mostrado en el portapapeles.</string>
+    <string name="compatibility_feedback_copy">Copiar informe</string>
+    <string name="compatibility_feedback_open">Abrir formulario de GitHub</string>
+    <string name="compatibility_feedback_copied">Informe copiado.</string>
+    <string name="compatibility_feedback_copy_failed">No se pudo copiar el informe.</string>
+    <string name="compatibility_feedback_confirm_title">¿Abrir GitHub?</string>
+    <string name="compatibility_feedback_confirm_message">Se abrirá github.com/zaguzovmaksim0-hue/workspace-47/issues/new con el informe de la vista previa en la URL. No se crea una incidencia automáticamente: tendrás que revisarla y publicarla en GitHub. GitHub recibirá la visita y puede asociarla con tu IP o sesión. Una incidencia publicada será pública. No añadas datos personales, certificados, documentos ni direcciones privadas.</string>
+    <string name="compatibility_feedback_confirm_open">Continuar a GitHub</string>
+    <string name="compatibility_feedback_open_failed">No se pudo abrir GitHub. Puedes copiar el informe y abrir GitHub por tu cuenta.</string>
+</resources>

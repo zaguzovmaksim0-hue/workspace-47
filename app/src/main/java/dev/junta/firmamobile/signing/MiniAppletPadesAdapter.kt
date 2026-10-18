@@ -34,6 +34,24 @@ open class MiniAppletPadesAdapter internal constructor(
 ) : SigningProtocolAdapter {
     override val id: SigningProtocolId = contract.id
 
+    final override fun documentConsent(request: NormalizedSignRequest): DocumentConsentEvidence {
+        if (!request.matchesContract()) return DocumentConsentEvidence.unavailable(SigningPayloadKind.ENVELOPE)
+        return try {
+            request.withPayload { payload ->
+                require(payload.size <= PendingSignRequestStore.MAX_PAYLOAD_BYTES)
+                MiniAppletPayloadCodec.withDecoded(payload) { pdfBytes, extraProperties ->
+                    if (isExpectedDocument(pdfBytes, extraProperties)) {
+                        DocumentConsentEvidence.fromEnvelope(request, payload, pdfBytes)
+                    } else {
+                        DocumentConsentEvidence.unavailable(SigningPayloadKind.ENVELOPE)
+                    }
+                }
+            }
+        } catch (_: Exception) {
+            DocumentConsentEvidence.unavailable(SigningPayloadKind.ENVELOPE)
+        }
+    }
+
     override suspend fun prepare(
         request: NormalizedSignRequest,
         certificateChain: List<X509Certificate>,
@@ -48,10 +66,7 @@ open class MiniAppletPadesAdapter internal constructor(
         return try {
             request.withPayload { payload ->
                 MiniAppletPayloadCodec.withDecoded(payload) { pdfBytes, extraProperties ->
-                    if (extraProperties != contract.expectedExtraProperties ||
-                        pdfBytes.size !in 5..MAX_PDF_BYTES ||
-                        !pdfBytes.startsWithPdfHeader()
-                    ) {
+                    if (!isExpectedDocument(pdfBytes, extraProperties)) {
                         return@withDecoded ProtocolPrepareResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
                     }
                     preparePdf(request, pdfBytes, certificateChain)
@@ -224,6 +239,10 @@ open class MiniAppletPadesAdapter internal constructor(
             algorithm == contract.signingAlgorithm &&
             format == SigningFormat.PADES
 
+
+    private fun isExpectedDocument(pdfBytes: ByteArray, extraProperties: String): Boolean =
+        extraProperties == contract.expectedExtraProperties &&
+            pdfBytes.size in 5..MAX_PDF_BYTES && pdfBytes.startsWithPdfHeader()
 
     private fun ByteArray.startsWithPdfHeader(): Boolean =
         size >= 5 && this[0] == '%'.code.toByte() && this[1] == 'P'.code.toByte() &&
