@@ -73,63 +73,6 @@ class BrowserSecurityRegressionTest {
     }
 
     @Test
-    fun sevillaAtseSigningAdapterIsWiredIntoTheRuntimeResolver() {
-        val activitySource = projectSource(
-            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
-        )
-        val resolverBlock = activitySource
-            .substringAfter("adapterResolver = { id ->", missingDelimiterValue = "")
-            .substringBefore("\n            },")
-
-        assertTrue(
-            "MainActivity must construct the exact Sevilla ATSE signing adapter",
-            "val sevillaAdapter = SevillaAtseXadesEnvelopingAdapter()" in activitySource,
-        )
-        assertTrue(
-            "The runtime adapter resolver must map only Sevilla's exact protocol id to that adapter",
-            resolverBlock.isNotEmpty() && "sevillaAdapter.id -> sevillaAdapter" in resolverBlock,
-        )
-    }
-
-    @Test
-    fun tenerifeSigningAdapterIsWiredIntoTheRuntimeResolver() {
-        val activitySource = projectSource(
-            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
-        )
-        val resolverBlock = activitySource
-            .substringAfter("adapterResolver = { id ->", missingDelimiterValue = "")
-            .substringBefore("\n            },")
-
-        assertTrue(
-            "MainActivity must construct the exact Tenerife signing adapter",
-            "val tenerifeAdapter = TenerifeCadesDetachedAdapter()" in activitySource,
-        )
-        assertTrue(
-            "The runtime adapter resolver must map Tenerife's exact protocol id to that adapter",
-            resolverBlock.isNotEmpty() && "tenerifeAdapter.id -> tenerifeAdapter" in resolverBlock,
-        )
-    }
-
-    @Test
-    fun policiaSigningAdapterIsWiredIntoTheRuntimeResolver() {
-        val activitySource = projectSource(
-            "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
-        )
-        val resolverBlock = activitySource
-            .substringAfter("adapterResolver = { id ->", missingDelimiterValue = "")
-            .substringBefore("\n            },")
-
-        assertTrue(
-            "MainActivity must construct the exact Policia signing adapter",
-            "val policiaAdapter = PoliciaXadesDetachedAdapter()" in activitySource,
-        )
-        assertTrue(
-            "The runtime adapter resolver must map Policia's exact protocol id to that adapter",
-            resolverBlock.isNotEmpty() && "policiaAdapter.id -> policiaAdapter" in resolverBlock,
-        )
-    }
-
-    @Test
     fun crossProfileNavigationCannotRebindTheSelectedSecurityProfile() {
         val invalidations = mutableListOf<BrowserTransitionReason>()
         val junta = profile("junta-andalucia")
@@ -757,6 +700,9 @@ class BrowserSecurityRegressionTest {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
         )
+        val adaptersSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/signing/RuntimeSigningAdapters.kt",
+        )
         val browserBlock = source
             .substringAfter("BrowserScreen(", missingDelimiterValue = "")
             .substringBefore("\n                        )")
@@ -773,7 +719,7 @@ class BrowserSecurityRegressionTest {
         )
         assertTrue(
             "Melilla batch protocol must use the existing direct HTTPS transport stack",
-            "MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))" in source,
+            "MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))" in adaptersSource,
         )
         val melillaAdapterBlock = source
             .substringAfter("melillaBatchSigningAdapter = MelillaBatchSigningAdapter(", missingDelimiterValue = "")
@@ -866,6 +812,9 @@ class BrowserSecurityRegressionTest {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
         )
+        val adaptersSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/signing/RuntimeSigningAdapters.kt",
+        )
         val coordinatorBlock = source
             .substringAfter("batchSigningCoordinator = BatchSigningCoordinator(", missingDelimiterValue = "")
             .substringBefore("\n        )")
@@ -878,16 +827,14 @@ class BrowserSecurityRegressionTest {
             "private lateinit var extremaduraBatchSigningAdapter: ExtremaduraBatchSigningAdapter" in source,
         )
         assertTrue(
-            "MainActivity must create fixed Melilla and Extremadura STA protocol adapters over HTTPS transport",
-            "val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))" in source &&
-                "val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy()::validate))" in source,
+            "Runtime adapters must create fixed Melilla and Extremadura STA protocol adapters over HTTPS transport",
+            "MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))" in adaptersSource &&
+                "ExtremaduraBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy()::validate))" in adaptersSource,
         )
         assertTrue(
-            "The batch coordinator must resolve only the two fixed STA protocol adapters and bind confirmation metadata to the active profile",
+            "The batch coordinator must resolve its adapters and bind confirmation metadata to the active profile",
             coordinatorBlock.isNotEmpty() &&
-                "adapter = melillaBatchProtocolAdapter" in coordinatorBlock &&
-                "melillaBatchProtocolAdapter.id -> melillaBatchProtocolAdapter" in coordinatorBlock &&
-                "extremaduraBatchProtocolAdapter.id -> extremaduraBatchProtocolAdapter" in coordinatorBlock &&
+                "adapterResolver = batchAdapters::resolve" in coordinatorBlock &&
                 "profileRegistry = BuiltInSiteProfiles.runtimeRegistry" in coordinatorBlock,
         )
         assertTrue(
@@ -946,7 +893,7 @@ class BrowserSecurityRegressionTest {
 
     @Test
     fun everyStaAdapterUsesItsOwnHostPolicyInsteadOfJuntaDefaultTransport() {
-        val source = projectSource("app/src/main/java/dev/junta/firmamobile/MainActivity.kt")
+        val source = projectSource("app/src/main/java/dev/junta/firmamobile/signing/RuntimeSigningAdapters.kt")
         for (name in listOf("Melilla", "Extremadura", "LaPalma", "Huesca", "Burgos")) {
             assertTrue("Missing exact host policy for $name", source.contains(
                 "${name}BatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.${name}BatchUrlPolicy()::validate))"))

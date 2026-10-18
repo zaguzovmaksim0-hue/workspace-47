@@ -66,38 +66,10 @@ import dev.junta.firmamobile.signing.BatchSigningCoordinator
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.CoroutineSigningExpiryScheduler
 import dev.junta.firmamobile.signing.JcaLocalSignatureEngine
-import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
 import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
-import dev.junta.firmamobile.signing.AccedaPadesAdapter
-import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
-import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
-import dev.junta.firmamobile.signing.DiputacionBadajozCadesAdapter
-import dev.junta.firmamobile.signing.DiputacionLleidaCadesAdapter
-import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
-import dev.junta.firmamobile.signing.EivissaCadesDetachedAdapter
-import dev.junta.firmamobile.signing.UgrCadesDetachedAdapter
-import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
-import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
-import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
-import dev.junta.firmamobile.signing.FuerteventuraPadesAdapter
-import dev.junta.firmamobile.signing.TransparenciaPadesAdapter
-import dev.junta.firmamobile.signing.MinecoPadesAdapter
-import dev.junta.firmamobile.signing.TenerifeCadesDetachedAdapter
-import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
-import dev.junta.firmamobile.signing.AirefXadesEnvelopingAdapter
-import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
-import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
-import dev.junta.firmamobile.signing.PoliciaXadesDetachedAdapter
-import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
-import dev.junta.firmamobile.signing.BurgosBatchProtocolAdapter
-import dev.junta.firmamobile.signing.CaibBatchProtocolAdapter
-import dev.junta.firmamobile.signing.ExtremaduraBatchProtocolAdapter
-import dev.junta.firmamobile.signing.HuescaBatchProtocolAdapter
-import dev.junta.firmamobile.signing.LaPalmaBatchProtocolAdapter
-import dev.junta.firmamobile.signing.LugoBatchProtocolAdapter
+import dev.junta.firmamobile.signing.JuntaTriPhaseAdapter
 import dev.junta.firmamobile.signing.MelillaBatchProtocolAdapter
-import dev.junta.firmamobile.signing.UnizarTriPhaseAdapter
-import dev.junta.firmamobile.signing.XuntaPadesTriPhaseAdapter
+import dev.junta.firmamobile.signing.RuntimeSigningAdapters
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningErrorCode
@@ -284,34 +256,13 @@ class MainActivity : ComponentActivity() {
             endpoint = URI(JuntaOfvirtualTriPhaseAdapter.ENDPOINT),
             observer = routeObserver,
         )
-        val juntaAdapter = JuntaTriPhaseAdapter(transport = directJuntaTransport)
-        val juntaOfvirtualAdapter = JuntaOfvirtualTriPhaseAdapter(transport = ofvirtualTransport)
-        val redsaraAdapter = LocalXadesDetachedAdapter()
-        val aragonAdapter = LocalCadesDetachedAdapter()
-        val dgtAdapter = DgtVerificationCadesAdapter()
-        val lleidaAdapter = DiputacionLleidaCadesAdapter()
-        val badajozAdapter = DiputacionBadajozCadesAdapter()
-        val canariasAdapter = CanariasCertificateLoginCadesAdapter()
-        val ugrAdapter = UgrCadesDetachedAdapter()
-        val jccmAdapter = JccmCertificateLoginProbeCadesAdapter()
-        val mitesAdapter = MitesCertificateLoginCadesAdapter()
-        val granCanariaAdapter = GranCanariaPadesAdapter()
-        val fuerteventuraAdapter = FuerteventuraPadesAdapter()
-        val xuntaAdapter = XuntaPadesTriPhaseAdapter()
-        val transparenciaAdapter = TransparenciaPadesAdapter()
-        val minecoAdapter = MinecoPadesAdapter()
-        val tenerifeAdapter = TenerifeCadesDetachedAdapter()
-        val eivissaAdapter = EivissaCadesDetachedAdapter()
-        val sevillaAdapter = SevillaAtseXadesEnvelopingAdapter()
-        val airefAdapter = AirefXadesEnvelopingAdapter()
-        val cdtiAdapter = CdtiXadesEnvelopingAdapter()
-        val transportesAdapter = TransportesXadesEnvelopedAdapter()
-        val policiaAdapter = PoliciaXadesDetachedAdapter()
-        val unizarAdapter = UnizarTriPhaseAdapter()
-        val accedaAdapter = AccedaPadesAdapter()
+        val ordinaryAdapters = RuntimeSigningAdapters.ordinary(
+            directJuntaTransport = directJuntaTransport,
+            ofvirtualTransport = ofvirtualTransport,
+        )
         signingCoordinator = SigningCoordinator(
             certificateSession = app.certificateSession,
-            adapter = juntaAdapter,
+            adapter = checkNotNull(ordinaryAdapters.resolve(JuntaTriPhaseAdapter.ID)),
             localSignatureEngine = JcaLocalSignatureEngine(),
             currentOrigin = originProvider@{
                 val selectedProfileId = (destination as? AppDestination.Browser)?.profileId
@@ -328,36 +279,7 @@ class MainActivity : ComponentActivity() {
             currentNavigationEpoch = { currentNavigationEpoch },
             currentPageUrl = { currentWebView?.url },
             expiryScheduler = CoroutineSigningExpiryScheduler(lifecycleScope),
-            adapterResolver = { id ->
-                when (id) {
-                    juntaAdapter.id -> juntaAdapter
-                    juntaOfvirtualAdapter.id -> juntaOfvirtualAdapter
-                    redsaraAdapter.id -> redsaraAdapter
-                    aragonAdapter.id -> aragonAdapter
-                    dgtAdapter.id -> dgtAdapter
-                    lleidaAdapter.id -> lleidaAdapter
-                    badajozAdapter.id -> badajozAdapter
-                    canariasAdapter.id -> canariasAdapter
-                    ugrAdapter.id -> ugrAdapter
-                    jccmAdapter.id -> jccmAdapter
-                    mitesAdapter.id -> mitesAdapter
-                    granCanariaAdapter.id -> granCanariaAdapter
-                    fuerteventuraAdapter.id -> fuerteventuraAdapter
-                    xuntaAdapter.id -> xuntaAdapter
-                    transparenciaAdapter.id -> transparenciaAdapter
-                    minecoAdapter.id -> minecoAdapter
-                    tenerifeAdapter.id -> tenerifeAdapter
-                    eivissaAdapter.id -> eivissaAdapter
-                    sevillaAdapter.id -> sevillaAdapter
-                    airefAdapter.id -> airefAdapter
-                    cdtiAdapter.id -> cdtiAdapter
-                    transportesAdapter.id -> transportesAdapter
-                    policiaAdapter.id -> policiaAdapter
-                    unizarAdapter.id -> unizarAdapter
-                    accedaAdapter.id -> accedaAdapter
-                    else -> null
-                }
-            },
+            adapterResolver = ordinaryAdapters::resolve,
         )
         val melillaProfile = checkNotNull(
             BuiltInSiteProfiles.catalog.profiles.singleOrNull {
@@ -385,28 +307,11 @@ class MainActivity : ComponentActivity() {
         burgosBatchSigningAdapter = BurgosBatchSigningAdapter(
             registry = BuiltInSiteProfiles.runtimeRegistry,
         )
-        val melillaBatchProtocolAdapter = MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))
-        val extremaduraBatchProtocolAdapter = ExtremaduraBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy()::validate))
-        val laPalmaBatchProtocolAdapter = LaPalmaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.LaPalmaBatchUrlPolicy()::validate))
-        val huescaBatchProtocolAdapter = HuescaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.HuescaBatchUrlPolicy()::validate))
-        val lugoBatchProtocolAdapter = LugoBatchProtocolAdapter()
-        val caibBatchProtocolAdapter = CaibBatchProtocolAdapter()
-        val burgosBatchProtocolAdapter = BurgosBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.BurgosBatchUrlPolicy()::validate))
+        val batchAdapters = RuntimeSigningAdapters.batch()
         batchSigningCoordinator = BatchSigningCoordinator(
             certificateSession = app.certificateSession,
-            adapter = melillaBatchProtocolAdapter,
-            adapterResolver = { id ->
-                when (id) {
-                    melillaBatchProtocolAdapter.id -> melillaBatchProtocolAdapter
-                    extremaduraBatchProtocolAdapter.id -> extremaduraBatchProtocolAdapter
-                    laPalmaBatchProtocolAdapter.id -> laPalmaBatchProtocolAdapter
-                    huescaBatchProtocolAdapter.id -> huescaBatchProtocolAdapter
-                    lugoBatchProtocolAdapter.id -> lugoBatchProtocolAdapter
-                    caibBatchProtocolAdapter.id -> caibBatchProtocolAdapter
-                    burgosBatchProtocolAdapter.id -> burgosBatchProtocolAdapter
-                    else -> null
-                }
-            },
+            adapter = checkNotNull(batchAdapters.resolve(MelillaBatchProtocolAdapter.ID)),
+            adapterResolver = batchAdapters::resolve,
             localSignatureEngine = JcaLocalSignatureEngine(),
             currentOrigin = { currentSigningOrigin() },
             currentNavigationEpoch = { currentNavigationEpoch },
