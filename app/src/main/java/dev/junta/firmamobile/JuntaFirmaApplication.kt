@@ -5,7 +5,6 @@ import android.util.Log
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
 import dev.junta.firmamobile.certificate.CertificateGateway
-import dev.junta.firmamobile.certificate.CertificateModule
 import dev.junta.firmamobile.certificate.CertificateUnlockCache
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.network.BuildVariantSecureTunnelRuntimeFactory
@@ -48,6 +47,9 @@ class JuntaFirmaApplication : Application() {
     lateinit var clientCertPreferenceCoordinator: ClientCertPreferenceCoordinator
         internal set
 
+    internal lateinit var appContainer: AppContainer
+        private set
+
     internal lateinit var secureTunnelRuntime: SecureTunnelRuntime
         private set
 
@@ -64,7 +66,8 @@ class JuntaFirmaApplication : Application() {
         )
         secureTunnelRuntime = BuildVariantSecureTunnelRuntimeFactory.create(this)
         clientCertPreferenceCoordinator = ClientCertPreferenceCoordinator()
-        val certificateModule = CertificateModule.create(this)
+        appContainer = AppContainer.create(this)
+        val certificateModule = appContainer.certificateModule
         certificateSession = certificateModule.session
         certificateUnlockCache = certificateModule.unlockCache
         certificateGateway = certificateModule.gateway

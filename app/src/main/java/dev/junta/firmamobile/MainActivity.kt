@@ -68,7 +68,6 @@ import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningErrorCode
-import dev.junta.firmamobile.signing.SigningModule
 import dev.junta.firmamobile.signing.SigningPreparationResult
 import dev.junta.firmamobile.signing.SigningReplySink
 import dev.junta.firmamobile.signing.SigningUiState
@@ -252,7 +251,7 @@ class MainActivity : ComponentActivity() {
             endpoint = URI(JuntaOfvirtualTriPhaseAdapter.ENDPOINT),
             observer = routeObserver,
         )
-        val signingModule = SigningModule(
+        val signingModule = app.appContainer.createSigningModule(
             certificateSession = app.certificateSession,
             scope = lifecycleScope,
         )
