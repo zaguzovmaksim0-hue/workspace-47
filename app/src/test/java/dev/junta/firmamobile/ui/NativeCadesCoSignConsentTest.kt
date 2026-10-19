@@ -28,7 +28,7 @@ import org.robolectric.annotation.SQLiteMode
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
-@Config(qualifiers="w400dp-h1200dp")
+@Config(qualifiers="es-rES-w400dp-h1200dp")
 class NativeCadesCoSignConsentTest {
     @get:Rule val rule=createComposeRule()
     private var confirmed=0

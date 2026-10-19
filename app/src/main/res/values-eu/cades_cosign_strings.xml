@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_cades_cosign_action">Gehitu nire sinadura dagoeneko sinatutako dokumentuari</string>
+    <string name="native_cades_cosign_notice">Aurreko sinadurak egiaztatuko dira, eta mantendu egingo dira berria gehitzean. CAdES fitxategiak jatorrizko dokumentua ez badauka, egiaztatutako aztarna bera sinatuko da: dokumentuaren edukia ez da hemen irakurriko ezta egiaztatuko ere. Horrek ez du aurreko ziurtagirien fidagarritasuna edo errebokazio-egoera frogatzen.</string>
+</resources>

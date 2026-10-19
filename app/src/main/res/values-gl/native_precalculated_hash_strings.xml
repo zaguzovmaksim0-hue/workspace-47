@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_cades_provided_hash_notice">A sede enviou unha pegada %1$s, non o documento orixinal. Asinarase esa pegada sen volver calculala. Esta aplicación non pode comprobar que documento representa; comproba o trámite na sede antes de confirmar. O resultado será unha sinatura CAdES separada.</string>
+    <string name="native_cades_provided_hash_batch">Esta solicitude inclúe %1$d elemento(s) cunha pegada calculada pola sede. Os seus documentos orixinais non se recibiron e non se pode comprobar aquí o seu contido. Os demais elementos conservan a súa operación normal.</string>
+    <string name="native_cades_provided_hash_size">Pegada recibida: %1$d bytes; tamaño do documento orixinal descoñecido.</string>
+    <string name="native_cades_received_hash_fingerprint">SHA-256 dos bytes recibidos, non do documento orixinal: %1$s</string>
+</resources>

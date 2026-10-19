@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_multiphase_service">Servizo de sinatura: %1$s</string>
+    <string name="native_multiphase_count">Documentos no lote: %1$d</string>
+    <string name="native_multiphase_delegated">Sinatura delegada: ao confirmar enviaranse o certificado público e os datos ou referencias ao servizo indicado. O servizo prepara os datos PRE que asinará a túa chave; o teléfono non pode demostrar que un PRE opaco corresponde ao documento amosado. Continúa só se confías nese servizo. Un lote pode rematar parcialmente ou ser gardado polo servizo antes de que volva a resposta.</string>
+    <string name="native_multiphase_cosign">Engadir unha sinatura ao documento</string>
+    <string name="native_multiphase_countersign">Contrasinatura mediante o servizo</string>
+    <string name="native_multiphase_batch">Sinatura por lotes</string>
+    <string name="webauthn_status_label">Passkeys / WebAuthn</string>
+    <string name="webauthn_unsupported">Este WebView non anuncia compatibilidade nativa con WebAuthn. Podes continuar no navegador externo.</string>
+    <string name="webauthn_configuration_failed">Non se puido activar o motor WebAuthn. A navegación normal continúa dispoñible.</string>
+    <string name="webauthn_provider_unknown">Motor WebAuthn nativo activado para o navegador. A autorización do provedor de credenciais para esta aplicación aínda non está confirmada; algunhas passkeys poden non estar dispoñibles.</string>
+    <string name="webauthn_no_success_claim">Activar o motor non equivale a completar un acceso nin a recibir a aprobación de Google Password Manager. Non se imita a orixe da web mediante JavaScript.</string>
+    <string name="webauthn_external_browser">Continuar no navegador externo</string>
+    <string name="webauthn_close">Pechar</string>
+</resources>

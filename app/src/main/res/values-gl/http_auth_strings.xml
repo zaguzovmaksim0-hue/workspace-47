@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="http_auth_title">Identificación do servidor</string>
+    <string name="http_auth_server">Servidor: %1$s</string>
+    <string name="http_auth_page">Páxina aberta: %1$s</string>
+    <string name="http_auth_realm">Área indicada polo servidor: %1$s</string>
+    <string name="http_auth_explanation">O servidor solicita usuario e contrasinal; pode ser un recurso da páxina. Non se usa o certificado nin se asina ningún documento. A aplicación non garda estes datos, aínda que WebView pode manter a sesión activa.</string>
+    <string name="http_auth_username">Usuario</string>
+    <string name="http_auth_password">Contrasinal</string>
+    <string name="http_auth_confirm">Continuar</string>
+    <string name="http_auth_cancel">Cancelar</string>
+    <string name="http_auth_invalid_input">Comproba o usuario e o contrasinal: o usuario non pode estar baleiro nin superar os 1024 caracteres; o contrasinal admite ata 4096.</string>
+</resources>

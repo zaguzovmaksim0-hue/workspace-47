@@ -38,7 +38,7 @@ class JuntaFirmaThemeTest {
     private lateinit var snapshot: Snapshot
 
     @Test
-    @Config(sdk = [30], qualifiers = "notnight")
+    @Config(sdk = [30], qualifiers = "es-rES-notnight")
     fun systemLightUsesStaticFallbackBelowApi31() {
         rule.setContent { JuntaFirmaTheme { ThemeProbe() } }
         rule.runOnIdle {
@@ -49,7 +49,7 @@ class JuntaFirmaThemeTest {
     }
 
     @Test
-    @Config(sdk = [30], qualifiers = "night")
+    @Config(sdk = [30], qualifiers = "es-rES-night")
     fun systemDarkUsesStaticFallbackBelowApi31() {
         rule.setContent { JuntaFirmaTheme { ThemeProbe() } }
         rule.runOnIdle {
@@ -60,7 +60,7 @@ class JuntaFirmaThemeTest {
     }
 
     @Test
-    @Config(sdk = [31], qualifiers = "notnight")
+    @Config(sdk = [31], qualifiers = "es-rES-notnight")
     fun supportedSystemLightUsesPlatformDynamicColors() {
         rule.setContent { JuntaFirmaTheme { ThemeProbe() } }
         rule.runOnIdle {
@@ -73,7 +73,7 @@ class JuntaFirmaThemeTest {
     }
 
     @Test
-    @Config(sdk = [31], qualifiers = "night")
+    @Config(sdk = [31], qualifiers = "es-rES-night")
     fun supportedSystemDarkUsesPlatformDynamicColors() {
         rule.setContent { JuntaFirmaTheme { ThemeProbe() } }
         rule.runOnIdle {
@@ -86,7 +86,7 @@ class JuntaFirmaThemeTest {
     }
 
     @Test
-    @Config(sdk = [31], qualifiers = "notnight")
+    @Config(sdk = [31], qualifiers = "es-rES-notnight")
     fun explicitDarkAndDynamicOptOutUseTheStaticDarkPalette() {
         rule.setContent { juntaFirmaTheme(darkTheme = true, dynamicColor = false) { ThemeProbe() } }
         rule.runOnIdle {
@@ -97,7 +97,7 @@ class JuntaFirmaThemeTest {
     }
 
     @Test
-    @Config(sdk = [30], qualifiers = "notnight")
+    @Config(sdk = [30], qualifiers = "es-rES-notnight")
     fun changingThemeUpdatesCustomColorsWithoutStaleGlobalTokens() {
         var dark by mutableStateOf(false)
         rule.setContent { juntaFirmaTheme(darkTheme = dark, dynamicColor = false) { ThemeProbe() } }

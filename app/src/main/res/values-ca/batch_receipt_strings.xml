@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_batch_details_show">Mostra els resultats per document</string>
+    <string name="native_batch_details_hide">Amaga els resultats per document</string>
+    <string name="native_batch_origin_local">Resultats de l’operació local. Una signatura generada no demostra que el lloc l’hagi rebut o desat. El lliurament de la resposta s’indica per separat; no confirma l’acceptació administrativa.</string>
+    <string name="native_batch_origin_service">Lot amb servei remot: estats comunicats pel servei i possibles omissions fetes per aquest client. El lliurament al lloc s’indica per separat. No acredita l’acceptació administrativa ni reverteix els efectes parcials.</string>
+    <string name="native_batch_id">%1$d. Document: %2$s</string>
+    <string name="native_batch_status">Codi de resultat: %1$s</string>
+    <string name="native_batch_description">Descripció rebuda: %1$s</string>
+    <string name="native_batch_status_done">Signatura finalitzada; estat de desament segons l’origen indicat.</string>
+    <string name="native_batch_status_pending_save">Signatura generada; desament no confirmat.</string>
+    <string name="native_batch_status_save_skipped">Signatura generada; desament omès.</string>
+    <string name="native_batch_status_save_failed">Error en desar el resultat.</string>
+    <string name="native_batch_status_pre_failed">Error en la preparació o la signatura local.</string>
+    <string name="native_batch_status_post_failed">Error en la finalització del servei.</string>
+    <string name="native_batch_status_skipped">Document omès.</string>
+    <string name="native_batch_status_not_started">Document no iniciat.</string>
+    <string name="native_batch_status_rollback">El servei declara una reversió del desament.</string>
+    <string name="native_batch_status_failed">Resultat negatiu declarat pel servei.</string>
+    <string name="native_batch_status_other">Consulta el codi comunicat per l’origen del resultat.</string>
+</resources>

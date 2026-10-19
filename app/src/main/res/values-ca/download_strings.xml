@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="document_download_title">Desa el document</string>
+    <string name="document_download_server">Servidor: %1$s</string>
+    <string name="document_download_inline_source">Generat per la pàgina: %1$s</string>
+    <string name="document_download_foreign">El fitxer és en un lloc diferent del de la pàgina. No s’enviaran les galetes de la pàgina.</string>
+    <string name="document_download_offer">Es tornarà a demanar el fitxer al servidor. Se’n seguiran les redireccions HTTPS. És possible que els enllaços d’un sol ús no funcionin. Límit: 32 MiB. Després podràs triar on desar-lo.</string>
+    <string name="document_download_offer_form">Aquest fitxer és la resposta a un formulari. Per obtenir-lo es tornarà a ENVIAR el formulari amb les mateixes dades. Si el formulari presenta una sol·licitud, un registre o un pagament, es podria enviar dues vegades: en aquest cas cancel·la i descarrega el justificant des de la mateixa seu. Límit: 32 MiB.</string>
+    <string name="document_download_session">S’utilitzaran les galetes actuals d’aquest lloc. No es transfereix cap contrasenya desada.</string>
+    <string name="document_download_certificate">El teu certificat només es presentarà a aquest servidor, igual que a la sessió amb certificat oberta.</string>
+    <string name="document_download_fetching">Descarregant una còpia temporal privada…</string>
+    <string name="document_download_ready">Còpia preparada. Tria on vols desar el document.</string>
+    <string name="document_download_picking">Selecciona una ubicació al selector de documents d’Android.</string>
+    <string name="document_download_copying">Desant el document…</string>
+    <string name="document_download_saved">Document lliurat a la ubicació triada. La còpia temporal s’ha eliminat.</string>
+    <string name="document_download_failed">No s’ha pogut completar l’operació. No es repetirà automàticament. L’enllaç pot haver caducat o la connexió pot haver fallat. Torna a la pàgina i prem de nou l’enllaç de descàrrega.</string>
+    <string name="document_download_failed_authentication">El servidor ha rebutjat la descàrrega (401/403). És possible que la sessió hagi caducat o que el servidor demani el certificat: torna a accedir-hi i descarrega’l de nou.</string>
+    <string name="document_download_failed_not_document">El servidor ha retornat una pàgina web en lloc del document, normalment una pàgina d’accés o d’error. No s’ha desat.</string>
+    <string name="document_download_failed_too_large">El document supera el límit de 32 MiB.</string>
+    <string name="document_download_failed_redirect">El servidor ha redirigit a una adreça no segura o ha encadenat massa redireccions.</string>
+    <string name="document_download_expired">La descàrrega s’ha cancel·lat o ja no està disponible. Torna a la pàgina i genera un enllaç nou.</string>
+    <string name="document_download_bytes">Rebuts: %1$d bytes</string>
+    <string name="document_download_start">Descarrega aquesta còpia</string>
+    <string name="document_download_start_form">Torna a enviar i descarrega</string>
+    <string name="document_download_save">Anomena i desa…</string>
+    <string name="document_download_done">Torna a la pàgina</string>
+    <string name="document_download_cancel">Cancel·la i torna</string>
+    <string name="document_download_unsupported">No es pot descarregar aquest fitxer: l’adreça no és HTTPS pública (port 443) o el fitxer supera els 32 MiB.</string>
+    <string name="document_download_busy">Hi ha una altra operació en curs (signatura, certificat, una altra descàrrega o finestra). Acaba-la o tanca-la i torna a prémer l’enllaç de descàrrega.</string>
+    <string name="document_download_open_failed">No s’ha pogut obrir la pantalla de descàrrega. Torna a prémer l’enllaç.</string>
+    <string name="document_download_preparing">Preparant el document…</string>
+    <string name="document_download_blob_unavailable">La pàgina ja no conserva el document generat. Torna a prémer el botó de descàrrega de la pàgina.</string>
+    <string name="document_download_form_missing">No s’han pogut recuperar les dades del formulari que ha generat el fitxer. Torna a prémer el botó de descàrrega de la pàgina.</string>
+    <string name="document_download_form_files">El formulari que ha generat aquest fitxer adjunta fitxers; no es pot tornar a enviar per descarregar-lo.</string>
+    <string name="document_download_save_failed">No s’ha pogut desar en aquesta ubicació. La còpia temporal continua disponible: pots triar una altra ubicació sense tornar-lo a descarregar.</string>
+</resources>

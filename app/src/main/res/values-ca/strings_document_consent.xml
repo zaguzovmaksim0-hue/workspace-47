@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="signing_document_name_unavailable">Nom del document: no disponible</string>
+    <string name="signing_document_bytes">Mida del document rebut: %1$d bytes</string>
+    <string name="signing_document_sha256">SHA-256 del document rebut: %1$s</string>
+    <string name="signing_document_metadata_unavailable">Nom, mida i SHA-256 del document no disponibles. L’entrada pot ser un repte, una empremta o un sobre del protocol; la seva empremta no identifica el document.</string>
+</resources>

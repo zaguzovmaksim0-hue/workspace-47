@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_afirma_pdf_cosign">Engadir unha sinatura ao PDF xa asinado</string>
+    <string name="native_afirma_pdf_prior_signatures">As sinaturas previas compatibles comprobaranse antes de engadir a nova. Comprobar a súa integridade non acredita a identidade nin a confianza dos seus certificados. Non se substitúe ningunha sinatura.</string>
+</resources>

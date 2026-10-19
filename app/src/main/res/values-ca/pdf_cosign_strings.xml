@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_afirma_pdf_cosign">Afegeix una signatura al PDF ja signat</string>
+    <string name="native_afirma_pdf_prior_signatures">Les signatures prèvies compatibles es comprovaran abans d’afegir-ne la nova. Comprovar-ne la integritat no acredita la identitat ni la confiança dels seus certificats. No se substitueix cap signatura.</string>
+</resources>

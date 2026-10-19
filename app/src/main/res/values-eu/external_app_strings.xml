@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_app_title">Jarraitu beste aplikazio batean</string>
+    <string name="external_app_source">Orriaren eskaera: %1$s</string>
+    <string name="external_app_scheme">Esteka mota: %1$s</string>
+    <string name="external_app_package">Eskatutako aplikazioa: %1$s</string>
+    <string name="external_app_copy">Esteka soilik bidaliko zaio Android-ek aukeratutako aplikazioari. Haren parametroek izapidearen datuak izan ditzakete. Ez dira ziurtagiria, cookieak edo orriaren edukia transferituko. Orriak irekita jarraituko du; itzultzeak ez du baieztatzen sarbidea edo izapidea amaitu denik.</string>
+    <string name="external_app_open">Ireki aplikazioa</string>
+    <string name="external_app_fallback">Ireki ordezko web-aukera nabigatzailean: %1$s</string>
+    <string name="external_app_cancel">Geratu hemen</string>
+</resources>
