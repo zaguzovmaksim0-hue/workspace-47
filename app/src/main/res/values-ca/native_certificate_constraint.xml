@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_afirma_exact_certificate">La seu exigeix un certificat concret per a aquesta operació. Ha de coincidir amb el sol·licitat; desbloquejar-lo no autoritza per si sol la signatura ni l’enviament.</string>
+</resources>

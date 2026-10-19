@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_address_title">Ireki zure helbidea</string>
+    <string name="catalog_address_hint">Idatzi edo itsatsi helbide bat. https:// gehituko dugu falta bada.</string>
+    <string name="catalog_address_label">Webgunearen helbidea</string>
+    <string name="catalog_address_paste">Itsatsi</string>
+    <string name="catalog_address_clear">Garbitu</string>
+    <string name="catalog_address_open">Ireki</string>
+    <string name="catalog_address_opening">Irekitzen…</string>
+    <string name="catalog_address_required">Idatzi helbide bat jarraitzeko.</string>
+    <string name="catalog_address_invalid">Sartu baliozko HTTPS helbide publiko bat, erabiltzaile-izenik eta pasahitzik gabe.</string>
+    <string name="catalog_address_too_long">Helbidea luzeegia da. Ez da helbidearen bertsio mozturik irekiko.</string>
+    <string name="catalog_address_clipboard_empty">Ez dago itsasteko testu-helbiderik. Idatziz ere sar dezakezu.</string>
+    <string name="catalog_address_destination">Helmuga: %1$s</string>
+    <string name="catalog_address_back_to_top">↑ Helbidea</string>
+    <string name="catalog_search_clear">Garbitu katalogoko bilaketa</string>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="compatibility_feedback_title">Informa de compatibilitat</string>
+    <string name="compatibility_feedback_intro">L’informe només inclou la versió de Firma Mobile, el seu codi de versió i el nivell API d’Android. No s’envia automàticament ni es crea cap incidència des de l’aplicació.</string>
+    <string name="compatibility_feedback_preview">Vista prèvia de l’informe</string>
+    <string name="compatibility_feedback_privacy">No s’hi inclouen certificats, identificadors, documents, adreces ni historial. Copiar només posa l’informe mostrat al porta-retalls.</string>
+    <string name="compatibility_feedback_copy">Copia l’informe</string>
+    <string name="compatibility_feedback_open">Obre el formulari de GitHub</string>
+    <string name="compatibility_feedback_copied">Informe copiat.</string>
+    <string name="compatibility_feedback_copy_failed">No s’ha pogut copiar l’informe.</string>
+    <string name="compatibility_feedback_confirm_title">Vols obrir GitHub?</string>
+    <string name="compatibility_feedback_confirm_message">S’obrirà github.com/zaguzovmaksim0-hue/workspace-47/issues/new amb l’informe de la vista prèvia a l’URL. No es crea cap incidència automàticament: l’hauràs de comprovar i publicar a GitHub. GitHub rebrà la visita i la pot associar amb la teva IP o sessió. Una incidència publicada serà pública. No hi afegeixis dades personals, certificats, documents ni adreces privades.</string>
+    <string name="compatibility_feedback_confirm_open">Continua a GitHub</string>
+    <string name="compatibility_feedback_open_failed">No s’ha pogut obrir GitHub. Pots copiar l’informe i obrir GitHub pel teu compte.</string>
+</resources>

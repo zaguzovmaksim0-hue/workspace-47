@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_cades_provided_hash_notice">La seu ha enviat una empremta %1$s, no el document original. Se signarà aquesta empremta sense tornar-la a calcular. Aquesta aplicació no pot comprovar quin document representa; comprova el tràmit a la seu abans de confirmar. El resultat serà una signatura CAdES separada.</string>
+    <string name="native_cades_provided_hash_batch">Aquesta sol·licitud inclou %1$d element(s) amb una empremta calculada per la seu. No s’han rebut els documents originals i no se’n pot comprovar el contingut aquí. Els altres elements conserven la seva operació normal.</string>
+    <string name="native_cades_provided_hash_size">Empremta rebuda: %1$d bytes; mida del document original desconeguda.</string>
+    <string name="native_cades_received_hash_fingerprint">SHA-256 dels bytes rebuts, no del document original: %1$s</string>
+</resources>

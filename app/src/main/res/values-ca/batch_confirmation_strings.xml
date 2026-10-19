@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <plurals name="signing_batch_document_count">
+        <item quantity="one">%1$d document al lot</item>
+        <item quantity="other">%1$d documents al lot</item>
+    </plurals>
+    <string name="signing_batch_documents_show">Mostra els documents</string>
+    <string name="signing_batch_documents_hide">Amaga els documents</string>
+    <string name="signing_batch_documents_explanation">Identificadors facilitats pel lloc; no són una vista prèvia del contingut dels documents.</string>
+    <string name="signing_batch_document_number">Document %1$d</string>
+    <string name="signing_batch_document_identifier">Document %1$d · ID: %2$s</string>
+</resources>

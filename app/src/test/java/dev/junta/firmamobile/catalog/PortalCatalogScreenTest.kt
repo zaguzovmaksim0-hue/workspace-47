@@ -203,7 +203,7 @@ class PortalCatalogScreenTest {
     }
 
     @Test
-    @Config(qualifiers = "w600dp-h2000dp")
+    @Config(qualifiers = "es-rES-w600dp-h2000dp")
     fun `other territories section is visible and collapsed for a selected region`() {
         val state = stateFor(selectedRegion = PortalRegionCode.ANDALUSIA)
         val otherSection = state.sections.single { it.kind == PortalCatalogSectionKind.OTHER_REGIONS }
@@ -222,7 +222,7 @@ class PortalCatalogScreenTest {
     }
 
     @Test
-    @Config(qualifiers = "w600dp-h2000dp")
+    @Config(qualifiers = "es-rES-w600dp-h2000dp")
     fun `regional catalog starts fully collapsed`() {
         val andalusia = repository.portals().first { it.regionCode == PortalRegionCode.ANDALUSIA }
         val national = repository.portals().first { it.regionCode == PortalRegionCode.SPAIN }
@@ -248,7 +248,7 @@ class PortalCatalogScreenTest {
     }
 
     @Test
-    @Config(qualifiers = "w600dp-h2000dp")
+    @Config(qualifiers = "es-rES-w600dp-h2000dp")
     fun `regional sections reveal only the region the user opens`() {
         val aragon = repository.portals().first { it.regionCode == PortalRegionCode.ARAGON }
         val andalusia = repository.portals().first { it.regionCode == PortalRegionCode.ANDALUSIA }
@@ -330,7 +330,7 @@ class PortalCatalogScreenTest {
     }
 
     @Test
-    @Config(qualifiers = "w320dp-h640dp")
+    @Config(qualifiers = "es-rES-w320dp-h640dp")
     fun `catalog remains usable at narrow width and large font scale`() {
         val state = stateFor(searchText = "carne joven europeo", selectedRegion = PortalRegionCode.ANDALUSIA)
         rule.setContent {

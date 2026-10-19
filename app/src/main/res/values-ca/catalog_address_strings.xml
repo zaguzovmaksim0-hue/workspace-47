@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="catalog_address_title">Obre la teva adreça</string>
+    <string name="catalog_address_hint">Escriu o enganxa una adreça. Hi afegim https:// si hi falta.</string>
+    <string name="catalog_address_label">Adreça del web</string>
+    <string name="catalog_address_paste">Enganxa</string>
+    <string name="catalog_address_clear">Neteja</string>
+    <string name="catalog_address_open">Obre</string>
+    <string name="catalog_address_opening">Obrint…</string>
+    <string name="catalog_address_required">Escriu una adreça per continuar.</string>
+    <string name="catalog_address_invalid">Introdueix una adreça HTTPS pública vàlida, sense usuari ni contrasenya.</string>
+    <string name="catalog_address_too_long">L’adreça és massa llarga. No se n’obrirà una versió retallada.</string>
+    <string name="catalog_address_clipboard_empty">No hi ha cap adreça de text per enganxar. També la pots escriure.</string>
+    <string name="catalog_address_destination">Destinació: %1$s</string>
+    <string name="catalog_address_back_to_top">↑ Adreça</string>
+    <string name="catalog_search_clear">Neteja la cerca del catàleg</string>
+</resources>

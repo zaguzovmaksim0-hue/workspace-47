@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="http_auth_title">Zerbitzariaren identifikazioa</string>
+    <string name="http_auth_server">Zerbitzaria: %1$s</string>
+    <string name="http_auth_page">Irekitako orria: %1$s</string>
+    <string name="http_auth_realm">Zerbitzariak adierazitako eremua: %1$s</string>
+    <string name="http_auth_explanation">Zerbitzariak erabiltzaile-izena eta pasahitza eskatzen ditu; eskaera orriko baliabide batetik etor daiteke. Ez da ziurtagiria erabiltzen eta ez da dokumenturik sinatzen. Aplikazioak ez ditu datu horiek gordetzen, baina WebView-k saioa aktibo mantendu dezake.</string>
+    <string name="http_auth_username">Erabiltzaile-izena</string>
+    <string name="http_auth_password">Pasahitza</string>
+    <string name="http_auth_confirm">Jarraitu</string>
+    <string name="http_auth_cancel">Utzi</string>
+    <string name="http_auth_invalid_input">Egiaztatu erabiltzaile-izena eta pasahitza: erabiltzaile-izenak ezin du hutsik egon eta ezin ditu 1024 karaktere gainditu; pasahitzak gehienez 4096 izan ditzake.</string>
+</resources>
