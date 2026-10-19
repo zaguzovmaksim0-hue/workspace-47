@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="signing_document_name_unavailable">Nome do documento: non dispoñible</string>
+    <string name="signing_document_bytes">Tamaño do documento recibido: %1$d bytes</string>
+    <string name="signing_document_sha256">SHA-256 do documento recibido: %1$s</string>
+    <string name="signing_document_metadata_unavailable">Nome, tamaño e SHA-256 do documento non dispoñibles. A entrada pode ser un reto, unha pegada ou un sobre do protocolo; a súa pegada non identifica o documento.</string>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_cades_cosign_action">Engadir a miña sinatura ao documento xa asinado</string>
+    <string name="native_cades_cosign_notice">Comprobaranse as sinaturas anteriores e conservaranse ao engadir a nova. Se o ficheiro CAdES non contén o documento orixinal, asinarase a mesma pegada verificada: aquí non se terá lido nin comprobado o contido do documento. Isto non acredita a confianza nin o estado de revogación dos certificados anteriores.</string>
+</resources>

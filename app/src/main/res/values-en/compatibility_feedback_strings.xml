@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="compatibility_feedback_title">Report compatibility</string>
+    <string name="compatibility_feedback_intro">The report only includes the Firma Mobile version, its version code and the Android API level. It is not sent automatically, and no issue is created from the app.</string>
+    <string name="compatibility_feedback_preview">Report preview</string>
+    <string name="compatibility_feedback_privacy">No certificates, identifiers, documents, addresses or history are included. Copying places only the report shown on the clipboard.</string>
+    <string name="compatibility_feedback_copy">Copy report</string>
+    <string name="compatibility_feedback_open">Open GitHub form</string>
+    <string name="compatibility_feedback_copied">Report copied.</string>
+    <string name="compatibility_feedback_copy_failed">Could not copy the report.</string>
+    <string name="compatibility_feedback_confirm_title">Open GitHub?</string>
+    <string name="compatibility_feedback_confirm_message">github.com/zaguzovmaksim0-hue/workspace-47/issues/new will open with the previewed report in the URL. An issue is not created automatically: you will need to check and publish it on GitHub. GitHub will receive the visit and may associate it with your IP address or session. A published issue will be public. Do not add personal data, certificates, documents or private addresses.</string>
+    <string name="compatibility_feedback_confirm_open">Continue to GitHub</string>
+    <string name="compatibility_feedback_open_failed">Could not open GitHub. You can copy the report and open GitHub yourself.</string>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="certificate_expiration_soon_title">Zure ziurtagiria laster iraungiko da</string>
+    <string name="certificate_expiration_week_title">Zure ziurtagiria hurrengo 7 egunetan iraungiko da</string>
+    <string name="certificate_expiration_today_title">Zure ziurtagiria gaur iraungiko da</string>
+    <string name="certificate_expiration_expired_title">Zure ziurtagiria iraungi da</string>
+    <plurals name="certificate_expiration_days">
+        <item quantity="one">%1$d egun natural geratzen da. Iraungitze-data: %2$s. Galdetu erakunde jaulkitzaileari nola berritu.</item>
+        <item quantity="other">%1$d egun natural geratzen dira. Iraungitze-data: %2$s. Galdetu erakunde jaulkitzaileari nola berritu.</item>
+    </plurals>
+    <string name="certificate_expiration_timestamp_copy">Iraungitze-data eta -ordua: %1$s. Galdetu erakunde jaulkitzaileari nola berritu.</string>
+</resources>

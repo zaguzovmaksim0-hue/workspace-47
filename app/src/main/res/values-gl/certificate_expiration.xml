@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="certificate_expiration_soon_title">O teu certificado caduca axiña</string>
+    <string name="certificate_expiration_week_title">O teu certificado caduca nos próximos 7 días</string>
+    <string name="certificate_expiration_today_title">O teu certificado caduca hoxe</string>
+    <string name="certificate_expiration_expired_title">O teu certificado caducou</string>
+    <plurals name="certificate_expiration_days">
+        <item quantity="one">Queda %1$d día natural. Caduca o %2$s. Consulta a súa renovación coa entidade emisora.</item>
+        <item quantity="other">Quedan %1$d días naturais. Caduca o %2$s. Consulta a súa renovación coa entidade emisora.</item>
+    </plurals>
+    <string name="certificate_expiration_timestamp_copy">Data e hora de caducidade: %1$s. Consulta a súa renovación coa entidade emisora.</string>
+</resources>

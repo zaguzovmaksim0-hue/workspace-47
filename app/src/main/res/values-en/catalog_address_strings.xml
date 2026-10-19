@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_address_title">Open your address</string>
+    <string name="catalog_address_hint">Type or paste an address. We add https:// if it is missing.</string>
+    <string name="catalog_address_label">Web address</string>
+    <string name="catalog_address_paste">Paste</string>
+    <string name="catalog_address_clear">Clear</string>
+    <string name="catalog_address_open">Open</string>
+    <string name="catalog_address_opening">Opening…</string>
+    <string name="catalog_address_required">Enter an address to continue.</string>
+    <string name="catalog_address_invalid">Enter a valid public HTTPS address without a username or password.</string>
+    <string name="catalog_address_too_long">The address is too long. A shortened version will not be opened.</string>
+    <string name="catalog_address_clipboard_empty">There is no text address to paste. You can also type it.</string>
+    <string name="catalog_address_destination">Destination: %1$s</string>
+    <string name="catalog_address_back_to_top">↑ Address</string>
+    <string name="catalog_search_clear">Clear catalog search</string>
+</resources>

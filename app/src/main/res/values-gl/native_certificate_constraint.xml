@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_afirma_exact_certificate">A sede esixe un certificado concreto para esta operación. Debe coincidir co solicitado; desbloquealo non autoriza por si só a sinatura nin o envío.</string>
+</resources>

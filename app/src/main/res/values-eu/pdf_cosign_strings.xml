@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_afirma_pdf_cosign">Gehitu sinadura bat dagoeneko sinatutako PDF dokumentuari</string>
+    <string name="native_afirma_pdf_prior_signatures">Aurreko sinadura bateragarriak egiaztatuko dira berria gehitu aurretik. Haien osotasuna egiaztatzeak ez du haien ziurtagirien identitatea edo fidagarritasuna frogatzen. Ez da sinadurarik ordezten.</string>
+</resources>
