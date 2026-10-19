@@ -8,6 +8,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -15,12 +16,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.history.LocalOutcome
 
 @Suppress("FunctionNaming") // Unit-returning Compose UI follows the framework naming convention.
 @Composable
-internal fun OfflineVerificationDialog(onDismiss: () -> Unit) {
+internal fun OfflineVerificationDialog(
+    onTerminal: (LocalOutcome) -> Unit = {},
+    onDismiss: () -> Unit,
+) {
     val scope = rememberCoroutineScope()
-    val controller = remember(scope) { OfflineVerificationController(scope) }
+    val terminal by rememberUpdatedState(onTerminal)
+    val controller = remember(scope) { OfflineVerificationController(scope, onTerminal = { terminal(it) }) }
     val pickers = rememberOfflineVerificationPickers(controller)
     OfflineVerificationDialog(controller, pickers.cms, pickers.original, onDismiss)
 }
