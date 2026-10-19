@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="signing_document_name_unavailable">Dokumentuaren izena: ez dago erabilgarri</string>
+    <string name="signing_document_bytes">Jasotako dokumentuaren tamaina: %1$d byte</string>
+    <string name="signing_document_sha256">Jasotako dokumentuaren SHA-256: %1$s</string>
+    <string name="signing_document_metadata_unavailable">Dokumentuaren izena, tamaina eta SHA-256 ez daude erabilgarri. Sarrera erronka bat, aztarna bat edo protokoloaren bilgarri bat izan daiteke; haren aztarnak ez du dokumentua identifikatzen.</string>
+</resources>

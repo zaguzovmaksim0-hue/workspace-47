@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="signing_document_name_unavailable">Document name: unavailable</string>
+    <string name="signing_document_bytes">Received document size: %1$d bytes</string>
+    <string name="signing_document_sha256">SHA-256 of the received document: %1$s</string>
+    <string name="signing_document_metadata_unavailable">Document name, size and SHA-256 unavailable. The input may be a challenge, a digest or a protocol envelope; its digest does not identify the document.</string>
+</resources>

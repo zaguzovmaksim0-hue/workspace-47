@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_batch_details_show">View results by document</string>
+    <string name="native_batch_details_hide">Hide results by document</string>
+    <string name="native_batch_origin_local">Results of the local operation. A generated signature does not prove that the site received or saved it. Response delivery is shown separately; it does not confirm administrative acceptance.</string>
+    <string name="native_batch_origin_service">Batch using a remote service: statuses reported by the service and any items skipped by this client. Delivery to the site is shown separately. This does not certify administrative acceptance or undo partial effects.</string>
+    <string name="native_batch_id">%1$d. Document: %2$s</string>
+    <string name="native_batch_status">Result code: %1$s</string>
+    <string name="native_batch_description">Received description: %1$s</string>
+    <string name="native_batch_status_done">Signing complete; save status depends on the stated result source.</string>
+    <string name="native_batch_status_pending_save">Signature produced; saving not confirmed.</string>
+    <string name="native_batch_status_save_skipped">Signature produced; saving skipped.</string>
+    <string name="native_batch_status_save_failed">Error saving the result.</string>
+    <string name="native_batch_status_pre_failed">Error during preparation or local signing.</string>
+    <string name="native_batch_status_post_failed">Error during service finalization.</string>
+    <string name="native_batch_status_skipped">Document skipped.</string>
+    <string name="native_batch_status_not_started">Document not started.</string>
+    <string name="native_batch_status_rollback">The service reports that saving was rolled back.</string>
+    <string name="native_batch_status_failed">Negative result reported by the service.</string>
+    <string name="native_batch_status_other">Refer to the code reported by the result source.</string>
+</resources>

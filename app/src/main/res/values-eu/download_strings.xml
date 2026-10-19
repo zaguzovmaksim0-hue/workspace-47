@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="document_download_title">Gorde dokumentua</string>
+    <string name="document_download_server">Zerbitzaria: %1$s</string>
+    <string name="document_download_inline_source">Orriak sortua: %1$s</string>
+    <string name="document_download_foreign">Fitxategia orriarena ez den beste gune batean dago. Ez dira orriko cookieak bidaliko.</string>
+    <string name="document_download_offer">Fitxategia berriro eskatuko zaio zerbitzariari. Zerbitzariaren HTTPS birbideratzeei jarraituko zaie. Erabilera bakarreko estekek agian ez dute funtzionatuko. Muga: 32 MiB. Ondoren, non gorde aukeratu ahal izango duzu.</string>
+    <string name="document_download_offer_form">Fitxategi hau inprimaki baten erantzuna da. Eskuratzeko, inprimakia berriro BIDALIKO da, datu berberekin. Inprimakiak eskaera, erregistro edo ordainketa bat aurkezten badu, baliteke bi aldiz bidaltzea: kasu horretan, utzi bertan behera eta deskargatu frogagiria egoitzatik bertatik. Muga: 32 MiB.</string>
+    <string name="document_download_session">Gune honetako uneko cookieak erabiliko dira. Ez da gordetako pasahitzik transferituko.</string>
+    <string name="document_download_certificate">Zure ziurtagiria zerbitzari honi soilik aurkeztuko zaio, ziurtagiriarekin irekita dagoen saioan bezala.</string>
+    <string name="document_download_fetching">Aldi baterako kopia pribatu bat deskargatzen…</string>
+    <string name="document_download_ready">Kopia prest dago. Aukeratu dokumentua non gorde.</string>
+    <string name="document_download_picking">Hautatu kokaleku bat Android-en dokumentu-hautatzailean.</string>
+    <string name="document_download_copying">Dokumentua gordetzen…</string>
+    <string name="document_download_saved">Dokumentua hautatutako kokalekura entregatu da. Aldi baterako kopia ezabatu da.</string>
+    <string name="document_download_failed">Ezin izan da eragiketa osatu. Ez da automatikoki errepikatuko. Baliteke esteka iraungi izana edo konexioak huts egin izana. Itzuli orrira eta sakatu berriro deskargatzeko esteka.</string>
+    <string name="document_download_failed_authentication">Zerbitzariak deskarga ukatu du (401/403). Baliteke saioa iraungi izana edo zerbitzariak ziurtagiria eskatzea: sartu berriro eta deskargatu berriz.</string>
+    <string name="document_download_failed_not_document">Zerbitzariak web-orri bat itzuli du dokumentuaren ordez, normalean saioa hasteko orri bat edo errore-orri bat. Ez da gorde.</string>
+    <string name="document_download_failed_too_large">Dokumentuak 32 MiB-ko muga gainditzen du.</string>
+    <string name="document_download_failed_redirect">Zerbitzariak helbide ez-seguru batera birbideratu du, edo birbideratze gehiegi kateatu ditu.</string>
+    <string name="document_download_expired">Deskarga bertan behera utzi da edo ez dago erabilgarri jada. Itzuli orrira eta sortu esteka berri bat.</string>
+    <string name="document_download_bytes">Jasota: %1$d byte</string>
+    <string name="document_download_start">Deskargatu kopia hau</string>
+    <string name="document_download_start_form">Bidali berriro eta deskargatu</string>
+    <string name="document_download_save">Gorde honela…</string>
+    <string name="document_download_done">Itzuli orrira</string>
+    <string name="document_download_cancel">Utzi eta itzuli</string>
+    <string name="document_download_unsupported">Ezin da fitxategi hau deskargatu: helbidea ez da HTTPS helbide publiko bat (443 ataka) edo fitxategiak 32 MiB gainditzen ditu.</string>
+    <string name="document_download_busy">Beste eragiketa bat abian dago (sinadura, ziurtagiria, beste deskarga bat edo leiho bat). Amaitu edo itxi, eta sakatu berriro deskargatzeko esteka.</string>
+    <string name="document_download_open_failed">Ezin izan da deskarga-pantaila ireki. Sakatu berriro esteka.</string>
+    <string name="document_download_preparing">Dokumentua prestatzen…</string>
+    <string name="document_download_blob_unavailable">Orriak ez du sortutako dokumentua gordetzen jada. Sakatu berriro orriko deskargatzeko botoia.</string>
+    <string name="document_download_form_missing">Ezin izan dira fitxategia sortu zuen inprimakiaren datuak berreskuratu. Sakatu berriro orriko deskargatzeko botoia.</string>
+    <string name="document_download_form_files">Fitxategi hau sortu duen inprimakiak fitxategiak eransten ditu; ezin da berriro bidali deskarga egiteko.</string>
+    <string name="document_download_save_failed">Ezin izan da kokaleku horretan gorde. Aldi baterako kopiak erabilgarri jarraitzen du: beste kokaleku bat aukeratu dezakezu, berriro deskargatu gabe.</string>
+</resources>

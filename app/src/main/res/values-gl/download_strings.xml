@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="document_download_title">Gardar documento</string>
+    <string name="document_download_server">Servidor: %1$s</string>
+    <string name="document_download_inline_source">Xerado pola páxina: %1$s</string>
+    <string name="document_download_foreign">O ficheiro está nun sitio distinto ao da páxina. Non se enviarán as cookies da páxina.</string>
+    <string name="document_download_offer">Volverase solicitar o ficheiro ao servidor. Seguiranse as súas redireccións HTTPS. As ligazóns dun só uso poden non funcionar. Límite: 32 MiB. Despois poderás escoller onde gardalo.</string>
+    <string name="document_download_offer_form">Este ficheiro é a resposta a un formulario. Para obtelo volverase ENVIAR ese formulario cos mesmos datos. Se o formulario presenta unha solicitude, un rexistro ou un pagamento, podería quedar enviado dúas veces: nese caso cancela e descarga o xustificante desde a propia sede. Límite: 32 MiB.</string>
+    <string name="document_download_session">Utilizaranse as cookies actuais deste sitio. Non se transfire un contrasinal gardado.</string>
+    <string name="document_download_certificate">Presentarase o teu certificado só a este servidor, igual que na sesión con certificado aberta.</string>
+    <string name="document_download_fetching">Descargando unha copia temporal privada…</string>
+    <string name="document_download_ready">Copia preparada. Escolle onde gardar o documento.</string>
+    <string name="document_download_picking">Selecciona unha localización no selector de documentos de Android.</string>
+    <string name="document_download_copying">Gardando o documento…</string>
+    <string name="document_download_saved">Documento entregado á localización escollida. A copia temporal eliminouse.</string>
+    <string name="document_download_failed">Non se puido completar a operación. Non se repetirá automaticamente. A ligazón pode ter caducado ou a conexión fallou. Volve á páxina e preme de novo a ligazón de descarga.</string>
+    <string name="document_download_failed_authentication">O servidor rexeitou a descarga (401/403). É posible que a sesión caducase ou que o servidor pida o certificado: volve entrar e descarga de novo.</string>
+    <string name="document_download_failed_not_document">O servidor devolveu unha páxina web no canto do documento, normalmente unha páxina de acceso ou de erro. Non se gardou.</string>
+    <string name="document_download_failed_too_large">O documento supera o límite de 32 MiB.</string>
+    <string name="document_download_failed_redirect">O servidor redirixiu a un enderezo non seguro ou encadeou demasiadas redireccións.</string>
+    <string name="document_download_expired">A descarga cancelouse ou xa non está dispoñible. Volve á páxina e xera unha ligazón nova.</string>
+    <string name="document_download_bytes">Recibidos: %1$d bytes</string>
+    <string name="document_download_start">Descargar esta copia</string>
+    <string name="document_download_start_form">Enviar de novo e descargar</string>
+    <string name="document_download_save">Gardar como…</string>
+    <string name="document_download_done">Volver á páxina</string>
+    <string name="document_download_cancel">Cancelar e volver</string>
+    <string name="document_download_unsupported">Non se pode descargar este ficheiro: o enderezo non é HTTPS público (porto 443) ou o ficheiro supera 32 MiB.</string>
+    <string name="document_download_busy">Hai outra operación en curso (sinatura, certificado, outra descarga ou xanela). Remátaa ou péchaa e volve premer a ligazón de descarga.</string>
+    <string name="document_download_open_failed">Non se puido abrir a pantalla de descarga. Volve premer a ligazón.</string>
+    <string name="document_download_preparing">Preparando o documento…</string>
+    <string name="document_download_blob_unavailable">A páxina xa non conserva o documento xerado. Volve premer o botón de descarga da páxina.</string>
+    <string name="document_download_form_missing">Non se puideron recuperar os datos do formulario que xerou o ficheiro. Volve premer o botón de descarga da páxina.</string>
+    <string name="document_download_form_files">O formulario que xerou este ficheiro achega ficheiros; non se pode volver enviar para descargalo.</string>
+    <string name="document_download_save_failed">Non se puido gardar nesa localización. A copia temporal segue dispoñible: podes escoller outra localización sen volver descargar.</string>
+</resources>
