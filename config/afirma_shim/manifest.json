@@ -1,0 +1,17 @@
+{
+  "format": 1,
+  "parts": [
+    "00-bootstrap.js",
+    "10-diagnostics.js",
+    "20-contracts.js",
+    "30-euskadi-post.js",
+    "40-request-lifecycle.js",
+    "50-single-sign.js",
+    "60-melilla-lugo-batch.js",
+    "70-caib-batch.js",
+    "80-setup-and-results.js",
+    "90-observation-and-wrappers.js",
+    "95-installation.js",
+    "99-native-uri.js"
+  ]
+}
