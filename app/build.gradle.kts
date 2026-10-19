@@ -400,7 +400,7 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     constraints {
-        implementation("androidx.fragment:fragment:1.5.7") {
+        implementation("androidx.fragment:fragment:1.9.1") {
             because("Align Credential Manager's compile graph with the locked runtime version required by ActivityResult APIs")
         }
     }
