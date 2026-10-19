@@ -57,7 +57,7 @@ internal object OfflineCmsAlgorithmPolicy {
         }
     }
 
-    private fun digestName(oid: String): String? {
+    fun digestName(oid: String): String? {
         return when (oid) {
             NISTObjectIdentifiers.id_sha256.getId() -> "SHA-256"
             NISTObjectIdentifiers.id_sha384.getId() -> "SHA-384"
@@ -66,7 +66,7 @@ internal object OfflineCmsAlgorithmPolicy {
         }
     }
 
-    private fun validateDigestIdentifier(identifier: AlgorithmIdentifier) {
+    fun validateDigestIdentifier(identifier: AlgorithmIdentifier) {
         if (digestName(identifier.getAlgorithm().getId()) == null ||
             !hasNullOrAbsentParameters(identifier)
         ) {

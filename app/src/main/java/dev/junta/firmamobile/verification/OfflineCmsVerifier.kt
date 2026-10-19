@@ -126,6 +126,8 @@ private object OfflineCmsVerification {
         val converter = JcaX509CertificateConverter().setProvider(BundledBouncyCastle.provider)
         val candidates = mutableListOf<OfflineCmsSignerCandidate>()
 
+        // Parsing requires declarations to equal the digest algorithms used by these signers.
+        val declaredDigestOids = signers.map { it.getDigestAlgOID() }.toSet()
         for (signer in signers) {
             val matchingIndexes = certificates.indices.filter { index ->
                 signer.getSID().match(certificates[index])
@@ -137,9 +139,10 @@ private object OfflineCmsVerification {
             val digestOid = signer.getDigestAlgOID()
             val signatureOid = signer.getEncryptionAlgOID()
             OfflineCmsAlgorithmPolicy.validateSignerAlgorithms(digestOid, signatureOid)
-            OfflineCmsAttributePolicy.validate(signer)
+            val matchedCertificate = certificates[matchingIndexes.single()]
+            OfflineCmsAttributePolicy.validate(signer, matchedCertificate, declaredDigestOids)
 
-            val certificate = converter.getCertificate(certificates[matchingIndexes.single()])
+            val certificate = converter.getCertificate(matchedCertificate)
             val publicKey = certificate.publicKey
             OfflineCmsAlgorithmPolicy.validatePublicKey(digestOid, signatureOid, publicKey)
             candidates.add(OfflineCmsSignerCandidate(signer, publicKey))
