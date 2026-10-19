@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_multiphase_service">Signing service: %1$s</string>
+    <string name="native_multiphase_count">Documents in the batch: %1$d</string>
+    <string name="native_multiphase_delegated">Delegated signing: confirming will send the public certificate and the data or references to the indicated service. The service prepares the PRE data that your key will sign; the phone cannot prove that an opaque PRE corresponds to the document shown. Continue only if you trust that service. A batch may complete partially or be saved by the service before the response returns.</string>
+    <string name="native_multiphase_cosign">Add a signature to the document</string>
+    <string name="native_multiphase_countersign">Countersign through the service</string>
+    <string name="native_multiphase_batch">Batch signing</string>
+    <string name="webauthn_status_label">Passkeys / WebAuthn</string>
+    <string name="webauthn_unsupported">This WebView does not advertise native WebAuthn support. You can continue in an external browser.</string>
+    <string name="webauthn_configuration_failed">Could not enable the WebAuthn engine. Normal browsing remains available.</string>
+    <string name="webauthn_provider_unknown">Native WebAuthn engine enabled for the browser. Credential provider authorization for this app has not yet been confirmed; some passkeys may not be available.</string>
+    <string name="webauthn_no_success_claim">Enabling the engine does not mean sign-in has been completed or approval has been received from Google Password Manager. The website origin is not imitated using JavaScript.</string>
+    <string name="webauthn_external_browser">Continue in external browser</string>
+    <string name="webauthn_close">Close</string>
+</resources>

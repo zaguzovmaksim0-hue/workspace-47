@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="catalog_open_universal_afirma">Obre amb AutoFirma</string>
+    <string name="catalog_open_profile_compatibility">Mode específic del portal</string>
+    <string name="catalog_universal_afirma_copy">Un mateix motor d’AutoFirma per a totes les seus. El mode específic queda com a alternativa per a integracions particulars. Obrir una seu no confirma que se n’hagi verificat el tràmit.</string>
+</resources>

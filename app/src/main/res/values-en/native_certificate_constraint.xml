@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_afirma_exact_certificate">The site requires a specific certificate for this operation. It must match the one requested; unlocking it does not, by itself, authorize signing or sending.</string>
+</resources>

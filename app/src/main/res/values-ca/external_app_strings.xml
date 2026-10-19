@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="external_app_title">Continua en una altra aplicació</string>
+    <string name="external_app_source">Sol·licitud de la pàgina: %1$s</string>
+    <string name="external_app_scheme">Tipus d’enllaç: %1$s</string>
+    <string name="external_app_package">Aplicació sol·licitada: %1$s</string>
+    <string name="external_app_copy">Només s’enviarà l’enllaç a l’aplicació triada per Android. Els seus paràmetres poden incloure dades del tràmit. No es transfereixen el certificat, les galetes ni el contingut de la pàgina. La pàgina continuarà oberta; tornar-hi no confirma que l’accés o el tràmit hagi acabat.</string>
+    <string name="external_app_open">Obre l’aplicació</string>
+    <string name="external_app_fallback">Obre l’alternativa web al navegador: %1$s</string>
+    <string name="external_app_cancel">Queda’t aquí</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="http_auth_title">Identificació del servidor</string>
+    <string name="http_auth_server">Servidor: %1$s</string>
+    <string name="http_auth_page">Pàgina oberta: %1$s</string>
+    <string name="http_auth_realm">Àrea indicada pel servidor: %1$s</string>
+    <string name="http_auth_explanation">El servidor demana usuari i contrasenya; pot ser un recurs de la pàgina. No s’utilitza el certificat ni se signa cap document. L’aplicació no desa aquestes dades, tot i que WebView pot mantenir la sessió activa.</string>
+    <string name="http_auth_username">Usuari</string>
+    <string name="http_auth_password">Contrasenya</string>
+    <string name="http_auth_confirm">Continua</string>
+    <string name="http_auth_cancel">Cancel·la</string>
+    <string name="http_auth_invalid_input">Comprova l’usuari i la contrasenya: l’usuari no pot estar buit ni superar els 1024 caràcters; la contrasenya n’admet fins a 4096.</string>
+</resources>

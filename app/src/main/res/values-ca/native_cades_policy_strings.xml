@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_cades_policy_notice">La seu demana aquesta referència de política de signatura: %1$s. L’identificador i l’empremta s’inclouran a les dades signades. No s’ha descarregat ni verificat el document de política; incloure’l no acredita per si sol el compliment de totes les seves regles.</string>
+    <string name="native_cades_policy_batch">Aquesta sol·licitud inclou %1$d element(s) amb una política de signatura explícita. Cada referència es conserva a la seva signatura; una dada incompleta farà fallar aquest element. No es descarreguen documents de política ni es confirma automàticament l’operació.</string>
+</resources>

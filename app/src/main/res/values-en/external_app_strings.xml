@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_app_title">Continue in another app</string>
+    <string name="external_app_source">Request from page: %1$s</string>
+    <string name="external_app_scheme">Link type: %1$s</string>
+    <string name="external_app_package">Requested app: %1$s</string>
+    <string name="external_app_copy">Only the link will be sent to the app chosen by Android. Its parameters may include data from the procedure. The certificate, cookies and page contents are not transferred. The page will remain open; returning does not confirm completion of sign-in or the procedure.</string>
+    <string name="external_app_open">Open app</string>
+    <string name="external_app_fallback">Open web alternative in browser: %1$s</string>
+    <string name="external_app_cancel">Stay here</string>
+</resources>

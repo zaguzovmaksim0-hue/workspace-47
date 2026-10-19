@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_cades_policy_notice">Egoitzak sinadura-politikaren erreferentzia hau eskatzen du: %1$s. Identifikatzailea eta aztarna sinatutako datuetan sartuko dira. Ez da politika-dokumentua deskargatu edo egiaztatu; sartze hutsak ez du berez frogatzen haren arau guztiak betetzen direnik.</string>
+    <string name="native_cades_policy_batch">Eskaera honek sinadura-politika esplizitua duten %1$d elementu ditu. Erreferentzia bakoitza dagokion sinaduran mantentzen da; datu osatugabe batek elementu horrek huts egitea eragingo du. Ez da politika-dokumenturik deskargatzen eta eragiketa ez da automatikoki baieztatzen.</string>
+</resources>

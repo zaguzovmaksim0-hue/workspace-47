@@ -44,7 +44,7 @@ import org.robolectric.annotation.SQLiteMode
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
-@Config(qualifiers = "w400dp-h1200dp")
+@Config(qualifiers = "es-rES-w400dp-h1200dp")
 class CatalogSimplicityTest {
     @get:Rule val rule = createComposeRule()
     private val repo by lazy { PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, loadBundledPublicPortalCatalog()) }

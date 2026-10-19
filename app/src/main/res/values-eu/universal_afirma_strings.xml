@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_open_universal_afirma">Ireki AutoFirma-rekin</string>
+    <string name="catalog_open_profile_compatibility">Atariaren modu espezifikoa</string>
+    <string name="catalog_universal_afirma_copy">AutoFirma motor bera egoitza guztietarako. Modu espezifikoa integrazio jakinetarako ordezko aukera da. Egoitza bat irekitzeak ez du baieztatzen haren izapidea egiaztatu denik.</string>
+</resources>
