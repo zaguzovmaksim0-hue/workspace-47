@@ -150,7 +150,10 @@ class OfflineCmsVerifierTest {
         contentInput[0] = (contentInput[0].toInt() xor CHANGE_MASK).toByte()
         assertEquals(expected, result)
 
-        val fields = OfflineCmsResult::class.java.declaredFields.filterNot { it.isSynthetic }
+        // Compose adds static $stable metadata; only per-result state owns data.
+        val fields = OfflineCmsResult::class.java.declaredFields.filterNot {
+            it.isSynthetic || Modifier.isStatic(it.modifiers)
+        }
         assertEquals(
             setOf("status", "verifiedSigners", "scope", "trust"),
             fields.map { it.name }.toSet(),
