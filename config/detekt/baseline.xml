@@ -144,7 +144,6 @@
     <ID>CyclomaticComplexMethod:CertificateRepository.kt$CertificateRepository$private suspend fun selectOnIo(uri: Uri): CertificateSelectionResult</ID>
     <ID>CyclomaticComplexMethod:CertificateUnlockCache.kt$EncryptedCertificateUnlockCache$private fun restoreOnIo( reference: StoredCertificateReference, now: Instant, restoreGeneration: Long, ): CachedCertificateUnlock?</ID>
     <ID>CyclomaticComplexMethod:CertificateUnlockCache.kt$EncryptedCertificateUnlockCache$private fun storeOnIo( reference: StoredCertificateReference, password: CharArray, issuedAt: Instant, expiresAt: Instant, observedAtMonotonicNanos: Long, storeGeneration: Long, ): Boolean</ID>
-    <ID>CyclomaticComplexMethod:CertificateViewModel.kt$CertificateViewModel$private fun CertificateErrorCode.toUiError()</ID>
     <ID>CyclomaticComplexMethod:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$@Synchronized fun observeTopLevelResourceRequest( activeProfileId: ProfileId?, currentUrl: String?, targetUrl: String, method: String, currentEpoch: Long, isMainFrameRequest: Boolean, ): AuthorizedClientAuthTarget?</ID>
     <ID>CyclomaticComplexMethod:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$private fun authorizeInPlaceGetRedirectTransition( profile: SiteProfile, policy: ClientAuthPolicy, currentUrl: String?, target: URI, currentEpoch: Long, nowNanos: Long, ): AuthorizedClientAuthTarget?</ID>
     <ID>CyclomaticComplexMethod:ClientAuthUrlMatcher.kt$internal fun ClientAuthPolicy.matchesSourceUrl(uri: URI): Boolean</ID>
