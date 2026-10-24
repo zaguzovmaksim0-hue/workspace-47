@@ -28,6 +28,28 @@ class NativeAfirmaConsentDialogTest {
         AfirmaConsentPhase.REVIEW, "Certificado de prueba", null,
     )
 
+    @Test fun localAndDelegatedBatchCountsAreVisibleWithoutGrantingConsent() {
+        val state = mutableStateOf(prompt().let {
+            it.copy(details = it.details.copy(operation = "batch", format = "Batch · local", batchItems = 3, delegatedSigning = false))
+        })
+        var actions = 0
+        rule.setContent { JuntaFirmaTheme {
+            NativeAfirmaConsentDialog(state.value, { actions++ }, { actions++ }, { actions++ }, { actions++ })
+        } }
+        rule.onNodeWithText("Documentos en el lote: 3").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("native-afirma-details-toggle").performScrollTo().performClick()
+        rule.onNodeWithText("Documentos en el lote: 3").performScrollTo().assertIsDisplayed()
+        rule.runOnIdle {
+            assertEquals(0, actions)
+            state.value = state.value.copy(token = UUID.randomUUID(),
+                details = state.value.details.copy(format = "Batch · trifásico", batchItems = 2, delegatedSigning = true))
+        }
+        rule.onNodeWithText("Documentos en el lote: 2").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Documentos en el lote: 3").assertDoesNotExist()
+        rule.onNodeWithTag("native-afirma-details").assertDoesNotExist()
+        rule.runOnIdle { assertEquals(0, actions) }
+    }
+
     @Test fun detailsAreCollapsedAndNeverGrantConsentAndResetForNewRequest() {
         val state = mutableStateOf(prompt())
         var actions = 0
