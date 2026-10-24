@@ -304,6 +304,14 @@
     <string name="certificate_retention_fifteen_minutes">15 minuts</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 hores</string>
+
+    <!-- Local, optional PDF consent preview. -->
+    <string name="pdf_preview_show">Mostra la previsualització</string>
+    <string name="pdf_preview_loading">Carregant la previsualització…</string>
+    <string name="pdf_preview_failed">No es pot mostrar la previsualització.</string>
+    <string name="pdf_preview_unavailable">Previsualització no disponible.</string>
+    <string name="pdf_preview_pages">Primera pàgina · %1$d pàgines</string>
+    <string name="pdf_preview_description">Previsualització de la primera pàgina del PDF</string>
     <string name="catalog_verified_on">Verificat el %1$s</string>
     <string name="certificate_auth_title">Protegir el desbloqueig desat</string>
     <string name="certificate_auth_subtitle">Confirma amb biometria o amb el PIN, el patró o la contrasenya del dispositiu.</string>

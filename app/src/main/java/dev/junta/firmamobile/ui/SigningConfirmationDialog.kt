@@ -62,7 +62,9 @@ internal fun SigningConfirmationDialog(
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
-                if (state.batchDocumentReview == null) SigningDocumentConsent(state.documentConsent)
+                if (state.batchDocumentReview == null) {
+                    SigningDocumentConsent(state.documentConsent, showPdfPreview = state.format == "PAdES")
+                }
                 BatchSigningDocuments(state)
             }
         },
@@ -83,6 +85,7 @@ internal fun SigningConfirmationDialog(
 @Composable
 private fun BatchSigningDocuments(state: SigningUiState.AwaitingConfirmation) {
     val review = state.batchDocumentReview ?: return
+    if (state.format == "PAdES") pdfPreview(null)
     var expanded by remember(state.requestId) { mutableStateOf(false) }
     Text(
         text = pluralStringResource(
