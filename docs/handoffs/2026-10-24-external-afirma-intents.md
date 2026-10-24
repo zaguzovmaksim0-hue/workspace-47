@@ -6,6 +6,40 @@ Branch: `feat/external-afirma-intents-20261024`.
 Worktree: `~/.cache/w47-agent-external-afirma-intents-20261024`.
 Status: **design only; incoming external operations remain disabled**.
 
+## Owner decision 2026-10-24 (supersedes the stop-condition below)
+
+The owner accepts the risk that the caller and the initiating website cannot be
+authenticated, and asks for external `afirma://` requests to be **signed with
+explicit confirmation**. The sections below remain the threat analysis. Where they
+say "deny", this decision applies instead:
+
+- Admit external `afirma://` deliveries for every operation the native servlet
+  route already supports (`sign`, `cosign`, `countersign`, `batch`, `selectcert`).
+  No reviewed caller/profile binding is required.
+- The caller is shown as **unknown/unverified**. An OS-attributed package (API 35
+  `ComponentCaller`) may be shown as information only, never as a trust badge.
+- Every delivery requires a fresh one-shot consent that shows:
+  - the operation;
+  - the recipient scheme/host/path without query;
+  - the payload size and SHA-256;
+  - the certificate;
+  - a prominent warning that the request came from outside the app, its source
+    cannot be verified, and data will be sent to the shown recipient.
+  
+  No "remember", no default-checked consent, no auto-accept.
+- Kept unchanged, these are not optional:
+  - the HTTPS/public-DNS/TLS/no-redirect/no-retry transport;
+  - body and time limits;
+  - no processing before the receiver is resumed and visible;
+  - no background execution;
+  - unlock is never consent;
+  - a one-shot token bound to request digest, destinations and certificate;
+  - invalidation on background/lock/replacement;
+  - no cookies or client-TLS grants copied into the request;
+  - no arbitrary result URI or Intent return.
+- The external request uses its own typed context. It never fabricates a browser
+  `TrustedOrigin` or `pageUrl`, and never borrows the live WebView's state.
+
 ## Decision and stop-condition
 
 Do not add an exported AutoFirma receiver, an `afirma` intent-filter, an
