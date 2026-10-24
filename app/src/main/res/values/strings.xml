@@ -301,4 +301,16 @@
     <string name="certificate_retention_fifteen_minutes">15 minutos</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 horas</string>
+    <string name="certificate_reminder_settings">Ajustes de recordatorios</string>
+    <string name="certificate_reminder_toggle">Avisar de la caducidad del certificado</string>
+    <string name="certificate_reminder_copy">Avisos locales 30 y 7 días naturales antes de caducar el certificado guardado. Desactivados por defecto. No incluyen datos personales. Android puede retrasarlos para ahorrar batería.</string>
+    <string name="certificate_reminder_blocked">Android no permite estos avisos. Puedes habilitarlos en los ajustes de notificaciones.</string>
+    <string name="certificate_reminder_system_settings">Abrir ajustes de notificaciones</string>
+    <string name="certificate_reminder_done">Listo</string>
+    <string name="certificate_reminder_save_failed">No se pudo guardar el ajuste. Inténtalo de nuevo.</string>
+    <string name="certificate_reminder_channel">Caducidad del certificado</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">Su certificado caduca en %1$d día</item>
+        <item quantity="other">Su certificado caduca en %1$d días</item>
+    </plurals>
 </resources>

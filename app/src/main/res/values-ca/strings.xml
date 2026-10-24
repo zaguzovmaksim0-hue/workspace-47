@@ -301,4 +301,16 @@
     <string name="certificate_retention_fifteen_minutes">15 minuts</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 hores</string>
+    <string name="certificate_reminder_settings">Configuració dels recordatoris</string>
+    <string name="certificate_reminder_toggle">Avisar de la caducitat del certificat</string>
+    <string name="certificate_reminder_copy">Avisos locals 30 i 7 dies naturals abans que caduqui el certificat desat. Desactivats per defecte. No inclouen dades personals. Android pot retardar-los per estalviar bateria.</string>
+    <string name="certificate_reminder_blocked">Android bloqueja aquests avisos. Pots activar-los a la configuració de notificacions.</string>
+    <string name="certificate_reminder_system_settings">Obrir la configuració de notificacions</string>
+    <string name="certificate_reminder_done">Fet</string>
+    <string name="certificate_reminder_save_failed">No s’ha pogut desar la configuració. Torna-ho a provar.</string>
+    <string name="certificate_reminder_channel">Caducitat del certificat</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">El vostre certificat caduca d’aquí a %1$d dia</item>
+        <item quantity="other">El vostre certificat caduca d’aquí a %1$d dies</item>
+    </plurals>
 </resources>

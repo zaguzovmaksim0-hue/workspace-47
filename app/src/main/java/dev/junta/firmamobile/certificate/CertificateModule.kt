@@ -28,8 +28,9 @@ internal class CertificateModule(
                         documentAccess = ContentResolverCertificateDocumentAccess(
                             applicationContext.contentResolver,
                         ),
-                        referenceStore = PreferencesCertificateReferenceStore(
-                            applicationContext.certificateReferenceDataStore,
+                        referenceStore = ReminderCertificateReferenceStore(
+                            applicationContext,
+                            PreferencesCertificateReferenceStore(applicationContext.certificateReferenceDataStore),
                         ),
                         loader = Pkcs12Loader(),
                     )
