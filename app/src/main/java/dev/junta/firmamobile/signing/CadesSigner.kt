@@ -7,6 +7,7 @@ import java.security.SecureRandom
 import java.time.Clock
 import java.util.Date
 import java.util.Hashtable
+import org.bouncycastle.asn1.ASN1Encoding
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERSet
 import org.bouncycastle.asn1.cms.Attribute
@@ -115,7 +116,8 @@ class BouncyCastleCadesSigner internal constructor(
                     ),
                 )
             }
-            val generated = generator.generate(CMSProcessableByteArray(contentCopy), false).encoded
+            val generated = generator.generate(CMSProcessableByteArray(contentCopy), false)
+                .getEncoded(ASN1Encoding.DER)
             encodedSignature = generated
             if (generated.size > maxOutputBytes) {
                 return LocalSignatureResult.Failure(LocalSignatureError.OUTPUT_TOO_LARGE)
