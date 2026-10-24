@@ -326,6 +326,18 @@
     <string name="local_signing_failed">Non se puido completar a operación. Comproba que o certificado segue desbloqueado e que o ficheiro non supera 512 KiB. Se falla o gardado, pode quedar un ficheiro incompleto no destino escollido.</string>
     <string name="local_signing_choose">Escoller outro ficheiro</string>
     <string name="local_signing_save">Gardar sinatura</string>
+    <string name="certificate_reminder_settings">Axustes dos recordatorios</string>
+    <string name="certificate_reminder_toggle">Avisar da caducidade do certificado</string>
+    <string name="certificate_reminder_copy">Avisos locais 30 e 7 días naturais antes de que caduque o certificado gardado. Desactivados por defecto. Non inclúen datos persoais. Android pode atrasalos para aforrar batería.</string>
+    <string name="certificate_reminder_blocked">Android bloquea estes avisos. Podes activalos nos axustes de notificacións.</string>
+    <string name="certificate_reminder_system_settings">Abrir os axustes de notificacións</string>
+    <string name="certificate_reminder_done">Feito</string>
+    <string name="certificate_reminder_save_failed">Non se puido gardar o axuste. Téntao de novo.</string>
+    <string name="certificate_reminder_channel">Caducidade do certificado</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">O seu certificado caduca en %1$d día</item>
+        <item quantity="other">O seu certificado caduca en %1$d días</item>
+    </plurals>
     <string name="certificate_auth_title">Protexer o desbloqueo gardado</string>
     <string name="certificate_auth_subtitle">Confirma con biometría ou co PIN, padrón ou contrasinal do dispositivo.</string>
     <string name="certificate_auth_help">Gardar e recuperar o desbloqueo require confirmación do dispositivo. Se cancelas ao gardalo, só se conserva a sesión en memoria.</string>

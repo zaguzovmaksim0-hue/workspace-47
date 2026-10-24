@@ -326,6 +326,18 @@
     <string name="local_signing_failed">No se pudo completar la operación. Comprueba que el certificado sigue desbloqueado y que el archivo no supera 512 KiB. Si falló el guardado, puede quedar un archivo incompleto en el destino elegido.</string>
     <string name="local_signing_choose">Elegir otro archivo</string>
     <string name="local_signing_save">Guardar firma</string>
+    <string name="certificate_reminder_settings">Ajustes de recordatorios</string>
+    <string name="certificate_reminder_toggle">Avisar de la caducidad del certificado</string>
+    <string name="certificate_reminder_copy">Avisos locales 30 y 7 días naturales antes de caducar el certificado guardado. Desactivados por defecto. No incluyen datos personales. Android puede retrasarlos para ahorrar batería.</string>
+    <string name="certificate_reminder_blocked">Android no permite estos avisos. Puedes habilitarlos en los ajustes de notificaciones.</string>
+    <string name="certificate_reminder_system_settings">Abrir ajustes de notificaciones</string>
+    <string name="certificate_reminder_done">Listo</string>
+    <string name="certificate_reminder_save_failed">No se pudo guardar el ajuste. Inténtalo de nuevo.</string>
+    <string name="certificate_reminder_channel">Caducidad del certificado</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">Su certificado caduca en %1$d día</item>
+        <item quantity="other">Su certificado caduca en %1$d días</item>
+    </plurals>
     <string name="certificate_auth_title">Proteger el desbloqueo guardado</string>
     <string name="certificate_auth_subtitle">Confirma con biometría o el PIN, patrón o contraseña del dispositivo.</string>
     <string name="certificate_auth_help">Guardar y recuperar el desbloqueo requiere confirmación del dispositivo. Si cancelas al guardarlo, solo se conserva la sesión en memoria.</string>
