@@ -287,6 +287,36 @@ class CertificateExpiryRemindersTest {
         assertTrue(shadowOf(alarms).scheduledAlarms.isEmpty())
     }
 
+    @Test
+    fun remindersFollowOnlyTheActiveCatalogueEntry() = runBlocking {
+        val reminders = reminders()
+        val store = ReminderCertificateReferenceStore(context, references, reminders)
+        reminders.setEnabled(true)
+        val first = checkNotNull(store.readCatalog().active)
+        val second = store.add(reference("content://synthetic/second").copy(summary = null))
+        assertEquals(1, shadowOf(alarms).scheduledAlarms.size)
+        assertFalse(store.selectEntry(second.id, second.revision + 1))
+        assertEquals(1, shadowOf(alarms).scheduledAlarms.size)
+        assertTrue(store.selectEntry(second.id, second.revision))
+        assertTrue(shadowOf(alarms).scheduledAlarms.isEmpty())
+        assertTrue(store.selectEntry(first.id, first.revision))
+        assertEquals(1, shadowOf(alarms).scheduledAlarms.size)
+        store.remove(second)
+        assertEquals(1, shadowOf(alarms).scheduledAlarms.size)
+        // Replacing the active entry reconciles too, as forgetting its source file would.
+        val withoutSummary = first.copy(revision = first.revision + 1, reference = first.reference?.copy(summary = null))
+        store.replace(first, withoutSummary)
+        assertTrue(shadowOf(alarms).scheduledAlarms.isEmpty())
+        val restored = first.copy(revision = first.revision + 2)
+        store.replace(withoutSummary, restored)
+        assertEquals(1, shadowOf(alarms).scheduledAlarms.size)
+        store.remove(restored)
+        assertNull(store.read())
+        assertTrue(shadowOf(alarms).scheduledAlarms.isEmpty())
+        reminders.refresh(deliver = true)
+        assertTrue(shadowOf(notifications).allNotifications.isEmpty())
+    }
+
     private fun reminders(at: Instant = now) = CertificateExpiryReminders(
         context, references, Clock.fixed(at, ZoneOffset.UTC), { ZoneOffset.UTC },
     )
@@ -299,13 +329,50 @@ class CertificateExpiryRemindersTest {
         CertificateSummary("OWNER_CANARY", "ISSUER_CANARY", Instant.parse("2025-01-01T00:00:00Z"), expiry),
     )
 
-    private class MemoryReferenceStore(var reference: StoredCertificateReference?) : CertificateReferenceStore {
+    /** In-memory catalogue with the same conditional semantics as the DataStore one. */
+    private class MemoryReferenceStore(initial: StoredCertificateReference?) : CertificateReferenceCatalogStore {
         var readFailure = false
+        private var catalog = StoredCertificateCatalog(emptyList(), null)
+
+        init {
+            initial?.let { catalog = entry(it).let { first -> StoredCertificateCatalog(listOf(first), first.id) } }
+        }
+
         override suspend fun read(): StoredCertificateReference? {
             if (readFailure) throw IOException("Synthetic unavailable metadata")
-            return reference
+            return catalog.active?.reference
         }
-        override suspend fun write(reference: StoredCertificateReference) { this.reference = reference }
-        override suspend fun clear() { reference = null }
+        override suspend fun readCatalog() = catalog
+        override suspend fun add(reference: StoredCertificateReference) = entry(reference).also {
+            catalog = catalog.copy(entries = catalog.entries + it)
+        }
+        override suspend fun selectEntry(id: String, revision: Long): Boolean =
+            catalog.entries.any { it.id == id && it.revision == revision && it.reference != null }
+                .also { if (it) catalog = catalog.copy(activeId = id) }
+        override suspend fun replace(expected: StoredCertificateEntry, replacement: StoredCertificateEntry) {
+            check(expected in catalog.entries)
+            catalog = catalog.copy(entries = catalog.entries.map { if (it == expected) replacement else it })
+        }
+        override suspend fun remove(expected: StoredCertificateEntry) {
+            check(expected in catalog.entries)
+            catalog = catalog.copy(
+                entries = catalog.entries - expected,
+                activeId = catalog.activeId.takeUnless { it == expected.id },
+            )
+        }
+        override suspend fun acknowledgeKeyDeletion(alias: String) = Unit
+        override suspend fun write(reference: StoredCertificateReference) {
+            val active = catalog.active
+            catalog = if (active == null) {
+                entry(reference).let { StoredCertificateCatalog(catalog.entries + it, it.id) }
+            } else {
+                catalog.copy(entries = catalog.entries.map { if (it.id == active.id) it.copy(reference = reference) else it })
+            }
+        }
+        override suspend fun clear() {
+            catalog = StoredCertificateCatalog(catalog.entries.filterNot { it.id == catalog.activeId }, null)
+        }
+
+        private fun entry(reference: StoredCertificateReference) = CertificateReferenceCatalogCodec.entry(reference)
     }
 }

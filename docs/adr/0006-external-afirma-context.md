@@ -1,7 +1,7 @@
 # 0006 — External AutoFirma consent without browser provenance
 
 **Date:** 2026-10-24
-**Status:** Accepted core; Android receiver disabled
+**Status:** Accepted; Android receiver enabled with shared admission (2026-10-24)
 
 ## Context
 
@@ -52,3 +52,39 @@ external deliveries without backgrounding or cancelling the current operation.
 Then connect VIEW envelope validation, resumed/visible/focused/keyguard checks,
 recreation rejection and the core, and test real Android delivery before enabling
 an intent-filter. Full CI and physical interoperability remain unverified here.
+
+## Android integration (2026-10-24)
+
+The payoff trigger is met. `SigningAdmission` is one process-wide owner: the
+browser screen registers a provider covering popup, native servlet, retrieval,
+fallback, interactive and in-place Client TLS, certificate selection, MiniApplet,
+Melilla batch and ordinary signing state; MainActivity registers its own
+ordinary/batch ownership, external handoffs, pickers and the certificate panel.
+A throwing provider counts as busy. While an external request holds admission,
+every portal entry point refuses new work.
+
+`ExternalAfirmaEntryActivity` is the only exported entry. It reads just the VIEW
+action and `afirma:` data string (no extras, clip data or selectors), parks it
+in a 30-second in-process slot and opens the app with the launcher intent, never
+forwarding the URI. It runs in its own empty-affinity task excluded from
+recents, the standard trampoline shape: with the app's affinity, a cold start
+with NEW_TASK would make it the task root and Android would drop the following
+launcher intent. Accepted cost: a delivery while Firma itself is in the
+foreground (from a notification or split screen) briefly stops it, which cancels
+its current operation as any other app switch does. A second delivery while one
+is parked is refused and never replaces it. Outgoing afirma:// never resolves to
+this entry: the scheme is reserved for page intent links and the official
+AutoFirma handoff names its package.
+
+MainActivity takes the slot only when resumed. A busy app answers at once with
+"busy" and leaves the current operation untouched; an idle app waits for window
+focus and an unlocked keyguard, then gives each delivery exactly one outcome:
+consent dialog, busy, rejected (parse/review failure) or expired (stale slot). An
+explicit intent to MainActivity never carries a request. Leaving the app before
+confirmation cancels the review; confirmation remains single-use with the
+two-minute window and replay ledger above. Admission is released when the
+consent dialog is dismissed or the Activity is destroyed.
+
+Robolectric covers cold and warm delivery, busy in both directions, background
+before confirmation, cancel, rejection and expiry. Physical interoperability
+with real callers remains unverified.
