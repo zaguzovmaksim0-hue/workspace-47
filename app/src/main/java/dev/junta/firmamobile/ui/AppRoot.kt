@@ -80,9 +80,7 @@ fun AppRoot(
             painter = painterResource(R.drawable.jfm_home_background),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag("jfm-home-background"),
+            modifier = Modifier.fillMaxSize().testTag("jfm-home-background"),
         )
         Column(
             modifier = Modifier
@@ -100,7 +98,7 @@ fun AppRoot(
                 state = state,
                 onSelectCertificate = onSelectCertificate,
                 onUnlock = onUnlock,
-                        onRestoreSavedUnlock = onRestoreSavedUnlock,
+                onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onLock = onLock,
                 onForget = onForget,
                 onContinue = onContinue,
@@ -203,7 +201,7 @@ private fun CertificatePanel(
             is CertificateUiState.Locked -> LockedCertificate(
                 state = state,
                 onUnlock = onUnlock,
-                        onRestoreSavedUnlock = onRestoreSavedUnlock,
+                onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onSelectCertificate = onSelectCertificate,
                 onForget = onForget,
             )
@@ -450,6 +448,9 @@ private fun CertificateError(error: CertificateUiError) {
 private fun CertificateUiError.message(): String = stringResource(
     when (this) {
         CertificateUiError.PASSWORD_INVALID_OR_FILE -> R.string.error_password_or_file
+        CertificateUiError.INVALID_PASSWORD -> R.string.error_invalid_password
+        CertificateUiError.INVALID_PKCS12_FILE -> R.string.error_invalid_pkcs12_file
+        CertificateUiError.UNSUPPORTED_PKCS12_ENCRYPTION -> R.string.error_unsupported_pkcs12_encryption
         CertificateUiError.FILE_TOO_LARGE -> R.string.error_file_too_large
         CertificateUiError.PRIVATE_KEY_MISSING -> R.string.error_private_key_missing
         CertificateUiError.MULTIPLE_PRIVATE_KEYS -> R.string.error_multiple_private_keys
