@@ -1,6 +1,8 @@
 package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.certificate.TestCertificateFactory
+import dev.junta.firmamobile.verification.OfflineCmsStatus
+import dev.junta.firmamobile.verification.OfflineCmsVerifier
 import java.security.Security
 import java.time.Clock
 import java.time.ZoneOffset
@@ -23,6 +25,19 @@ class CadesSignerTest {
     private val signer: CadesSigner = BouncyCastleCadesSigner(
         clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC),
     )
+
+    @Test
+    fun detachedOutputPassesStrictOfflineVerification() {
+        val content = "local file".encodeToByteArray()
+        val result = signer.signDetached(content, syntheticIdentity(), SigningAlgorithm.SHA256_WITH_RSA)
+            as LocalSignatureResult.Success
+        result.signature.use { signature ->
+            signature.withBytes { bytes ->
+                assertEquals(OfflineCmsStatus.VERIFIED, OfflineCmsVerifier.verify(bytes, content).status)
+            }
+        }
+        content.fill(0)
+    }
 
     @Test
     fun detachedCadesVerifiesAgainstSyntheticContentAndCertificate() {
@@ -56,6 +71,7 @@ class CadesSignerTest {
             signature.withBytes { bytes ->
                 val signerInfo = signerInfo(content, bytes)
                 assertNotNull(signerInfo.signedAttributes.get(CMSAttributes.messageDigest))
+                assertNotNull(signerInfo.signedAttributes.get(CMSAttributes.signingTime))
                 assertNotNull(
                     signerInfo.signedAttributes.get(
                         PKCSObjectIdentifiers.id_aa_signingCertificateV2,
