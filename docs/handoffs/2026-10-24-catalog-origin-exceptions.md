@@ -1,5 +1,15 @@
 # Catalog origin exceptions: fail-closed migration handoff
 
+## Owner decision 2026-10-24
+
+- **Authority: both.** The catalog declares the shared-origin exceptions, and the
+  Kotlin parser keeps independent exact pins. Any mismatch rejects the whole
+  catalog. The catalog alone never widens access.
+- **Order: keep the directional first-owner rule.** Do not convert it into
+  symmetric groups.
+- Gate 0 characterization: #445. Its known gap: Soria has no exact client-auth
+  policy pin, unlike its same-origin peers.
+
 ## Disposition and scope
 
 Task 6 is **plan only**. No production code, catalog entry, protocol, adapter, test,
