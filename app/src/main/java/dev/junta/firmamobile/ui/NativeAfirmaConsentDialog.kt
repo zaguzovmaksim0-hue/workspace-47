@@ -35,6 +35,7 @@ import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentProblem
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt
+import dev.junta.firmamobile.afirma.servlet.AfirmaResultSummary
 
 @Composable
 internal fun NativeAfirmaConsentDialog(
@@ -104,7 +105,14 @@ internal fun NativeAfirmaConsentDialog(
                 prompt.details.serviceDestinations.forEach { endpoint -> Text(stringResource(R.string.native_multiphase_service, endpoint)) }
                 prompt.details.batchItems?.let { Text(stringResource(R.string.native_multiphase_count, it)) }
                 if (prompt.details.delegatedSigning) Text(stringResource(R.string.native_multiphase_delegated))
-                prompt.resultSummary?.let { Text(it, Modifier.testTag("native-multiphase-results")) }
+                prompt.resultSummary?.let { summary ->
+                    val text = when (summary) {
+                        AfirmaResultSummary.ServiceResult -> stringResource(R.string.native_multiphase_result)
+                        is AfirmaResultSummary.Batch -> stringResource(R.string.native_multiphase_batch_result,
+                            summary.documents, summary.positive, summary.documents - summary.positive)
+                    }
+                    Text(text, Modifier.testTag("native-multiphase-results"))
+                }
                 if (finished) prompt.batchReceipt?.let { NativeBatchResultDetails(it) }
                 if (prompt.details.format?.startsWith("PDF") == true) Text(stringResource(R.string.native_afirma_pdf_prior_signatures))
                 if (!prompt.details.delegatedSigning &&
