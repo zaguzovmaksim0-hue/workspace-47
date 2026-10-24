@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.signing
 
+import dev.junta.firmamobile.certificate.KeystoreRsaSigning
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import java.security.SecureRandom
 import java.security.Signature
@@ -52,9 +53,12 @@ class JcaLocalSignatureEngine internal constructor(
         var generatedSignature: ByteArray? = null
         return try {
             val jcaAlgorithm = algorithm.jcaName()
+            val placement = identity.keystorePlacement
             val signatureBytes = identity.withPrivateKey { privateKey ->
                 if (!privateKey.algorithm.equals(RSA, ignoreCase = true)) {
                     null
+                } else if (placement != null) {
+                    KeystoreRsaSigning.sign(privateKey, algorithm, inputCopy, placement)
                 } else {
                     signatureForKey(privateKey, jcaAlgorithm).run {
                         initSign(privateKey, secureRandom)
