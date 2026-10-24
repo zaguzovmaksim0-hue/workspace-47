@@ -1,4 +1,4 @@
-# 0006 — Atomic keystore key catalogue commits
+# 0009 — Atomic keystore key catalogue commits
 
 **Date:** 2026-10-24
 **Status:** Draft, implementation of ADR 0005 slice 2

@@ -1,6 +1,6 @@
 # ADR 0005 slice 2: local storage verification
 
-Scope: disabled storage lifecycle, not runtime activation. ADR 0006 records the
+Scope: disabled storage lifecycle, not runtime activation. ADR 0009 records the
 schema and commit/recovery boundary. No TLS, signing configuration, dependencies,
 locks, verification metadata, security policy, or detekt baseline changed.
 
@@ -65,7 +65,7 @@ Other checks:
 No push, PR, workflow dispatch, broad Gradle gate, instrumentation, emulator,
 device install or physical StrongBox/TEE test was performed. Runtime UI and
 password-cache/grant/reminder integration remain disconnected, as recorded in
-ADR 0006 and the debt registry. The new warning strings are assets for that UI,
+ADR 0009 and the debt registry. The new warning strings are assets for that UI,
 not evidence that the feature is user-operable. Optional forgetting removes the
 stored file reference, not the user's backup or its existing SAF grant. An
 unreadable ambiguous commit preserves its alias until recovery can read a safe
