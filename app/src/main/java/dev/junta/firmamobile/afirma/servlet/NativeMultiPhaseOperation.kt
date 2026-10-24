@@ -46,6 +46,7 @@ internal class NativeMultiPhaseOperation(
             MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) },
             serviceDestinations = listOfNotNull(remote.preUrl, remote.postUrl).map(::destination).distinct(),
             batchItems = remote.batch?.items?.size, delegatedSigning = !remote.localBatch,
+            batchReview = remote.batch?.let { NativeBatchConsentReview.from(it, remote.localBatch) },
             requiresExactCertificate = invocation.requiresExactCertificate,
             providedDigestItems = if (remote.localBatch) remote.batch?.items?.count {
                 it.operation == "sign" && it.format.equals("CAdES", true) &&

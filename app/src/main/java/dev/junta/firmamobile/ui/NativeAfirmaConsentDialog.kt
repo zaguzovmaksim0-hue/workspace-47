@@ -35,6 +35,7 @@ import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentProblem
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt
+import dev.junta.firmamobile.afirma.servlet.NativeBatchConsentReview
 import dev.junta.firmamobile.afirma.servlet.AfirmaResultSummary
 
 @Composable
@@ -103,7 +104,10 @@ internal fun NativeAfirmaConsentDialog(
                         Modifier.testTag("native-afirma-exact-certificate"))
                 }
                 prompt.details.serviceDestinations.forEach { endpoint -> Text(stringResource(R.string.native_multiphase_service, endpoint)) }
-                prompt.details.batchItems?.let { Text(stringResource(R.string.native_multiphase_count, it)) }
+                prompt.details.batchItems?.let {
+                    Text(stringResource(R.string.native_multiphase_count, it), Modifier.testTag("native-batch-count"))
+                }
+                if (review) prompt.details.batchReview?.let { nativeBatchDocuments(it, prompt.token) }
                 if (prompt.details.delegatedSigning) Text(stringResource(R.string.native_multiphase_delegated))
                 prompt.resultSummary?.let { summary ->
                     val text = when (summary) {
@@ -178,10 +182,16 @@ internal fun NativeAfirmaConsentDialog(
                         prompt.details.format?.let { Text(stringResource(R.string.native_afirma_format, it)) }
                         prompt.details.algorithm?.let { Text(stringResource(R.string.native_afirma_algorithm, it)) }
                         if (prompt.details.operation != "selectcert") {
-                            Text(stringResource(if (prompt.details.providedDigestAlgorithm == null) R.string.native_afirma_size
-                                else R.string.native_cades_provided_hash_size, prompt.details.payloadBytes))
-                            prompt.details.payloadSha256?.let { Text(stringResource(if (prompt.details.providedDigestAlgorithm == null)
-                                R.string.native_afirma_digest else R.string.native_cades_received_hash_fingerprint, it)) }
+                            Text(stringResource(when {
+                                prompt.details.batchItems != null -> R.string.native_batch_descriptor_size
+                                prompt.details.providedDigestAlgorithm == null -> R.string.native_afirma_size
+                                else -> R.string.native_cades_provided_hash_size
+                            }, prompt.details.payloadBytes))
+                            prompt.details.payloadSha256?.let { Text(stringResource(when {
+                                prompt.details.batchItems != null -> R.string.native_batch_descriptor_digest
+                                prompt.details.providedDigestAlgorithm == null -> R.string.native_afirma_digest
+                                else -> R.string.native_cades_received_hash_fingerprint
+                            }, it)) }
                         }
                     }
                 }
@@ -238,5 +248,44 @@ private fun ConsentPrimaryButton(
     Button(onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth().heightIn(min = 50.dp),
         shape = JuntaPanelShape) {
         Text(text, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+private fun nativeBatchDocuments(review: NativeBatchConsentReview, token: java.util.UUID) {
+    var expanded by remember(token) { mutableStateOf(false) }
+    val state = stringResource(
+        if (expanded) R.string.native_consent_expanded else R.string.native_consent_collapsed,
+    )
+    TextButton(
+        onClick = { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+            .testTag("native-batch-documents-toggle").semantics { stateDescription = state },
+    ) {
+        Text(stringResource(
+            if (expanded) R.string.signing_batch_documents_hide else R.string.signing_batch_documents_show,
+        ))
+    }
+    if (expanded) {
+        Column(Modifier.fillMaxWidth().testTag("native-batch-documents"),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.signing_batch_documents_explanation))
+            Text(stringResource(R.string.native_batch_evidence_notice))
+            review.documents.forEachIndexed { index, document ->
+                Text(stringResource(if (document.identifier.isEmpty()) R.string.signing_batch_document_number
+                    else R.string.signing_batch_document_identifier, index + 1, document.identifier),
+                    Modifier.testTag("native-batch-document-$index"))
+                val evidence = document.evidence
+                if (evidence == null) {
+                    Text(stringResource(R.string.native_batch_evidence_unavailable),
+                        Modifier.testTag("native-batch-document-unavailable-$index"))
+                } else {
+                    Text(stringResource(R.string.native_batch_document_bytes, evidence.bytes),
+                        Modifier.testTag("native-batch-document-bytes-$index"))
+                    Text(stringResource(R.string.native_batch_document_sha256, evidence.sha256),
+                        Modifier.testTag("native-batch-document-sha256-$index"))
+                }
+            }
+        }
     }
 }
