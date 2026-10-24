@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offline_verification_entry">Sinaduraren osotasuna egiaztatu</string>
+    <string name="offline_verification_title">CMS/CAdES sinaduraren osotasuna</string>
+    <string name="offline_verification_scope">CMS/CAdES osotasun kriptografikoaren tokiko egiaztapena, sareko kontsultarik gabe. Ez dira ziurtagiriaren konfiantza, indarraldia edo errebokazioa egiaztatzen, ezta denbora-zigiluak balioztatzen ere.</string>
+    <string name="offline_verification_limits">Tokiko fitxategiak soilik: CMS gehienez 1 MiB eta jatorrizko edukia gehienez 512 KiB. PDF eta XML ez dira onartzen.</string>
+    <string name="offline_verification_original_hint">Jatorrizkoa sinadura bereizietan baino ez da behar. Hautatutako fitxategi hutsa edukia da; ez da ezer ez hautatzearen berdina. CMS fitxategiak edukia badakar, ez gehitu jatorrizkorik.</string>
+    <string name="offline_verification_pick_cms">CMS/CAdES sinadura hautatu</string>
+    <string name="offline_verification_cms_selected">Sinadura hautatuta</string>
+    <string name="offline_verification_cms_missing">Ez da sinadurarik hautatu</string>
+    <string name="offline_verification_pick_original">Aukerako jatorrizkoa hautatu</string>
+    <string name="offline_verification_original_selected">Jatorrizkoa hautatuta, hutsik egon arren</string>
+    <string name="offline_verification_original_missing">Ez da jatorrizkorik hautatu</string>
+    <string name="offline_verification_clear_original">Jatorrizkoa kendu</string>
+    <string name="offline_verification_verify">Egiaztatu</string>
+    <string name="offline_verification_close">Itxi</string>
+    <string name="offline_verification_cancel">Utzi eta hautapena ezabatu</string>
+    <string name="offline_verification_progress">Osotasuna egiaztatzen…</string>
+    <string name="offline_verification_cancellation_note">Bertan behera uzteak emaitza baztertu eta aplikazioaren byteak ezabatzen ditu eragiketa amaitzean. Hornitzaile edo kalkulu batzuk ezin dira berehala eten eta hurrengo egiaztapena atzera dezakete.</string>
+    <string name="offline_verification_verified">Sinaduraren osotasuna egiaztatuta. Horrek ez du ziurtagiriaren konfiantza edo baliozkotasuna bermatzen.</string>
+    <string name="offline_verification_signer_count">Osotasuna egiaztatuta duten sinadurak: %1$d</string>
+    <string name="offline_verification_invalid">Osotasuna ez da egiaztatu: sinadura baliogabea, eduki aldatua edo bat ez datorren jatorrizkoa. CMS fitxategiak edukia badakar, kendu aukerako jatorrizkoa.</string>
+    <string name="offline_verification_unsupported">CMS/CAdES profila ez da onartzen. Osotasuna ez da egiaztatu.</string>
+    <string name="offline_verification_limit_exceeded">Muga gaindituta: CMS gehienez 1 MiB eta jatorrizkoa gehienez 512 KiB. Osotasuna ez da egiaztatu.</string>
+    <string name="offline_verification_detached_required">Sinadura bereizi honek jatorrizko edukia behar du. Hautatu eta sakatu Egiaztatu.</string>
+    <string name="offline_verification_read_failed">Ezin izan dira fitxategiak irakurri edo egiaztatu. Hautatu berriro tokiko fitxategiak.</string>
+</resources>
