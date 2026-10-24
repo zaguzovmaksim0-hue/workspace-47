@@ -24,6 +24,33 @@ import org.robolectric.annotation.SQLiteMode
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SiteProfileCatalogParserTest {
     @Test
+    fun escapedSchemaKeyAndJsonWhitespacePreserveTheCatalog() {
+        val json = BuiltInSiteProfiles.JSON
+        assertTrue(json.contains("\"schemaVersion\""))
+        val escaped = json.replaceFirst("\"schemaVersion\"", "\"schema\\u0056ersion\"")
+        assertEquals(
+            BuiltInSiteProfiles.catalog,
+            SiteProfileCatalogParser.parse(" \t\r\n$escaped\n\r\t "),
+        )
+    }
+
+    @Test
+    fun malformedUnicodeEscapesAndRawControlCharactersFailClosed() {
+        val invalidKeys = listOf(
+            "schema\\u00" to IllegalArgumentException::class.java,
+            "schema\\u00xzersion" to IllegalArgumentException::class.java,
+            "schema\\qVersion" to IllegalStateException::class.java,
+            "schema${0x1f.toChar()}Version" to IllegalStateException::class.java,
+        )
+        for ((key, errorType) in invalidKeys) {
+            val json = BuiltInSiteProfiles.JSON.replaceFirst("\"schemaVersion\"", "\"$key\"")
+            assertThrows("Key must be rejected: $key", errorType) {
+                SiteProfileCatalogParser.parse(json)
+            }
+        }
+    }
+
+    @Test
     fun lastVerifiedOnPreservesDocumentedE2EDates() {
         val expected = mapOf(
             "unizar-tramitador" to "2026-07-30",
@@ -57,6 +84,25 @@ class SiteProfileCatalogParserTest {
             "2026-07-21T00:00:00Z", " 2026-07-21", "0000-01-01", tomorrow)) {
             assertThrows(RuntimeException::class.java) {
                 SiteProfileCatalogParser.parse(profileDateJson("unizar-tramitador", date))
+            }
+        }
+    }
+
+    @Test
+    fun collectionSeparatorsAndTrailingInputRemainStrict() {
+        val json = """{"schemaVersion":1,"catalogVersion":1,"profiles":[]}"""
+        val catalog = SiteProfileCatalogParser.parse(json)
+        assertTrue(catalog.profiles.isEmpty())
+        val invalid = listOf(
+            json.replace("[]", "[,]") to IllegalStateException::class.java,
+            json.replace("[]", "[{},]") to IllegalStateException::class.java,
+            json.replace("1,\"catalogVersion\"", "1 \"catalogVersion\"") to IllegalArgumentException::class.java,
+            (json.dropLast(1) + ",}") to IllegalArgumentException::class.java,
+            "$json false" to IllegalArgumentException::class.java,
+        )
+        for ((candidate, errorType) in invalid) {
+            assertThrows(errorType) {
+                SiteProfileCatalogParser.parse(candidate)
             }
         }
     }
