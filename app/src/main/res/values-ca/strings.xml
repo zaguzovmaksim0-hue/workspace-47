@@ -304,4 +304,9 @@
     <string name="certificate_retention_fifteen_minutes">15 minuts</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 hores</string>
+    <string name="certificate_auth_title">Protegir el desbloqueig desat</string>
+    <string name="certificate_auth_subtitle">Confirma amb biometria o amb el PIN, el patró o la contrasenya del dispositiu.</string>
+    <string name="certificate_auth_help">Desar i recuperar el desbloqueig requereix la confirmació del dispositiu. Si cancel·les en desar-lo, només es conserva la sessió en memòria.</string>
+    <string name="certificate_auth_unsupported">A Android 8–10 el desbloqueig no es desa entre reinicis de l\'aplicació. Introdueix la contrasenya del certificat.</string>
+    <string name="certificate_restore_saved">Recuperar el desbloqueig desat</string>
 </resources>

@@ -478,6 +478,138 @@ class CertificateViewModelTest {
         assertEquals(TestCertificateFactory.now.plus(Duration.ofMinutes(15)), cache.storedExpiry)
     }
 
+    @Test
+    fun deniedSaveClearsOldRecordButKeepsManualMemorySession() = runTest(dispatcher) {
+        val identity = validIdentity()
+        val gateway = FakeCertificateGateway().apply {
+            current = reference()
+            unlockResult = CertificateLoadResult.Success(identity)
+        }
+        val cache = FakeCertificateUnlockCache().apply {
+            requiresExplicitRestore = true
+            storeAllowed = false
+            restoredPassword = TestCertificateFactory.password()
+            restoredExpiry = TestCertificateFactory.now.plus(Duration.ofHours(24))
+        }
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle()
+        model.unlock(TestCertificateFactory.password())
+        advanceUntilIdle()
+        assertTrue(model.state.value is CertificateUiState.Unlocked)
+        assertSame(identity, session.identityForSigning())
+        assertNull(cache.restoredPassword)
+        assertEquals(1, cache.clearCalls)
+    }
+
+    @Test
+    fun deniedSaveWithUnverifiedCleanupFailsClosed() = runTest(dispatcher) {
+        val gateway = FakeCertificateGateway().apply {
+            current = reference()
+            unlockResult = CertificateLoadResult.Success(validIdentity())
+        }
+        val cache = FakeCertificateUnlockCache().apply {
+            requiresExplicitRestore = true
+            storeAllowed = false
+            clearVerified = false
+        }
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle()
+        model.unlock(TestCertificateFactory.password())
+        advanceUntilIdle()
+        val locked = model.state.value as CertificateUiState.Locked
+        assertTrue(locked.revocationPending)
+        assertEquals(CertificateUiError.STORAGE_FAILURE, locked.error)
+        assertNull(session.identityForSigning())
+        model.restoreSavedUnlock()
+        advanceUntilIdle()
+        assertEquals(0, cache.restoreCalls)
+    }
+
+    @Test
+    fun nativePromptBackgroundDoesNotCancelExplicitRestore() = runTest(dispatcher) {
+        val approval = CompletableDeferred<Unit>()
+        val identity = validIdentity()
+        val gateway = FakeCertificateGateway().apply {
+            current = reference()
+            unlockResult = CertificateLoadResult.Success(identity)
+        }
+        val cache = FakeCertificateUnlockCache().apply {
+            requiresExplicitRestore = true
+            restoredPassword = TestCertificateFactory.password()
+            restoredExpiry = TestCertificateFactory.now.plus(Duration.ofMinutes(15))
+            beforeRestore = { isAwaitingAuthentication = true; approval.await() }
+        }
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle()
+        model.restoreSavedUnlock()
+        runCurrent()
+        model.onAppBackgrounded()
+        approval.complete(Unit)
+        advanceUntilIdle()
+        assertTrue(model.state.value is CertificateUiState.Unlocked)
+        assertSame(identity, session.identityForSigning())
+    }
+
+    @Test
+    fun authenticatedCacheNeverRestoresAtStartupForegroundOrMemoryPressure() = runTest(dispatcher) {
+        val gateway = FakeCertificateGateway().apply { current = reference() }
+        val cache = FakeCertificateUnlockCache().apply { requiresExplicitRestore = true }
+        val model = viewModel(gateway, cache = cache)
+        advanceUntilIdle(); model.onAppForegrounded(); model.onMemoryPressure(); advanceUntilIdle()
+        assertEquals(0, cache.restoreCalls)
+        assertTrue(model.state.value is CertificateUiState.Locked)
+    }
+
+    @Test
+    fun explicitRestoreUsesOriginalLeaseAndConsumesPasswordOnlyOnce() = runTest(dispatcher) {
+        val identity = validIdentity()
+        val gateway = FakeCertificateGateway().apply { current = reference(); unlockResult = CertificateLoadResult.Success(identity) }
+        val cache = FakeCertificateUnlockCache().apply {
+            requiresExplicitRestore = true
+            restoredPassword = TestCertificateFactory.password()
+            restoredExpiry = TestCertificateFactory.now.plus(Duration.ofMinutes(15))
+        }
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle(); model.restoreSavedUnlock(); model.restoreSavedUnlock(); advanceUntilIdle()
+        assertEquals(1, cache.restoreCalls)
+        assertTrue(model.state.value is CertificateUiState.Unlocked)
+        assertSame(identity, session.identityForSigning())
+        assertTrue(cache.lastReturnedPassword!!.all { it == '\u0000' })
+    }
+
+    @Test
+    fun deniedExplicitRestoreStaysLocked() = runTest(dispatcher) {
+        val gateway = FakeCertificateGateway().apply { current = reference() }
+        val cache = FakeCertificateUnlockCache().apply { requiresExplicitRestore = true }
+        val session = CertificateSession()
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle(); model.restoreSavedUnlock(); advanceUntilIdle()
+        assertTrue(model.state.value is CertificateUiState.Locked)
+        assertNull(session.identityForSigning()); assertNull(gateway.receivedPassword)
+    }
+
+    @Test
+    fun manualLockCancelsPendingExplicitApproval() = runTest(dispatcher) {
+        val approval = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val identity = validIdentity()
+        val gateway = FakeCertificateGateway().apply { current = reference(); unlockResult = CertificateLoadResult.Success(identity) }
+        val cache = FakeCertificateUnlockCache().apply {
+            requiresExplicitRestore = true
+            beforeRestore = { approval.await() }
+            restoredPassword = TestCertificateFactory.password()
+            restoredExpiry = TestCertificateFactory.now.plus(Duration.ofMinutes(15))
+        }
+        val session = CertificateSession()
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle(); model.restoreSavedUnlock(); runCurrent(); model.lock(); approval.complete(Unit); advanceUntilIdle()
+        assertTrue(model.state.value is CertificateUiState.Locked)
+        assertNull(session.identityForSigning()); assertNull(gateway.receivedPassword)
+    }
+
     private fun viewModel(
         gateway: FakeCertificateGateway,
         session: CertificateSession = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC)),
@@ -542,6 +674,10 @@ class CertificateViewModelTest {
     }
 
     private class FakeCertificateUnlockCache : CertificateUnlockCache {
+        override var requiresExplicitRestore = false
+        var storeAllowed = true
+        override var isAwaitingAuthentication = false
+        var beforeRestore: suspend () -> Unit = {}
         var clearVerified = true
         override fun clearAndReport(): Boolean { clear(); return clearVerified }
         var restoredPassword: CharArray? = null
@@ -561,6 +697,7 @@ class CertificateViewModelTest {
             expiresAt: Instant,
             observedAtMonotonicNanos: Long,
         ): Boolean {
+            if (!storeAllowed) return false
             storedPassword?.fill('\u0000')
             storedPassword = password.copyOf()
             storedIssuedAt = issuedAt
@@ -576,6 +713,7 @@ class CertificateViewModelTest {
             now: Instant,
         ): CachedCertificateUnlock? {
             restoreCalls += 1
+            beforeRestore()
             val password = restoredPassword?.copyOf() ?: return null
             val expiry = restoredExpiry
             if (expiry == null) {

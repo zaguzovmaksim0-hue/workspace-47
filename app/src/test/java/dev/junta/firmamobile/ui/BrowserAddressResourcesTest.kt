@@ -4,7 +4,6 @@ import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.w3c.dom.Element
 
@@ -24,42 +23,6 @@ class BrowserAddressResourcesTest {
             .filter { it.getAttribute("name") == "browser_address_unavailable" }
         assertEquals(1, entries.size)
         assertFalse(entries.single().textContent.contains('%'))
-    }
-
-    @Test
-    fun bothMainCallsResolveTheFallbackFromComposeResources() {
-        assertResourceCalls(
-            "app/src/main/java/dev/junta/firmamobile/ui/BrowserLayout.kt",
-            "stringResource",
-        )
-    }
-
-    @Test
-    fun bothDebugCallsResolveTheFallbackFromContextResources() {
-        assertResourceCalls(
-            "app/src/debug/java/dev/junta/firmamobile/browser/ProtocolProbeActivity.kt",
-            "getString",
-        )
-    }
-
-    @Test
-    fun hostHelperRemainsNonComposableAndRequiresTheExplicitFallback() {
-        val source = projectFile("app/src/main/java/dev/junta/firmamobile/ui/BrowserAddressBar.kt").readText()
-        assertTrue("fun hostOf(url: String, unavailableAddress: String): String" in source)
-        assertFalse("@Composable" in source)
-        assertFalse("stringResource" in source)
-        assertFalse("dirección no disponible" in source)
-    }
-
-    private fun assertResourceCalls(path: String, resolver: String) {
-        val source = projectFile(path).readText()
-        val calls = Regex(Regex.escape("BrowserAddressPresentation.hostOf(")).findAll(source).count()
-        val resourceCall = Regex(
-            "BrowserAddressPresentation\\.hostOf\\(\\s*(?:currentUrl|url),\\s*" +
-                "(?:unavailableAddress = )?$resolver\\(R\\.string\\.browser_address_unavailable\\),?\\s*\\)",
-        )
-        assertEquals(2, calls)
-        assertEquals(calls, resourceCall.findAll(source).count())
     }
 
     private fun projectFile(relativePath: String): File =

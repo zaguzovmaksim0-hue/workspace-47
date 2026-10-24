@@ -304,4 +304,9 @@
     <string name="certificate_retention_fifteen_minutes">15 minutu</string>
     <string name="certificate_retention_one_hour">ordu 1</string>
     <string name="certificate_retention_one_day">24 ordu</string>
+    <string name="certificate_auth_title">Babestu gordetako desblokeoa</string>
+    <string name="certificate_auth_subtitle">Berretsi biometriarekin edo gailuaren PIN, eredu edo pasahitzarekin.</string>
+    <string name="certificate_auth_help">Desblokeoa gordetzeko eta berreskuratzeko gailuaren berrespena behar da. Gordetzean bertan behera uzten baduzu, memoriako saioa soilik gordeko da.</string>
+    <string name="certificate_auth_unsupported">Android 8–10 bertsioetan desblokeoa ez da gordetzen aplikazioa berrabiaraztean. Idatzi ziurtagiriaren pasahitza.</string>
+    <string name="certificate_restore_saved">Berreskuratu gordetako desblokeoa</string>
 </resources>
