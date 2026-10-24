@@ -81,9 +81,7 @@ fun AppRoot(
             painter = painterResource(R.drawable.jfm_home_background),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag("jfm-home-background"),
+            modifier = Modifier.fillMaxSize().testTag("jfm-home-background"),
         )
         Column(
             modifier = Modifier
@@ -101,7 +99,7 @@ fun AppRoot(
                 state = state,
                 onSelectCertificate = onSelectCertificate,
                 onUnlock = onUnlock,
-                        onRestoreSavedUnlock = onRestoreSavedUnlock,
+                onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onLock = onLock,
                 onForget = onForget,
                 onContinue = onContinue,
@@ -204,7 +202,7 @@ private fun CertificatePanel(
             is CertificateUiState.Locked -> LockedCertificate(
                 state = state,
                 onUnlock = onUnlock,
-                        onRestoreSavedUnlock = onRestoreSavedUnlock,
+                onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onSelectCertificate = onSelectCertificate,
                 onForget = onForget,
             )
