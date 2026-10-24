@@ -4,6 +4,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalConfiguration
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertCountEquals
@@ -56,6 +59,58 @@ class PortalCatalogScreenTest {
         )
     }
 
+
+    @Test
+    @Config(qualifiers = "es")
+    fun `verified card displays Spanish verification date`() = assertVerificationDate("Verificado el ")
+
+    @Test
+    @Config(qualifiers = "en")
+    fun `verified card displays English verification date`() = assertVerificationDate("Verified on ")
+
+    @Test
+    @Config(qualifiers = "ca")
+    fun `verified card displays Catalan verification date`() = assertVerificationDate("Verificat el ")
+
+    @Test
+    @Config(qualifiers = "gl")
+    fun `verified card displays Galician verification date`() = assertVerificationDate("Verificado o ")
+
+    @Test
+    @Config(qualifiers = "eu")
+    fun `verified card displays Basque verification date`() = assertVerificationDate("Egiaztatze-data: ")
+
+    @Test
+    fun `card with missing verification date does not invent one`() {
+        val portal = repository.portals().first { it.lastVerifiedOn != null }.copy(lastVerifiedOn = null)
+        setVerificationCard(portal)
+        rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}").assertDoesNotExist()
+    }
+
+    @Test
+    fun `unverified card never displays a verification date`() {
+        val portal = repository.portals().first { it.lastVerifiedOn != null }
+            .copy(supportStatus = PortalSupportStatus.VERIFIED_CONTRACT)
+        setVerificationCard(portal)
+        rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}").assertDoesNotExist()
+    }
+
+    private fun assertVerificationDate(prefix: String) {
+        val portal = repository.portals().single { it.profileId?.value == "carne-joven-andalucia" }
+        var expected = ""
+        rule.setContent {
+            val locale = LocalConfiguration.current.locales[0]
+            expected = prefix + checkNotNull(portal.lastVerifiedOn)
+                .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
+            JuntaFirmaTheme { CatalogPortalCard(portal, false, {}, {}) }
+        }
+        rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}").assertIsDisplayed()
+        rule.onNodeWithText(expected).assertIsDisplayed()
+    }
+
+    private fun setVerificationCard(portal: PortalCatalogItem) {
+        rule.setContent { JuntaFirmaTheme { CatalogPortalCard(portal, false, {}, {}) } }
+    }
 
     @Test
     fun `catalog offers a visible way back to the certificate screen`() {
