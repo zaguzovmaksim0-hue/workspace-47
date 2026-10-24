@@ -1,4 +1,4 @@
-# 0003 — External AutoFirma consent without browser provenance
+# 0006 — External AutoFirma consent without browser provenance
 
 **Date:** 2026-10-24
 **Status:** Accepted core; Android receiver disabled

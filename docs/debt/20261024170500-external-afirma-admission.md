@@ -12,4 +12,4 @@ ai_authored: true
 created: 2026-10-24
 ---
 
-ADR docs/adr/0003-external-afirma-context.md implements the typed parser and consent core while keeping the exported receiver disabled. BrowserScreen owns native, retrieval, popup and Client TLS busy state locally, while MainActivity owns other signing flows and cancels on background. Enabling a separate Activity before sharing admission would let a new delivery interrupt an existing operation. Complete the shared ownership integration and Android delivery tests before adding an intent-filter.
+ADR docs/adr/0006-external-afirma-context.md implements the typed parser and consent core while keeping the exported receiver disabled. BrowserScreen owns native, retrieval, popup and Client TLS busy state locally, while MainActivity owns other signing flows and cancels on background. Enabling a separate Activity before sharing admission would let a new delivery interrupt an existing operation. Complete the shared ownership integration and Android delivery tests before adding an intent-filter.
