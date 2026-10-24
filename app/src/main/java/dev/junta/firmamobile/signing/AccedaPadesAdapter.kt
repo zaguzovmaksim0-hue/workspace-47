@@ -17,6 +17,21 @@ class AccedaPadesAdapter internal constructor(
 ) : SigningProtocolAdapter {
     override val id: SigningProtocolId = ID
 
+    override fun documentConsent(request: NormalizedSignRequest): DocumentConsentEvidence {
+        if (!request.matchesContract()) return DocumentConsentEvidence.unavailable(SigningPayloadKind.ENVELOPE)
+        return try {
+            request.withPayload { payload ->
+                MiniAppletPayloadCodec.withDecoded(payload) { pdfData, extraProperties ->
+                    require(pdfData.size <= MAX_PDF_BYTES && extraProperties == EXPECTED_EXTRA_PROPERTIES)
+                    require(PdfPreviewSource.isPdf(pdfData))
+                    DocumentConsentEvidence.fromEnvelope(request, payload, pdfData)
+                }
+            }
+        } catch (_: Exception) {
+            DocumentConsentEvidence.unavailable(SigningPayloadKind.ENVELOPE)
+        }
+    }
+
     override suspend fun prepare(
         request: NormalizedSignRequest,
         certificateChain: List<X509Certificate>,

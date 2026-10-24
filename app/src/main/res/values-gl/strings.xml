@@ -301,4 +301,12 @@
     <string name="certificate_retention_fifteen_minutes">15 minutos</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 horas</string>
+
+    <!-- Local, optional PDF consent preview. -->
+    <string name="pdf_preview_show">Ver vista previa</string>
+    <string name="pdf_preview_loading">Cargando a vista previa…</string>
+    <string name="pdf_preview_failed">Non se pode mostrar a vista previa.</string>
+    <string name="pdf_preview_unavailable">Vista previa non dispoñible.</string>
+    <string name="pdf_preview_pages">Primeira páxina · %1$d páxinas</string>
+    <string name="pdf_preview_description">Vista previa da primeira páxina do PDF</string>
 </resources>

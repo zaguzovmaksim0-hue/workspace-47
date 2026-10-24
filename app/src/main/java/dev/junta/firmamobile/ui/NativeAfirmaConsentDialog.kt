@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import dev.junta.firmamobile.ui.theme.JuntaTeal
@@ -45,6 +46,7 @@ internal fun NativeAfirmaConsentDialog(
     onDismiss: () -> Unit,
 ) {
     var detailsExpanded by remember(prompt.token) { mutableStateOf(false) }
+    var previewIndex by remember(prompt.token) { mutableStateOf(prompt.pdfPreviews.keys.firstOrNull()) }
     val confirmArmed = rememberConsentArmed(prompt.token to prompt.canConfirm)
     val finished = prompt.phase == AfirmaConsentPhase.FINISHED
     val review = prompt.phase == AfirmaConsentPhase.REVIEW
@@ -107,6 +109,18 @@ internal fun NativeAfirmaConsentDialog(
                 prompt.resultSummary?.let { Text(it, Modifier.testTag("native-multiphase-results")) }
                 if (finished) prompt.batchReceipt?.let { NativeBatchResultDetails(it) }
                 if (prompt.details.format?.startsWith("PDF") == true) Text(stringResource(R.string.native_afirma_pdf_prior_signatures))
+                if (review && (prompt.details.format?.contains("PAdES", ignoreCase = true) == true ||
+                        prompt.pdfPreviews.isNotEmpty())) {
+                    if (prompt.details.batchItems != null) {
+                        prompt.pdfPreviews.keys.forEach { index ->
+                            TextButton(onClick = { previewIndex = index }) {
+                                Text(stringResource(R.string.signing_batch_document_number, index + 1))
+                            }
+                        }
+                        previewIndex?.let { Text(stringResource(R.string.signing_batch_document_number, it + 1)) }
+                    }
+                    key(prompt.token, previewIndex) { pdfPreview(previewIndex?.let(prompt.pdfPreviews::get)) }
+                }
                 if (!prompt.details.delegatedSigning &&
                     (prompt.details.operation == "cosign" && prompt.details.format?.startsWith("CAdES") == true ||
                         prompt.details.operation == "batch" && prompt.details.format?.contains("CAdES co-sign") == true)) {
