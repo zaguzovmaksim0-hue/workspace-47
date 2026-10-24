@@ -91,7 +91,7 @@ class VerificationJournalSafTest {
         assertEquals(0, fixture.provider.queries.get())
         click("offline-verification-verify")
         awaitTag("offline-verification-result")
-        rule.onNodeWithText(fixture.context.getString(R.string.offline_verification_invalid)).performScrollTo().assertExists()
+        rule.onNodeWithText(fixture.context.getString(R.string.signature_verification_invalid)).performScrollTo().assertExists()
         assertEquals(1, fixture.provider.inputOpens.get())
         click("offline-verification-close")
         scrollClick("open-verification-journal")

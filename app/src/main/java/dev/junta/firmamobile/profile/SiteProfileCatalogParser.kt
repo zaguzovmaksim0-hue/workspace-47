@@ -6,6 +6,15 @@ import java.time.ZoneOffset
 
 object SiteProfileCatalogParser {
     const val MAX_CATALOG_CHARS = 262_144
+    private const val MAX_DISPLAY_NAME_CHARS = 128
+    private const val MAX_CONTENT_TYPE_CHARS = 128
+    private const val MAX_SAFE_DESCRIPTION_CHARS = 160
+    private const val MAX_PORT = 65_535
+    private const val HTTPS_PORT = 443
+    private const val MAX_CLIENT_AUTH_GRANT_TTL_SECONDS = 60
+    private const val REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS = 15
+    private const val MAX_CLIENT_AUTH_QUERY_VALUE_CHARS = 2_048
+    private const val MAX_HTTPS_URL_CHARS = 2_048
 
     fun parse(json: String): SiteProfileCatalog {
         require(json.length <= MAX_CATALOG_CHARS)
@@ -50,7 +59,9 @@ object SiteProfileCatalogParser {
         return SiteProfile(
             profileId = profileId,
             profileVersion = o.int("profileVersion").also { require(it >= 1) },
-            displayName = o.string("displayName").also { require(it.isNotBlank() && it.length <= 128) },
+            displayName = o.string("displayName").also {
+                require(it.isNotBlank() && it.length <= MAX_DISPLAY_NAME_CHARS)
+            },
             compatibilityStatus = compatibilityStatus,
             lastVerifiedOn = lastVerifiedOn,
             activation = enum(o.string("activation")),
@@ -97,7 +108,10 @@ object SiteProfileCatalogParser {
         return OperationPolicy(
             operation = enum(o.string("operation")),
             safeDescription = o.string("safeDescription").also {
-                require(it.isNotBlank() && it.length <= 160 && it.all { character -> !character.isISOControl() })
+                require(
+                    it.isNotBlank() && it.length <= MAX_SAFE_DESCRIPTION_CHARS &&
+                        it.all { character -> !character.isISOControl() }
+                )
             },
             inputAdapterId = ProtocolInputAdapterId(o.string("inputAdapterId")).also {
                 require(it.value in REGISTERED_ADAPTERS)
@@ -139,9 +153,9 @@ object SiteProfileCatalogParser {
         ).filter { it in o.values }
         o.exact(*(baseKeys.toList() + optionalKeys).toTypedArray())
         val requestPort = if ("requestPort" in o.values) {
-            o.int("requestPort").also { require(it in 1..65_535) }
+            o.int("requestPort").also { require(it in 1..MAX_PORT) }
         } else {
-            443
+            HTTPS_PORT
         }
         val requestMethod = if ("requestMethod" in o.values) {
             enum<HttpMethod>(o.string("requestMethod"))
@@ -229,7 +243,7 @@ object SiteProfileCatalogParser {
                         returnUrlConstraints.isEmpty()
                 )
                 require(
-                    fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != 443 ||
+                    fixed.isNotEmpty() || ephemeral.isNotEmpty() || requestPort != HTTPS_PORT ||
                         sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty()
                 )
             }
@@ -251,12 +265,12 @@ object SiteProfileCatalogParser {
                 }
             }
             ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> {
-                require(requestPort == 443)
+                require(requestPort == HTTPS_PORT)
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
                 val reviewedUnparameterizedPostSource =
                     profileId.value == MALAGA_PROFILE_ID &&
                         requestMethod == HttpMethod.POST &&
-                        requestPort == 443 &&
+                        requestPort == HTTPS_PORT &&
                         requestOrigins == setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)) &&
                         sourceUrls == setOf(URI(MALAGA_CLIENT_AUTH_SOURCE_URL)) &&
                         requestPath == MALAGA_CLIENT_AUTH_REQUEST_PATH &&
@@ -290,7 +304,7 @@ object SiteProfileCatalogParser {
             fixedQueryParameters = fixed,
             requiredEphemeralQueryParameters = ephemeral,
             allowEmptyIssuerList = o.boolean("allowEmptyIssuerList"),
-            grantTtlSeconds = o.int("grantTtlSeconds").also { require(it in 1..60) },
+            grantTtlSeconds = o.int("grantTtlSeconds").also { require(it in 1..MAX_CLIENT_AUTH_GRANT_TTL_SECONDS) },
             requireOfferedKeyTypeMatch = requireOfferedKeyTypeMatch,
             requireTlsClientAuthExtendedKeyUsage = requireTlsClientAuthExtendedKeyUsage,
             requestPort = requestPort,
@@ -313,7 +327,7 @@ object SiteProfileCatalogParser {
         require((fixed.keys intersect ephemeral).isEmpty())
         require(fixed.keys.all(CLIENT_AUTH_PARAMETER_NAME::matches))
         require(ephemeral.all(CLIENT_AUTH_PARAMETER_NAME::matches))
-        require(fixed.values.all { it.length <= 2_048 && it.none(Char::isISOControl) })
+        require(fixed.values.all { it.length <= MAX_CLIENT_AUTH_QUERY_VALUE_CHARS && it.none(Char::isISOControl) })
         return ClientAuthUrlConstraint(
             origin = ExactOrigin.parse(o.string("origin")),
             path = o.string("path").also {
@@ -527,7 +541,7 @@ object SiteProfileCatalogParser {
                     SORIA_PROFILE_ID,
                 ) &&
                     clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
-                    clientAuthPolicy.requestPort == 443 &&
+                    clientAuthPolicy.requestPort == HTTPS_PORT &&
                     clientAuthOrigins.size == 1 &&
                     clientAuthPolicy.sourceUrls.all { it.origin() in clientAuthOrigins } &&
                     (clientAuthPolicy.fixedQueryParameters.isNotEmpty() ||
@@ -536,14 +550,14 @@ object SiteProfileCatalogParser {
             val sameOriginRedirectClientAuth =
                 p.profileId.value == LA_RIOJA_PROFILE_ID &&
                     clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE &&
-                    clientAuthPolicy.requestPort == 443 &&
+                    clientAuthPolicy.requestPort == HTTPS_PORT &&
                     clientAuthOrigins == p.initiatorOrigins &&
                     clientAuthPolicy.sourceUrls == setOf(URI(LA_RIOJA_SOURCE_URL)) &&
                     clientAuthPolicy.fixedQueryParameters.isEmpty() &&
                     clientAuthPolicy.requiredEphemeralQueryParameters.isEmpty() &&
                     clientAuthPolicy.sourceFixedQueryParameters == LA_RIOJA_SOURCE_FIXED_QUERY &&
                     clientAuthPolicy.sourceRequiredEphemeralQueryParameters == LA_RIOJA_SOURCE_EPHEMERAL_QUERY
-            if (clientAuthPolicy?.requestPort == 443) {
+            if (clientAuthPolicy?.requestPort == HTTPS_PORT) {
                 require(
                     (clientAuthOrigins intersect p.initiatorOrigins).isEmpty() ||
                         sameOriginDirectClientAuth || sameOriginRedirectClientAuth
@@ -560,8 +574,12 @@ object SiteProfileCatalogParser {
                         it == Capability.CLIENT_TLS_AUTH || it == Capability.AFIRMA_URI
                 })
             }
-            require(p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED || p.activation == ProfileActivation.DISABLED)
-            require(p.activation != ProfileActivation.ENABLED || p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED)
+            require(
+                p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED || p.activation == ProfileActivation.DISABLED,
+            )
+            require(
+                p.activation != ProfileActivation.ENABLED || p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED,
+            )
             require(Capability.CLIENT_TLS_AUTH in p.capabilities == (p.clientAuthPolicy != null))
             p.clientAuthPolicy?.let { policy ->
                 if (p.profileId.value == AIREF_PROFILE_ID) {
@@ -630,12 +648,12 @@ object SiteProfileCatalogParser {
                 })
                 require(policy.fixedQueryParameters.keys.all(CLIENT_AUTH_PARAMETER_NAME::matches))
                 require(policy.fixedQueryParameters.values.all { value ->
-                    value.length <= 2_048 && value.none(Char::isISOControl)
+                    value.length <= MAX_CLIENT_AUTH_QUERY_VALUE_CHARS && value.none(Char::isISOControl)
                 })
                 require(policy.requiredEphemeralQueryParameters.all(CLIENT_AUTH_PARAMETER_NAME::matches))
                 require(policy.sourceFixedQueryParameters.keys.all(CLIENT_AUTH_PARAMETER_NAME::matches))
                 require(policy.sourceFixedQueryParameters.values.all { value ->
-                    value.length <= 2_048 && value.none(Char::isISOControl)
+                    value.length <= MAX_CLIENT_AUTH_QUERY_VALUE_CHARS && value.none(Char::isISOControl)
                 })
                 require(policy.sourceRequiredEphemeralQueryParameters.all(CLIENT_AUTH_PARAMETER_NAME::matches))
                 require(policy.linkedEphemeralQueryParameters.all(CLIENT_AUTH_PARAMETER_NAME::matches))
@@ -715,7 +733,10 @@ object SiteProfileCatalogParser {
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
                                     require(op.fixedExtraProperties == EIVISSA_FIXED_EXTRA_PROPERTIES)
                                     require(op.allowedExtraProperties == setOf("filter", "mimeType"))
-                                } else if (p.profileId.value == LLEIDA_PROFILE_ID || p.profileId.value == BADAJOZ_PROFILE_ID) {
+                                } else if (
+                                    p.profileId.value == LLEIDA_PROFILE_ID ||
+                                    p.profileId.value == BADAJOZ_PROFILE_ID
+                                ) {
                                     require(op.mode == SignatureMode.EXPLICIT)
                                     require(op.algorithms == setOf(SignatureAlgorithm.SHA256_WITH_RSA))
                                     require(op.fixedExtraProperties == LLEIDA_EXTRA_PROPERTIES)
@@ -948,8 +969,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = setOf(NAVARRA_TARGET_TOKEN_PARAMETER),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = emptyMap(),
                 sourceRequiredEphemeralQueryParameters = setOf(NAVARRA_SOURCE_TOKEN_PARAMETER),
                 linkedEphemeralQueryParameters = emptySet(),
@@ -984,8 +1005,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = SANIDAD_FIXED_QUERY,
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
@@ -1040,8 +1061,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = setOf(MENORCA_URL_PARAMETER),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = emptyMap(),
                 sourceRequiredEphemeralQueryParameters = setOf(MENORCA_URL_PARAMETER),
                 linkedEphemeralQueryParameters = setOf(MENORCA_URL_PARAMETER),
@@ -1078,8 +1099,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 requestMethod = HttpMethod.POST,
                 sourceFixedQueryParameters = TARRAGONA_SOURCE_FIXED_QUERY,
                 sourceRequiredEphemeralQueryParameters = setOf("state"),
@@ -1111,8 +1132,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = linkedMapOf("tram" to "0"),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TEA_EVIDENCE_URLS)
@@ -1363,7 +1384,9 @@ object SiteProfileCatalogParser {
         require(profile.activation == ProfileActivation.QA_ONLY)
         require(profile.startUrl.toASCIIString() == EIVISSA_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(EIVISSA_ORIGIN)))
-        require(profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty() && profile.endpoints.isEmpty())
+        require(
+            profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty() && profile.endpoints.isEmpty(),
+        )
         require(profile.capabilities == setOf(Capability.SIGN) && profile.clientAuthPolicy == null)
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
@@ -1503,8 +1526,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == PATTEX_EVIDENCE_URLS)
@@ -1533,8 +1556,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
             ),
         )
         require(
@@ -1571,8 +1594,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
             ),
         )
         require(
@@ -1602,8 +1625,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == AIREF_EVIDENCE_URLS)
@@ -1655,8 +1678,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CATALUNYA_EVIDENCE_URLS)
@@ -1691,8 +1714,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CATALUNYA_SEU_EVIDENCE_URLS)
@@ -1726,8 +1749,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == EDUCATION_EVIDENCE_URLS)
@@ -1906,7 +1929,11 @@ object SiteProfileCatalogParser {
         require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
         require(profile.activation == ProfileActivation.QA_ONLY)
         require(profile.startUrl.toASCIIString() == CAIB_START_URL)
-        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CAIB_PUBLIC_ORIGIN), ExactOrigin.parse(CAIB_SIGNING_ORIGIN)))
+        require(
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(CAIB_PUBLIC_ORIGIN), ExactOrigin.parse(CAIB_SIGNING_ORIGIN),
+            ),
+        )
         require(profile.redirectOrigins.isEmpty())
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
@@ -1956,8 +1983,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "24000"),
                 requiredEphemeralQueryParameters = setOf("idtoken"),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
                 sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
                 linkedEphemeralQueryParameters = setOf("idtoken"),
@@ -1989,8 +2016,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "02000"),
                 requiredEphemeralQueryParameters = setOf("idtoken"),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
                 sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
                 linkedEphemeralQueryParameters = setOf("idtoken"),
@@ -2022,8 +2049,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = linkedMapOf("idioma" to "ca", "entidad" to "07700"),
                 requiredEphemeralQueryParameters = setOf("idtoken"),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = linkedMapOf("idioma" to "ca"),
                 sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
                 linkedEphemeralQueryParameters = setOf("idtoken"),
@@ -2055,8 +2082,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "16000"),
                 requiredEphemeralQueryParameters = setOf("idtoken"),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
                 sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
                 linkedEphemeralQueryParameters = setOf("idtoken"),
@@ -2088,8 +2115,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = LA_RIOJA_SOURCE_FIXED_QUERY,
                 sourceRequiredEphemeralQueryParameters = LA_RIOJA_SOURCE_EPHEMERAL_QUERY,
                 linkedEphemeralQueryParameters = emptySet(),
@@ -2126,8 +2153,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = linkedMapOf("idioma" to "es"),
                 requiredEphemeralQueryParameters = setOf("idSesion"),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = emptyMap(),
                 sourceRequiredEphemeralQueryParameters = setOf("idSesion"),
                 linkedEphemeralQueryParameters = setOf("idSesion"),
@@ -2159,8 +2186,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = emptyMap(),
                 sourceRequiredEphemeralQueryParameters = emptySet(),
                 linkedEphemeralQueryParameters = emptySet(),
@@ -2192,8 +2219,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = linkedMapOf("back" to JAEN_SOURCE_URL),
                 requiredEphemeralQueryParameters = setOf("key"),
                 allowEmptyIssuerList = false,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = emptyMap(),
                 sourceRequiredEphemeralQueryParameters = emptySet(),
                 linkedEphemeralQueryParameters = emptySet(),
@@ -2328,8 +2355,8 @@ object SiteProfileCatalogParser {
         require(clientAuth.linkedEphemeralQueryParameters.isEmpty())
         require(clientAuth.linkedEphemeralQueryParameterMappings.isEmpty())
         require(clientAuth.allowEmptyIssuerList)
-        require(clientAuth.grantTtlSeconds == 15)
-        require(clientAuth.requestPort == 443)
+        require(clientAuth.grantTtlSeconds == REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS)
+        require(clientAuth.requestPort == HTTPS_PORT)
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
         require(
             profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
@@ -2472,8 +2499,8 @@ object SiteProfileCatalogParser {
                 fixedQueryParameters = ARAGON_SSLOGIN_FIXED_QUERY,
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
-                grantTtlSeconds = 15,
-                requestPort = 443,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requestPort = HTTPS_PORT,
                 sourceFixedQueryParameters = ARAGON_SSLOGIN_FIXED_QUERY,
                 sourceRequiredEphemeralQueryParameters = emptySet(),
                 linkedEphemeralQueryParameters = emptySet(),
@@ -2680,10 +2707,10 @@ object SiteProfileCatalogParser {
         values.map { enum<T>(it.string()) }.toSet().also { require(it.size == values.size) }
     private inline fun <reified T : Enum<T>> enum(value: String): T = enumValueOf(value)
     private fun strictHttpsUrl(raw: String): URI {
-        require(raw.length <= 2048 && !raw.any(Char::isISOControl))
+        require(raw.length <= MAX_HTTPS_URL_CHARS && !raw.any(Char::isISOControl))
         val uri = URI(raw)
         require(!uri.isOpaque && uri.scheme == "https" && uri.host != null && uri.userInfo == null)
-        require(uri.port == -1 || uri.port == 443)
+        require(uri.port == -1 || uri.port == HTTPS_PORT)
         require(uri.rawFragment == null)
         val origin = ExactOrigin.parse("https://${uri.host}")
         require(uri.host == origin.host)
@@ -2691,7 +2718,7 @@ object SiteProfileCatalogParser {
     }
 
     private fun validContentType(value: String): Boolean =
-        value.length <= 128 && CONTENT_TYPE.matches(value)
+        value.length <= MAX_CONTENT_TYPE_CHARS && CONTENT_TYPE.matches(value)
 
     private const val ARAGON_TRAMITES_PROFILE_ID = "aragon-solicitud-general-client-auth"
     private const val ARAGON_TRAMITES_PROFILE_VERSION = 1
@@ -2707,7 +2734,8 @@ object SiteProfileCatalogParser {
     private const val ARAGON_SSLOGIN_REQUEST_PATH = "/sife_login/SSLOGIN/idByCert"
     private const val ARAGON_SSLOGIN_CONSUME_RESPONSE =
         "https://aplicaciones.aragon.es/mfe_core/rest/identification/TTO/" +
-            "aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFsL2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw==/" +
+            "aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lc" +
+                "mFsL2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw==/" +
             "SSLOGIN/consumeResponse"
     private val ARAGON_SSLOGIN_FIXED_QUERY = linkedMapOf(
         "redirect.url" to ARAGON_SSLOGIN_CONSUME_RESPONSE,
@@ -2745,7 +2773,6 @@ object SiteProfileCatalogParser {
         "autoscript-select-certificate-callback-v1",
     )
     private val CONTENT_TYPE = Regex("[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+(?:; charset=UTF-8)?")
-    private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_.]{0,63}")
     private const val MAX_BODY_BYTES = 8 * 1024 * 1024
     private const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 2_048
     private const val ISCIII_PROFILE_ID = "isciii-certificate-selection"
@@ -3076,7 +3103,8 @@ object SiteProfileCatalogParser {
     private val EIVISSA_EVIDENCE_URLS = setOf(
         EIVISSA_START_URL,
         "https://seu.conselldeivissa.es/sta/reg/autofirma.js",
-        "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269002703260065905043",
+        "https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&PAGE_COD" +
+            "E=CATALOGO&DETALLE=6269002703260065905043",
     )
     private const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
     private const val TENERIFE_PROFILE_VERSION = 1
@@ -3293,7 +3321,8 @@ object SiteProfileCatalogParser {
     private const val BURGOS_PROFILE_VERSION = 1
     private const val BURGOS_DISPLAY_NAME = "Diputación Provincial de Burgos — Registro electrónico"
     private const val BURGOS_START_URL =
-        "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO"
+        "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA" +
+            "&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO"
     private const val BURGOS_ORIGIN = "https://registro.diputaciondeburgos.es"
     private const val BURGOS_SAFE_DESCRIPTION =
         "Firma por lotes de Instancia Genérica en el Registro electrónico de la Diputación Provincial de Burgos"
@@ -3309,7 +3338,8 @@ object SiteProfileCatalogParser {
     private const val LUGO_PROFILE_VERSION = 1
     private const val LUGO_DISPLAY_NAME = "Deputación de Lugo — Sede electrónica"
     private const val LUGO_START_URL =
-        "https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
+        "https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/seccion" +
+            "es/autenticacion/autenticacion.jsp"
     private const val LUGO_ORIGIN = "https://sede.deputacionlugo.org"
     private const val LUGO_SAFE_DESCRIPTION =
         "Acceso con certificado mediante lote XML clientSigner de la Sede de la Deputación de Lugo"
@@ -3318,7 +3348,9 @@ object SiteProfileCatalogParser {
     private const val CAIB_PROFILE_VERSION = 1
     private const val CAIB_DISPLAY_NAME = "Govern de les Illes Balears — Instància genèrica"
     private const val CAIB_START_URL =
-        "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=false&idTramiteCatalogo=4213963&parametros="
+        "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB" +
+            ".SIMPL_DOC.INSTANCIA_GENERICA_SR&version=1&idioma=es&servicioCatalogo=fal" +
+            "se&idTramiteCatalogo=4213963&parametros="
     private const val CAIB_PUBLIC_ORIGIN = "https://www.caib.es"
     private const val CAIB_SIGNING_ORIGIN = "https://intranet.caib.es"
     private const val CAIB_SAFE_DESCRIPTION = "Firma PAdES de la Instància genèrica mediante PortaFIB"
@@ -3451,7 +3483,8 @@ object SiteProfileCatalogParser {
         "sticky" to "true",
     )
     private val TRANSPORTES_EVIDENCE_URLS = setOf(
-        "https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible",
+        "https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-su" +
+            "gerencias-ambito-ministerio-transportes-movilidad-sostenible",
         "https://sede.transportes.gob.es/MFOM.genericprocedure.web/Autenticacion.aspx",
         "https://sede.transportes.gob.es/CIM/js/CIM_Functions.js",
         "https://sede.transportes.gob.es/CIM/js/CIM_Classes.js",
@@ -3595,7 +3628,11 @@ private data class JObject(val values: LinkedHashMap<String, JValue>) : JValue {
     fun boolean(key: String) = (required(key) as? JBoolean)?.value ?: error("boolean required")
     fun array(key: String) = (required(key) as? JArray)?.values ?: error("array required")
     fun objValue(key: String) = required(key)
-    fun nullableObject(key: String) = when (val v = required(key)) { JNull -> null; is JObject -> v; else -> error("object required") }
+    fun nullableObject(key: String) = when (val v = required(key)) {
+        JNull -> null
+        is JObject -> v
+        else -> error("object required")
+    }
     private fun required(key: String) = requireNotNull(values[key])
 }
 private data class JArray(val values: List<JValue>) : JValue
@@ -3605,11 +3642,16 @@ private data class JBoolean(val value: Boolean) : JValue
 private data object JNull : JValue
 private fun String.toIntExact(): Int? = toIntOrNull()?.takeIf { it.toString() == this }
 
+private const val MAX_JSON_DEPTH = 32
+private const val JSON_CONTROL_CHAR_LIMIT = 0x20
+private const val JSON_UNICODE_ESCAPE_DIGITS = 4
+private const val JSON_HEX_RADIX = 16
+
 private class StrictJson(private val source: String) {
     private var index = 0
     fun parse(): JValue = value(0).also { whitespace(); require(index == source.length) }
     private fun value(depth: Int): JValue {
-        require(depth <= 32); whitespace(); require(index < source.length)
+        require(depth <= MAX_JSON_DEPTH); whitespace(); require(index < source.length)
         return when (source[index]) {
             '{' -> obj(depth + 1); '[' -> array(depth + 1); '"' -> JString(string())
             't' -> literal("true", JBoolean(true)); 'f' -> literal("false", JBoolean(false))
@@ -3623,13 +3665,18 @@ private class StrictJson(private val source: String) {
         while (true) {
             whitespace(); require(peek() == '"'); val key = string(); require(map[key] == null)
             whitespace(); require(take(':')); map[key] = value(depth); whitespace()
-            if (take('}')) return JObject(map); require(take(','))
+            if (take('}')) return JObject(map)
+            require(take(','))
         }
     }
     private fun array(depth: Int): JArray {
         index++; whitespace(); val list = mutableListOf<JValue>()
         if (take(']')) return JArray(list)
-        while (true) { list += value(depth); whitespace(); if (take(']')) return JArray(list); require(take(',')) }
+        while (true) {
+            list += value(depth); whitespace()
+            if (take(']')) return JArray(list)
+            require(take(','))
+        }
     }
     private fun string(): String {
         require(take('"')); val out = StringBuilder()
@@ -3639,10 +3686,16 @@ private class StrictJson(private val source: String) {
                 c == '\\' -> { require(index < source.length); when (val e = source[index++]) {
                     '"', '\\', '/' -> out.append(e); 'b' -> out.append('\b'); 'f' -> out.append('\u000c')
                     'n' -> out.append('\n'); 'r' -> out.append('\r'); 't' -> out.append('\t')
-                    'u' -> { require(index + 4 <= source.length); val hex = source.substring(index, index + 4); require(hex.all { it.isDigit() || it.lowercaseChar() in 'a'..'f' }); out.append(hex.toInt(16).toChar()); index += 4 }
+                    'u' -> {
+                        require(index + JSON_UNICODE_ESCAPE_DIGITS <= source.length)
+                        val hex = source.substring(index, index + JSON_UNICODE_ESCAPE_DIGITS)
+                        require(hex.all { it.isDigit() || it.lowercaseChar() in 'a'..'f' })
+                        out.append(hex.toInt(JSON_HEX_RADIX).toChar())
+                        index += JSON_UNICODE_ESCAPE_DIGITS
+                    }
                     else -> error("invalid escape")
                 } }
-                c.code < 0x20 -> error("control in string")
+                c.code < JSON_CONTROL_CHAR_LIMIT -> error("control in string")
                 else -> out.append(c)
             }
         }; error("unterminated string")
@@ -3650,12 +3703,20 @@ private class StrictJson(private val source: String) {
     private fun number(): JNumber {
         val start = index; if (take('-')) require(index < source.length)
         if (take('0')) require(index == source.length || source[index] !in '0'..'9')
-        else { require(index < source.length && source[index] in '1'..'9'); while (index < source.length && source[index] in '0'..'9') index++ }
+        else {
+            require(index < source.length && source[index] in '1'..'9')
+            while (index < source.length && source[index] in '0'..'9') index++
+        }
         require(index == source.length || source[index] !in charArrayOf('.', 'e', 'E'))
         return JNumber(source.substring(start, index))
     }
-    private fun <T : JValue> literal(text: String, value: T): T { require(source.startsWith(text, index)); index += text.length; return value }
-    private fun whitespace() { while (index < source.length && source[index] in charArrayOf(' ', '\n', '\r', '\t')) index++ }
+    private fun <T : JValue> literal(text: String, value: T): T {
+        require(source.startsWith(text, index)); index += text.length
+        return value
+    }
+    private fun whitespace() {
+        while (index < source.length && source[index] in charArrayOf(' ', '\n', '\r', '\t')) index++
+    }
     private fun take(c: Char) = if (index < source.length && source[index] == c) { index++; true } else false
     private fun peek() = source[index]
 }

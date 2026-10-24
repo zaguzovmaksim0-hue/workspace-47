@@ -2,15 +2,15 @@
 <resources>
     <string name="verification_journal_entry">Diario de comprobacións desta sesión</string>
     <string name="verification_journal_title">Diario de comprobacións da sesión</string>
-    <string name="verification_journal_scope">Só comprobacións CMS locais desta sesión; non é un historial completo de sinaturas. As entradas desaparecen ao recrear ou pechar a aplicación.</string>
-    <string name="verification_journal_integrity">Completada indica só integridade CMS local, non confianza, vixencia ou revogación do certificado, validación de selos de tempo nin aceptación remota.</string>
+    <string name="verification_journal_scope">Só comprobacións CMS/PDF locais desta sesión; non é un historial completo de sinaturas. As entradas desaparecen ao recrear ou pechar a aplicación.</string>
+    <string name="verification_journal_integrity">Completada indica só integridade CMS/PDF local, non confianza, vixencia ou revogación do certificado, validación de selos de tempo nin aceptación remota.</string>
     <string name="verification_journal_copies">Borrar afecta só a este diario; non revoga as instantáneas nin as copias JSON xa exportadas.</string>
     <string name="verification_journal_provider_warning">Un fallo do provedor pode deixar un ficheiro externo parcial. Cancelar non desfai os bytes xa escritos.</string>
     <string name="verification_journal_empty">Aínda non hai comprobacións nesta sesión.</string>
     <string name="verification_journal_clear">Borrar diario</string>
     <string name="verification_journal_export">Exportar instantánea JSON</string>
     <string name="verification_journal_close">Pechar</string>
-    <string name="verification_journal_kind_verify">Verificación CMS local</string>
+    <string name="verification_journal_kind_verify">Verificación CMS/PDF local</string>
     <string name="verification_journal_completed">Completada (só integridade local)</string>
     <string name="verification_journal_cancelled">Cancelada</string>
     <string name="verification_journal_failed">Fallida</string>

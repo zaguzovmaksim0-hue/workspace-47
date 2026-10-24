@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="signature_verification_title">CMS and PDF signature integrity</string>
+    <string name="signature_verification_scope">Local cryptographic check of CMS/CAdES and PDF/PAdES. Checks integrity and binding to the included certificate, not identity, certificate trust or validity. Revocation not checked (no OCSP/CRL). Dates are claimed; timestamps are not validated. XML/XAdES is unsupported.</string>
+    <string name="signature_verification_limits">Local files only: PDF up to 2 MiB, CMS up to 1 MiB, original up to 512 KiB. The optional original is only for detached CMS; remove it for PDF. Up to 8 PDF signatures; RSA Adobe/ETSI approval profiles. Other profiles or encrypted documents are rejected.</string>
+    <string name="signature_verification_pick">Select CMS signature or PDF</string>
+    <string name="signature_verification_limit_exceeded">Limit exceeded: PDF 2 MiB, CMS 1 MiB, original 512 KiB. Integrity not checked.</string>
+    <string name="signature_verification_unsupported">Unsupported format or profile. Integrity not checked.</string>
+    <string name="signature_verification_invalid">Integrity not checked: invalid signature, changed content, incorrect original or unsupported profile. For PDF or CMS with included content, remove the optional original.</string>
+    <string name="signature_verification_no_signatures">No signatures found in this PDF.</string>
+    <string name="signature_verification_signer">Signature %1$d · Certificate: %2$s</string>
+    <string name="signature_verification_date">Claimed date (not trusted): %1$s</string>
+    <string name="signature_verification_valid">Signed revision integrity checked; trust and revocation not checked.</string>
+    <string name="signature_verification_unsigned_changes">Unsigned changes or bytes follow the last signature. Integrity of the current PDF has not been established.</string>
+    <string name="signature_verification_later_changes">Later revisions or bytes follow this signature; it covers only its signed revision.</string>
+    <string name="signature_verification_unknown_time">Unavailable</string>
+</resources>

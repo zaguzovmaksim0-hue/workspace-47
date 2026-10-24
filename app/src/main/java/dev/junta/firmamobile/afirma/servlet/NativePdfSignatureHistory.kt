@@ -50,6 +50,22 @@ internal object NativePdfSignatureHistory {
         current
     }.getOrNull()
 
+    /** Read-only verification may report unsigned trailing changes. The signing
+     * path above still requires complete coverage and authenticates every entry. */
+    fun inspectForVerification(pdf: ByteArray, document: PDDocument): List<NativePdfPriorSignature>? = runCatching {
+        val entries = read(pdf, document, verifyCryptography = false, requireCompleteCoverage = false) ?: return null
+        if (!earlierRevisionsMatch(pdf, entries)) return null
+        for ((index, entry) in entries.withIndex()) {
+            val revision = pdf.copyOf(entry.revisionEnd)
+            try {
+                PDDocument.load(ByteArrayInputStream(revision), memory()).use { previous ->
+                    if (read(revision, previous, verifyCryptography = false) != entries.take(index + 1)) return null
+                }
+            } finally { revision.fill(0) }
+        }
+        entries
+    }.getOrNull()
+
     /** Even if the newest catalog hides every old field, earlier complete
      * revisions remain in the preserved file prefix. Reopen bounded historical
      * footers rather than treating an empty latest field list as unsigned. */

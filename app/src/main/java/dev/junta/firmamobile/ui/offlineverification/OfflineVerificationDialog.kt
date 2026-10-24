@@ -46,7 +46,7 @@ internal fun OfflineVerificationDialog(
         modifier = Modifier.testTag("offline-verification-dialog"),
         onDismissRequest = close,
         properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
-        title = { Text(stringResource(R.string.offline_verification_title)) },
+        title = { Text(stringResource(R.string.signature_verification_title)) },
         text = { OfflineVerificationContent(state, controller, onPickCms, onPickOriginal) },
         confirmButton = {
             TextButton(
