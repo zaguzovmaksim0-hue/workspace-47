@@ -67,7 +67,7 @@ class NativeGeneralSigningTest {
         val parts = wire.split('|'); assertEquals(2, parts.size)
         assertTrue(AfirmaIntermediateCipher.decode(parts[0], null).toString(Charsets.UTF_8).startsWith("<signs>"))
         assertArrayEquals(key.identity.certificate.encoded, AfirmaIntermediateCipher.decode(parts[1], null))
-        assertTrue(operation.resultSummary!!.contains("positivo: 1")); operation.close()
+        assertEquals(AfirmaResultSummary.Batch(1, 1), operation.resultSummary); operation.close()
     }
 
     @Test fun partialJsonPreFailureIsBoundToDescriptorAndNeverReportedAsAllSigned() = runBlocking<Unit> {
@@ -87,7 +87,7 @@ class NativeGeneralSigningTest {
             }
         }, AfirmaResultTransport { _, _, value -> wire = value; AfirmaDeliveryResult.ACKNOWLEDGED }, generalClockFor(key.identity))
         assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.executeWithCheckpoints(key.identity, {}, {}))
-        assertEquals(2, calls); assertTrue(operation.resultSummary!!.contains("otros resultados: 1"))
+        assertEquals(2, calls); assertEquals(AfirmaResultSummary.Batch(2, 1), operation.resultSummary)
         assertEquals(NativeBatchReceipt.Origin.SERVICE, operation.batchReceipt!!.origin)
         assertEquals(listOf("DONE_AND_SAVED", "ERROR_PRE"), operation.batchReceipt!!.entries.map { it.statusCode })
         assertEquals("Synthetic failure", operation.batchReceipt!!.entries[1].description)

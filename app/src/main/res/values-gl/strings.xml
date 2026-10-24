@@ -301,4 +301,9 @@
     <string name="certificate_retention_fifteen_minutes">15 minutos</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 horas</string>
+    <string name="certificate_auth_title">Protexer o desbloqueo gardado</string>
+    <string name="certificate_auth_subtitle">Confirma con biometría ou co PIN, padrón ou contrasinal do dispositivo.</string>
+    <string name="certificate_auth_help">Gardar e recuperar o desbloqueo require confirmación do dispositivo. Se cancelas ao gardalo, só se conserva a sesión en memoria.</string>
+    <string name="certificate_auth_unsupported">En Android 8–10 o desbloqueo non se garda entre reinicios da aplicación. Introduce o contrasinal do certificado.</string>
+    <string name="certificate_restore_saved">Recuperar o desbloqueo gardado</string>
 </resources>

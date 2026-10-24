@@ -15,6 +15,7 @@ import javax.crypto.spec.GCMParameterSpec
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
 class CachedCertificateUnlock internal constructor(
@@ -29,6 +30,9 @@ class CachedCertificateUnlock internal constructor(
 }
 
 interface CertificateUnlockCache {
+    val requiresExplicitRestore: Boolean get() = false
+    val isAwaitingAuthentication: Boolean get() = false
+
     suspend fun store(
         reference: StoredCertificateReference,
         password: CharArray,
@@ -79,6 +83,7 @@ interface CertificateUnlockRecordStorage {
 fun interface CertificateUnlockKeyProvider {
     fun getOrCreate(): SecretKey
     fun getExisting(): SecretKey? = getOrCreate()
+    suspend fun authenticateCipher(cipher: Cipher): Boolean = true
     /** Production providers revoke even when a record cannot be removed. */
     fun revoke(): Boolean = false
 }
@@ -97,9 +102,9 @@ internal fun interface CertificateUnlockBootTimeSource {
     fun read(): CertificateUnlockBootTime?
 }
 
-// API 26/27 cannot bind this password cache to the device-unlocked state.
+// Per-operation strong biometric OR device credential crypto is supported from API 30.
 internal fun supportsPersistentCertificateUnlock(sdkInt: Int): Boolean =
-    sdkInt >= android.os.Build.VERSION_CODES.P
+    sdkInt >= android.os.Build.VERSION_CODES.R
 
 class EncryptedCertificateUnlockCache internal constructor(
     private val storage: CertificateUnlockRecordStorage,
@@ -189,7 +194,7 @@ class EncryptedCertificateUnlockCache internal constructor(
         }
     }
 
-    private fun storeOnIo(
+    private suspend fun storeOnIo(
         reference: StoredCertificateReference,
         password: CharArray,
         issuedAt: Instant,
@@ -238,10 +243,14 @@ class EncryptedCertificateUnlockCache internal constructor(
                 bootTime = bootTime,
                 referenceDigest = referenceDigest,
             )
+            val cipher = synchronized(persistenceLock) {
+                if (invalidationGeneration.get() != storeGeneration) return false
+                Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.ENCRYPT_MODE, keyProvider.getOrCreate()) }
+            }
+            if (!keyProvider.authenticateCipher(cipher)) return false
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
             synchronized(persistenceLock) {
                 if (invalidationGeneration.get() != storeGeneration) return false
-                val cipher = Cipher.getInstance(TRANSFORMATION)
-                cipher.init(Cipher.ENCRYPT_MODE, keyProvider.getOrCreate())
                 val iv = cipher.iv
                 require(iv.size == GCM_IV_BYTES)
                 cipher.updateAAD(authenticatedHeader)
@@ -278,7 +287,7 @@ class EncryptedCertificateUnlockCache internal constructor(
         }
     }
 
-    private fun restoreOnIo(
+    private suspend fun restoreOnIo(
         reference: StoredCertificateReference,
         now: Instant,
         restoreGeneration: Long,
@@ -340,6 +349,9 @@ class EncryptedCertificateUnlockCache internal constructor(
                 keyProvider.getExisting() ?: return null,
                 GCMParameterSpec(GCM_TAG_BITS, parsed.iv),
             )
+            if (!keyProvider.authenticateCipher(cipher)) return null
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            if (synchronized(stateLock) { restoreBlocked || invalidationGeneration.get() != restoreGeneration }) return null
             cipher.updateAAD(parsed.authenticatedHeader)
             plainBytes = cipher.doFinal(parsed.cipherText)
             if (plainBytes.isEmpty() || plainBytes.size > MAX_PASSWORD_BYTES) {
@@ -533,17 +545,31 @@ class EncryptedCertificateUnlockCache internal constructor(
 class AndroidKeystoreCertificateUnlockCache(
     context: android.content.Context,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val authentication: AndroidCertificateUnlockAuthentication = AndroidCertificateUnlockAuthentication(),
 ) : CertificateUnlockCache {
+    override val requiresExplicitRestore: Boolean = true
+    override val isAwaitingAuthentication: Boolean get() = authentication.isPending
+    private val dispatcher = ioDispatcher
+    private val keys = AndroidKeystoreCertificateUnlockKeyProvider(authentication)
+    private val legacyStorage = AtomicCertificateUnlockRecordStorage(
+        java.io.File(context.noBackupFilesDir, "certificate_unlock_v1.bin"),
+    )
     private val delegate = EncryptedCertificateUnlockCache(
         storage = AtomicCertificateUnlockRecordStorage(
-            java.io.File(context.noBackupFilesDir, RECORD_FILE_NAME),
+            java.io.File(context.noBackupFilesDir, "certificate_unlock_v2.bin"),
         ),
-        keyProvider = AndroidKeystoreCertificateUnlockKeyProvider(),
+        keyProvider = keys,
         bootTimeSource = AndroidCertificateUnlockBootTimeSource(context),
         sessionMonotonicNanos = android.os.SystemClock::elapsedRealtimeNanos,
         ioDispatcher = ioDispatcher,
         persistentCacheAllowed = supportsPersistentCertificateUnlock(android.os.Build.VERSION.SDK_INT),
     )
+
+    private suspend fun removeLegacy(): Boolean = withContext(dispatcher) {
+        val revoked = runCatching { keys.revokeLegacy() }.getOrDefault(false)
+        val removed = runCatching { legacyStorage.clear() }.getOrDefault(false)
+        revoked && removed
+    }
 
     override suspend fun store(
         reference: StoredCertificateReference,
@@ -551,25 +577,22 @@ class AndroidKeystoreCertificateUnlockCache(
         issuedAt: Instant,
         expiresAt: Instant,
         observedAtMonotonicNanos: Long,
-    ): Boolean = delegate.store(
-        reference,
-        password,
-        issuedAt,
-        expiresAt,
-        observedAtMonotonicNanos,
-    )
+    ): Boolean = if (removeLegacy()) {
+        delegate.store(reference, password, issuedAt, expiresAt, observedAtMonotonicNanos)
+    } else false
 
     override suspend fun restore(
         reference: StoredCertificateReference,
         now: Instant,
-    ): CachedCertificateUnlock? = delegate.restore(reference, now)
+    ): CachedCertificateUnlock? = if (removeLegacy()) delegate.restore(reference, now) else null
 
     override fun invalidate() = delegate.invalidate()
-    override fun clear() = delegate.clear()
-    override fun clearAndReport(): Boolean = delegate.clearAndReport()
-
-    private companion object {
-        const val RECORD_FILE_NAME = "certificate_unlock_v1.bin"
+    override fun clear() { clearAndReport() }
+    override fun clearAndReport(): Boolean {
+        val revoked = delegate.clearAndReport()
+        val legacyRevoked = runCatching { keys.revokeLegacy() }.getOrDefault(false)
+        val legacyRemoved = runCatching { legacyStorage.clear() }.getOrDefault(false)
+        return revoked && (legacyRevoked || legacyRemoved)
     }
 }
 
@@ -649,12 +672,23 @@ internal class AtomicCertificateUnlockRecordStorage(
     }
 }
 
-internal class AndroidKeystoreCertificateUnlockKeyProvider : CertificateUnlockKeyProvider {
+internal class AndroidKeystoreCertificateUnlockKeyProvider(
+    private val authentication: AndroidCertificateUnlockAuthentication = AndroidCertificateUnlockAuthentication(),
+) : CertificateUnlockKeyProvider {
+    override suspend fun authenticateCipher(cipher: Cipher): Boolean = authentication.authenticateCipher(cipher)
+
     @Synchronized
     override fun getExisting(): SecretKey? {
         check(supportsPersistentCertificateUnlock(android.os.Build.VERSION.SDK_INT))
         val store = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         return store.getKey(KEY_ALIAS, null) as? SecretKey
+    }
+
+    @Synchronized
+    fun revokeLegacy(): Boolean {
+        val store = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+        if (store.containsAlias(LEGACY_KEY_ALIAS)) store.deleteEntry(LEGACY_KEY_ALIAS)
+        return !store.containsAlias(LEGACY_KEY_ALIAS)
     }
 
     @Synchronized
@@ -666,7 +700,9 @@ internal class AndroidKeystoreCertificateUnlockKeyProvider : CertificateUnlockKe
 
     @Synchronized
     override fun getOrCreate(): SecretKey {
-        check(supportsPersistentCertificateUnlock(android.os.Build.VERSION.SDK_INT))
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) {
+            error("Authenticated cache requires API 30")
+        }
         val keyStore = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         val existing = runCatching { keyStore.getKey(KEY_ALIAS, null) as? SecretKey }.getOrNull()
         if (existing != null) return existing
@@ -680,7 +716,9 @@ internal class AndroidKeystoreCertificateUnlockKeyProvider : CertificateUnlockKe
             .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
             .setRandomizedEncryptionRequired(true)
-            .setUserAuthenticationRequired(false)
+            .setUserAuthenticationRequired(true)
+            .setUserAuthenticationParameters(0, android.security.keystore.KeyProperties.AUTH_BIOMETRIC_STRONG or
+                android.security.keystore.KeyProperties.AUTH_DEVICE_CREDENTIAL)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
             builder.setUnlockedDeviceRequired(true)
         }
@@ -694,6 +732,7 @@ internal class AndroidKeystoreCertificateUnlockKeyProvider : CertificateUnlockKe
 
     private companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
-        const val KEY_ALIAS = "dev.junta.firmamobile.certificate_unlock_aes_v1"
+        const val KEY_ALIAS = "dev.junta.firmamobile.certificate_unlock_aes_v2"
+        const val LEGACY_KEY_ALIAS = "dev.junta.firmamobile.certificate_unlock_aes_v1"
     }
 }
