@@ -153,7 +153,9 @@ class SharedOriginCharacterizationTest {
                 assertEquals(id, resolved?.profile?.profileId)
                 assertEquals(origin, resolved?.origin)
             }
-            assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(ProfileId("reg-age-redsara"), URI(family.origin)))
+            assertNull(
+                BuiltInSiteProfiles.qaRegistry.resolveForProfile(ProfileId("reg-age-redsara"), URI(family.origin)),
+            )
         }
     }
 
@@ -224,29 +226,56 @@ class SharedOriginCharacterizationTest {
         val mixed = setOf(false to true, true to false)
         val nonRedirect = setOf(false to false)
         val pairs = listOf(
-            Triple("https://miprincipado.asturias.es", "asturias-miprincipado", "asturias-sede-tramite-navigation") to mixed,
-            Triple("https://gestiona.comunidad.madrid", "comunidad-madrid-registro-general", "comunidad-madrid-cuenta-digital-53f1") to mixed,
-            Triple("https://lanzaroteylagraciosa.sedelectronica.es", "lanzarote-instancia-general", "lanzarote-sede-public-navigation") to mixed,
-            Triple("https://elhierro.sedelectronica.es", "el-hierro-solicitud-general", "el-hierro-sede-public-navigation") to nonRedirect,
-            Triple("https://lagomera.sedelectronica.es", "la-gomera-instancia-general", "la-gomera-sede-public-navigation") to nonRedirect,
-            Triple("https://ws235.juntadeandalucia.es", "carne-joven-andalucia", "junta-andalucia-vea-peg") to nonRedirect,
+            Triple(
+                "https://miprincipado.asturias.es",
+                "asturias-miprincipado",
+                "asturias-sede-tramite-navigation",
+            ) to mixed,
+            Triple(
+                "https://gestiona.comunidad.madrid",
+                "comunidad-madrid-registro-general",
+                "comunidad-madrid-cuenta-digital-53f1",
+            ) to mixed,
+            Triple(
+                "https://lanzaroteylagraciosa.sedelectronica.es",
+                "lanzarote-instancia-general",
+                "lanzarote-sede-public-navigation",
+            ) to mixed,
+            Triple(
+                "https://elhierro.sedelectronica.es",
+                "el-hierro-solicitud-general",
+                "el-hierro-sede-public-navigation",
+            ) to nonRedirect,
+            Triple(
+                "https://lagomera.sedelectronica.es",
+                "la-gomera-instancia-general",
+                "la-gomera-sede-public-navigation",
+            ) to nonRedirect,
+            Triple(
+                "https://ws235.juntadeandalucia.es",
+                "carne-joven-andalucia",
+                "junta-andalucia-vea-peg",
+            ) to nonRedirect,
         )
-        pairs.forEach { (pair, acceptedRoles) ->
+        val roles = listOf(false, true).flatMap { first -> listOf(false, true).map { first to it } }
+        for ((pair, acceptedRoles) in pairs) for ((firstRedirect, secondRedirect) in roles) {
             val (origin, first, second) = pair
-            listOf(false, true).forEach { firstRedirect ->
-                listOf(false, true).forEach { secondRedirect ->
-                    val blocks = listOf(
-                        navigationProfile(first, origin, firstRedirect),
-                        navigationProfile(second, origin, secondRedirect),
-                    )
-                    blocks.forEach { parse(listOf(it)) }
-                    val accepted = (firstRedirect to secondRedirect) in acceptedRoles
-                    listOf(blocks, blocks.reversed()).forEach { order ->
-                        if (accepted) assertEquals(2, parse(order).profiles.size)
-                        else rejects("$origin: $firstRedirect/$secondRedirect", order)
-                    }
-                }
-            }
+            val blocks = listOf(
+                navigationProfile(first, origin, firstRedirect),
+                navigationProfile(second, origin, secondRedirect),
+            )
+            blocks.forEach { parse(listOf(it)) }
+            assertBothOrders(
+                "$origin: $firstRedirect/$secondRedirect",
+                blocks,
+                accepted = (firstRedirect to secondRedirect) in acceptedRoles,
+            )
+        }
+    }
+
+    private fun assertBothOrders(message: String, blocks: List<String>, accepted: Boolean) {
+        listOf(blocks, blocks.reversed()).forEach { order ->
+            if (accepted) assertEquals(2, parse(order).profiles.size) else rejects(message, order)
         }
     }
 
@@ -261,20 +290,15 @@ class SharedOriginCharacterizationTest {
             "ctbg-solicitud-informacion", "catastro-solicitudes-genericas",
             "fega-solicitud-general-ofvsg02", "diputacion-caceres-instancia-general",
         )
-        (onlyPublicGateway + bothGateways).forEach { owner ->
-            listOf("https://pasarela.clave.gob.es", "https://pasarela-ident.clave.gob.es").forEach { origin ->
-                listOf(false, true).forEach { redirect ->
-                    val peer = navigationProfile(owner, origin, redirect)
-                    parse(listOf(peer))
-                    listOf(listOf(mineco, peer), listOf(peer, mineco)).forEach { blocks ->
-                        if (owner in onlyPublicGateway && origin == "https://pasarela-ident.clave.gob.es") {
-                            rejects("$origin: $owner/$redirect", blocks)
-                        } else {
-                            assertEquals(2, parse(blocks).profiles.size)
-                        }
-                    }
-                }
-            }
+        val origins = listOf("https://pasarela.clave.gob.es", "https://pasarela-ident.clave.gob.es")
+        for (owner in onlyPublicGateway + bothGateways) for (origin in origins) for (redirect in listOf(false, true)) {
+            val peer = navigationProfile(owner, origin, redirect)
+            parse(listOf(peer))
+            assertBothOrders(
+                "$origin: $owner/$redirect",
+                listOf(mineco, peer),
+                accepted = owner !in onlyPublicGateway || origin != "https://pasarela-ident.clave.gob.es",
+            )
         }
     }
 
@@ -316,12 +340,7 @@ class SharedOriginCharacterizationTest {
             rejects("$id: unreviewed owner", listOf(replace(block, id, "unreviewed-same-origin")))
             val wrongMode = if (id == "la-rioja-oficina-electronica") "DIRECT_FROM_SOURCE" else "REDIRECT_AFTER_SOURCE"
             rejects("$id: transition", listOf(replace(block, policy.transitionMode.name, wrongMode)))
-            val wrongPath = listOf(replace(block, policy.requestPath, "/unreviewed-client-auth"))
-            if (id == "diputacion-soria-sede-client-auth") {
-                assertEquals("/unreviewed-client-auth", parse(wrongPath).profiles.single().clientAuthPolicy?.requestPath)
-            } else {
-                rejects("$id: request path", wrongPath)
-            }
+            rejects("$id: request path", listOf(replace(block, policy.requestPath, "/unreviewed-client-auth")))
             val source = policy.sourceUrls.single().toASCIIString()
             rejects("$id: source", listOf(replace(block, source, "https://unreviewed.example/source")))
         }
@@ -330,11 +349,19 @@ class SharedOriginCharacterizationTest {
     @Test
     fun sameOriginTlsRequestOriginsAndPathsAreIndependentGoldenValues() {
         val expected = listOf(
-            Triple("ministerio-sanidad-certificado", "https://sede.mscbs.gob.es", "/SIGEM_AutenticacionWeb/validacionCertificado.do"),
+            Triple(
+                "ministerio-sanidad-certificado",
+                "https://sede.mscbs.gob.es",
+                "/SIGEM_AutenticacionWeb/validacionCertificado.do",
+            ),
             Triple("navarra-sede-registro-general", "https://ateka.navarra.es", "/ateka/Certificate/login"),
             Triple("menorca-carpeta-ciutadana", "https://www.carpetaciutadana.org", "/cime/Login/LoginCert.aspx"),
             Triple("extremadura-pattex-client-auth", "https://pattex.juntaex.es", "/PATTEX/accesoCertificadoSEDE.jsf"),
-            Triple("diputacion-soria-sede-client-auth", "https://portaltramitador.dipsoria.es", "/web/inicioWebcCert.do"),
+            Triple(
+                "diputacion-soria-sede-client-auth",
+                "https://portaltramitador.dipsoria.es",
+                "/web/inicioWebcCert.do",
+            ),
             Triple("la-rioja-oficina-electronica", "https://ias1.larioja.org", "/clientcertSSL/login"),
         )
         expected.forEach { (id, origin, path) ->
@@ -356,13 +383,18 @@ class SharedOriginCharacterizationTest {
     }
 
     @Test
-    fun tlsQueryAndPortMutationsPreservePinnedContractsAndTheBroaderSoriaContract() {
+    fun tlsQueryAndPortMutationsAreRejectedForEverySameOriginProfile() {
         val cases = listOf(
             Triple("ministerio-sanidad-certificado", "TRAM_TARDESCONPLAN", "TRAM_OTHER"),
             Triple("navarra-sede-registro-general", "\"returnUrl\"", "\"otherUrl\""),
             Triple("menorca-carpeta-ciutadana", "\"URL\"", "\"OTHER\""),
             Triple("la-rioja-oficina-electronica", "\"OFIVIR\"", "\"OTHER\""),
-            Triple("extremadura-pattex-client-auth", "\"fixedQueryParameters\":{}", "\"fixedQueryParameters\":{\"extra\":\"value\"}"),
+            Triple(
+                "extremadura-pattex-client-auth",
+                "\"fixedQueryParameters\":{}",
+                "\"fixedQueryParameters\":{\"extra\":\"value\"}",
+            ),
+            Triple("diputacion-soria-sede-client-auth", "\"ssl\"", "\"other\""),
         )
         cases.forEach { (id, old, new) ->
             val block = profileJson(id)
@@ -370,11 +402,6 @@ class SharedOriginCharacterizationTest {
             rejects("$id: query or port", listOf(replace(block, old, new)))
             rejects("$id: non-default port", listOf(withRequestPort(block, 444)))
         }
-        val soria = profileJson("diputacion-soria-sede-client-auth")
-        val changedPort = parse(listOf(withRequestPort(soria, 444)))
-        assertEquals(444, changedPort.profiles.single().clientAuthPolicy?.requestPort)
-        val changedQuery = parse(listOf(replace(soria, "\"ssl\"", "\"other\"")))
-        assertEquals("other", changedQuery.profiles.single().clientAuthPolicy?.fixedQueryParameters?.get("opcion"))
     }
 
     @Test
