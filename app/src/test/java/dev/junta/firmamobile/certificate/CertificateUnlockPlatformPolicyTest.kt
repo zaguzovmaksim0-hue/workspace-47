@@ -35,14 +35,14 @@ class CertificateUnlockPlatformPolicyTest {
     )
 
     @Test
-    fun persistentCacheRequiresAtLeastApi28() {
-        for (sdk in listOf(26, 27)) assertFalse(supportsPersistentCertificateUnlock(sdk))
-        for (sdk in listOf(28, 29, 36)) assertTrue(supportsPersistentCertificateUnlock(sdk))
+    fun persistentCacheRequiresAtLeastApi30() {
+        for (sdk in listOf(26, 27, 28, 29)) assertFalse(supportsPersistentCertificateUnlock(sdk))
+        for (sdk in listOf(30, 36)) assertTrue(supportsPersistentCertificateUnlock(sdk))
     }
 
     @Test
     fun unsupportedStoreNeverReadsWritesOrObtainsAKeyAndRevokesLegacyData() = runTest {
-        for (sdk in listOf(26, 27)) {
+        for (sdk in listOf(26, 27, 28, 29)) {
             val storage = RecordingStorage().apply { bytes = byteArrayOf(1, 2, 3) }
             val keys = RecordingKeys()
             val password = "synthetic-password".toCharArray()
@@ -59,10 +59,10 @@ class CertificateUnlockPlatformPolicyTest {
 
     @Test
     fun unsupportedRestoreRevokesPreviouslyValidRecordWithoutReadingOrDecryptingIt() = runTest {
-        for (sdk in listOf(26, 27)) {
+        for (sdk in listOf(26, 27, 28, 29)) {
             val storage = RecordingStorage()
             val keys = RecordingKeys()
-            assertTrue(cache(28, storage, keys).store(reference, "synthetic".toCharArray(), now, expiry, 1L))
+            assertTrue(cache(30, storage, keys).store(reference, "synthetic".toCharArray(), now, expiry, 1L))
             keys.accesses = 0
             storage.reads = 0
             assertNull(cache(sdk, storage, keys).restore(reference, now))
@@ -88,7 +88,7 @@ class CertificateUnlockPlatformPolicyTest {
 
     @Test
     fun supportedPlatformsRetainEncryptedRoundTrip() = runTest {
-        for (sdk in listOf(28, 36)) {
+        for (sdk in listOf(30, 36)) {
             val cache = cache(sdk, RecordingStorage(), RecordingKeys())
             val password = "synthetic".toCharArray()
             assertTrue(cache.store(reference, password, now, expiry, 1L))

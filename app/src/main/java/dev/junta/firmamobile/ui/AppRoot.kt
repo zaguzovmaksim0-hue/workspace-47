@@ -63,6 +63,7 @@ fun AppRoot(
     state: CertificateUiState = CertificateUiState.NoCertificate(),
     onSelectCertificate: () -> Unit = {},
     onUnlock: (CharArray, CertificateUnlockRetention) -> Unit = { _, _ -> },
+    onRestoreSavedUnlock: (() -> Unit)? = null,
     onLock: () -> Unit = {},
     onForget: () -> Unit = {},
     onContinue: () -> Unit = {},
@@ -99,6 +100,7 @@ fun AppRoot(
                 state = state,
                 onSelectCertificate = onSelectCertificate,
                 onUnlock = onUnlock,
+                        onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onLock = onLock,
                 onForget = onForget,
                 onContinue = onContinue,
@@ -130,6 +132,7 @@ private fun CertificatePanel(
     state: CertificateUiState,
     onSelectCertificate: () -> Unit,
     onUnlock: (CharArray, CertificateUnlockRetention) -> Unit,
+    onRestoreSavedUnlock: (() -> Unit)?,
     onLock: () -> Unit,
     onForget: () -> Unit,
     onContinue: () -> Unit,
@@ -200,6 +203,7 @@ private fun CertificatePanel(
             is CertificateUiState.Locked -> LockedCertificate(
                 state = state,
                 onUnlock = onUnlock,
+                        onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onSelectCertificate = onSelectCertificate,
                 onForget = onForget,
             )
@@ -249,12 +253,14 @@ private fun NoCertificate(
 private fun LockedCertificate(
     state: CertificateUiState.Locked,
     onUnlock: (CharArray, CertificateUnlockRetention) -> Unit,
+    onRestoreSavedUnlock: (() -> Unit)?,
     onSelectCertificate: () -> Unit,
     onForget: () -> Unit,
 ) {
     LockedCertificateHeading(state)
     var retention by remember(state.reference.uri) { mutableStateOf(CertificateUnlockRetention.FIFTEEN_MINUTES) }
     CertificateUnlockRetentionSelector(retention, !state.revocationPending) { retention = it }
+    SavedCertificateUnlockAction(onRestoreSavedUnlock, !state.revocationPending)
     val passwordState = remember(state.reference.uri) { TextFieldState() }
     DisposableEffect(passwordState) {
         onDispose { passwordState.clearText() }

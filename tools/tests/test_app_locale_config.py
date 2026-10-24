@@ -28,6 +28,27 @@ class AppLocaleConfigTest(unittest.TestCase):
         self.assertNotIn('locale', handled)
         self.assertNotIn('layoutDirection', handled)
 
+    def test_browser_trust_default_uses_translated_resource(self):
+        source = (ROOT / 'app/src/main/java/dev/junta/firmamobile/ui/BrowserLayout.kt').read_text()
+        self.assertNotRegex(source, r'trustLabel\s*:\s*String\s*=\s*"')
+        self.assertRegex(source,
+            r'trustLabel\s*:\s*String\s*=\s*stringResource\(\s*R\.string\.browser_trust_signing\s*\)')
+
+    def test_native_result_summaries_use_resources_instead_of_spanish_literals(self):
+        source = ROOT / 'app/src/main/java/dev/junta/firmamobile'
+        for filename, literal in (
+            ('afirma/servlet/NativeMultiPhaseOperation.kt', 'El servicio devolvió un resultado.'),
+            ('afirma/servlet/NativeBatchProtocol.kt', 'resultado positivo:'),
+        ):
+            with self.subTest(file=filename):
+                self.assertNotIn(literal, (source / filename).read_text())
+        dialog = (source / 'ui/NativeAfirmaConsentDialog.kt').read_text()
+        for name in ('native_multiphase_result', 'native_multiphase_batch_result'):
+            self.assertIn(f'stringResource(R.string.{name}', dialog)
+            for locale in ('values', 'values-en', 'values-ca', 'values-gl', 'values-eu'):
+                resources = ET.parse(ROOT / f'app/src/main/res/{locale}/multiphase_strings.xml').getroot()
+                self.assertIsNotNone(resources.find(f"string[@name='{name}']"))
+
 
 if __name__ == '__main__':
     unittest.main()

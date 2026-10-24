@@ -38,6 +38,8 @@ class JuntaFirmaApplication : Application() {
     lateinit var certificateSession: CertificateSession
         internal set
 
+    val certificateUnlockAuthentication = dev.junta.firmamobile.certificate.AndroidCertificateUnlockAuthentication()
+
     lateinit var certificateUnlockCache: CertificateUnlockCache
         internal set
 
@@ -66,7 +68,7 @@ class JuntaFirmaApplication : Application() {
         )
         secureTunnelRuntime = BuildVariantSecureTunnelRuntimeFactory.create(this)
         clientCertPreferenceCoordinator = ClientCertPreferenceCoordinator()
-        appContainer = AppContainer.create(this)
+        appContainer = AppContainer.create(this, certificateUnlockAuthentication)
         val certificateModule = appContainer.certificateModule
         certificateSession = certificateModule.session
         certificateUnlockCache = certificateModule.unlockCache

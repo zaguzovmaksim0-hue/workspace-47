@@ -19,12 +19,12 @@ class UnlockPlatformPolicyTest(unittest.TestCase):
             self.assertIn('if (!persistentCacheAllowed)', body)
             self.assertIn('clearAndReport()', body)
 
-    def test_threat_model_scopes_persistent_restore_to_api28_and_above(self):
+    def test_threat_model_scopes_persistent_restore_to_api30_and_above(self):
         text = (ROOT / 'docs/threat-model.md').read_text()
-        self.assertIn('solo en API 28+', text)
-        self.assertIn('en API 26–27 la persistencia del desbloqueo está\ndeshabilitada', text)
+        self.assertIn('solo en API 30+', text)
+        self.assertIn('en API 26–29 la persistencia del desbloqueo está\ndeshabilitada', text)
         self.assertIn('Si la limpieza falla, la restauración\nsigue denegada', text)
-        self.assertIn('no añade biometría/PIN', text)
+        self.assertIn('requieren confirmación nativa con biometría/PIN', text)
 
 
 if __name__ == '__main__':
