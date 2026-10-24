@@ -35,6 +35,7 @@ internal data class AfirmaConsentDetails(
     val providedDigestItems: Int = 0,
     val signaturePolicySummary: String? = null,
     val signaturePolicyItems: Int = 0,
+    val batchReview: NativeBatchConsentReview? = null,
 )
 
 internal sealed interface AfirmaResultSummary {

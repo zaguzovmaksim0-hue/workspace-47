@@ -105,6 +105,7 @@ fun AppRoot(
             )
             Spacer(modifier = Modifier.height(12.dp))
             CertificateStateBanner(state)
+            localFileSigningEntry(state is CertificateUiState.Unlocked)
             if (state !is CertificateUiState.Unlocked) {
                 androidx.compose.material3.TextButton(
                     onClick = onContinue,
@@ -113,6 +114,7 @@ fun AppRoot(
                     Text(stringResource(R.string.browse_without_certificate))
                 }
             }
+            certificateReminderSettings()
             androidx.compose.material3.TextButton(
                 onClick = { legalInformationVisible = true },
                 modifier = Modifier.fillMaxWidth().testTag("open-legal-information"),

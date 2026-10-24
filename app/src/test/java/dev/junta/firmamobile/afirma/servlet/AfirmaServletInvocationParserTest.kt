@@ -149,6 +149,86 @@ class AfirmaServletInvocationParserTest {
         invalid(sign(mapOf("cipher" to b64("{\"algo\":\"AES\",\"key\":\"$key\",\"iv\":\"$iv\",\"legDes\":\"12345678\",\"legacydes\":\"87654321\"}"))))
     }
 
+    @Test fun cipherKeyAndIvBoundsKeepTheirExactRefusals() {
+        for (keySize in listOf(16, 24, 32)) {
+            accepted(sign(mapOf("cipher" to b64(cipherConfig(keySize, 16))))).use { invocation ->
+                checkNotNull(invocation.cipherCopy()).use { cipher ->
+                    val plaintext = "synthetic payload".toByteArray()
+                    assertArrayEquals(plaintext, cipher.decode(cipher.encode(plaintext)))
+                }
+            }
+        }
+        for ((keySize, ivSize, reason) in listOf(
+            Triple(15, 16, "malformed_input"),
+            Triple(31, 16, "malformed_input"),
+            Triple(33, 16, "invalid_base64"),
+            Triple(32, 15, "malformed_input"),
+            Triple(32, 17, "invalid_base64"),
+        )) {
+            assertEquals(
+                AfirmaServletParseResult.Invalid(reason),
+                AfirmaServletInvocationParser.parse(
+                    sign(mapOf("cipher" to b64(cipherConfig(keySize, ivSize)))),
+                    "https://unknown.example/",
+                ),
+            )
+        }
+    }
+
+    @Test fun cipherConfigurationLimitIncludesJsonWhitespace() {
+        val atLimit = cipherConfig(32, 16).padEnd(4096, ' ')
+        accepted(sign(mapOf("cipher" to b64(atLimit)))).use { invocation ->
+            checkNotNull(invocation.cipherCopy()).close()
+        }
+        assertEquals(
+            AfirmaServletParseResult.Invalid("invalid_base64"),
+            AfirmaServletInvocationParser.parse(
+                sign(mapOf("cipher" to b64(atLimit + " "))), "https://unknown.example/",
+            ),
+        )
+    }
+
+    @Test fun percentEscapesStillConsumeThreeCharactersAndDecodeHexadecimal() {
+        val encodedPayload = "cGF5bG9hZA%3D%3D"
+        val escapedPayload = "%63%47%46%35%62%47%39%68%5a%41%3d%3D"
+        accepted(sign().replace(encodedPayload, escapedPayload)).use {
+            assertArrayEquals("payload".toByteArray(), it.payloadCopy())
+        }
+        for ((suffix, reason) in listOf(
+            "&appname=%" to "malformed_input",
+            "&appname=%ZZ" to "malformed_input",
+            "&appname=%C3%28" to "malformed_input",
+            "&appname=%0A" to "parameter_control",
+        )) {
+            assertEquals(
+                AfirmaServletParseResult.Invalid(reason),
+                AfirmaServletInvocationParser.parse(sign() + suffix, "https://unknown.example/"),
+            )
+        }
+    }
+
+    @Test fun refusalsKeepTheirPrecedenceBeforeCipherParsing() {
+        for ((extra, expected) in listOf(
+            mapOf("unknown" to "value") to AfirmaServletParseResult.Unsupported("unknown_parameter"),
+            mapOf("v" to "3", "ver" to "4") to
+                AfirmaServletParseResult.Invalid("conflicting_protocol_versions"),
+            mapOf("key" to "short") to AfirmaServletParseResult.Invalid("invalid_legacy_key"),
+        )) {
+            assertEquals(
+                expected,
+                AfirmaServletInvocationParser.parse(
+                    sign(extra + ("cipher" to "not-base64!")), "https://unknown.example/",
+                ),
+            )
+        }
+    }
+
+    private fun cipherConfig(keySize: Int, ivSize: Int): String {
+        val key = Base64.getEncoder().encodeToString(ByteArray(keySize))
+        val iv = Base64.getEncoder().encodeToString(ByteArray(ivSize))
+        return "{\"algo\":\"AES\",\"key\":\"$key\",\"iv\":\"$iv\"}"
+    }
+
     private fun sign(extra: Map<String, String> = emptyMap()): String = uri("sign", linkedMapOf(
         "id" to "Session123", "stservlet" to "https://storage.example/StorageService", "key" to "12345678",
         "format" to "CAdES", "algorithm" to "SHA256withRSA", "dat" to b64("payload"),
