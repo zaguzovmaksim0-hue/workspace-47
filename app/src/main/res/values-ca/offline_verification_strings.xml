@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offline_verification_entry">Comprovar la integritat de la signatura</string>
+    <string name="offline_verification_title">Integritat de signatura CMS/CAdES</string>
+    <string name="offline_verification_scope">Comprovació local de la integritat criptogràfica CMS/CAdES, sense consultes de xarxa. No comprova la confiança, la vigència ni la revocació del certificat, ni valida segells de temps.</string>
+    <string name="offline_verification_limits">Només fitxers locals: CMS fins a 1 MiB i contingut original fins a 512 KiB. PDF i XML no estan admesos.</string>
+    <string name="offline_verification_original_hint">L’original només és necessari en signatures separades. Un fitxer buit seleccionat compta com a contingut; no equival a no seleccionar-ne cap. Si el CMS ja inclou el contingut, no hi afegeixis un original.</string>
+    <string name="offline_verification_pick_cms">Seleccionar signatura CMS/CAdES</string>
+    <string name="offline_verification_cms_selected">Signatura seleccionada</string>
+    <string name="offline_verification_cms_missing">Cap signatura seleccionada</string>
+    <string name="offline_verification_pick_original">Seleccionar original opcional</string>
+    <string name="offline_verification_original_selected">Original seleccionat, encara que estigui buit</string>
+    <string name="offline_verification_original_missing">Cap original seleccionat</string>
+    <string name="offline_verification_clear_original">Treure l’original</string>
+    <string name="offline_verification_verify">Verificar</string>
+    <string name="offline_verification_close">Tancar</string>
+    <string name="offline_verification_cancel">Cancel·lar i esborrar la selecció</string>
+    <string name="offline_verification_progress">Comprovant la integritat…</string>
+    <string name="offline_verification_cancellation_note">Cancel·lar descarta el resultat i esborra els bytes propis quan acaba l’operació. Alguns proveïdors o càlculs no es poden interrompre immediatament i poden retardar la comprovació següent.</string>
+    <string name="offline_verification_verified">Integritat de signatura comprovada. No implica confiança ni validesa del certificat.</string>
+    <string name="offline_verification_signer_count">Signatures amb integritat comprovada: %1$d</string>
+    <string name="offline_verification_invalid">Integritat no comprovada: signatura invàlida, contingut modificat o original no corresponent. Si el CMS inclou el contingut, treu l’original opcional.</string>
+    <string name="offline_verification_unsupported">Perfil CMS/CAdES no admès. Integritat no comprovada.</string>
+    <string name="offline_verification_limit_exceeded">Límit excedit: CMS fins a 1 MiB i original fins a 512 KiB. Integritat no comprovada.</string>
+    <string name="offline_verification_detached_required">Aquesta signatura separada necessita el contingut original. Selecciona’l i prem Verificar.</string>
+    <string name="offline_verification_read_failed">No s’han pogut llegir o comprovar els fitxers. Torna a seleccionar fitxers locals.</string>
+</resources>

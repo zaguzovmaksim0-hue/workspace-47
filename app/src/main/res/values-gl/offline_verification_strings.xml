@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offline_verification_entry">Comprobar a integridade da sinatura</string>
+    <string name="offline_verification_title">Integridade de sinatura CMS/CAdES</string>
+    <string name="offline_verification_scope">Comprobación local da integridade criptográfica CMS/CAdES, sen consultas de rede. Non comproba a confianza, a vixencia nin a revogación do certificado, nin valida selos de tempo.</string>
+    <string name="offline_verification_limits">Só ficheiros locais: CMS ata 1 MiB e contido orixinal ata 512 KiB. PDF e XML non están admitidos.</string>
+    <string name="offline_verification_original_hint">O orixinal só é necesario nas sinaturas separadas. Un ficheiro baleiro seleccionado conta como contido; non equivale a non seleccionar. Se o CMS xa inclúe o contido, non engadas un orixinal.</string>
+    <string name="offline_verification_pick_cms">Seleccionar sinatura CMS/CAdES</string>
+    <string name="offline_verification_cms_selected">Sinatura seleccionada</string>
+    <string name="offline_verification_cms_missing">Ningunha sinatura seleccionada</string>
+    <string name="offline_verification_pick_original">Seleccionar orixinal opcional</string>
+    <string name="offline_verification_original_selected">Orixinal seleccionado, aínda que estea baleiro</string>
+    <string name="offline_verification_original_missing">Sen orixinal seleccionado</string>
+    <string name="offline_verification_clear_original">Quitar orixinal</string>
+    <string name="offline_verification_verify">Verificar</string>
+    <string name="offline_verification_close">Pechar</string>
+    <string name="offline_verification_cancel">Cancelar e borrar a selección</string>
+    <string name="offline_verification_progress">Comprobando a integridade…</string>
+    <string name="offline_verification_cancellation_note">Cancelar descarta o resultado e borra os bytes propios ao rematar. Algúns provedores ou cálculos non se poden interromper de inmediato e poden atrasar a seguinte comprobación.</string>
+    <string name="offline_verification_verified">Integridade de sinatura comprobada. Non implica confianza nin validez do certificado.</string>
+    <string name="offline_verification_signer_count">Sinaturas con integridade comprobada: %1$d</string>
+    <string name="offline_verification_invalid">Integridade non comprobada: sinatura inválida, contido modificado ou orixinal non correspondente. Se o CMS inclúe o contido, quita o orixinal opcional.</string>
+    <string name="offline_verification_unsupported">Perfil CMS/CAdES non admitido. Integridade non comprobada.</string>
+    <string name="offline_verification_limit_exceeded">Límite superado: CMS ata 1 MiB e orixinal ata 512 KiB. Integridade non comprobada.</string>
+    <string name="offline_verification_detached_required">Esta sinatura separada necesita o contido orixinal. Selecciónao e preme Verificar.</string>
+    <string name="offline_verification_read_failed">Non se puideron ler ou comprobar os ficheiros. Volve seleccionar ficheiros locais.</string>
+</resources>
