@@ -92,7 +92,7 @@ class AfirmaCancellationFlowTest {
     }
 
     private fun invocation() = AfirmaServletInvocation(
-        AfirmaServletOperation.SIGN, "https://page.synthetic.example", URI("https://storage.synthetic.example/put"),
-        "RESULT-123", "12345678", SigningAlgorithm.SHA256_WITH_RSA, true, "not for transport".toByteArray(),
+        AfirmaServletMetadata(AfirmaServletOperation.SIGN, "https://page.synthetic.example", URI("https://storage.synthetic.example/put"),
+        "RESULT-123", "12345678", SigningAlgorithm.SHA256_WITH_RSA, true), "not for transport".toByteArray(),
     )
 }

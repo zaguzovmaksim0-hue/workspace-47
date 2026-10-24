@@ -44,10 +44,23 @@ class NativeAfirmaOperationTest {
         assertEquals(0, identity.encodedReads.get())
     }
 
+    @Test fun externalSelectionReviewPreservesContextAndDisplaysRecipientWithoutQuery() {
+        val parsed = AfirmaServletInvocationParser.parseExternal(ExternalAfirmaControllerTest.SELECT)
+            as AfirmaServletParseResult.Accepted
+        val context = parsed.invocation.externalContext
+        NativeAfirmaOperation(parsed.invocation).use { operation ->
+            assertNull(operation.details.sourceOrigin)
+            assertSame(context, operation.details.externalContext)
+            assertEquals("https://storage.example/store", operation.details.destination)
+            assertEquals(0, operation.details.payloadBytes)
+            assertEquals("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", operation.details.payloadSha256)
+        }
+    }
+
     @Test fun selectCertificateUsesExactlyOneFieldAndDoesNotSign() = runBlocking {
         val identity = nonExportableSyntheticIdentity()
-        val invocation = AfirmaServletInvocation(AfirmaServletOperation.SELECT_CERTIFICATE, "https://portal.example",
-            URI("https://store.example/select"), "Select-123", null, null, true, ByteArray(0))
+        val invocation = AfirmaServletInvocation(AfirmaServletMetadata(AfirmaServletOperation.SELECT_CERTIFICATE, "https://portal.example",
+            URI("https://store.example/select"), "Select-123", null, null, true), ByteArray(0))
         var body: String? = null
         val operation = NativeAfirmaOperation(invocation, AfirmaResultTransport { _, _, result -> body = result; AfirmaDeliveryResult.ACKNOWLEDGED }, clock = clockFor(identity.identity))
         assertEquals("selectcert", operation.details.operation)
@@ -136,7 +149,7 @@ class NativeAfirmaOperationTest {
 
     private fun invocation(payload: ByteArray = "PAYLOAD_NOT_FOR_LOGS".toByteArray(),
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA, detached: Boolean = true) =
-        AfirmaServletInvocation(AfirmaServletOperation.SIGN, "https://portal.example",
-            URI("https://store.example/StorageService?route=test"), "Request-123", "12345678", algorithm, detached, payload)
+        AfirmaServletInvocation(AfirmaServletMetadata(AfirmaServletOperation.SIGN, "https://portal.example",
+            URI("https://store.example/StorageService?route=test"), "Request-123", "12345678", algorithm, detached), payload)
     private fun b64(bytes: ByteArray) = Base64.getEncoder().encodeToString(bytes)
 }

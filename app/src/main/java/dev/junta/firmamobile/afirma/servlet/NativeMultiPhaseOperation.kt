@@ -63,6 +63,7 @@ internal class NativeMultiPhaseOperation(
             else "${remote.format} · trifásico",
             checkNotNull(invocation.algorithm).let { with(NativeTriphaseCodec) { it.wireName() } }, bytes.size,
             MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) },
+            externalContext = invocation.externalContext,
             serviceDestinations = listOfNotNull(remote.preUrl, remote.postUrl).map(::destination).distinct(),
             batchItems = remote.batch?.items?.size, delegatedSigning = !remote.localBatch,
             batchReview = remote.batch?.let { NativeBatchConsentReview.from(it, remote.localBatch) },
