@@ -236,6 +236,22 @@ class CertificateReferenceCatalogTest {
         }
     }
 
+    @Test
+    fun schemaOneIsUpgradedOnMutationWithoutChangingExistingIdentity() = runBlocking {
+        val file = file()
+        val data = dataStore(file)
+        val id = "00000000-0000-0000-0000-000000000001"
+        data.edit { it[stringPreferencesKey("catalog")] = payload(active = id, ids = listOf(id)) }
+        val store = PreferencesCertificateReferenceStore(data)
+        val before = checkNotNull(store.readCatalog().active)
+        assertEquals(id, before.id)
+        store.add(reference("second"))
+        assertEquals(before, store.readCatalog().active)
+        val snapshot = store.readCatalog()
+        scopes.last().coroutineContext[kotlinx.coroutines.Job]!!.let { it.cancel(); it.join() }
+        assertEquals(snapshot, PreferencesCertificateReferenceStore(dataStore(file)).readCatalog())
+    }
+
     // Independent wire fixtures exercise rejection through the storage interface, not the codec.
     private fun payload(
         version: Int = 1,

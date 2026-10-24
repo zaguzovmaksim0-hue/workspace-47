@@ -57,8 +57,8 @@ class AfirmaServerCancellationTransportTest {
     }
 
     private fun invocation(endpoint: URI) = AfirmaServletInvocation(
-        AfirmaServletOperation.SIGN, "https://page.example", endpoint, "Cancellation123", "12345678",
-        SigningAlgorithm.SHA256_WITH_RSA, true, "DO_NOT_SEND_THE_DOCUMENT".toByteArray(),
+        AfirmaServletMetadata(AfirmaServletOperation.SIGN, "https://page.example", endpoint, "Cancellation123", "12345678",
+        SigningAlgorithm.SHA256_WITH_RSA, true), "DO_NOT_SEND_THE_DOCUMENT".toByteArray(),
     )
     private class Fixture(val server: MockWebServer, trusted: HandshakeCertificates) {
         val endpoint = URI("https://store.example:${server.port}/StorageService")

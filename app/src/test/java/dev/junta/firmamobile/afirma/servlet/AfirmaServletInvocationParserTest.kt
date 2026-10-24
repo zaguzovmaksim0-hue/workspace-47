@@ -223,6 +223,12 @@ class AfirmaServletInvocationParserTest {
         }
     }
 
+    @Test fun retrievedRequestsKeepTheRecursiveRetrievalRefusal() {
+        assertEquals(AfirmaServletParseResult.Unsupported("recursive_retrieval"),
+            AfirmaServletInvocationParser.parseRetrieved(AfirmaServletOperation.SIGN,
+                "https://page.example", mapOf("fileid" to "remote")))
+    }
+
     private fun cipherConfig(keySize: Int, ivSize: Int): String {
         val key = Base64.getEncoder().encodeToString(ByteArray(keySize))
         val iv = Base64.getEncoder().encodeToString(ByteArray(ivSize))

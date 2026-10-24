@@ -36,8 +36,6 @@ val Context.certificateReferenceDataStore: DataStore<Preferences> by preferences
 class PreferencesCertificateReferenceStore(
     private val dataStore: DataStore<Preferences>,
 ) : CertificateReferenceCatalogStore {
-    override suspend fun read(): StoredCertificateReference? = readCatalog().active?.reference
-
     override suspend fun readCatalog(): StoredCertificateCatalog {
         val preferences = dataStore.data.first()
         if (Keys.CATALOG in preferences || Keys.LEGACY.none { it in preferences }) {
@@ -61,9 +59,11 @@ class PreferencesCertificateReferenceStore(
             val catalog = readSnapshot(preferences)
             val active = catalog.active
             val entry = if (active != null) {
-                val metadataChanged = active.reference.copy(summary = null) != reference.copy(summary = null)
+                // A summary refresh retains the key; selecting another file retires it atomically.
+                val metadataChanged = active.reference?.copy(summary = null) != reference.copy(summary = null)
                 active.copy(
                     reference = reference,
+                    signingKey = active.signingKey.takeUnless { metadataChanged },
                     revision = if (metadataChanged) Math.addExact(active.revision, 1) else active.revision,
                 )
             } else {
@@ -72,7 +72,11 @@ class PreferencesCertificateReferenceStore(
             val entries = if (active == null) catalog.entries + entry else catalog.entries.map {
                 if (it.id == active.id) entry else it
             }
-            persist(preferences, StoredCertificateCatalog(entries, entry.id))
+            persist(preferences, catalog.copy(
+                entries = entries, activeId = entry.id,
+                tombstones = catalog.tombstones + listOfNotNull(active?.signingKey?.alias)
+                    .filterNot { it == entry.signingKey?.alias },
+            ))
         }
     }
 
@@ -80,7 +84,42 @@ class PreferencesCertificateReferenceStore(
         dataStore.edit { preferences ->
             val catalog = readSnapshot(preferences)
             val remaining = catalog.entries.filterNot { it.id == catalog.activeId }
-            persist(preferences, StoredCertificateCatalog(remaining, null))
+            persist(preferences, catalog.copy(
+                entries = remaining, activeId = null,
+                tombstones = catalog.tombstones + listOfNotNull(catalog.active?.signingKey?.alias),
+            ))
+        }
+    }
+
+    override suspend fun replace(expected: StoredCertificateEntry, replacement: StoredCertificateEntry) {
+        require(replacement.id == expected.id && replacement.revision == Math.addExact(expected.revision, 1))
+        dataStore.edit { preferences ->
+            val catalog = readSnapshot(preferences)
+            check(catalog.entries.singleOrNull { it.id == expected.id } == expected) { "Stale certificate entry" }
+            val retired = listOfNotNull(expected.signingKey?.alias).filterNot { it == replacement.signingKey?.alias }
+            persist(preferences, catalog.copy(
+                entries = catalog.entries.map { if (it.id == expected.id) replacement else it },
+                tombstones = catalog.tombstones + retired,
+            ))
+        }
+    }
+
+    override suspend fun remove(expected: StoredCertificateEntry) {
+        dataStore.edit { preferences ->
+            val catalog = readSnapshot(preferences)
+            check(catalog.entries.singleOrNull { it.id == expected.id } == expected) { "Stale certificate entry" }
+            persist(preferences, catalog.copy(
+                entries = catalog.entries.filterNot { it.id == expected.id },
+                activeId = catalog.activeId.takeUnless { it == expected.id },
+                tombstones = catalog.tombstones + listOfNotNull(expected.signingKey?.alias),
+            ))
+        }
+    }
+
+    override suspend fun acknowledgeKeyDeletion(alias: String) {
+        dataStore.edit { preferences ->
+            val catalog = readSnapshot(preferences)
+            persist(preferences, catalog.copy(tombstones = catalog.tombstones - alias))
         }
     }
 

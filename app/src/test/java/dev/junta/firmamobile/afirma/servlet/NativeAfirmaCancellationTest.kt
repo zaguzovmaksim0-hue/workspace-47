@@ -206,13 +206,15 @@ class NativeAfirmaCancellationTest {
         key: String? = "12345678",
         cipherParameters: AfirmaAesParameters? = null,
     ) = AfirmaServletInvocation(
-        operation = kind,
-        sourceOrigin = "https://portal.example",
-        storageUrl = ENDPOINT,
-        sessionId = SESSION_ID,
-        key = key,
-        algorithm = if (kind == AfirmaServletOperation.SIGN) SigningAlgorithm.SHA256_WITH_RSA else null,
-        detached = true,
+        AfirmaServletMetadata(
+            operation = kind,
+            sourceOrigin = "https://portal.example",
+            storageUrl = ENDPOINT,
+            sessionId = SESSION_ID,
+            key = key,
+            algorithm = if (kind == AfirmaServletOperation.SIGN) SigningAlgorithm.SHA256_WITH_RSA else null,
+            detached = true,
+        ),
         payload = if (kind == AfirmaServletOperation.SIGN) "Synthetic unsigned payload".toByteArray() else ByteArray(0),
         cipherParameters = cipherParameters,
     )
