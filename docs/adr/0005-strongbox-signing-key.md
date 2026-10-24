@@ -24,7 +24,7 @@ Key authorizations are fixed at import. Changing any of them later requires re-i
 3. **Paddings: PKCS#1 v1.5 and PSS.** The same key will serve TLS client authentication through WebView, and TLS 1.3 forbids PKCS#1 v1.5 for CertificateVerify. Omitting PSS would break certificate login with no remedy short of re-import.
 
 4. **Placement and fallback.**
-   - StrongBox is tried first when `FEATURE_STRONGBOX_KEYSTORE` is present.
+   - StrongBox is tried first when `FEATURE_STRONGBOX_KEYSTORE` is present and the device runs Android 12 (API 31) or later. `KeyProtection.Builder#setIsStrongBoxBacked` does not exist before API 31, so on API 28–30 only the consented TEE import is possible.
    - If StrongBox refuses the key, or cannot sign every `SigningAlgorithm` in the post-import challenge, the importer returns `StrongBoxUnsuitable`. The trusted environment is used only when the caller passes the owner's explicit consent (`allowTrustedEnvironment`). There is no silent downgrade.
    - A key whose confirmed security level is SOFTWARE is rejected.
 

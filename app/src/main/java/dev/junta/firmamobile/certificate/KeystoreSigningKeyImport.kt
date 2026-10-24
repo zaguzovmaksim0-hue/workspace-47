@@ -188,14 +188,14 @@ internal object KeystoreRsaSigning {
 }
 
 internal class AndroidSigningKeyStoreBackend(context: Context) : SigningKeyStoreBackend {
-    override val strongBoxAvailable: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+    override val strongBoxAvailable: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
 
     override fun importKey(alias: String, key: PrivateKey, chain: List<X509Certificate>, placement: KeystorePlacement) {
         val strongBox = placement == KeystorePlacement.STRONGBOX
         val protection = KeyProtection.Builder(KeyProperties.PURPOSE_SIGN)
             .apply {
-                if (strongBox && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                if (strongBox && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     setDigests(KeyProperties.DIGEST_NONE, KeyProperties.DIGEST_SHA256)
                     setIsStrongBoxBacked(true)
                 } else {
