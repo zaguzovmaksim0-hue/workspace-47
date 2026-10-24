@@ -1,7 +1,6 @@
 package dev.junta.firmamobile.certificate
 
 import android.net.Uri
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -17,17 +16,20 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
 
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35], manifest = Config.NONE)
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
@@ -70,16 +72,7 @@ class CertificateReferenceStoreTest {
         assertEquals(reference, store.read())
         val raw = dataStore.data.first()
         assertEquals(
-            setOf(
-                "uri",
-                "display_name",
-                "mime_type",
-                "size",
-                "summary_owner",
-                "summary_issuer",
-                "summary_valid_from",
-                "summary_valid_until",
-            ),
+            setOf("catalog"),
             raw.asMap().keys.map { it.name }.toSet(),
         )
         val serializedValues = raw.asMap().values.joinToString("|")
@@ -122,7 +115,21 @@ class CertificateReferenceStoreTest {
         store.clear()
 
         assertEquals(null, store.read())
-        assertEquals(emptyMap<Preferences.Key<*>, Any>(), dataStore.data.first().asMap())
+        assertTrue(store.readCatalog().entries.isEmpty())
+        assertEquals(setOf("catalog"), dataStore.data.first().asMap().keys.map { it.name }.toSet())
+    }
+
+    @Test
+    fun rejectsForeignLegacyUriWithoutLosingIt() = runTest {
+        val dataStore = dataStore(temporaryFolder.newFile("foreign.preferences_pb"))
+        dataStore.edit {
+            it[stringPreferencesKey("uri")] = "https://example.invalid/cert.p12"
+            it[stringPreferencesKey("display_name")] = "cert.p12"
+            it[stringPreferencesKey("mime_type")] = "application/x-pkcs12"
+        }
+        val failure = runCatching { PreferencesCertificateReferenceStore(dataStore).read() }.exceptionOrNull()
+        assertTrue("Foreign URI must fail closed", failure is IllegalArgumentException)
+        assertEquals("https://example.invalid/cert.p12", dataStore.data.first()[stringPreferencesKey("uri")])
     }
 
     private fun dataStore(file: File) = PreferenceDataStoreFactory.create(
