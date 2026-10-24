@@ -301,4 +301,5 @@
     <string name="certificate_retention_fifteen_minutes">15 minutos</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 horas</string>
+    <string name="catalog_verified_on">Verificado el %1$s</string>
 </resources>
