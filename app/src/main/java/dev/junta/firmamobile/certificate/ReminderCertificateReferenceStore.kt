@@ -22,11 +22,15 @@ internal class ReminderCertificateReferenceStore(
         return selected
     }
 
-    override suspend fun remove(id: String, revision: Long): StoredCertificateEntry? {
-        var removed: StoredCertificateEntry? = null
-        reminders.changeReference { removed = delegate.remove(id, revision) }
-        return removed
+    override suspend fun replace(expected: StoredCertificateEntry, replacement: StoredCertificateEntry) =
+        reminders.changeReference { delegate.replace(expected, replacement) }
+
+    override suspend fun remove(expected: StoredCertificateEntry) = reminders.changeReference {
+        delegate.remove(expected)
     }
+
+    // Tombstones only: no entry or selection changes.
+    override suspend fun acknowledgeKeyDeletion(alias: String) = delegate.acknowledgeKeyDeletion(alias)
 
     override suspend fun write(reference: StoredCertificateReference) = reminders.changeReference {
         delegate.write(reference)

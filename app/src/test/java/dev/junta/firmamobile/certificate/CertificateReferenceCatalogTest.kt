@@ -236,6 +236,22 @@ class CertificateReferenceCatalogTest {
         }
     }
 
+    @Test
+    fun schemaOneIsUpgradedOnMutationWithoutChangingExistingIdentity() = runBlocking {
+        val file = file()
+        val data = dataStore(file)
+        val id = "00000000-0000-0000-0000-000000000001"
+        data.edit { it[stringPreferencesKey("catalog")] = payload(active = id, ids = listOf(id)) }
+        val store = PreferencesCertificateReferenceStore(data)
+        val before = checkNotNull(store.readCatalog().active)
+        assertEquals(id, before.id)
+        store.add(reference("second"))
+        assertEquals(before, store.readCatalog().active)
+        val snapshot = store.readCatalog()
+        scopes.last().coroutineContext[kotlinx.coroutines.Job]!!.let { it.cancel(); it.join() }
+        assertEquals(snapshot, PreferencesCertificateReferenceStore(dataStore(file)).readCatalog())
+    }
+
     // Independent wire fixtures exercise rejection through the storage interface, not the codec.
     private fun payload(
         version: Int = 1,
@@ -277,7 +293,7 @@ class CertificateReferenceCatalogTest {
     }
 
     @Test
-    fun selectionAndRemovalAreConditionalOnTheListedRevision() = runBlocking {
+    fun selectionIsConditionalOnTheListedRevisionAndSkipsKeyOnlyEntries() = runBlocking {
         val data = dataStore(file())
         val store = PreferencesCertificateReferenceStore(data)
         val first = store.add(reference("a"))
@@ -289,15 +305,17 @@ class CertificateReferenceCatalogTest {
         val moved = checkNotNull(store.readCatalog().active)
         assertEquals(first.revision + 1, moved.revision)
         assertEquals(false, store.selectEntry(first.id, first.revision))
-        assertNull(store.remove(first.id, first.revision))
         assertEquals(false, store.selectEntry("00000000-0000-0000-0000-000000000000", 1))
-        assertEquals(moved.id, store.readCatalog().activeId)
 
-        assertEquals(second, store.remove(second.id, second.revision))
-        assertEquals(listOf(moved), store.readCatalog().entries)
-        assertEquals(moved.reference, store.read())
-        assertEquals(moved, store.remove(moved.id, moved.revision))
-        assertEquals(StoredCertificateCatalog(emptyList(), null), PreferencesCertificateReferenceStore(data).readCatalog())
+        // Active, it would read as no certificate and a later file choice would retire its key.
+        val key = StoredSigningKeyReference(
+            1, KeystoreSigningKeyImporter.ALIAS_PREFIX + "a".repeat(32), StoredKeystoreLevel.TEE,
+            "b".repeat(64), "b.p12",
+        )
+        val keyOnly = second.copy(revision = second.revision + 1, reference = null, signingKey = key)
+        store.replace(second, keyOnly)
+        assertEquals(false, store.selectEntry(keyOnly.id, keyOnly.revision))
+        assertEquals(moved.id, PreferencesCertificateReferenceStore(data).readCatalog().activeId)
     }
 
     private fun reference(name: String) = StoredCertificateReference(

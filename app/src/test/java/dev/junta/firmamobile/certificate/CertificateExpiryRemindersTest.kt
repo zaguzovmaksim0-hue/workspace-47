@@ -301,9 +301,16 @@ class CertificateExpiryRemindersTest {
         assertTrue(shadowOf(alarms).scheduledAlarms.isEmpty())
         assertTrue(store.selectEntry(first.id, first.revision))
         assertEquals(1, shadowOf(alarms).scheduledAlarms.size)
-        assertEquals(second, store.remove(second.id, second.revision))
+        store.remove(second)
         assertEquals(1, shadowOf(alarms).scheduledAlarms.size)
-        assertEquals(first, store.remove(first.id, first.revision))
+        // Replacing the active entry reconciles too, as forgetting its source file would.
+        val withoutSummary = first.copy(revision = first.revision + 1, reference = first.reference?.copy(summary = null))
+        store.replace(first, withoutSummary)
+        assertTrue(shadowOf(alarms).scheduledAlarms.isEmpty())
+        val restored = first.copy(revision = first.revision + 2)
+        store.replace(withoutSummary, restored)
+        assertEquals(1, shadowOf(alarms).scheduledAlarms.size)
+        store.remove(restored)
         assertNull(store.read())
         assertTrue(shadowOf(alarms).scheduledAlarms.isEmpty())
         reminders.refresh(deliver = true)
@@ -340,11 +347,20 @@ class CertificateExpiryRemindersTest {
             catalog = catalog.copy(entries = catalog.entries + it)
         }
         override suspend fun selectEntry(id: String, revision: Long): Boolean =
-            catalog.entries.any { it.id == id && it.revision == revision }.also { if (it) catalog = catalog.copy(activeId = id) }
-        override suspend fun remove(id: String, revision: Long): StoredCertificateEntry? =
-            catalog.entries.singleOrNull { it.id == id && it.revision == revision }?.also {
-                catalog = StoredCertificateCatalog(catalog.entries - it, catalog.activeId.takeIf { active -> active != id })
-            }
+            catalog.entries.any { it.id == id && it.revision == revision && it.reference != null }
+                .also { if (it) catalog = catalog.copy(activeId = id) }
+        override suspend fun replace(expected: StoredCertificateEntry, replacement: StoredCertificateEntry) {
+            check(expected in catalog.entries)
+            catalog = catalog.copy(entries = catalog.entries.map { if (it == expected) replacement else it })
+        }
+        override suspend fun remove(expected: StoredCertificateEntry) {
+            check(expected in catalog.entries)
+            catalog = catalog.copy(
+                entries = catalog.entries - expected,
+                activeId = catalog.activeId.takeUnless { it == expected.id },
+            )
+        }
+        override suspend fun acknowledgeKeyDeletion(alias: String) = Unit
         override suspend fun write(reference: StoredCertificateReference) {
             val active = catalog.active
             catalog = if (active == null) {

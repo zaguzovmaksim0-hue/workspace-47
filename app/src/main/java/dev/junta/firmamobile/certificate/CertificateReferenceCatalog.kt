@@ -12,34 +12,43 @@ import java.util.UUID
 data class StoredCertificateEntry(
     val id: String,
     val revision: Long,
-    val reference: StoredCertificateReference,
+    val reference: StoredCertificateReference?,
+    val signingKey: StoredSigningKeyReference? = null,
 )
 
 data class StoredCertificateCatalog(
     val entries: List<StoredCertificateEntry>,
     val activeId: String?,
+    val tombstones: Set<String> = emptySet(),
 ) {
     val active: StoredCertificateEntry? get() = entries.singleOrNull { it.id == activeId }
 }
 
 /** Storage only: append does not select, unlock, acquire a grant or schedule reminders. */
 interface CertificateReferenceCatalogStore : CertificateReferenceStore {
+    /** Legacy file facade: key-only entries require the authenticated keystore flow. */
+    override suspend fun read(): StoredCertificateReference? = readCatalog().active?.reference
+
     suspend fun readCatalog(): StoredCertificateCatalog
 
     suspend fun add(reference: StoredCertificateReference): StoredCertificateEntry
 
-    /** Activates [id] only if it still has [revision]; a stale list row never selects a changed entry. */
+    /** Activates [id] only if it still has [revision] and a file reference; a stale list row never selects a
+     * changed entry, and a key-only entry stays behind the authenticated keystore flow (see [read]). */
     suspend fun selectEntry(id: String, revision: Long): Boolean
 
-    /** Removes [id] only if it still has [revision]; removing the active entry leaves none selected. Returns the
-     * removed entry so its caller can release that entry's grant. Catalogue URIs are unique, so no surviving
-     * entry can share it. */
-    suspend fun remove(id: String, revision: Long): StoredCertificateEntry?
+    /** Compare the complete entry, including its revision, inside the atomic edit. */
+    suspend fun replace(expected: StoredCertificateEntry, replacement: StoredCertificateEntry)
+
+    suspend fun remove(expected: StoredCertificateEntry)
+
+    suspend fun acknowledgeKeyDeletion(alias: String)
 }
 
 internal object CertificateReferenceCatalogCodec {
     const val MAX_ENTRIES = 16
-    private const val VERSION = 1
+    private const val VERSION = 2
+    private const val MAX_TOMBSTONES = 128
     private const val MAX_ENCODED_LENGTH = 524288
     private const val MAX_URI_LENGTH = 4096
     private const val MAX_NAME_LENGTH = 256
@@ -75,8 +84,19 @@ internal object CertificateReferenceCatalogCodec {
             for (entry in catalog.entries) {
                 output.writeUTF(entry.id)
                 output.writeLong(entry.revision)
-                writeReference(output, entry.reference)
+                output.writeBoolean(entry.reference != null)
+                entry.reference?.let { writeReference(output, it) }
+                output.writeBoolean(entry.signingKey != null)
+                entry.signingKey?.let { key ->
+                    output.writeInt(key.version)
+                    output.writeUTF(key.alias)
+                    output.writeUTF(key.level.name)
+                    output.writeUTF(key.certificateSha256)
+                    output.writeUTF(key.displayName)
+                }
             }
+            output.writeInt(catalog.tombstones.size)
+            catalog.tombstones.sorted().forEach(output::writeUTF)
         }
         return Base64.getEncoder().encodeToString(bytes.toByteArray()).also {
             require(it.length <= MAX_ENCODED_LENGTH)
@@ -86,26 +106,48 @@ internal object CertificateReferenceCatalogCodec {
     fun decode(encoded: String): StoredCertificateCatalog {
         require(encoded.length <= MAX_ENCODED_LENGTH)
         return DataInputStream(ByteArrayInputStream(Base64.getDecoder().decode(encoded))).use { input ->
-            require(input.readInt() == VERSION)
+            val version = input.readInt()
+            require(version in 1..VERSION)
             val activeId = input.readUTF().ifEmpty { null }
             val count = input.readInt()
             require(count in 0..MAX_ENTRIES)
             val entries = List(count) {
-                StoredCertificateEntry(input.readUTF(), input.readLong(), readReference(input))
+                val id = input.readUTF()
+                val revision = input.readLong()
+                val reference = if (version == 1 || input.readBoolean()) readReference(input) else null
+                val key = if (version >= 2 && input.readBoolean()) {
+                    StoredSigningKeyReference(
+                        input.readInt(), input.readUTF(), StoredKeystoreLevel.valueOf(input.readUTF()),
+                        input.readUTF(), input.readUTF(),
+                    )
+                } else null
+                StoredCertificateEntry(id, revision, reference, key)
             }
+            val tombstones = if (version >= 2) {
+                val size = input.readInt()
+                require(size in 0..MAX_TOMBSTONES)
+                List(size) { input.readUTF() }.also { require(it.toSet().size == size) }.toSet()
+            } else emptySet()
             require(input.available() == 0)
-            StoredCertificateCatalog(entries, activeId).also(::validate)
+            StoredCertificateCatalog(entries, activeId, tombstones).also(::validate)
         }
     }
 
     private fun validate(catalog: StoredCertificateCatalog) {
         require(catalog.entries.size <= MAX_ENTRIES)
         require(catalog.entries.map { it.id }.toSet().size == catalog.entries.size)
-        require(catalog.entries.map { it.reference.uri }.toSet().size == catalog.entries.size)
+        require(catalog.entries.mapNotNull { it.reference?.uri }.let { it.toSet().size == it.size })
         require(catalog.activeId == null || catalog.entries.any { it.id == catalog.activeId })
+        val aliases = catalog.entries.mapNotNull { it.signingKey?.alias }
+        require(aliases.toSet().size == aliases.size)
+        require(catalog.tombstones.size <= MAX_TOMBSTONES)
+        require(catalog.tombstones.none { it in aliases })
+        catalog.tombstones.forEach { require(StoredSigningKeyReference.isOwnedAlias(it)) }
         for (entry in catalog.entries) {
             require(UUID.fromString(entry.id).toString() == entry.id && entry.revision > 0)
-            validateReference(entry.reference)
+            require(entry.reference != null || entry.signingKey != null)
+            entry.reference?.let(::validateReference)
+            entry.signingKey?.validate()
         }
     }
 
