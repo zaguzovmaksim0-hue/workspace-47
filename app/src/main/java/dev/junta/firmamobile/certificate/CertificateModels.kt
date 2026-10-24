@@ -16,6 +16,8 @@ class UnlockedIdentity internal constructor(
     val certificate: X509Certificate,
     val chain: List<X509Certificate>,
     val summary: CertificateSummary,
+    /** Where an AndroidKeyStore copy lives; null for an in-memory PKCS#12 key. */
+    internal val keystorePlacement: KeystorePlacement? = null,
 ) {
     internal fun <T> withPrivateKey(block: (PrivateKey) -> T): T = block(privateKey)
 }
@@ -23,6 +25,9 @@ class UnlockedIdentity internal constructor(
 enum class CertificateErrorCode {
     FILE_TOO_LARGE,
     INVALID_PASSWORD_OR_FILE,
+    INVALID_PASSWORD,
+    INVALID_PKCS12_FILE,
+    UNSUPPORTED_PKCS12_ENCRYPTION,
     TOO_MANY_ENTRIES,
     PRIVATE_KEY_MISSING,
     MULTIPLE_PRIVATE_KEYS,

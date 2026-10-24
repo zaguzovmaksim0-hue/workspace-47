@@ -285,7 +285,7 @@
     <ID>FunctionNaming:BrowserConfirmationDialogs.kt$@Composable internal fun AfirmaObservationDialog( request: AfirmaRequest, certificateOwner: String, onDismiss: () -&gt; Unit, onOpenOfficial: () -&gt; Unit, )</ID>
     <ID>FunctionNaming:BrowserConfirmationDialogs.kt$@Composable internal fun CertificateSelectionConfirmationDialog( host: String, certificateOwner: String, safeDescription: String, onContinue: () -&gt; Unit, onCancel: () -&gt; Unit, )</ID>
     <ID>FunctionNaming:BrowserConfirmationDialogs.kt$@Composable internal fun ClientAuthConfirmationDialog( organization: String, host: String, certificateOwner: String, onContinue: () -&gt; Unit, onCancel: () -&gt; Unit, )</ID>
-    <ID>FunctionNaming:BrowserLayout.kt$@Composable internal fun BrowserLayout( certificateOwner: String, currentUrl: String = JuntaOriginPolicy.START_URL, profileName: String = "Junta de Andalucía", trustLabel: String = "Firma protegida", browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current(), onBack: () -&gt; Unit, onHome: () -&gt; Unit, onReload: () -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearCurrentSite: () -&gt; Unit, onClearSession: () -&gt; Unit, onDeleteAllBrowserData: () -&gt; Unit, onOpenInBrowser: (() -&gt; Unit)? = null, certificateAvailable: Boolean = true, publicBrowsing: Boolean = false, webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null, content: @Composable (Modifier) -&gt; Unit, )</ID>
+    <ID>FunctionNaming:BrowserLayout.kt$@Composable internal fun BrowserLayout( certificateOwner: String, currentUrl: String = JuntaOriginPolicy.START_URL, profileName: String = "Junta de Andalucía", trustLabel: String = stringResource(R.string.browser_trust_signing), browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current(), onBack: () -&gt; Unit, onHome: () -&gt; Unit, onReload: () -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearCurrentSite: () -&gt; Unit, onClearSession: () -&gt; Unit, onDeleteAllBrowserData: () -&gt; Unit, onOpenInBrowser: (() -&gt; Unit)? = null, certificateAvailable: Boolean = true, publicBrowsing: Boolean = false, webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null, content: @Composable (Modifier) -&gt; Unit, )</ID>
     <ID>FunctionNaming:BrowserPopupHeader.kt$@Composable internal fun BrowserPopupHeader(onClose: () -&gt; Unit)</ID>
     <ID>FunctionNaming:BrowserScreen.kt$@Composable fun BrowserScreen( profileId: ProfileId?, entryUrl: URI, certificateState: CertificateUiState.Unlocked?, logger: SanitizedLogger, signingState: SigningUiState, onMiniAppletRequest: (MiniAppletBridgeRequest, SigningReplySink) -&gt; Unit, onMiniAppletCancel: (UUID) -&gt; Unit, onConfirmSigning: (UUID) -&gt; Unit, onCancelSigning: (SigningCancelReason, UUID?) -&gt; Unit, onDismissSigningState: () -&gt; Unit, onExitBrowser: () -&gt; Unit, onOpenExternal: (Uri) -&gt; Unit, onOpenOfficialAutoFirma: (Uri) -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearSession: () -&gt; Unit, clientCertificateIdentityProvider: () -&gt; UnlockedIdentity?, clientCertPreferenceCoordinator: ClientCertPreferenceCoordinator, onWebViewChanged: (WebView?) -&gt; Unit, onNavigationEpochChanged: (Long) -&gt; Unit = {}, onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -&gt; Unit)? = null, onMelillaBatchCancel: (UUID) -&gt; Unit = {}, onShowFileChooser: ((WebView, android.webkit.ValueCallback&lt;Array&lt;Uri&gt;&gt;, android.webkit.WebChromeClient.FileChooserParams) -&gt; Boolean)? = null, certificatePanelVisible: Boolean = false, mayRetainExternalReturn: () -&gt; Boolean = { false }, consumeExternalReturn: () -&gt; Boolean = { false }, popupTransport: BrowserPopupTransport? = null, onPopupWindowClose: () -&gt; Unit = onExitBrowser, onRelatedClientCertPreferenceClear: (Boolean) -&gt; Unit = {}, onDocumentDownload: ((WebView, android.content.Intent) -&gt; Boolean)? = null, onExternalAppRequest: ((WebView, dev.junta.firmamobile.browser.ExternalAppLink) -&gt; Boolean)? = null, )</ID>
     <ID>FunctionNaming:BrowserSiteInformationDialog.kt$@Composable internal fun BrowserSiteInformationDialog( profileName: String, host: String, trustLabel: String, publicBrowsing: Boolean, webAuthnState: WebAuthnEngineState?, onOpenInBrowser: (() -&gt; Unit)?, onDismiss: () -&gt; Unit, )</ID>
@@ -340,7 +340,7 @@
     <ID>LongMethod:AppRoot.kt$@Composable private fun CertificatePanel( state: CertificateUiState, onSelectCertificate: () -&gt; Unit, onUnlock: (CharArray, CertificateUnlockRetention) -&gt; Unit, onRestoreSavedUnlock: (() -&gt; Unit)?, onLock: () -&gt; Unit, onForget: () -&gt; Unit, onContinue: () -&gt; Unit, )</ID>
     <ID>LongMethod:BatchSigningCoordinator.kt$BatchSigningCoordinator$@Synchronized fun prepare( request: NormalizedBatchSigningRequest, reply: BatchSigningReplySink, ): SigningPreparationResult</ID>
     <ID>LongMethod:BatchSigningCoordinator.kt$BatchSigningCoordinator$suspend fun confirm(requestId: UUID): SigningExecutionResult</ID>
-    <ID>LongMethod:BrowserLayout.kt$@Composable internal fun BrowserLayout( certificateOwner: String, currentUrl: String = JuntaOriginPolicy.START_URL, profileName: String = "Junta de Andalucía", trustLabel: String = "Firma protegida", browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current(), onBack: () -&gt; Unit, onHome: () -&gt; Unit, onReload: () -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearCurrentSite: () -&gt; Unit, onClearSession: () -&gt; Unit, onDeleteAllBrowserData: () -&gt; Unit, onOpenInBrowser: (() -&gt; Unit)? = null, certificateAvailable: Boolean = true, publicBrowsing: Boolean = false, webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null, content: @Composable (Modifier) -&gt; Unit, )</ID>
+    <ID>LongMethod:BrowserLayout.kt$@Composable internal fun BrowserLayout( certificateOwner: String, currentUrl: String = JuntaOriginPolicy.START_URL, profileName: String = "Junta de Andalucía", trustLabel: String = stringResource(R.string.browser_trust_signing), browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current(), onBack: () -&gt; Unit, onHome: () -&gt; Unit, onReload: () -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearCurrentSite: () -&gt; Unit, onClearSession: () -&gt; Unit, onDeleteAllBrowserData: () -&gt; Unit, onOpenInBrowser: (() -&gt; Unit)? = null, certificateAvailable: Boolean = true, publicBrowsing: Boolean = false, webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null, content: @Composable (Modifier) -&gt; Unit, )</ID>
     <ID>LongMethod:BrowserScreen.kt$@Composable fun BrowserScreen( profileId: ProfileId?, entryUrl: URI, certificateState: CertificateUiState.Unlocked?, logger: SanitizedLogger, signingState: SigningUiState, onMiniAppletRequest: (MiniAppletBridgeRequest, SigningReplySink) -&gt; Unit, onMiniAppletCancel: (UUID) -&gt; Unit, onConfirmSigning: (UUID) -&gt; Unit, onCancelSigning: (SigningCancelReason, UUID?) -&gt; Unit, onDismissSigningState: () -&gt; Unit, onExitBrowser: () -&gt; Unit, onOpenExternal: (Uri) -&gt; Unit, onOpenOfficialAutoFirma: (Uri) -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearSession: () -&gt; Unit, clientCertificateIdentityProvider: () -&gt; UnlockedIdentity?, clientCertPreferenceCoordinator: ClientCertPreferenceCoordinator, onWebViewChanged: (WebView?) -&gt; Unit, onNavigationEpochChanged: (Long) -&gt; Unit = {}, onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -&gt; Unit)? = null, onMelillaBatchCancel: (UUID) -&gt; Unit = {}, onShowFileChooser: ((WebView, android.webkit.ValueCallback&lt;Array&lt;Uri&gt;&gt;, android.webkit.WebChromeClient.FileChooserParams) -&gt; Boolean)? = null, certificatePanelVisible: Boolean = false, mayRetainExternalReturn: () -&gt; Boolean = { false }, consumeExternalReturn: () -&gt; Boolean = { false }, popupTransport: BrowserPopupTransport? = null, onPopupWindowClose: () -&gt; Unit = onExitBrowser, onRelatedClientCertPreferenceClear: (Boolean) -&gt; Unit = {}, onDocumentDownload: ((WebView, android.content.Intent) -&gt; Boolean)? = null, onExternalAppRequest: ((WebView, dev.junta.firmamobile.browser.ExternalAppLink) -&gt; Boolean)? = null, )</ID>
     <ID>LongMethod:CadesSigner.kt$BouncyCastleCadesSigner$override fun signDetached( content: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm, ): LocalSignatureResult</ID>
     <ID>LongMethod:CertificateRepository.kt$CertificateRepository$private suspend fun selectOnIo(uri: Uri): CertificateSelectionResult</ID>
@@ -398,7 +398,7 @@
     <ID>LongParameterList:BrowserChromeComponents.kt$( expanded: Boolean, onDismissRequest: () -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearCurrentSiteRequested: () -&gt; Unit, onClearSessionRequested: () -&gt; Unit, onDeleteAllBrowserDataRequested: () -&gt; Unit, onOpenInBrowser: (() -&gt; Unit)? = null, onShowSiteInformation: (() -&gt; Unit)? = null, )</ID>
     <ID>LongParameterList:BrowserChromeComponents.kt$( host: String, onBack: () -&gt; Unit, onHome: () -&gt; Unit, onReload: () -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearCurrentSiteRequested: () -&gt; Unit, onClearSessionRequested: () -&gt; Unit, onDeleteAllBrowserDataRequested: () -&gt; Unit, onOpenInBrowser: (() -&gt; Unit)? = null, onShowSiteInformation: (() -&gt; Unit)? = null, modifier: Modifier = Modifier, windowInsets: WindowInsets = WindowInsets(0, 0, 0, 0), )</ID>
     <ID>LongParameterList:BrowserHttpAuthController.kt$BrowserHttpAuthController$(owner: Owner, epoch: Long, pageUrl: String, host: String, realm: String, reply: HttpAuthReply)</ID>
-    <ID>LongParameterList:BrowserLayout.kt$( certificateOwner: String, currentUrl: String = JuntaOriginPolicy.START_URL, profileName: String = "Junta de Andalucía", trustLabel: String = "Firma protegida", browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current(), onBack: () -&gt; Unit, onHome: () -&gt; Unit, onReload: () -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearCurrentSite: () -&gt; Unit, onClearSession: () -&gt; Unit, onDeleteAllBrowserData: () -&gt; Unit, onOpenInBrowser: (() -&gt; Unit)? = null, certificateAvailable: Boolean = true, publicBrowsing: Boolean = false, webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null, content: @Composable (Modifier) -&gt; Unit, )</ID>
+    <ID>LongParameterList:BrowserLayout.kt$( certificateOwner: String, currentUrl: String = JuntaOriginPolicy.START_URL, profileName: String = "Junta de Andalucía", trustLabel: String = stringResource(R.string.browser_trust_signing), browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current(), onBack: () -&gt; Unit, onHome: () -&gt; Unit, onReload: () -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearCurrentSite: () -&gt; Unit, onClearSession: () -&gt; Unit, onDeleteAllBrowserData: () -&gt; Unit, onOpenInBrowser: (() -&gt; Unit)? = null, certificateAvailable: Boolean = true, publicBrowsing: Boolean = false, webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null, content: @Composable (Modifier) -&gt; Unit, )</ID>
     <ID>LongParameterList:BrowserScreen.kt$( profileId: ProfileId?, entryUrl: URI, certificateState: CertificateUiState.Unlocked?, logger: SanitizedLogger, signingState: SigningUiState, onMiniAppletRequest: (MiniAppletBridgeRequest, SigningReplySink) -&gt; Unit, onMiniAppletCancel: (UUID) -&gt; Unit, onConfirmSigning: (UUID) -&gt; Unit, onCancelSigning: (SigningCancelReason, UUID?) -&gt; Unit, onDismissSigningState: () -&gt; Unit, onExitBrowser: () -&gt; Unit, onOpenExternal: (Uri) -&gt; Unit, onOpenOfficialAutoFirma: (Uri) -&gt; Unit, onChangeCertificate: () -&gt; Unit, onLockCertificate: () -&gt; Unit, onClearSession: () -&gt; Unit, clientCertificateIdentityProvider: () -&gt; UnlockedIdentity?, clientCertPreferenceCoordinator: ClientCertPreferenceCoordinator, onWebViewChanged: (WebView?) -&gt; Unit, onNavigationEpochChanged: (Long) -&gt; Unit = {}, onMelillaBatchRequest: ((MelillaBatchBridgeRequest, MelillaBatchReplyChannel) -&gt; Unit)? = null, onMelillaBatchCancel: (UUID) -&gt; Unit = {}, onShowFileChooser: ((WebView, android.webkit.ValueCallback&lt;Array&lt;Uri&gt;&gt;, android.webkit.WebChromeClient.FileChooserParams) -&gt; Boolean)? = null, certificatePanelVisible: Boolean = false, mayRetainExternalReturn: () -&gt; Boolean = { false }, consumeExternalReturn: () -&gt; Boolean = { false }, popupTransport: BrowserPopupTransport? = null, onPopupWindowClose: () -&gt; Unit = onExitBrowser, onRelatedClientCertPreferenceClear: (Boolean) -&gt; Unit = {}, onDocumentDownload: ((WebView, android.content.Intent) -&gt; Boolean)? = null, onExternalAppRequest: ((WebView, dev.junta.firmamobile.browser.ExternalAppLink) -&gt; Boolean)? = null, )</ID>
     <ID>LongParameterList:BrowserSiteInformationDialog.kt$( profileName: String, host: String, trustLabel: String, publicBrowsing: Boolean, webAuthnState: WebAuthnEngineState?, onOpenInBrowser: (() -&gt; Unit)?, onDismiss: () -&gt; Unit, )</ID>
     <ID>LongParameterList:CatalogAddressCard.kt$( state: CatalogAddressInput, onEdit: (String) -&gt; Unit, onPaste: () -&gt; Unit, onClear: () -&gt; Unit, onSubmit: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
@@ -489,13 +489,9 @@
     <ID>MagicNumber:AfirmaJavascriptShim.kt$AfirmaJavascriptShim$443</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$0x20</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$0x7e</ID>
-    <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$16</ID>
-    <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$3</ID>
-    <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$32</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$37</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$3L</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$4</ID>
-    <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$4096</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$45</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$4L</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$5</ID>
@@ -712,21 +708,6 @@
     <ID>MagicNumber:MelillaBatchUrlPolicy.kt$StaBatchUrlPolicy$10</ID>
     <ID>MagicNumber:MelillaBatchUrlPolicy.kt$StaBatchUrlPolicy$3</ID>
     <ID>MagicNumber:MelillaBatchUrlPolicy.kt$StaBatchUrlPolicy$4</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x20</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x30</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x39</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x41</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x5a</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x5f</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x61</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x66</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x7a</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x7e</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0xff</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$15</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$3</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$32</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$4</ID>
     <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$443</ID>
     <ID>MagicNumber:MiniAppletPadesAdapter.kt$MiniAppletPadesAdapter$1024</ID>
     <ID>MagicNumber:MiniAppletPadesAdapter.kt$MiniAppletPadesAdapter$16L</ID>
@@ -883,13 +864,6 @@
     <ID>MagicNumber:NativeTriphaseXml.kt$NativeTriphaseXml$262_144</ID>
     <ID>MagicNumber:NativeTriphaseXml.kt$NativeTriphaseXml$32</ID>
     <ID>MagicNumber:NativeTriphaseXml.kt$NativeTriphaseXml$64</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$16_384</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$3</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$32</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$5</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$64</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$65_536</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$8</ID>
     <ID>MagicNumber:NativeXadesOptions.kt$NativeXadesOptions.Companion$128</ID>
     <ID>MagicNumber:NativeXadesOptions.kt$NativeXadesOptions.Companion$256</ID>
     <ID>MagicNumber:PoliciaXadesDetachedAdapter.kt$PoliciaXadesDetachedAdapter$10</ID>
@@ -917,10 +891,8 @@
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0x8000</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xfc00</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xfe80</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xff</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xff00</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xff9b</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xffff</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$10</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$100</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$113</ID>
@@ -936,24 +908,16 @@
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$193</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$196</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$198</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$20</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$203</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$224</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$23</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$254</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$3</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$31</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$32</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$48</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$51</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$52</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$64</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$7</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$8</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$88</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$96</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$99</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy.Ipv6Prefix$0xff</ID>
     <ID>MagicNumber:PublicPortalCatalogParser.kt$PublicPortalCatalogParser$120</ID>
     <ID>MagicNumber:PublicPortalCatalogParser.kt$PublicPortalCatalogParser$150</ID>
     <ID>MagicNumber:PublicPortalCatalogParser.kt$PublicPortalCatalogParser$160</ID>
@@ -993,17 +957,6 @@
     <ID>MagicNumber:SiteProfileCatalogParser.kt$StrictJson$32</ID>
     <ID>MagicNumber:SiteProfileCatalogParser.kt$StrictJson$4</ID>
     <ID>MagicNumber:SiteProfileRegistry.kt$SiteProfileRegistry$443</ID>
-    <ID>MagicNumber:Theme.kt$0xFF073C3A</ID>
-    <ID>MagicNumber:Theme.kt$0xFF101310</ID>
-    <ID>MagicNumber:Theme.kt$0xFF125854</ID>
-    <ID>MagicNumber:Theme.kt$0xFF14736B</ID>
-    <ID>MagicNumber:Theme.kt$0xFF4F524C</ID>
-    <ID>MagicNumber:Theme.kt$0xFF8A2424</ID>
-    <ID>MagicNumber:Theme.kt$0xFFB8AD9B</ID>
-    <ID>MagicNumber:Theme.kt$0xFFD9E5DE</ID>
-    <ID>MagicNumber:Theme.kt$0xFFE7DBC8</ID>
-    <ID>MagicNumber:Theme.kt$0xFFF2E5D1</ID>
-    <ID>MagicNumber:Theme.kt$0xFFF8EDDB</ID>
     <ID>MagicNumber:TunnelRouteEvent.kt$TunnelRouteDurationBucket.Companion$10</ID>
     <ID>MagicNumber:TunnelRouteEvent.kt$TunnelRouteDurationBucket.Companion$3</ID>
     <ID>MagicNumber:TunnelRouteEvent.kt$TunnelRouteDurationBucket.Companion$30</ID>
@@ -1042,35 +995,9 @@
     <ID>MaxLineLength:AfirmaRetrievalDialog.kt$modifier = Modifier.testTag(if (prompt.loading) "afirma-retrieval-cancel" else "afirma-retrieval-close")</ID>
     <ID>MaxLineLength:AfirmaServletInvocation.kt$AfirmaServletInvocation$@Synchronized override fun close()</ID>
     <ID>MaxLineLength:AfirmaServletInvocation.kt$AfirmaServletInvocation$val cadesCoSign: Boolean get() = operation == AfirmaServletOperation.COSIGN &amp;&amp; padesOptions == null &amp;&amp; xadesOptions == null &amp;&amp; remoteOptions == null</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$algorithm</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$for (name in listOf("ver", "v")) values[name]?.let { if (it !in setOf("1", "2", "3", "4")) unsupported("protocol_version") }</ID>
     <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (!remote &amp;&amp; op == AfirmaServletOperation.COUNTERSIGN) unsupported("local_countersign_not_implemented")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (!remote &amp;&amp; pdfCoSign &amp;&amp; !pdf &amp;&amp; !format.equals("CAdES", true)) unsupported("local_cosign_format_not_implemented")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (!values["mcv"].isNullOrBlank() || !values["minkeysize"].isNullOrBlank()) unsupported("minimum_client_or_key_constraint")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (fields.keys.any { it !in setOf("algo", "key", "iv", "legDes", "legacydes") }) unsupported("cipher_parameter")</ID>
     <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (legacy.length != 8 || legacy.any { it.code !in 0x20..0x7e } || key != null &amp;&amp; key != legacy) invalid("conflicting_legacy_keys")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (local &amp;&amp; values.keys.any { it in setOf("batchpresignerurl", "batchpostsignerurl") }) invalid("conflicting_local_batch_services")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (local) null else checkedEndpoint(values["batchpostsignerurl"] ?: invalid("missing_batch_post"))</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (op == AfirmaServletOperation.SELECT_CERTIFICATE &amp;&amp; values.containsKey("serverurl")) invalid("service_on_certificate_selection")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (precalculatedHash!!.signingAlgorithm != algorithm) unsupported("precalculated_hash_algorithm_mismatch")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (properties.containsKey("mode") &amp;&amp; detached != preservedMode) unsupported("cosign_packaging_change_not_implemented")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (properties.isNotEmpty() || values.containsKey("serverurl")) unsupported("batch_properties_must_be_in_descriptor")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (properties.keys.any { it !in setOf("mode", NativePrecalculatedHash.PROPERTY) + NativeCadesPolicy.PROPERTY_NAMES }) unsupported("signature_property_not_implemented")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (values.keys.any { it in setOf("dat", "format", "algorithm", "cop") }) invalid("unexpected_signing_parameters")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (values.keys.any { it in setOf("dat", "format", "algorithm", "properties", "cop") }) invalid("mixed_inline_and_indirect")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (values["rid"] != null &amp;&amp; values["id"] != null &amp;&amp; values["rid"] != values["id"]) invalid("conflicting_response_id")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (values["ver"] != null &amp;&amp; values["v"] != null &amp;&amp; values["ver"] != values["v"]) invalid("conflicting_protocol_versions")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$precalculatedHash = NativePrecalculatedHash.parse(digest) ?: unsupported("precalculated_hash_algorithm")</ID>
     <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$private</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$remoteOptions</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$val batch = NativeBatchDescriptor.parse(payload, flag("jsonbatch")) ?: invalid("invalid_batch_descriptor")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$val expected = when (op) { AfirmaServletOperation.SELECT_CERTIFICATE -&gt; "selectcert"; else -&gt; op.name.lowercase(Locale.ROOT) }</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$val serviceValues = listOfNotNull(values["serverurl"], properties["serverUrl"], properties["serverurl"]).distinct()</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$val source = URI("https", null, page.host.lowercase(Locale.ROOT), page.port, null, null, null).toASCIIString()</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$values["algorithm"]?.let { if (NativeBatchDescriptor.algorithm(it) != algorithm) invalid("conflicting_batch_algorithm") }</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$values["cop"]?.let { if (!it.equals("sign", true) || op != AfirmaServletOperation.SIGN) unsupported("cosign_or_countersign") }</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$xadesOptions = NativeXadesOptions.parse(format, properties) ?: unsupported("xades_constraint_not_implemented")</ID>
     <ID>MaxLineLength:AfirmaServletTransport.kt$AfirmaEndpointPolicy$private val DNS = Regex("[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+", RegexOption.IGNORE_CASE)</ID>
     <ID>MaxLineLength:AfirmaServletTransport.kt$AfirmaRetrievalException : IOException</ID>
     <ID>MaxLineLength:AfirmaServletTransport.kt$AfirmaRetrievalProblem</ID>
@@ -1254,10 +1181,6 @@
     <ID>MaxLineLength:MelillaBatchSigningAdapter.kt$LugoBatchSigningAdapter$profile.capabilities != setOf(Capability.SIGN)</ID>
     <ID>MaxLineLength:MelillaBatchSigningAdapter.kt$LugoBatchSigningAdapter$request.format != "CAdES"</ID>
     <ID>MaxLineLength:MelillaBatchUrlPolicy.kt$BurgosBatchUrlPolicy$fun</ID>
-    <ID>MaxLineLength:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$FORMAT_PADES</ID>
-    <ID>MaxLineLength:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$operation.endpointId?.let(profile.endpoints::get)?.url?.toASCIIString() == XuntaPadesTriPhaseAdapter.ENDPOINT</ID>
-    <ID>MaxLineLength:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$profile.redirectOrigins.isEmpty()</ID>
-    <ID>MaxLineLength:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$val</ID>
     <ID>MaxLineLength:NativeAfirmaConsentDialog.kt$AfirmaConsentProblem.CANCEL_ACKNOWLEDGED -&gt; Text(stringResource(R.string.native_afirma_cancel_acknowledged))</ID>
     <ID>MaxLineLength:NativeAfirmaConsentDialog.kt$AfirmaConsentProblem.CANCEL_UNCERTAIN -&gt; Text(stringResource(R.string.native_afirma_cancel_uncertain))</ID>
     <ID>MaxLineLength:NativeAfirmaConsentDialog.kt$ConsentIdentityField(stringResource(R.string.native_consent_page_label), prompt.details.sourceOrigin)</ID>
@@ -1403,43 +1326,6 @@
     <ID>MaxLineLength:NativeTriphaseCodec.kt$NativeTriphaseCodec$val parameters = objectValue(map["params"]).mapValues { (_, raw) -&gt; raw as? String ?: error("Parameter is not text") }</ID>
     <ID>MaxLineLength:NativeTriphaseCodec.kt$NativeTriphaseCodec$val pre = AfirmaServletInvocationParser.strictBase64(item.parameters["PRE"] ?: error("Missing PRE"), 262_144)</ID>
     <ID>MaxLineLength:NativeTriphaseXml.kt$NativeTriphaseXml$((node.nodeType == Node.TEXT_NODE || node.nodeType == Node.CDATA_SECTION_NODE) &amp;&amp; node.textContent.isBlank())</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$(if (options.packaging == NativeXadesPackaging.DETACHED) doc.createElement("CONTENT") else element(doc, DS, "ds:Object"))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$.</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$NativeXadesPackaging.DETACHED -&gt; doc.createElement("AFIRMA").also { doc.appendChild(it); it.appendChild(signature) }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$NativeXadesPackaging.EXTERNALLY_DETACHED -&gt; { dataUri = externalId(payload); dataTransforms = emptyList(); covered = payload }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$SigningAlgorithm.SHA1_WITH_RSA -&gt; "SHA-1"</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$SigningAlgorithm.SHA1_WITH_RSA -&gt; "SHA1withRSA"</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$SigningAlgorithm.SHA1_WITH_RSA -&gt; DS + "rsa-sha1"</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$SigningAlgorithm.SHA1_WITH_RSA -&gt; DS + "sha1"</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$certDigest.appendChild(element(doc, DS, "ds:DigestValue", b64(MessageDigest.getInstance("SHA-256").digest(certificate.encoded))))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$else</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$fun</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$if</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$if (options.packaging == NativeXadesPackaging.DETACHED) doc.documentElement.insertBefore(this, signature) else signature.appendChild(this)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$if (payload.isEmpty() || payload.size &gt; MAX_INPUT) return LocalSignatureResult.Failure(LocalSignatureError.INPUT_TOO_LARGE)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(element(doc, DS, "ds:CanonicalizationMethod").apply { setAttribute("Algorithm", NativeSigningXml.C14N) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(element(doc, DS, "ds:SignatureMethod").apply { setAttribute("Algorithm", signatureUri(algorithm)) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(reference(doc, "#$stem-key", NativeSigningXml.canonical(keyInfo), algorithm, listOf(NativeSigningXml.C14N)))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(reference(doc, "#$stem-props", NativeSigningXml.canonical(props), algorithm, listOf(NativeSigningXml.C14N)).apply { setAttribute("Type", SIGNED_PROPERTIES) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(reference(doc, dataUri, covered, algorithm, dataTransforms).apply { setAttribute("Id", referenceId) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$private</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$private fun element(doc: Document, ns: String, name: String, text: String? = null)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$private fun externalId(payload: ByteArray)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(MessageDigest.isEqual(decode(one(certDigest, DS, "DigestValue").textContent, 32), MessageDigest.getInstance("SHA-256").digest(certificate.encoded)))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(MessageDigest.isEqual(digest(referenceData[index], algorithm), decode(one(ref, DS, "DigestValue").textContent, 64)))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(if (options.contentDescription == null) descriptions.isEmpty() else descriptions.single().textContent == options.contentDescription)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(references[1].getAttribute("URI") == expectedPropertyUri &amp;&amp; references[1].getAttribute("Type") == SIGNED_PROPERTIES)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(target.getAttribute("MimeType") == options.mimeType &amp;&amp; transforms(dataReference) == listOf(BASE64_TRANSFORM))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$setAttribute("Id", dataId)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$signed.appendChild(element(doc, XA, "xades:SignaturePolicyIdentifier").apply { appendChild(element(doc, XA, "xades:SignaturePolicyImplied")) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$transformations.forEach { appendChild(element(doc, DS, "ds:Transform").apply { setAttribute("Algorithm", it) }) }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val descriptions = NativeSigningXml.children(format).filter { it.localName == "Description" &amp;&amp; it.namespaceURI == XA }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val doc = if (options.packaging == NativeXadesPackaging.ENVELOPED) NativeSigningXml.parse(payload, MAX_INPUT) else NativeSigningXml.newDocument()</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val objectNodes = NativeSigningXml.children(signature).filter { it.namespaceURI == DS &amp;&amp; it.localName == "Object" }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val props = element(doc, XA, "xades:SignedProperties").apply { setAttribute("Id", "$stem-props") }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val qualifying = element(doc, XA, "xades:QualifyingProperties").apply { setAttribute("Target", "#$stem") }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val qualifying = objectNodes.flatMap(NativeSigningXml::children).single { it.namespaceURI == XA &amp;&amp; it.localName == "QualifyingProperties" }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val referenceData = listOf(dataBytes, NativeSigningXml.canonical(properties), NativeSigningXml.canonical(keyInfo))</ID>
     <ID>MaxLineLength:PortalCatalogRepository.kt$PortalCatalogRepository$if (!item.isEnabled || item.opensWithoutProfile || item.entryUrl.toASCIIString() != entryUrl.toASCIIString()) return null</ID>
     <ID>MaxLineLength:PortalCatalogRepository.kt$PortalCatalogRepository$listOf(aliases[item.portalId].orEmpty(), item.displayName, item.organization, item.territory, item.purpose)</ID>
     <ID>MaxLineLength:PortalCatalogScreen.kt$Text(stringResource(R.string.catalog_my_region_label), color = JuntaMutedInk, style = MaterialTheme.typography.labelSmall)</ID>
@@ -1494,7 +1380,6 @@
     <ID>NestedBlockDepth:NativePadesEngine.kt$NativePadesEngine$fun sign(pdf: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm, options: NativePadesOptions = NativePadesOptions(), requireExistingSignature: Boolean = false): LocalSignatureResult</ID>
     <ID>NestedBlockDepth:NativePdfSignatureHistory.kt$NativePdfSignatureHistory$private fun earlierRevisionsMatch(pdf: ByteArray, expected: List&lt;NativePdfPriorSignature&gt;): Boolean</ID>
     <ID>NestedBlockDepth:NativePdfSignatureHistory.kt$NativePdfSignatureHistory$private fun read(pdf: ByteArray, document: PDDocument, verifyCryptography: Boolean, requireCompleteCoverage: Boolean = true): List&lt;NativePdfPriorSignature&gt;?</ID>
-    <ID>NestedBlockDepth:NativeXadesEngine.kt$NativeXadesEngine$fun sign(payload: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm, options: NativeXadesOptions): LocalSignatureResult</ID>
     <ID>NestedBlockDepth:SecureTunnelProtocol.kt$SecureTunnelProtocol$fun readResponse(input: InputStream): SecureTunnelConnectResult</ID>
     <ID>NestedBlockDepth:SigningCoordinator.kt$SigningCoordinator$@Synchronized internal fun onTunnelRouteEvent(requestId: UUID, event: TunnelRouteEvent): Boolean</ID>
     <ID>NestedBlockDepth:SigningCoordinator.kt$SigningCoordinator$suspend fun confirm(requestId: UUID): SigningExecutionResult</ID>
@@ -1708,8 +1593,6 @@
     <ID>ReturnCount:ProfileHttpCallPhaseTracker.kt$ProfileHttpCallPhaseTracker$private fun advanceTo(next: ProfileHttpFailurePhase)</ID>
     <ID>ReturnCount:ProfileHttpTransport.kt$HttpsProfileHttpTransport$override fun post( request: ProfileHttpRequest, cancellation: ProfileHttpCancellation, ): ProfileHttpResult</ID>
     <ID>ReturnCount:PublicBrowserAddress.kt$PublicBrowserAddress$fun parse(raw: String): URI?</ID>
-    <ID>ReturnCount:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$fun isPublicRoutable(address: InetAddress): Boolean</ID>
-    <ID>ReturnCount:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$private fun isPublicIpv6(address: Inet6Address, raw: ByteArray): Boolean</ID>
     <ID>ReturnCount:PublicIpAddressPolicy.kt$PublicIpAddressPolicy.Ipv6Prefix$fun matches(candidate: ByteArray): Boolean</ID>
     <ID>ReturnCount:QaDiagnosticFileSink.kt$QaDiagnosticFileSink$private fun isSafeRecord(record: String): Boolean</ID>
     <ID>ReturnCount:SafeNetworkUrlPolicy.kt$SafeNetworkUrlPolicy$fun validateEndpoint(rawUrl: String): NetworkUrlValidation</ID>

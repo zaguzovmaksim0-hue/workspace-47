@@ -162,6 +162,7 @@ data class SiteProfile(
     val clientAuthPolicy: ClientAuthPolicy?,
     val certificateRules: CertificateFilterRules,
     val evidence: List<EvidenceReference>,
+    val lastVerifiedOn: LocalDate? = null,
 )
 
 data class SiteProfileCatalog(

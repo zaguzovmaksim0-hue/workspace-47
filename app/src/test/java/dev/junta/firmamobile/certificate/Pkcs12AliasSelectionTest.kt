@@ -233,7 +233,7 @@ class Pkcs12AliasSelectionTest {
             loader.inspect(noRead, Pkcs12Loader.MAX_INPUT_BYTES + 1L, TestCertificateFactory.password()),
         )
         assertEquals(
-            Pkcs12InspectionResult.Failure(CertificateErrorCode.INVALID_PASSWORD_OR_FILE),
+            Pkcs12InspectionResult.Failure(CertificateErrorCode.INVALID_PKCS12_FILE),
             preview(byteArrayOf(1, 2, 3)),
         )
     }

@@ -453,7 +453,9 @@ class BrowserSecurityRegressionTest {
         val bridgeSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/browser/WebMessageBridge.kt",
         )
-        val shimSource = projectSource("app/src/main/res/raw/afirma_shim.js")
+        val shimSource = listOf("bootstrap", "handlers", "installation").joinToString("") {
+            projectSource("app/src/main/res/raw/afirma_shim_$it.js")
+        }
 
         assertTrue(
             "Pending request and reply replay state must use a TTL-bounded ledger",

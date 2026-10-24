@@ -16,10 +16,13 @@ internal object AfirmaServletInvocationParser {
     fun parse(rawUri: String, pageUrl: String): AfirmaServletParseResult = safely {
             if (rawUri.length > MAX_URI || rawUri.any(Char::isISOControl)) invalid("invalid_uri_size_or_control")
             val page = URI(pageUrl)
-            if (!AfirmaEndpointPolicy.accepts(URI(page.scheme, page.userInfo, page.host, page.port, page.path, page.query, null)) || page.rawUserInfo != null) {
+            if (!AfirmaEndpointPolicy.accepts(URI(page.scheme,
+                    page.userInfo, page.host, page.port, page.path, page.query, null)) ||
+                page.rawUserInfo != null) {
                 invalid("invalid_source_page")
             }
-            val source = URI("https", null, page.host.lowercase(Locale.ROOT), page.port, null, null, null).toASCIIString()
+            val source = URI("https", null, page.host.lowercase(Locale.ROOT),
+                page.port, null, null, null).toASCIIString()
             parseUri(rawUri, source, null)
     }
 
@@ -110,24 +113,34 @@ internal object AfirmaServletInvocationParser {
             unsupported("indirect_data_or_cipher_or_keystore_variant")
         }
         values["op"]?.let {
-            val expected = when (op) { AfirmaServletOperation.SELECT_CERTIFICATE -> "selectcert"; else -> op.name.lowercase(Locale.ROOT) }
+            val expected = when (op) {
+                AfirmaServletOperation.SELECT_CERTIFICATE -> "selectcert"
+                else -> op.name.lowercase(Locale.ROOT)
+            }
             if (!it.equals(expected, true)) invalid("conflicting_operation")
         }
         // cop belongs to sign-and-save, which is not this route. Retain
         // only the previously accepted redundant sign marker.
-        values["cop"]?.let { if (!it.equals("sign", true) || op != AfirmaServletOperation.SIGN) unsupported("cosign_or_countersign") }
+        values["cop"]?.let {
+            if (!it.equals("sign", true) || op != AfirmaServletOperation.SIGN) unsupported("cosign_or_countersign")
+        }
 
         validateVersionAndFlags()
         if (op != AfirmaServletOperation.BATCH && values.keys.any {
             it in setOf("batchpresignerurl", "batchpostsignerurl", "jsonbatch", "localBatchProcess", "needcert")
         }) invalid("batch_parameters_on_single_operation")
-        if (op == AfirmaServletOperation.SELECT_CERTIFICATE && values.containsKey("serverurl")) invalid("service_on_certificate_selection")
+        if (op == AfirmaServletOperation.SELECT_CERTIFICATE && values.containsKey("serverurl"))
+            invalid("service_on_certificate_selection")
     }
 
     private fun InvocationBuildState.validateVersionAndFlags() {
-        for (name in listOf("ver", "v")) values[name]?.let { if (it !in setOf("1", "2", "3", "4")) unsupported("protocol_version") }
-        if (values["ver"] != null && values["v"] != null && values["ver"] != values["v"]) invalid("conflicting_protocol_versions")
-        if (!values["mcv"].isNullOrBlank() || !values["minkeysize"].isNullOrBlank()) unsupported("minimum_client_or_key_constraint")
+        for (name in listOf("ver", "v")) values[name]?.let {
+            if (it !in setOf("1", "2", "3", "4")) unsupported("protocol_version")
+        }
+        if (values["ver"] != null && values["v"] != null && values["ver"] != values["v"])
+            invalid("conflicting_protocol_versions")
+        if (!values["mcv"].isNullOrBlank() || !values["minkeysize"].isNullOrBlank())
+            unsupported("minimum_client_or_key_constraint")
 
         validateFlags()
     }
@@ -151,40 +164,47 @@ internal object AfirmaServletInvocationParser {
     }
 
     private fun validateCipher(fields: Map<String, String>, key: String?) {
-        if (fields.keys.any { it !in setOf("algo", "key", "iv", "legDes", "legacydes") }) unsupported("cipher_parameter")
+        if (fields.keys.any { it !in setOf("algo", "key", "iv", "legDes", "legacydes") })
+            unsupported("cipher_parameter")
         if (!fields["algo"].equals("AES", true)) unsupported("cipher_algorithm")
         if (fields["legDes"] != null && fields["legacydes"] != null && fields["legDes"] != fields["legacydes"]) {
             invalid("conflicting_legacy_keys")
         }
         (fields["legDes"] ?: fields["legacydes"])?.let { legacy ->
-            if (legacy.length != 8 || legacy.any { it.code !in 0x20..0x7e } || key != null && key != legacy) invalid("conflicting_legacy_keys")
+            if (legacy.length != 8 || legacy.any { it.code !in 0x20..0x7e } || key != null && key != legacy)
+                invalid("conflicting_legacy_keys")
         }
     }
 
     private fun cipherFields(config: String): Map<String, String> {
-        val bytes = strictBase64(config, 4096)
+        val bytes = strictBase64(config, MAX_CIPHER_CONFIG_BYTES)
         return try { AfirmaCipherJson.parse(decodeUtf8(bytes)) } finally { bytes.fill(0) }
     }
 
     private fun cipherParameters(fields: Map<String, String>): AfirmaAesParameters {
-        val aesKey = strictBase64(fields["key"] ?: invalid("missing_cipher_key"), 32)
+        val aesKey = strictBase64(fields["key"] ?: invalid("missing_cipher_key"), MAX_AES_KEY_BYTES)
         return try {
-            val iv = strictBase64(fields["iv"] ?: invalid("missing_cipher_iv"), 16)
+            val iv = strictBase64(fields["iv"] ?: invalid("missing_cipher_iv"), AES_IV_BYTES)
             try { AfirmaAesParameters(aesKey, iv) } finally { iv.fill(0) }
         } finally { aesKey.fill(0) }
     }
 
     private fun InvocationBuildState.deferredInvocation(): AfirmaServletParseResult? {
         if (values.containsKey("fileid")) {
-            if (!allowIndirect) unsupported("indirect_retrieval_not_allowed")
-            if (values.keys.any { it in setOf("dat", "format", "algorithm", "properties", "cop") }) invalid("mixed_inline_and_indirect")
+            if (!allowIndirect) {
+                if (external != null) unsupported("indirect_retrieval_not_allowed")
+                unsupported("recursive_retrieval")
+            }
+            if (values.keys.any { it in setOf("dat", "format", "algorithm", "properties", "cop") })
+                invalid("mixed_inline_and_indirect")
             val fileId = values.getValue("fileid")
             if (!SESSION_ID.matches(fileId)) invalid("invalid_file_id")
             val retrieval = checkedEndpoint(values["rtservlet"] ?: invalid("missing_retrieval_url"))
             val expectedStorage = values["stservlet"]?.let(::checkedEndpoint)
             val responseId = values["rid"] ?: values["id"]
             if (responseId != null && !SESSION_ID.matches(responseId)) invalid("invalid_response_id")
-            if (values["rid"] != null && values["id"] != null && values["rid"] != values["id"]) invalid("conflicting_response_id")
+            if (values["rid"] != null && values["id"] != null && values["rid"] != values["id"])
+                invalid("conflicting_response_id")
             return AfirmaServletParseResult.Deferred(AfirmaDeferredInvocation(
                 op, checkNotNull(source), retrieval, fileId, responseId, expectedStorage, key, advancedCipher,
             ))
@@ -213,9 +233,6 @@ internal object AfirmaServletInvocationParser {
         val suppliedProperties = values["properties"]?.takeIf(String::isNotEmpty)?.let(::properties).orEmpty()
         rejectExternalConsentSuppression(suppliedProperties)
         readCertificateConstraint(suppliedProperties)
-        suppliedProperties["headless"]?.let {
-            if (!it.equals("true", true) && !it.equals("false", true)) invalid("invalid_headless_flag")
-        }
         // These are client certificate-selection parameters, not document
         // signature properties. Headless never suppresses native consent.
         properties = suppliedProperties.filterKeys { it !in setOf("filter", "filters", "headless") }
@@ -236,6 +253,9 @@ internal object AfirmaServletInvocationParser {
         if (suppliedProperties.keys.any { it.startsWith("filters.") || it == "mandatoryCertSelection" }) {
             unsupported("certificate_filter_not_implemented")
         }
+        suppliedProperties["headless"]?.let {
+            if (!it.equals("true", true) && !it.equals("false", true)) invalid("invalid_headless_flag")
+        }
         filterKeys.singleOrNull()?.let { name ->
             certificateConstraint = NativeCertificateConstraint.parse(suppliedProperties.getValue(name))
                 ?: unsupported("certificate_filter_not_implemented")
@@ -253,10 +273,14 @@ internal object AfirmaServletInvocationParser {
         val batch = NativeBatchDescriptor.parse(bytes, flag("jsonbatch")) ?: invalid("invalid_batch_descriptor")
         batch.items.forEach { rejectExternalConsentSuppression(it.extraProperties) }
         algorithm = batch.algorithm
-        values["algorithm"]?.let { if (NativeBatchDescriptor.algorithm(it) != algorithm) invalid("conflicting_batch_algorithm") }
-        if (properties.isNotEmpty() || values.containsKey("serverurl")) unsupported("batch_properties_must_be_in_descriptor")
+        values["algorithm"]?.let {
+            if (NativeBatchDescriptor.algorithm(it) != algorithm) invalid("conflicting_batch_algorithm")
+        }
+        if (properties.isNotEmpty() || values.containsKey("serverurl"))
+            unsupported("batch_properties_must_be_in_descriptor")
         val local = flag("localBatchProcess")
-        if (local && values.keys.any { it in setOf("batchpresignerurl", "batchpostsignerurl") }) invalid("conflicting_local_batch_services")
+        if (local && values.keys.any { it in setOf("batchpresignerurl", "batchpostsignerurl") })
+            invalid("conflicting_local_batch_services")
         remoteOptions = batchServices(batch, local)
         detached = true
     }
@@ -264,13 +288,15 @@ internal object AfirmaServletInvocationParser {
     private fun InvocationBuildState.batchServices(batch: NativeBatchDescriptor, local: Boolean): NativeRemoteOptions {
         return NativeRemoteOptions("batch",
             if (local) null else checkedEndpoint(values["batchpresignerurl"] ?: invalid("missing_batch_pre")),
-            if (local) null else checkedEndpoint(values["batchpostsignerurl"] ?: invalid("missing_batch_post")), emptyMap(), batch, flag("needcert"), local)
+            if (local) null else checkedEndpoint(values["batchpostsignerurl"] ?: invalid("missing_batch_post")),
+            emptyMap(), batch, flag("needcert"), local)
     }
 
     private fun InvocationBuildState.readSignature() {
         val format = values["format"] ?: invalid("missing_format")
         if (format.isBlank()) invalid("missing_format")
-        val serviceValues = listOfNotNull(values["serverurl"], properties["serverUrl"], properties["serverurl"]).distinct()
+        val serviceValues = listOfNotNull(values["serverurl"],
+            properties["serverUrl"], properties["serverurl"]).distinct()
         if (serviceValues.size > 1) invalid("conflicting_triphase_service")
         val remote = NativeRemoteOptions.isTriphaseFormat(format) || serviceValues.isNotEmpty()
         val pdf = NativePadesOptions.acceptsFormat(format)
@@ -279,11 +305,13 @@ internal object AfirmaServletInvocationParser {
         algorithm = signingAlgorithm()
         if (remote) {
             val service = checkedEndpoint(serviceValues.singleOrNull() ?: invalid("missing_triphase_service"))
-            remoteOptions = NativeRemoteOptions(NativeRemoteOptions.wireFormat(format) ?: unsupported("remote_signature_format"),
+            remoteOptions = NativeRemoteOptions(NativeRemoteOptions.wireFormat(format)
+                    ?: unsupported("remote_signature_format"),
                 service, service, properties.filterKeys { it !in setOf("serverUrl", "serverurl") })
             detached = true
         } else if (xades) {
-            xadesOptions = NativeXadesOptions.parse(format, properties) ?: unsupported("xades_constraint_not_implemented")
+            xadesOptions = NativeXadesOptions.parse(format, properties)
+                ?: unsupported("xades_constraint_not_implemented")
             detached = true
         } else if (pdf) {
             padesOptions = NativePadesOptions.parse(properties)
@@ -298,7 +326,8 @@ internal object AfirmaServletInvocationParser {
     }
 
     private fun InvocationBuildState.validateLocalFormat(format: String, remote: Boolean, pdf: Boolean, xades: Boolean) {
-        if (!remote && pdfCoSign && !pdf && !format.equals("CAdES", true)) unsupported("local_cosign_format_not_implemented")
+        if (!remote && pdfCoSign && !pdf && !format.equals("CAdES", true))
+            unsupported("local_cosign_format_not_implemented")
         if (!remote && op == AfirmaServletOperation.COUNTERSIGN) unsupported("local_countersign_not_implemented")
         if (!remote && !pdf && !xades && !format.equals("cades", true)) unsupported("signature_format")
     }
@@ -315,7 +344,8 @@ internal object AfirmaServletInvocationParser {
     }
 
     private fun InvocationBuildState.readCadesOptions() {
-        if (properties.keys.any { it !in setOf("mode", NativePrecalculatedHash.PROPERTY) + NativeCadesPolicy.PROPERTY_NAMES }) unsupported("signature_property_not_implemented")
+        if (properties.keys.any { it !in setOf("mode", NativePrecalculatedHash.PROPERTY) +
+                NativeCadesPolicy.PROPERTY_NAMES }) unsupported("signature_property_not_implemented")
         cadesPolicy = try { NativeCadesPolicy.parse(properties) }
             catch (_: Exception) { unsupported("cades_policy_parameters_not_supported") }
         properties[NativePrecalculatedHash.PROPERTY]?.let { digest ->
@@ -348,7 +378,8 @@ internal object AfirmaServletInvocationParser {
     private fun InvocationBuildState.preserveCosignMode(bytes: ByteArray, remote: Boolean, format: String) {
         if (!remote && pdfCoSign && format.equals("CAdES", true)) {
             val preservedMode = NativeCadesHistory.isDetached(bytes) ?: invalid("cades_signature_expected")
-            if (properties.containsKey("mode") && detached != preservedMode) unsupported("cosign_packaging_change_not_implemented")
+            if (properties.containsKey("mode") && detached != preservedMode)
+                unsupported("cosign_packaging_change_not_implemented")
             detached = preservedMode
         }
     }
@@ -360,7 +391,8 @@ internal object AfirmaServletInvocationParser {
     }
 
     private fun InvocationBuildState.readSelection() {
-        if (values.keys.any { it in setOf("dat", "format", "algorithm", "cop") }) invalid("unexpected_signing_parameters")
+        if (values.keys.any { it in setOf("dat", "format", "algorithm", "cop") })
+            invalid("unexpected_signing_parameters")
         if (properties.isNotEmpty()) unsupported("certificate_filter_not_implemented")
         algorithm = null
         detached = true
@@ -421,9 +453,9 @@ internal object AfirmaServletInvocationParser {
         while (index < value.length) {
             if (value[index] == '%') {
                 if (index + 2 >= value.length) invalid("malformed_percent")
-                val first = value[index + 1].digitToIntOrNull(16) ?: invalid("malformed_percent")
-                val second = value[index + 2].digitToIntOrNull(16) ?: invalid("malformed_percent")
-                bytes.write(first * 16 + second); index += 3
+                val first = value[index + 1].digitToIntOrNull(HEX_RADIX) ?: invalid("malformed_percent")
+                val second = value[index + 2].digitToIntOrNull(HEX_RADIX) ?: invalid("malformed_percent")
+                bytes.write(first * HEX_RADIX + second); index += PERCENT_ESCAPE_CHARS
             } else {
                 val end = value.indexOf('%', index).let { if (it < 0) value.length else it }
                 bytes.write(value.substring(index, end).toByteArray(Charsets.UTF_8)); index = end
@@ -441,7 +473,8 @@ internal object AfirmaServletInvocationParser {
         ) invalid("invalid_base64")
         val canonical = value.replace('-', '+').replace('_', '/')
         val bytes = Base64.getDecoder().decode(canonical)
-        if (bytes.size > maxBytes || Base64.getEncoder().withoutPadding().encodeToString(bytes) != canonical.trimEnd('=')) {
+        if (bytes.size > maxBytes ||
+            Base64.getEncoder().withoutPadding().encodeToString(bytes) != canonical.trimEnd('=')) {
             bytes.fill(0); invalid("invalid_base64")
         }
         return bytes
@@ -455,6 +488,11 @@ internal object AfirmaServletInvocationParser {
     private class UnsupportedInput(val code: String) : RuntimeException()
     private fun invalid(code: String): Nothing = throw InvalidInput(code)
     private fun unsupported(code: String): Nothing = throw UnsupportedInput(code)
+    private const val MAX_CIPHER_CONFIG_BYTES = 4096
+    private const val MAX_AES_KEY_BYTES = 32
+    private const val AES_IV_BYTES = 16
+    private const val HEX_RADIX = 16
+    private const val PERCENT_ESCAPE_CHARS = 3
     private const val MAX_URI = 1_048_576
     private const val MAX_PAYLOAD = 524_288
     private val NAME = Regex("[A-Za-z][A-Za-z0-9_-]{0,63}")

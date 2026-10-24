@@ -45,10 +45,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.testTag
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.history.InMemoryOperationJournal
+import dev.junta.firmamobile.ui.history.verificationJournalHome
 import dev.junta.firmamobile.certificate.CertificateUnlockRetention
 import dev.junta.firmamobile.certificate.CertificateSummary
-import dev.junta.firmamobile.ui.offlineverification.OfflineVerificationDialog
-import dev.junta.firmamobile.ui.offlineverification.OfflineVerificationEntry
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
@@ -70,8 +70,7 @@ fun AppRoot(
 ) {
     var legalInformationVisible by remember { mutableStateOf(false) }
     if (legalInformationVisible) LegalInformationDialog(onDismiss = { legalInformationVisible = false })
-    var offlineVerificationVisible by remember { mutableStateOf(false) }
-    if (offlineVerificationVisible) OfflineVerificationDialog(onDismiss = { offlineVerificationVisible = false })
+    val verificationJournal = remember { InMemoryOperationJournal() }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -81,9 +80,7 @@ fun AppRoot(
             painter = painterResource(R.drawable.jfm_home_background),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag("jfm-home-background"),
+            modifier = Modifier.fillMaxSize().testTag("jfm-home-background"),
         )
         Column(
             modifier = Modifier
@@ -101,13 +98,14 @@ fun AppRoot(
                 state = state,
                 onSelectCertificate = onSelectCertificate,
                 onUnlock = onUnlock,
-                        onRestoreSavedUnlock = onRestoreSavedUnlock,
+                onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onLock = onLock,
                 onForget = onForget,
                 onContinue = onContinue,
             )
             Spacer(modifier = Modifier.height(12.dp))
             CertificateStateBanner(state)
+            localFileSigningEntry(state is CertificateUiState.Unlocked)
             if (state !is CertificateUiState.Unlocked) {
                 androidx.compose.material3.TextButton(
                     onClick = onContinue,
@@ -116,13 +114,14 @@ fun AppRoot(
                     Text(stringResource(R.string.browse_without_certificate))
                 }
             }
+            certificateReminderSettings()
             androidx.compose.material3.TextButton(
                 onClick = { legalInformationVisible = true },
                 modifier = Modifier.fillMaxWidth().testTag("open-legal-information"),
             ) {
                 Text(stringResource(R.string.legal_information))
             }
-            OfflineVerificationEntry(onClick = { offlineVerificationVisible = true })
+            verificationJournalHome(verificationJournal)
             Spacer(modifier = Modifier.height(4.dp))
         }
     }
@@ -204,7 +203,7 @@ private fun CertificatePanel(
             is CertificateUiState.Locked -> LockedCertificate(
                 state = state,
                 onUnlock = onUnlock,
-                        onRestoreSavedUnlock = onRestoreSavedUnlock,
+                onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onSelectCertificate = onSelectCertificate,
                 onForget = onForget,
             )
@@ -451,6 +450,9 @@ private fun CertificateError(error: CertificateUiError) {
 private fun CertificateUiError.message(): String = stringResource(
     when (this) {
         CertificateUiError.PASSWORD_INVALID_OR_FILE -> R.string.error_password_or_file
+        CertificateUiError.INVALID_PASSWORD -> R.string.error_invalid_password
+        CertificateUiError.INVALID_PKCS12_FILE -> R.string.error_invalid_pkcs12_file
+        CertificateUiError.UNSUPPORTED_PKCS12_ENCRYPTION -> R.string.error_unsupported_pkcs12_encryption
         CertificateUiError.FILE_TOO_LARGE -> R.string.error_file_too_large
         CertificateUiError.PRIVATE_KEY_MISSING -> R.string.error_private_key_missing
         CertificateUiError.MULTIPLE_PRIVATE_KEYS -> R.string.error_multiple_private_keys

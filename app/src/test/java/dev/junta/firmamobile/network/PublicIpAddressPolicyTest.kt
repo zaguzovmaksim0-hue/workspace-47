@@ -119,6 +119,112 @@ class PublicIpAddressPolicyTest {
         assertFalse(PublicIpAddressPolicy.isPublicRoutable(scoped))
     }
 
+    @Test
+    fun ipv4DeniedRangeEdgesAndTheirNeighboursKeepCurrentDecisions() {
+        val deniedRanges = listOf(
+            "0.0.0.0" to "0.255.255.255",
+            "10.0.0.0" to "10.255.255.255",
+            "100.64.0.0" to "100.127.255.255",
+            "127.0.0.0" to "127.255.255.255",
+            "169.254.0.0" to "169.254.255.255",
+            "172.16.0.0" to "172.31.255.255",
+            "192.0.0.0" to "192.0.0.255",
+            "192.0.2.0" to "192.0.2.255",
+            "192.31.196.0" to "192.31.196.255",
+            "192.52.193.0" to "192.52.193.255",
+            "192.88.99.0" to "192.88.99.255",
+            "192.168.0.0" to "192.168.255.255",
+            "192.175.48.0" to "192.175.48.255",
+            "198.18.0.0" to "198.19.255.255",
+            "198.51.100.0" to "198.51.100.255",
+            "203.0.113.0" to "203.0.113.255",
+            "224.0.0.0" to "255.255.255.255",
+        )
+        deniedRanges.forEach { (first, last) ->
+            assertIpv4AndEmbeddedDecisions(first, expected = false)
+            assertIpv4AndEmbeddedDecisions(last, expected = false)
+            val firstValue = ipv4Value(first)
+            val lastValue = ipv4Value(last)
+            if (firstValue > 0) assertIpv4AndEmbeddedDecisions(ipv4Literal(firstValue - 1), expected = true)
+            if (lastValue < 0xffffffffL) {
+                assertIpv4AndEmbeddedDecisions(ipv4Literal(lastValue + 1), expected = true)
+            }
+        }
+    }
+
+    @Test
+    fun remainingGlobalIpv6DenyRangesHaveExactEdges() {
+        val deniedEdges = listOf(
+            "2001::",
+            "2001:1ff:ffff:ffff:ffff:ffff:ffff:ffff",
+            "2001:db8::",
+            "2001:db8:ffff:ffff:ffff:ffff:ffff:ffff",
+            "2002::",
+            "2002:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+            "2620:4f:8000::",
+            "2620:4f:8000:ffff:ffff:ffff:ffff:ffff",
+            "3fff::",
+            "3fff:fff:ffff:ffff:ffff:ffff:ffff:ffff",
+        )
+        deniedEdges.forEach { raw ->
+            assertFalse(raw, PublicIpAddressPolicy.isPublicRoutable(InetAddress.getByName(raw)))
+        }
+        val allowedNeighbours = listOf(
+            "2000:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+            "2001:200::",
+            "2001:db7:ffff:ffff:ffff:ffff:ffff:ffff",
+            "2001:db9::",
+            "2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+            "2003::",
+            "2620:4f:7fff:ffff:ffff:ffff:ffff:ffff",
+            "2620:4f:8001::",
+            "3ffe:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+            "3fff:1000::",
+            "2000::",
+            "3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+        )
+        allowedNeighbours.forEach { raw ->
+            assertTrue(raw, PublicIpAddressPolicy.isPublicRoutable(InetAddress.getByName(raw)))
+        }
+    }
+
+    @Test
+    fun globalUnicastAndNat64OuterBoundariesFailClosed() {
+        listOf(
+            "1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+            "4000::",
+            "64:ff9a:ffff:ffff:ffff:ffff:ffff:ffff",
+            "64:ff9b:0:0:0:1::",
+            "::808:808",
+        ).forEach { raw ->
+            assertFalse(raw, PublicIpAddressPolicy.isPublicRoutable(InetAddress.getByName(raw)))
+        }
+    }
+
+    @Test
+    fun numericScopeRejectsGlobalAndNat64WithoutDependingOnHostInterfaces() {
+        listOf("2606:4700:4700::1111", "64:ff9b::808:808").forEach { literal ->
+            val raw = InetAddress.getByName(literal).address
+            assertTrue(literal, PublicIpAddressPolicy.isPublicRoutable(Inet6Address.getByAddress(null, raw, 0)))
+            assertFalse(literal, PublicIpAddressPolicy.isPublicRoutable(Inet6Address.getByAddress(null, raw, 1)))
+        }
+    }
+
+    private fun assertIpv4AndEmbeddedDecisions(literal: String, expected: Boolean) {
+        val ipv4 = InetAddress.getByName(literal)
+        val nat64 = InetAddress.getByName("64:ff9b::$literal")
+        assertTrue(literal, PublicIpAddressPolicy.isPublicRoutable(ipv4) == expected)
+        assertTrue("NAT64 $literal", PublicIpAddressPolicy.isPublicRoutable(nat64) == expected)
+        // Force Inet6Address: parsing a mapped literal may normalize it to Inet4Address.
+        assertFalse("mapped $literal", PublicIpAddressPolicy.isPublicRoutable(ipv4Mapped(literal)))
+    }
+
+    private fun ipv4Value(literal: String): Long =
+        literal.split('.').fold(0L) { value, octet -> (value shl 8) or octet.toLong() }
+
+    private fun ipv4Literal(value: Long): String =
+        (3 downTo 0).joinToString(".") { shift -> ((value ushr (shift * 8)) and 0xff).toString() }
+
     private fun ipv4Mapped(ipv4: String): Inet6Address {
         val raw = ByteArray(16)
         raw[10] = 0xff.toByte()

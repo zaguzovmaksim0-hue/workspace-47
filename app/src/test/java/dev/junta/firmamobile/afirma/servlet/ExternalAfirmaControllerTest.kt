@@ -191,6 +191,20 @@ class ExternalAfirmaControllerTest {
         f.controller.close()
     }
 
+    @Test fun reviewKeepsPdfPreviewAndCertificateEvidenceTogetherWithoutReusingConsent() {
+        val f = Fixture(); f.identity = identity()
+        assertTrue(f.controller.receive(f.raw))
+        val review = f.prompt!!
+        assertNotNull(review.details.externalContext)
+        assertNotNull(review.certificateEvidence)
+        assertTrue(review.pdfPreviews.containsKey(0))
+        assertTrue(f.controller.confirm(review.token))
+        assertEquals(1, f.effects)
+        assertTrue(f.prompt!!.pdfPreviews.isEmpty())
+        assertFalse(f.controller.confirm(review.token))
+        f.controller.close()
+    }
+
     private class Fixture(val raw: String = SELECT.replace("fixture", UUID.randomUUID().toString())) {
 
         var identity: UnlockedIdentity? = null
@@ -214,6 +228,7 @@ class ExternalAfirmaControllerTest {
                     override val details = AfirmaConsentDetails(null, if (unsafeReview) "https://storage.example/store?token=private" else "https://storage.example/store", "selectcert",
                         null, null, 0, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                         externalContext = invocation.externalContext)
+                    override val pdfPreviews: Map<Int, dev.junta.firmamobile.signing.PdfPreviewSource?> = mapOf(0 to null)
                     override fun certificateCompatible(identity: UnlockedIdentity) = true
                     override suspend fun execute(identity: UnlockedIdentity, authorizeUpload: suspend () -> Unit): AfirmaDeliveryResult {
                         executions++; beforeUpload?.await(); authorizeUpload(); effects++

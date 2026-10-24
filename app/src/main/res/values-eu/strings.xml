@@ -33,6 +33,9 @@
     <string name="lock_certificate">Blokeatu ziurtagiria</string>
     <string name="forget_certificate">Ahaztu ziurtagiria</string>
     <string name="error_password_or_file">Pasahitza ez da zuzena edo PKCS#12 fitxategia ez da baliozkoa.</string>
+    <string name="error_invalid_password">Ziurtagiriaren pasahitza ez da zuzena.</string>
+    <string name="error_invalid_pkcs12_file">Fitxategia ez da baliozko PKCS#12 fitxategia edo hondatuta dago.</string>
+    <string name="error_unsupported_pkcs12_encryption">Android bertsio honek ez du onartzen PKCS#12 fitxategiaren zifratze-algoritmoa.</string>
     <string name="error_file_too_large">Fitxategiak baimendutako gehieneko tamaina gainditzen du.</string>
     <string name="error_private_key_missing">Fitxategiak ez dauka sinatzeko gako pribaturik.</string>
     <string name="error_multiple_private_keys">Fitxategiak identitate pribatu bat baino gehiago dauka.</string>
@@ -301,6 +304,40 @@
     <string name="certificate_retention_fifteen_minutes">15 minutu</string>
     <string name="certificate_retention_one_hour">ordu 1</string>
     <string name="certificate_retention_one_day">24 ordu</string>
+
+    <!-- Local, optional PDF consent preview. -->
+    <string name="pdf_preview_show">Ikusi aurrebista</string>
+    <string name="pdf_preview_loading">Aurrebista kargatzen…</string>
+    <string name="pdf_preview_failed">Ezin da aurrebista erakutsi.</string>
+    <string name="pdf_preview_unavailable">Aurrebista ez dago erabilgarri.</string>
+    <string name="pdf_preview_pages">Lehen orria · %1$d orri</string>
+    <string name="pdf_preview_description">PDFaren lehen orriaren aurrebista</string>
+    <string name="catalog_verified_on">Egiaztatze-data: %1$s</string>
+    <string name="local_signing_title">Sinatu tokiko fitxategi bat</string>
+    <string name="local_signing_unlock">Desblokeatu ziurtagiri bat zure fitxategia sinatzeko.</string>
+    <string name="local_signing_unnamed">fitxategia</string>
+    <string name="local_signing_name">Fitxategia: %1$s</string>
+    <string name="local_signing_scope">CAdES sinadura bereizia gailuan sortzen da, sinadura-zerbitzurik eta denbora-zigilurik gabe. Gorde jatorrizko fitxategia sinadurarekin batera. Muga: 512 KiB.</string>
+    <string name="local_signing_loading">Fitxategia irakurtzen…</string>
+    <string name="local_signing_signing">Sinatzen eta sinadura egiaztatzen…</string>
+    <string name="local_signing_ready">Sinadura jatorrizko fitxategiarekin egiaztatuta. Aukeratu non gorde. Egiaztapen honek ez du ziurtagiriaren konfiantza edo ezeztapena ebaluatzen.</string>
+    <string name="local_signing_saving">Sinadura gordetzen…</string>
+    <string name="local_signing_saved">Sinadura gordeta.</string>
+    <string name="local_signing_failed">Ezin izan da eragiketa osatu. Egiaztatu ziurtagiria desblokeatuta dagoela eta fitxategiak ez dituela 512 KiB gainditzen. Gordetzeak huts eginez gero, osatu gabeko fitxategi bat gera daiteke aukeratutako helburuan.</string>
+    <string name="local_signing_choose">Aukeratu beste fitxategi bat</string>
+    <string name="local_signing_save">Gorde sinadura</string>
+    <string name="certificate_reminder_settings">Abisuen ezarpenak</string>
+    <string name="certificate_reminder_toggle">Ziurtagiriaren iraungitze-abisuak</string>
+    <string name="certificate_reminder_copy">Tokiko abisuak gordetako ziurtagiria iraungi baino 30 eta 7 egun natural lehenago. Lehenespenez desaktibatuta daude. Ez dute datu pertsonalik. Android-ek atzeratu egin ditzake bateria aurrezteko.</string>
+    <string name="certificate_reminder_blocked">Android-ek abisu hauek blokeatzen ditu. Jakinarazpenen ezarpenetan aktiba ditzakezu.</string>
+    <string name="certificate_reminder_system_settings">Ireki jakinarazpenen ezarpenak</string>
+    <string name="certificate_reminder_done">Eginda</string>
+    <string name="certificate_reminder_save_failed">Ezin izan da ezarpena gorde. Saiatu berriro.</string>
+    <string name="certificate_reminder_channel">Ziurtagiriaren iraungitzea</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">Zure ziurtagiria %1$d egun barru iraungiko da</item>
+        <item quantity="other">Zure ziurtagiria %1$d egun barru iraungiko da</item>
+    </plurals>
     <string name="certificate_auth_title">Babestu gordetako desblokeoa</string>
     <string name="certificate_auth_subtitle">Berretsi biometriarekin edo gailuaren PIN, eredu edo pasahitzarekin.</string>
     <string name="certificate_auth_help">Desblokeoa gordetzeko eta berreskuratzeko gailuaren berrespena behar da. Gordetzean bertan behera uzten baduzu, memoriako saioa soilik gordeko da.</string>

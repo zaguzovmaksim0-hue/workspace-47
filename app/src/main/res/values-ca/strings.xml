@@ -33,6 +33,9 @@
     <string name="lock_certificate">Bloqueja el certificat</string>
     <string name="forget_certificate">Oblida el certificat</string>
     <string name="error_password_or_file">La contrasenya no és correcta o el fitxer PKCS#12 no és vàlid.</string>
+    <string name="error_invalid_password">La contrasenya del certificat no és correcta.</string>
+    <string name="error_invalid_pkcs12_file">El fitxer no és un PKCS#12 vàlid o està malmès.</string>
+    <string name="error_unsupported_pkcs12_encryption">Aquesta versió d’Android no admet l’algorisme de xifratge del fitxer PKCS#12.</string>
     <string name="error_file_too_large">El fitxer supera la mida màxima permesa.</string>
     <string name="error_private_key_missing">El fitxer no conté cap clau privada de signatura.</string>
     <string name="error_multiple_private_keys">El fitxer conté més d’una identitat privada.</string>
@@ -301,6 +304,40 @@
     <string name="certificate_retention_fifteen_minutes">15 minuts</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 hores</string>
+
+    <!-- Local, optional PDF consent preview. -->
+    <string name="pdf_preview_show">Mostra la previsualització</string>
+    <string name="pdf_preview_loading">Carregant la previsualització…</string>
+    <string name="pdf_preview_failed">No es pot mostrar la previsualització.</string>
+    <string name="pdf_preview_unavailable">Previsualització no disponible.</string>
+    <string name="pdf_preview_pages">Primera pàgina · %1$d pàgines</string>
+    <string name="pdf_preview_description">Previsualització de la primera pàgina del PDF</string>
+    <string name="catalog_verified_on">Verificat el %1$s</string>
+    <string name="local_signing_title">Signar un fitxer local</string>
+    <string name="local_signing_unlock">Desbloca un certificat per signar el teu fitxer.</string>
+    <string name="local_signing_unnamed">fitxer</string>
+    <string name="local_signing_name">Fitxer: %1$s</string>
+    <string name="local_signing_scope">La signatura CAdES separada es genera al dispositiu, sense serveis de signatura ni segell de temps. Conserva el fitxer original juntament amb la signatura. Límit: 512 KiB.</string>
+    <string name="local_signing_loading">Llegint el fitxer…</string>
+    <string name="local_signing_signing">Signant i comprovant la signatura…</string>
+    <string name="local_signing_ready">Signatura comprovada amb el fitxer original. Tria on desar-la. Aquesta comprovació no avalua la confiança ni la revocació del certificat.</string>
+    <string name="local_signing_saving">Desant la signatura…</string>
+    <string name="local_signing_saved">Signatura desada.</string>
+    <string name="local_signing_failed">No s’ha pogut completar l’operació. Comprova que el certificat continua desblocat i que el fitxer no supera 512 KiB. Si falla el desament, pot quedar un fitxer incomplet a la destinació triada.</string>
+    <string name="local_signing_choose">Triar un altre fitxer</string>
+    <string name="local_signing_save">Desar la signatura</string>
+    <string name="certificate_reminder_settings">Configuració dels recordatoris</string>
+    <string name="certificate_reminder_toggle">Avisar de la caducitat del certificat</string>
+    <string name="certificate_reminder_copy">Avisos locals 30 i 7 dies naturals abans que caduqui el certificat desat. Desactivats per defecte. No inclouen dades personals. Android pot retardar-los per estalviar bateria.</string>
+    <string name="certificate_reminder_blocked">Android bloqueja aquests avisos. Pots activar-los a la configuració de notificacions.</string>
+    <string name="certificate_reminder_system_settings">Obrir la configuració de notificacions</string>
+    <string name="certificate_reminder_done">Fet</string>
+    <string name="certificate_reminder_save_failed">No s’ha pogut desar la configuració. Torna-ho a provar.</string>
+    <string name="certificate_reminder_channel">Caducitat del certificat</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">El vostre certificat caduca d’aquí a %1$d dia</item>
+        <item quantity="other">El vostre certificat caduca d’aquí a %1$d dies</item>
+    </plurals>
     <string name="certificate_auth_title">Protegir el desbloqueig desat</string>
     <string name="certificate_auth_subtitle">Confirma amb biometria o amb el PIN, el patró o la contrasenya del dispositiu.</string>
     <string name="certificate_auth_help">Desar i recuperar el desbloqueig requereix la confirmació del dispositiu. Si cancel·les en desar-lo, només es conserva la sessió en memòria.</string>
