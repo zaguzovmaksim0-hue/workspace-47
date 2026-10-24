@@ -45,10 +45,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.testTag
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.history.InMemoryOperationJournal
+import dev.junta.firmamobile.ui.history.verificationJournalHome
 import dev.junta.firmamobile.certificate.CertificateUnlockRetention
 import dev.junta.firmamobile.certificate.CertificateSummary
-import dev.junta.firmamobile.ui.offlineverification.OfflineVerificationDialog
-import dev.junta.firmamobile.ui.offlineverification.OfflineVerificationEntry
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
@@ -70,8 +70,7 @@ fun AppRoot(
 ) {
     var legalInformationVisible by remember { mutableStateOf(false) }
     if (legalInformationVisible) LegalInformationDialog(onDismiss = { legalInformationVisible = false })
-    var offlineVerificationVisible by remember { mutableStateOf(false) }
-    if (offlineVerificationVisible) OfflineVerificationDialog(onDismiss = { offlineVerificationVisible = false })
+    val verificationJournal = remember { InMemoryOperationJournal() }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -120,7 +119,7 @@ fun AppRoot(
             ) {
                 Text(stringResource(R.string.legal_information))
             }
-            OfflineVerificationEntry(onClick = { offlineVerificationVisible = true })
+            verificationJournalHome(verificationJournal)
             Spacer(modifier = Modifier.height(4.dp))
         }
     }
