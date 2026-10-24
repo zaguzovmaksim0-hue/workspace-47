@@ -31,7 +31,7 @@ import org.robolectric.annotation.SQLiteMode
 import org.robolectric.shadows.ShadowAlarmManager
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, sdk = [32])
+@Config(application = Application::class, sdk = [31])
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
