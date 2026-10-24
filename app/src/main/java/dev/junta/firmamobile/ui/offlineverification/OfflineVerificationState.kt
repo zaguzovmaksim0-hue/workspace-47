@@ -1,5 +1,7 @@
 package dev.junta.firmamobile.ui.offlineverification
 
+import dev.junta.firmamobile.verification.OfflineDocumentVerification
+
 internal enum class OfflineVerificationOutcome {
     VERIFIED,
     INVALID,
@@ -17,6 +19,7 @@ internal data class OfflineVerificationState(
     val busy: Boolean = false,
     val outcome: OfflineVerificationOutcome? = null,
     val verifiedSigners: Int = 0,
+    val document: OfflineDocumentVerification? = null,
 ) {
     val canVerify: Boolean get() = cmsSelected && !busy && picking == null
     val hasSelection: Boolean get() = cmsSelected || originalSelected
@@ -27,4 +30,5 @@ internal data class OfflineSelection(val generation: Long, val kind: OfflineInpu
 internal data class OfflineVerificationCompletion(
     val outcome: OfflineVerificationOutcome,
     val verifiedSigners: Int = 0,
+    val document: OfflineDocumentVerification? = null,
 )

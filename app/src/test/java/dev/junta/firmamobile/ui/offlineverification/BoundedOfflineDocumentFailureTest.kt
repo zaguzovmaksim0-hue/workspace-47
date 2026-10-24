@@ -51,10 +51,10 @@ class BoundedOfflineDocumentFailureTest {
     }
 
     @Test
-    fun cmsAcceptsExactlyOneMiBAndEmptyOriginalRemainsPresentButEmpty() {
-        val source = SyntheticOfflineDocument(ByteArray(1_048_576) { 19 }, null)
+    fun signatureInputAcceptsExactlyTwoMiBAndEmptyOriginalRemainsPresentButEmpty() {
+        val source = SyntheticOfflineDocument(ByteArray(2_097_152) { 19 }, null)
         val cms = BoundedOfflineDocument.read(source, OfflineInputKind.CMS) {}
-        assertEquals(1_048_576, cms.size)
+        assertEquals(2_097_152, cms.size)
         assertTrue(cms.all { it == 19.toByte() })
         cms.fill(0)
         val empty = BoundedOfflineDocument.read(SyntheticOfflineDocument(byteArrayOf()), OfflineInputKind.ORIGINAL) {}

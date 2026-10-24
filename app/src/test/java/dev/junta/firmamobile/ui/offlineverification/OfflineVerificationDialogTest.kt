@@ -16,6 +16,7 @@ import dev.junta.firmamobile.testing.createComposeRule
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import dev.junta.firmamobile.verification.OfflineCmsFixtures
 import dev.junta.firmamobile.verification.OfflineCmsOptions
+import dev.junta.firmamobile.verification.OfflinePadesVerifierTest
 import java.io.IOException
 import java.util.Date
 import org.junit.Assert.assertEquals
@@ -48,7 +49,7 @@ class OfflineVerificationDialogTest {
         rule.onNodeWithTag("offline-verification-result").assertDoesNotExist()
         rule.onNodeWithTag("offline-verification-verify").assertIsEnabled().performClick()
         awaitOutcome(OfflineVerificationOutcome.VERIFIED)
-        rule.onNodeWithText(text(R.string.offline_verification_scope)).assertExists()
+        rule.onNodeWithText(text(R.string.signature_verification_scope)).assertExists()
         rule.onNodeWithText(text(R.string.offline_verification_verified)).performScrollTo().assertExists()
         rule.onNodeWithText("Firmas con integridad comprobada: 1").assertExists()
         rule.onNodeWithText("Firmante de confianza").assertDoesNotExist()
@@ -83,7 +84,7 @@ class OfflineVerificationDialogTest {
         rule.onNodeWithTag("offline-verification-pick-original").performScrollTo().performClick()
         rule.onNodeWithTag("offline-verification-verify").performClick()
         awaitOutcome(OfflineVerificationOutcome.INVALID)
-        rule.onNodeWithText(text(R.string.offline_verification_invalid)).performScrollTo().assertExists()
+        rule.onNodeWithText(text(R.string.signature_verification_invalid)).performScrollTo().assertExists()
         rule.onNodeWithTag("offline-verification-clear-original").performScrollTo().performClick()
         rule.onNodeWithTag("offline-verification-result").assertDoesNotExist()
         rule.onNodeWithTag("offline-verification-verify").performClick()
@@ -110,7 +111,7 @@ class OfflineVerificationDialogTest {
     @Test
     fun unsupportedAndOverLimitResultsNeverShowASuccessCount() {
         val cms = OfflineCmsFixtures.signed(byteArrayOf(8), listOf(OfflineCmsFixtures.signer("SHA1withRSA")))
-        val declared = java.util.concurrent.atomic.AtomicLong(1_048_577L)
+        val declared = java.util.concurrent.atomic.AtomicLong(2_097_153L)
         val backing = SyntheticOfflineDocument(cms)
         val source = object : OfflineDocumentSource {
             override fun declaredSize(): Long = declared.get()
@@ -120,15 +121,32 @@ class OfflineVerificationDialogTest {
         rule.onNodeWithTag("offline-verification-pick-cms").performScrollTo().performClick()
         rule.onNodeWithTag("offline-verification-verify").performClick()
         awaitOutcome(OfflineVerificationOutcome.LIMIT_EXCEEDED)
-        rule.onNodeWithText(text(R.string.offline_verification_limit_exceeded)).performScrollTo().assertExists()
+        rule.onNodeWithText(text(R.string.signature_verification_limit_exceeded)).performScrollTo().assertExists()
         rule.onNodeWithText("Firmas con integridad comprobada:", substring = true).assertDoesNotExist()
         declared.set(cms.size.toLong())
         rule.onNodeWithTag("offline-verification-pick-cms").performScrollTo().performClick()
         rule.onNodeWithTag("offline-verification-result").assertDoesNotExist()
         rule.onNodeWithTag("offline-verification-verify").performClick()
         awaitOutcome(OfflineVerificationOutcome.UNSUPPORTED)
-        rule.onNodeWithText(text(R.string.offline_verification_unsupported)).performScrollTo().assertExists()
+        rule.onNodeWithText(text(R.string.signature_verification_unsupported)).performScrollTo().assertExists()
         rule.onNodeWithText("Firmas con integridad comprobada:", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun pdfShowsBothCertificateRowsAndUnsignedChangesWarning() {
+        val first = OfflinePadesVerifierTest.signedPdf()
+        val second = OfflinePadesVerifierTest.signedPdf(first)
+        showDialog(SyntheticOfflineDocument(second + "\n% unsigned\n".toByteArray()))
+        rule.onNodeWithTag("offline-verification-pick-cms").performScrollTo().performClick()
+        rule.onNodeWithTag("offline-verification-verify").performClick()
+        awaitOutcome(OfflineVerificationOutcome.INVALID)
+        val context = RuntimeEnvironment.getApplication()
+        for (index in 1..2) {
+            val label = context.getString(R.string.signature_verification_signer, index, "CN=Synthetic PDF signer")
+            rule.onNodeWithText(label).performScrollTo().assertExists()
+        }
+        rule.onNodeWithText(text(R.string.signature_verification_unsigned_changes)).performScrollTo().assertExists()
+        first.fill(0); second.fill(0)
     }
 
     private fun showDialog(cms: OfflineDocumentSource, original: OfflineDocumentSource? = null) {
