@@ -99,9 +99,9 @@ internal object NativeBatchProtocol {
     private val signatureCreatedStatuses = setOf("OK", "DONE_AND_SAVED", "DONE_BUT_NOT_SAVED_YET",
         "DONE_BUT_SAVED_SKIPPED", "DONE_BUT_ERROR_SAVING", "SAVE_ROLLBACKED")
 
-    fun summary(results: List<Outcome>): String {
+    fun summary(results: List<Outcome>): AfirmaResultSummary.Batch {
         val success = results.count { it.status in setOf("DONE_AND_SAVED", "OK") }
-        return "Documentos: ${results.size}; resultado positivo: $success; otros resultados: ${results.size - success}."
+        return AfirmaResultSummary.Batch(results.size, success)
     }
     private fun outcome(value: Any?): Outcome {
         val row = NativeTriphaseCodec.objectValue(value)
