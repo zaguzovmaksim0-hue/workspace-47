@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_batch_evidence_notice">O tamaño e a pegada calcúlanse só sobre o contido local dispoñible; non verifican o nome nin a aceptación do trámite.</string>
+    <string name="native_batch_evidence_unavailable">Tamaño e SHA-256 do documento non dispoñibles antes de asinar.</string>
+    <string name="native_batch_document_bytes">Datos locais do documento: %1$d bytes</string>
+    <string name="native_batch_document_sha256">SHA-256 calculado localmente: %1$s</string>
+    <string name="native_batch_descriptor_size">Descritor do lote: %1$d bytes</string>
+    <string name="native_batch_descriptor_digest">SHA-256 do descritor do lote (non dos documentos): %1$s</string>
+</resources>
