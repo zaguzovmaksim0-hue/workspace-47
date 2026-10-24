@@ -3,11 +3,11 @@ package dev.junta.firmamobile.ui.offlineverification
 import java.io.Closeable
 import java.io.InputStream
 
-private const val MAX_OFFLINE_CMS_BYTES = 1_048_576
+private const val MAX_OFFLINE_SIGNATURE_BYTES = 2_097_152
 private const val MAX_OFFLINE_ORIGINAL_BYTES = 524_288
 
 internal enum class OfflineInputKind(val maxBytes: Int) {
-    CMS(MAX_OFFLINE_CMS_BYTES),
+    CMS(MAX_OFFLINE_SIGNATURE_BYTES),
     ORIGINAL(MAX_OFFLINE_ORIGINAL_BYTES),
 }
 

@@ -70,7 +70,7 @@ internal class OfflineVerificationController(
         invalidate()
         val ticket = generation
         activeGeneration = ticket // Only an accepted explicit Verify owns a terminal callback.
-        mutableState.value = state.value.copy(busy = true, outcome = null, verifiedSigners = 0)
+        mutableState.value = state.value.copy(busy = true, outcome = null, verifiedSigners = 0, document = null)
         operation = scope.launch {
             val result = withContext(workerDispatcher) {
                 OfflineVerificationWorker.verify(cmsSource, originalSource, verifyCms)
@@ -81,6 +81,7 @@ internal class OfflineVerificationController(
                     busy = false,
                     outcome = result.outcome,
                     verifiedSigners = result.verifiedSigners,
+                    document = result.document,
                 )
                 notifyTerminal(if (result.outcome == OfflineVerificationOutcome.VERIFIED) {
                     LocalOutcome.COMPLETED

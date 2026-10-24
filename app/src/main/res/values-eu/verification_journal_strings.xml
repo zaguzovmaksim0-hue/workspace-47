@@ -2,15 +2,15 @@
 <resources>
     <string name="verification_journal_entry">Saio honetako egiaztapenen egunkaria</string>
     <string name="verification_journal_title">Saioko egiaztapenen egunkaria</string>
-    <string name="verification_journal_scope">Saio honetako tokiko CMS egiaztapenak soilik; ez da sinaduren historia osoa. Aplikazioa berriz sortzean edo ixtean sarrerak desagertzen dira.</string>
-    <string name="verification_journal_integrity">Osatua emaitzak tokiko CMS osotasuna soilik adierazten du; ez ziurtagiriaren konfiantza, indarraldia edo errebokazioa, denbora-zigiluen baliozkotzea edo urruneko onarpena.</string>
+    <string name="verification_journal_scope">Saio honetako tokiko CMS/PDF egiaztapenak soilik; ez da sinaduren historia osoa. Aplikazioa berriz sortzean edo ixtean sarrerak desagertzen dira.</string>
+    <string name="verification_journal_integrity">Osatua emaitzak tokiko CMS/PDF osotasuna soilik adierazten du; ez ziurtagiriaren konfiantza, indarraldia edo errebokazioa, denbora-zigiluen baliozkotzea edo urruneko onarpena.</string>
     <string name="verification_journal_copies">Ezabatzeak egunkari honi soilik eragiten dio; ezin ditu jada sortutako instantaneak edo esportatutako JSON kopiak baliogabetu.</string>
     <string name="verification_journal_provider_warning">Hornitzailearen errore batek kanpoko fitxategi partziala utz dezake. Uzteak ezin ditu jada idatzitako byteak desegin.</string>
     <string name="verification_journal_empty">Oraindik ez dago egiaztapenik saio honetan.</string>
     <string name="verification_journal_clear">Ezabatu egunkaria</string>
     <string name="verification_journal_export">Esportatu JSON instantanea</string>
     <string name="verification_journal_close">Itxi</string>
-    <string name="verification_journal_kind_verify">Tokiko CMS egiaztapena</string>
+    <string name="verification_journal_kind_verify">Tokiko CMS/PDF egiaztapena</string>
     <string name="verification_journal_completed">Osatua (tokiko osotasuna soilik)</string>
     <string name="verification_journal_cancelled">Utzita</string>
     <string name="verification_journal_failed">Huts eginda</string>

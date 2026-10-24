@@ -2,6 +2,7 @@ package dev.junta.firmamobile.ui.offlineverification
 
 import dev.junta.firmamobile.verification.OfflineCmsResult
 import dev.junta.firmamobile.verification.OfflineCmsStatus
+import dev.junta.firmamobile.verification.OfflinePadesVerifier
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -31,9 +32,18 @@ internal object OfflineVerificationWorker {
                     BoundedOfflineDocument.read(source, OfflineInputKind.ORIGINAL) { context.ensureActive() }
                 }
                 context.ensureActive()
-                val result = verifyCms(cms, original)
+                val result = if (OfflinePadesVerifier.isPdf(cms)) {
+                    if (original != null) {
+                        OfflineVerificationCompletion(OfflineVerificationOutcome.INVALID)
+                    } else {
+                        val pdf = OfflinePadesVerifier.verify(cms)
+                        completion(OfflineCmsResult(pdf.status, pdf.verifiedSigners)).copy(document = pdf.document)
+                    }
+                } else {
+                    completion(verifyCms(cms, original))
+                }
                 context.ensureActive()
-                completion(result)
+                result
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: OfflineInputTooLargeException) {
