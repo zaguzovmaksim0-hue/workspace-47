@@ -338,27 +338,7 @@ class CertificateViewModel(
         CertificateSelectionErrorCode.STORAGE_FAILURE -> CertificateUiError.STORAGE_FAILURE
     }
 
-    private fun CertificateErrorCode.toUiError() = when (this) {
-        CertificateErrorCode.FILE_TOO_LARGE -> CertificateUiError.FILE_TOO_LARGE
-        CertificateErrorCode.INVALID_PASSWORD_OR_FILE -> CertificateUiError.PASSWORD_INVALID_OR_FILE
-        CertificateErrorCode.INVALID_PASSWORD -> CertificateUiError.INVALID_PASSWORD
-        CertificateErrorCode.INVALID_PKCS12_FILE -> CertificateUiError.INVALID_PKCS12_FILE
-        CertificateErrorCode.UNSUPPORTED_PKCS12_ENCRYPTION -> CertificateUiError.UNSUPPORTED_PKCS12_ENCRYPTION
-        CertificateErrorCode.TOO_MANY_ENTRIES,
-        CertificateErrorCode.CHAIN_TOO_LONG,
-        -> CertificateUiError.CERTIFICATE_NOT_USABLE
-        CertificateErrorCode.PRIVATE_KEY_MISSING -> CertificateUiError.PRIVATE_KEY_MISSING
-        CertificateErrorCode.MULTIPLE_PRIVATE_KEYS -> CertificateUiError.MULTIPLE_PRIVATE_KEYS
-        CertificateErrorCode.CERTIFICATE_NOT_X509 -> CertificateUiError.CERTIFICATE_NOT_X509
-        CertificateErrorCode.UNSUPPORTED_KEY_TYPE -> CertificateUiError.UNSUPPORTED_KEY_TYPE
-        CertificateErrorCode.CERTIFICATE_EXPIRED -> CertificateUiError.CERTIFICATE_EXPIRED
-        CertificateErrorCode.CERTIFICATE_NOT_YET_VALID -> CertificateUiError.CERTIFICATE_NOT_YET_VALID
-        CertificateErrorCode.KEY_USAGE_NOT_PERMITTED -> CertificateUiError.KEY_USAGE_NOT_PERMITTED
-        CertificateErrorCode.KEY_CERTIFICATE_MISMATCH -> CertificateUiError.KEY_CERTIFICATE_MISMATCH
-        CertificateErrorCode.NO_CERTIFICATE_SELECTED -> CertificateUiError.CERTIFICATE_NOT_SELECTED
-        CertificateErrorCode.DOCUMENT_UNAVAILABLE -> CertificateUiError.DOCUMENT_UNAVAILABLE
-        CertificateErrorCode.REFERENCE_STORAGE_FAILURE -> CertificateUiError.STORAGE_FAILURE
-    }
+    private fun CertificateErrorCode.toUiError() = CertificateErrorPresentation.forCode(this)
 
     class Factory(
         private val gateway: CertificateGateway,
