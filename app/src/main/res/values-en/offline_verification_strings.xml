@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offline_verification_entry">Check signature integrity</string>
+    <string name="offline_verification_title">CMS/CAdES signature integrity</string>
+    <string name="offline_verification_scope">Local CMS/CAdES cryptographic integrity check, without network queries. Certificate trust, validity and revocation are not checked, and timestamps are not validated.</string>
+    <string name="offline_verification_limits">Local files only: CMS up to 1 MiB and original content up to 512 KiB. PDF and XML are not supported.</string>
+    <string name="offline_verification_original_hint">The original is only needed for detached signatures. A selected empty file counts as content; it is not the same as no selection. If the CMS already includes the content, do not add an original.</string>
+    <string name="offline_verification_pick_cms">Select CMS/CAdES signature</string>
+    <string name="offline_verification_cms_selected">Signature selected</string>
+    <string name="offline_verification_cms_missing">No signature selected</string>
+    <string name="offline_verification_pick_original">Select optional original</string>
+    <string name="offline_verification_original_selected">Original selected, even if empty</string>
+    <string name="offline_verification_original_missing">No original selected</string>
+    <string name="offline_verification_clear_original">Remove original</string>
+    <string name="offline_verification_verify">Verify</string>
+    <string name="offline_verification_close">Close</string>
+    <string name="offline_verification_cancel">Cancel and clear selection</string>
+    <string name="offline_verification_progress">Checking integrity…</string>
+    <string name="offline_verification_cancellation_note">Cancelling discards the result and clears owned bytes when the operation exits. Some providers or computations cannot be interrupted immediately and may delay the next check.</string>
+    <string name="offline_verification_verified">Signature integrity checked. This does not establish certificate trust or validity.</string>
+    <string name="offline_verification_signer_count">Signatures with checked integrity: %1$d</string>
+    <string name="offline_verification_invalid">Integrity not checked: invalid signature, modified content or mismatched original. If the CMS includes the content, remove the optional original.</string>
+    <string name="offline_verification_unsupported">Unsupported CMS/CAdES profile. Integrity not checked.</string>
+    <string name="offline_verification_limit_exceeded">Limit exceeded: CMS up to 1 MiB and original up to 512 KiB. Integrity not checked.</string>
+    <string name="offline_verification_detached_required">This detached signature needs the original content. Select it and press Verify.</string>
+    <string name="offline_verification_read_failed">The files could not be read or checked. Select local files again.</string>
+</resources>

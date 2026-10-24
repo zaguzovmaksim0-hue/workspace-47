@@ -13,4 +13,6 @@
     <string name="webauthn_no_success_claim">Enabling the engine does not mean sign-in has been completed or approval has been received from Google Password Manager. The website origin is not imitated using JavaScript.</string>
     <string name="webauthn_external_browser">Continue in external browser</string>
     <string name="webauthn_close">Close</string>
+    <string name="native_multiphase_result">The service returned a result. This alone does not prove acceptance of the procedure.</string>
+    <string name="native_multiphase_batch_result">Documents: %1$d; positive results: %2$d; other results: %3$d.</string>
 </resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="offline_verification_entry">Comprobar integridad de firma</string>
+    <string name="offline_verification_title">Integridad de firma CMS/CAdES</string>
+    <string name="offline_verification_scope">Comprobación local de la integridad criptográfica CMS/CAdES, sin consultas de red. No comprueba la confianza, la vigencia ni la revocación del certificado, ni valida sellos de tiempo.</string>
+    <string name="offline_verification_limits">Solo archivos locales: CMS hasta 1 MiB y contenido original hasta 512 KiB. PDF y XML no están admitidos.</string>
+    <string name="offline_verification_original_hint">El original solo es necesario en firmas separadas. Un archivo vacío seleccionado cuenta como contenido; no equivale a no seleccionar. Si el CMS ya incluye el contenido, no añadas un original.</string>
+    <string name="offline_verification_pick_cms">Seleccionar firma CMS/CAdES</string>
+    <string name="offline_verification_cms_selected">Firma seleccionada</string>
+    <string name="offline_verification_cms_missing">Ninguna firma seleccionada</string>
+    <string name="offline_verification_pick_original">Seleccionar original opcional</string>
+    <string name="offline_verification_original_selected">Original seleccionado, aunque esté vacío</string>
+    <string name="offline_verification_original_missing">Sin original seleccionado</string>
+    <string name="offline_verification_clear_original">Quitar original</string>
+    <string name="offline_verification_verify">Verificar</string>
+    <string name="offline_verification_close">Cerrar</string>
+    <string name="offline_verification_cancel">Cancelar y borrar selección</string>
+    <string name="offline_verification_progress">Comprobando integridad…</string>
+    <string name="offline_verification_cancellation_note">Cancelar descarta el resultado y borra los bytes propios al finalizar. Algunos proveedores o cálculos no se pueden interrumpir de inmediato y pueden retrasar la siguiente comprobación.</string>
+    <string name="offline_verification_verified">Integridad de firma comprobada. No implica confianza ni validez del certificado.</string>
+    <string name="offline_verification_signer_count">Firmas con integridad comprobada: %1$d</string>
+    <string name="offline_verification_invalid">Integridad no comprobada: firma inválida, contenido modificado u original no correspondiente. Si el CMS incluye el contenido, quita el original opcional.</string>
+    <string name="offline_verification_unsupported">Perfil CMS/CAdES no admitido. Integridad no comprobada.</string>
+    <string name="offline_verification_limit_exceeded">Límite excedido: CMS hasta 1 MiB y original hasta 512 KiB. Integridad no comprobada.</string>
+    <string name="offline_verification_detached_required">Esta firma separada necesita el contenido original. Selecciónalo y pulsa Verificar.</string>
+    <string name="offline_verification_read_failed">No se han podido leer o comprobar los archivos. Vuelve a seleccionar archivos locales.</string>
+</resources>

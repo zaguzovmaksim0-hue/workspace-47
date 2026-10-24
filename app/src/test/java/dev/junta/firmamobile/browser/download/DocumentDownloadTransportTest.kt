@@ -5,13 +5,16 @@ import dev.junta.firmamobile.certificate.UnlockedIdentity
 import java.net.InetAddress
 import java.time.Instant
 import java.nio.file.Files
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import okhttp3.Dispatcher
 import okhttp3.Dns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -144,16 +147,46 @@ class DocumentDownloadTransportTest {
         assertEquals(0, f.server.requestCount); assertTrue(f.directory.listFiles().orEmpty().isEmpty())
     }
     @Test fun cancellationDeletesPartialStagingWithoutASecondRequest() = fixture { f ->
+        val body = "%PDF-" + "x".repeat(64 * 1024)
+        val partialWritten = CompletableDeferred<Long>()
+        val releaseProgress = CountDownLatch(1)
         f.server.enqueue(MockResponse.Builder().code(200).addHeader("Content-Type", "application/pdf")
-            .body("%PDF-" + "x".repeat(8192)).throttleBody(1024, 1, TimeUnit.SECONDS).build())
-        runBlocking {
-            val task = async { f.transport.fetch(f.plan(), f.directory) }
-            delay(150); task.cancelAndJoin()
+            .body(body).build())
+        val partial = runBlocking {
+            val task = async {
+                f.transport.fetch(f.plan(), f.directory) { bytes ->
+                    // Progress is published after the bytes have reached staging.
+                    // Hold the first write so even a fast runner cannot finish the body.
+                    if (partialWritten.complete(bytes)) {
+                        check(releaseProgress.await(15, TimeUnit.SECONDS)) { "Partial-write barrier was not released" }
+                    }
+                }
+            }
+            try {
+                val written = withTimeout(10_000) { partialWritten.await() }
+                val request = checkNotNull(f.server.takeRequest(1, TimeUnit.SECONDS))
+                assertEquals("GET", request.method); assertEquals("/download", request.target)
+                assertEquals(1, f.server.requestCount)
+                val file = f.directory.listFiles().orEmpty().single()
+                assertEquals(written, file.length())
+                assertTrue("Cancellation must interrupt a nonempty, incomplete file", written in 1L until body.length.toLong())
+                assertArrayEquals(body.toByteArray().copyOf(written.toInt()), file.readBytes())
+                assertTrue("The transfer must still be in progress", task.isActive)
+                task.cancelAndJoin()
+                assertTrue(task.isCancelled)
+                file
+            } finally {
+                releaseProgress.countDown()
+                task.cancelAndJoin()
+            }
         }
-        // OkHttp's response callback releases its own IO resources after cancel.
-        repeat(40) { if (f.directory.listFiles().orEmpty().isNotEmpty()) Thread.sleep(25) }
+        // fetch shuts down this executor; termination also joins the response callback,
+        // including any cleanup it performs after the coroutine has been cancelled.
+        assertTrue("Response callback did not finish", f.dispatcher.executorService.awaitTermination(10, TimeUnit.SECONDS))
+        assertFalse(partial.exists())
         assertTrue(f.directory.listFiles().orEmpty().isEmpty())
-        assertTrue(f.server.requestCount <= 1)
+        assertEquals(1, f.server.requestCount)
+        assertNull(f.server.takeRequest(200, TimeUnit.MILLISECONDS))
     }
     @Test fun staleCleanupNeverDeletesAnActivePreparedFileOrAnUnrelatedFile() {
         val dir = Files.createTempDirectory("stage-retention-").toFile()
@@ -176,8 +209,9 @@ class DocumentDownloadTransportTest {
                 return listOf(InetAddress.getByName("127.0.0.1"))
             }
         }
+        val dispatcher = Dispatcher()
         val transport = DocumentDownloadTransport(dns = dns, clientBuilder = {
-            OkHttpClient.Builder().sslSocketFactory(trusted.sslSocketFactory(), trusted.trustManager)
+            OkHttpClient.Builder().dispatcher(dispatcher).sslSocketFactory(trusted.sslSocketFactory(), trusted.trustManager)
         }, trustManager = { trusted.trustManager },
             // The fixture server cannot listen on 443; only the port is relaxed.
             admit = { it.isHttps && it.host == "download.example" })
