@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.verification.OfflineDocumentVerification
 
 @Suppress("FunctionNaming") // Unit-returning Compose UI follows the framework naming convention.
 @Composable
@@ -30,8 +31,8 @@ internal fun OfflineVerificationContent(
         modifier = Modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(stringResource(R.string.offline_verification_scope))
-        Text(stringResource(R.string.offline_verification_limits))
+        Text(stringResource(R.string.signature_verification_scope))
+        Text(stringResource(R.string.signature_verification_limits))
         OfflineVerificationInputs(state, onPickCms, onPickOriginal, controller::clearOriginal)
         if (state.busy) {
             Text(
@@ -63,7 +64,7 @@ private fun OfflineVerificationInputs(
         onClick = onPickCms,
         enabled = state.picking == null,
         modifier = Modifier.testTag("offline-verification-pick-cms"),
-    ) { Text(stringResource(R.string.offline_verification_pick_cms)) }
+    ) { Text(stringResource(R.string.signature_verification_pick)) }
     val cmsLabel = if (state.cmsSelected) {
         R.string.offline_verification_cms_selected
     } else {
@@ -94,6 +95,10 @@ private fun OfflineVerificationInputs(
 @Suppress("FunctionNaming") // Unit-returning Compose UI follows the framework naming convention.
 @Composable
 private fun OfflineVerificationResult(state: OfflineVerificationState) {
+    state.document?.let { document ->
+        offlineDocumentResult(document)
+        return
+    }
     val outcome = state.outcome ?: return
     val verified = outcome == OfflineVerificationOutcome.VERIFIED
     Text(
@@ -107,9 +112,40 @@ private fun OfflineVerificationResult(state: OfflineVerificationState) {
 @StringRes
 private fun offlineOutcomeLabel(outcome: OfflineVerificationOutcome): Int = when (outcome) {
     OfflineVerificationOutcome.VERIFIED -> R.string.offline_verification_verified
-    OfflineVerificationOutcome.INVALID -> R.string.offline_verification_invalid
-    OfflineVerificationOutcome.UNSUPPORTED -> R.string.offline_verification_unsupported
-    OfflineVerificationOutcome.LIMIT_EXCEEDED -> R.string.offline_verification_limit_exceeded
+    OfflineVerificationOutcome.INVALID -> R.string.signature_verification_invalid
+    OfflineVerificationOutcome.UNSUPPORTED -> R.string.signature_verification_unsupported
+    OfflineVerificationOutcome.LIMIT_EXCEEDED -> R.string.signature_verification_limit_exceeded
     OfflineVerificationOutcome.DETACHED_CONTENT_REQUIRED -> R.string.offline_verification_detached_required
     OfflineVerificationOutcome.READ_FAILED -> R.string.offline_verification_read_failed
+}
+
+@Composable
+private fun offlineDocumentResult(document: OfflineDocumentVerification) {
+    Column(modifier = Modifier.testTag("offline-verification-document-result").semantics {
+        liveRegion = LiveRegionMode.Polite
+    }) {
+        if (document.signatures.isEmpty()) Text(stringResource(R.string.signature_verification_no_signatures))
+        if (document.unsignedChanges) Text(
+            stringResource(R.string.signature_verification_unsigned_changes), color = MaterialTheme.colorScheme.error,
+        )
+        document.signatures.forEachIndexed { index, signature ->
+            val result = if (signature.verified) {
+                R.string.signature_verification_valid
+            } else {
+                R.string.signature_verification_invalid
+            }
+            Text(stringResource(R.string.signature_verification_signer, index + 1, signature.signer))
+            Text(stringResource(R.string.signature_verification_date,
+                signature.claimedTime ?: stringResource(R.string.signature_verification_unknown_time)))
+            Text(
+                stringResource(result),
+                color = if (signature.verified) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.error
+                },
+            )
+            if (signature.laterChanges) Text(stringResource(R.string.signature_verification_later_changes))
+        }
+    }
 }
