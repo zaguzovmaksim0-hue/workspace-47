@@ -13,4 +13,6 @@
     <string name="webauthn_no_success_claim">Activar el motor no equival a completar un accés ni a rebre l’aprovació de Google Password Manager. No s’imita l’origen del web mitjançant JavaScript.</string>
     <string name="webauthn_external_browser">Continua al navegador extern</string>
     <string name="webauthn_close">Tanca</string>
+    <string name="native_multiphase_result">El servei ha retornat un resultat. Això no acredita per si sol l’acceptació del tràmit.</string>
+    <string name="native_multiphase_batch_result">Documents: %1$d; resultat positiu: %2$d; altres resultats: %3$d.</string>
 </resources>

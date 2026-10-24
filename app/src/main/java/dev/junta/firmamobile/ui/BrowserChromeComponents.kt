@@ -82,6 +82,59 @@ internal fun IndustrialBrowserTopBar(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
+    browserToolbarSurface(
+        modifier = modifier,
+        windowInsets = windowInsets,
+    ) {
+        browserToolbarControls(
+            host = host,
+            onBack = onBack,
+            onHome = onHome,
+            onReload = onReload,
+        ) {
+            Box {
+                BrowserChromeIconButton(
+                    iconRes = R.drawable.ic_browser_more,
+                    contentDescription = stringResource(R.string.browser_action_more),
+                    onClick = { menuExpanded = true },
+                )
+                BrowserOverflowMenu(
+                    onShowSiteInformation = onShowSiteInformation?.let { show -> { menuExpanded = false; show() } },
+                    onOpenInBrowser = onOpenInBrowser?.let { open -> { menuExpanded = false; open() } },
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
+                    onChangeCertificate = {
+                        menuExpanded = false
+                        onChangeCertificate()
+                    },
+                    onLockCertificate = {
+                        menuExpanded = false
+                        onLockCertificate()
+                    },
+                    onClearCurrentSiteRequested = {
+                        menuExpanded = false
+                        onClearCurrentSiteRequested()
+                    },
+                    onClearSessionRequested = {
+                        menuExpanded = false
+                        onClearSessionRequested()
+                    },
+                    onDeleteAllBrowserDataRequested = {
+                        menuExpanded = false
+                        onDeleteAllBrowserDataRequested()
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun browserToolbarSurface(
+    modifier: Modifier,
+    windowInsets: WindowInsets,
+    content: @Composable () -> Unit,
+) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -95,77 +148,7 @@ internal fun IndustrialBrowserTopBar(
                 .fillMaxWidth()
                 .height(BrowserIndustrialToolbarHeight - 3.dp),
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                BrowserChromeIconButton(
-                    iconRes = R.drawable.ic_browser_back,
-                    contentDescription = stringResource(R.string.browser_action_back),
-                    onClick = onBack,
-                )
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 4.dp),
-                ) {
-                    Text(
-                        text = host,
-                        color = JuntaTealDark,
-                        style = MaterialTheme.typography.titleSmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.testTag(BROWSER_ADDRESS_LABEL_TAG),
-                    )
-                }
-
-                BrowserChromeIconButton(
-                    iconRes = R.drawable.ic_browser_home,
-                    contentDescription = stringResource(R.string.browser_action_home),
-                    onClick = onHome,
-                )
-                BrowserChromeIconButton(
-                    iconRes = R.drawable.ic_browser_reload,
-                    contentDescription = stringResource(R.string.browser_action_reload),
-                    onClick = onReload,
-                )
-                Box {
-                    BrowserChromeIconButton(
-                        iconRes = R.drawable.ic_browser_more,
-                        contentDescription = stringResource(R.string.browser_action_more),
-                        onClick = { menuExpanded = true },
-                    )
-                    BrowserOverflowMenu(
-                        onShowSiteInformation = onShowSiteInformation?.let { show -> { menuExpanded = false; show() } },
-                        onOpenInBrowser = onOpenInBrowser?.let { open -> { menuExpanded = false; open() } },
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false },
-                        onChangeCertificate = {
-                            menuExpanded = false
-                            onChangeCertificate()
-                        },
-                        onLockCertificate = {
-                            menuExpanded = false
-                            onLockCertificate()
-                        },
-                        onClearCurrentSiteRequested = {
-                            menuExpanded = false
-                            onClearCurrentSiteRequested()
-                        },
-                        onClearSessionRequested = {
-                            menuExpanded = false
-                            onClearSessionRequested()
-                        },
-                        onDeleteAllBrowserDataRequested = {
-                            menuExpanded = false
-                            onDeleteAllBrowserDataRequested()
-                        },
-                    )
-                }
-            }
+            content()
         }
         Box(
             modifier = Modifier
@@ -179,6 +162,53 @@ internal fun IndustrialBrowserTopBar(
                 .height(1.dp)
                 .background(JuntaInk.copy(alpha = 0.42f)),
         )
+    }
+}
+
+@Composable
+private fun browserToolbarControls(
+    host: String,
+    onBack: () -> Unit,
+    onHome: () -> Unit,
+    onReload: () -> Unit,
+    overflowMenu: @Composable () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BrowserChromeIconButton(
+            iconRes = R.drawable.ic_browser_back,
+            contentDescription = stringResource(R.string.browser_action_back),
+            onClick = onBack,
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 4.dp),
+        ) {
+            Text(
+                text = host,
+                color = JuntaTealDark,
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag(BROWSER_ADDRESS_LABEL_TAG),
+            )
+        }
+        BrowserChromeIconButton(
+            iconRes = R.drawable.ic_browser_home,
+            contentDescription = stringResource(R.string.browser_action_home),
+            onClick = onHome,
+        )
+        BrowserChromeIconButton(
+            iconRes = R.drawable.ic_browser_reload,
+            contentDescription = stringResource(R.string.browser_action_reload),
+            onClick = onReload,
+        )
+        overflowMenu()
     }
 }
 
