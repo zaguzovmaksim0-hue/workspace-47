@@ -314,4 +314,9 @@
     <string name="local_signing_failed">No se pudo completar la operación. Comprueba que el certificado sigue desbloqueado y que el archivo no supera 512 KiB. Si falló el guardado, puede quedar un archivo incompleto en el destino elegido.</string>
     <string name="local_signing_choose">Elegir otro archivo</string>
     <string name="local_signing_save">Guardar firma</string>
+    <string name="certificate_auth_title">Proteger el desbloqueo guardado</string>
+    <string name="certificate_auth_subtitle">Confirma con biometría o el PIN, patrón o contraseña del dispositivo.</string>
+    <string name="certificate_auth_help">Guardar y recuperar el desbloqueo requiere confirmación del dispositivo. Si cancelas al guardarlo, solo se conserva la sesión en memoria.</string>
+    <string name="certificate_auth_unsupported">En Android 8–10 el desbloqueo no se guarda entre reinicios de la aplicación. Introduce la contraseña del certificado.</string>
+    <string name="certificate_restore_saved">Recuperar desbloqueo guardado</string>
 </resources>

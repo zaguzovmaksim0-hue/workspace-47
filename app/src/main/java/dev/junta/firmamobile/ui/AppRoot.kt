@@ -47,6 +47,8 @@ import androidx.compose.ui.platform.testTag
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.certificate.CertificateUnlockRetention
 import dev.junta.firmamobile.certificate.CertificateSummary
+import dev.junta.firmamobile.ui.offlineverification.OfflineVerificationDialog
+import dev.junta.firmamobile.ui.offlineverification.OfflineVerificationEntry
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
@@ -61,12 +63,15 @@ fun AppRoot(
     state: CertificateUiState = CertificateUiState.NoCertificate(),
     onSelectCertificate: () -> Unit = {},
     onUnlock: (CharArray, CertificateUnlockRetention) -> Unit = { _, _ -> },
+    onRestoreSavedUnlock: (() -> Unit)? = null,
     onLock: () -> Unit = {},
     onForget: () -> Unit = {},
     onContinue: () -> Unit = {},
 ) {
     var legalInformationVisible by remember { mutableStateOf(false) }
     if (legalInformationVisible) LegalInformationDialog(onDismiss = { legalInformationVisible = false })
+    var offlineVerificationVisible by remember { mutableStateOf(false) }
+    if (offlineVerificationVisible) OfflineVerificationDialog(onDismiss = { offlineVerificationVisible = false })
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -96,6 +101,7 @@ fun AppRoot(
                 state = state,
                 onSelectCertificate = onSelectCertificate,
                 onUnlock = onUnlock,
+                        onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onLock = onLock,
                 onForget = onForget,
                 onContinue = onContinue,
@@ -117,6 +123,7 @@ fun AppRoot(
             ) {
                 Text(stringResource(R.string.legal_information))
             }
+            OfflineVerificationEntry(onClick = { offlineVerificationVisible = true })
             Spacer(modifier = Modifier.height(4.dp))
         }
     }
@@ -127,6 +134,7 @@ private fun CertificatePanel(
     state: CertificateUiState,
     onSelectCertificate: () -> Unit,
     onUnlock: (CharArray, CertificateUnlockRetention) -> Unit,
+    onRestoreSavedUnlock: (() -> Unit)?,
     onLock: () -> Unit,
     onForget: () -> Unit,
     onContinue: () -> Unit,
@@ -197,6 +205,7 @@ private fun CertificatePanel(
             is CertificateUiState.Locked -> LockedCertificate(
                 state = state,
                 onUnlock = onUnlock,
+                        onRestoreSavedUnlock = onRestoreSavedUnlock,
                 onSelectCertificate = onSelectCertificate,
                 onForget = onForget,
             )
@@ -246,12 +255,14 @@ private fun NoCertificate(
 private fun LockedCertificate(
     state: CertificateUiState.Locked,
     onUnlock: (CharArray, CertificateUnlockRetention) -> Unit,
+    onRestoreSavedUnlock: (() -> Unit)?,
     onSelectCertificate: () -> Unit,
     onForget: () -> Unit,
 ) {
     LockedCertificateHeading(state)
     var retention by remember(state.reference.uri) { mutableStateOf(CertificateUnlockRetention.FIFTEEN_MINUTES) }
     CertificateUnlockRetentionSelector(retention, !state.revocationPending) { retention = it }
+    SavedCertificateUnlockAction(onRestoreSavedUnlock, !state.revocationPending)
     val passwordState = remember(state.reference.uri) { TextFieldState() }
     DisposableEffect(passwordState) {
         onDispose { passwordState.clearText() }

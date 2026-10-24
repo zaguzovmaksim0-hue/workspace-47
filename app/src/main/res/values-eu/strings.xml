@@ -314,4 +314,9 @@
     <string name="local_signing_failed">Ezin izan da eragiketa osatu. Egiaztatu ziurtagiria desblokeatuta dagoela eta fitxategiak ez dituela 512 KiB gainditzen. Gordetzeak huts eginez gero, osatu gabeko fitxategi bat gera daiteke aukeratutako helburuan.</string>
     <string name="local_signing_choose">Aukeratu beste fitxategi bat</string>
     <string name="local_signing_save">Gorde sinadura</string>
+    <string name="certificate_auth_title">Babestu gordetako desblokeoa</string>
+    <string name="certificate_auth_subtitle">Berretsi biometriarekin edo gailuaren PIN, eredu edo pasahitzarekin.</string>
+    <string name="certificate_auth_help">Desblokeoa gordetzeko eta berreskuratzeko gailuaren berrespena behar da. Gordetzean bertan behera uzten baduzu, memoriako saioa soilik gordeko da.</string>
+    <string name="certificate_auth_unsupported">Android 8–10 bertsioetan desblokeoa ez da gordetzen aplikazioa berrabiaraztean. Idatzi ziurtagiriaren pasahitza.</string>
+    <string name="certificate_restore_saved">Berreskuratu gordetako desblokeoa</string>
 </resources>

@@ -314,4 +314,9 @@
     <string name="local_signing_failed">Could not complete the operation. Check that the certificate is still unlocked and the file is at most 512 KiB. A failed save may leave an incomplete file at the chosen destination.</string>
     <string name="local_signing_choose">Choose another file</string>
     <string name="local_signing_save">Save signature</string>
+    <string name="certificate_auth_title">Protect saved unlock</string>
+    <string name="certificate_auth_subtitle">Confirm with biometrics or the device PIN, pattern or password.</string>
+    <string name="certificate_auth_help">Saving and restoring the unlock requires device confirmation. If you cancel when saving, only the in-memory session is kept.</string>
+    <string name="certificate_auth_unsupported">On Android 8–10 the unlock is not saved across app restarts. Enter the certificate password.</string>
+    <string name="certificate_restore_saved">Restore saved unlock</string>
 </resources>

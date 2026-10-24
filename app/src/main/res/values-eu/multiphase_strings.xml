@@ -13,4 +13,6 @@
     <string name="webauthn_no_success_claim">Motorra aktibatzeak ez du esan nahi saioa hasi denik edo Google Password Manager-en onarpena jaso denik. Ez da webgunearen jatorria JavaScript bidez imitatzen.</string>
     <string name="webauthn_external_browser">Jarraitu kanpoko nabigatzailean</string>
     <string name="webauthn_close">Itxi</string>
+    <string name="native_multiphase_result">Zerbitzuak emaitza bat itzuli du. Horrek bakarrik ez du izapidea onartu dela frogatzen.</string>
+    <string name="native_multiphase_batch_result">Dokumentuak: %1$d; emaitza positiboak: %2$d; bestelako emaitzak: %3$d.</string>
 </resources>

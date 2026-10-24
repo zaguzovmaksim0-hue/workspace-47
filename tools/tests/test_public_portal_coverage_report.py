@@ -73,6 +73,11 @@ class PublicPortalCoverageReportTest(unittest.TestCase):
             markdown,
         )
 
+        totals = re.findall(r"(?m)^\| \*\*Total\*\* \| \*\*(\d+)\*\* \|$", markdown)
+        self.assertTrue(totals)
+        for total in totals:
+            self.assertEqual(len(records), int(total))
+
         implemented = inventory_counts["VERIFIED_E2E"] + inventory_counts["IMPLEMENTED_NOT_E2E"]
         remaining = len(records) - implemented
         self.assertIn(f"| Entradas `VERIFIED_E2E` | {inventory_counts['VERIFIED_E2E']} |", markdown)
