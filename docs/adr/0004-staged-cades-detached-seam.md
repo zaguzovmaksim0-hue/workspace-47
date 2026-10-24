@@ -1,4 +1,4 @@
-# 0003 — Stage the detached CAdES orchestration behind existing adapters
+# 0004 — Stage the detached CAdES orchestration behind existing adapters
 
 **Date:** 2026-10-24
 **Status:** Proposed
