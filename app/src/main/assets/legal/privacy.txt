@@ -30,17 +30,27 @@ Para programarlos, la aplicación usa la alarma de Android y vuelve a calcular e
 6. Verificación de firmas en PDF
 La verificación de firmas de un PDF se realiza en el dispositivo y sin conexión. Eliges el archivo con el selector de Android; la aplicación lo lee para comprobar la firma y no lo sube a ningún servidor ni lo guarda en su almacenamiento. El resultado describe la comprobación técnica local y no sustituye la validación de un prestador de servicios de confianza ni del organismo destinatario.
 
-7. Componentes del dispositivo y de terceros
+7. Clave en el almacén seguro de Android
+Esta función se activa por etapas y solo se aplica cuando está disponible en tu versión y decides usarla. Con tu confirmación, la aplicación copia la clave privada del archivo PKCS#12 al almacén de claves de Android: a StrongBox si el dispositivo lo admite (Android 12 o posterior) o, solo si lo aceptas expresamente, al entorno seguro del dispositivo. No se admite una ubicación únicamente por software. La aplicación puede usar la clave para firmar, pero no puede leerla ni exportarla. Se sigue protegiendo con el desbloqueo de la aplicación, no con una confirmación del sistema en cada firma.
+
+La clave no se incluye en copias de seguridad ni se puede trasladar a otro dispositivo. Desinstalar la aplicación, borrar sus datos o restablecer el teléfono la elimina de forma irreversible, por lo que debes conservar el archivo PKCS#12 original en un lugar seguro. La aplicación guarda en su almacenamiento privado un alias aleatorio, la ubicación confirmada, la huella SHA-256 del certificado y su nombre visible. «Olvidar certificado» elimina esa referencia y la clave del almacén de Android; nunca borra tu archivo original.
+
+8. Solicitudes de firma desde otras aplicaciones o enlaces
+Esta función se activa por etapas y solo se aplica cuando está disponible en tu versión. Otras aplicaciones o páginas web pueden abrir Firma Mobile con un enlace afirma://. La aplicación no puede verificar quién envía la solicitud y la muestra como de origen desconocido, con un aviso. Nada se firma ni se envía sin tu confirmación expresa: antes de confirmar ves la operación, el tamaño y la huella SHA-256 de los datos y la dirección de destino sin parámetros. La confirmación sirve solo para esa solicitud y caduca a los dos minutos.
+
+Si confirmas, la aplicación envía por HTTPS a la dirección indicada en la solicitud el certificado público, la firma y los datos necesarios para la operación. Se rechazan las solicitudes que intentan omitir la confirmación u obtener los datos de forma indirecta, y las que llegan mientras otra operación de firma está en curso. Comprueba que esperabas la solicitud antes de confirmarla.
+
+9. Componentes del dispositivo y de terceros
 La aplicación usa Android WebView y bibliotecas de terceros, incluidos Google Play services mediante AndroidX Credentials (`androidx.credentials:credentials-play-services-auth`) para integraciones de identidad/credenciales. Su funcionamiento puede implicar servicios del dispositivo o del proveedor; no debe interpretarse esta política como una promesa de que el dispositivo o los portales nunca se comuniquen con terceros. Los componentes y avisos se enumeran en «Licencias y componentes».
 
 Esta distribución no incluye un servidor propio del proyecto para almacenar tus certificados o documentos ni un servicio propio de publicidad o analítica. Los sitios visitados pueden tener sus propios servicios y cookies. El permiso de biometría puede proceder de bibliotecas de autenticación; la aplicación no recibe la plantilla biométrica que conserva Android.
 
-8. Seguridad y eliminación
+10. Seguridad y eliminación
 La configuración de producción desactiva copias de seguridad de datos de la aplicación y tráfico HTTP en claro. Se aplican controles de origen y se evita registrar secretos en los registros de la aplicación. Ninguna medida elimina todo riesgo: mantén Android actualizado y no uses un dispositivo comprometido para certificados sensibles.
 
 Puedes bloquear u olvidar el certificado y desactivar los avisos de caducidad desde la aplicación, limpiar datos del sitio mediante las opciones disponibles y revocar permisos en Android. Android permite borrar los datos locales de la aplicación o desinstalarla; esto puede eliminar de forma irreversible sus preferencias. Los archivos que hayas guardado fuera del almacenamiento privado requieren eliminación independiente.
 
-9. Contacto y cambios
+11. Contacto y cambios
 La información actual del proyecto se publica en:
 https://github.com/zaguzovmaksim0-hue/workspace-47
 
