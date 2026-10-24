@@ -29,9 +29,11 @@ URL inicial:
 - Un módulo Android `app`.
 - AndroidX y Material 3.
 - `minSdk = 26`.
-- `compileSdk = 36` y `targetSdk = 36`, correspondientes al Android 16 del
-  dispositivo objetivo. Las versiones se verificarán contra documentación
-  oficial antes de fijarlas en el catálogo de versiones.
+- `compileSdk = 37`, requerido por los metadatos AAR de OkHttp 5.5.0.
+  Este cambio afecta solo a la compilación; `targetSdk = 36` sigue
+  correspondiendo al Android 16 del dispositivo objetivo y no cambia
+  el mínimo de Android admitido. Las versiones se verifican contra
+  documentación oficial antes de fijarlas en el catálogo de versiones.
 - Gradle Wrapper incluido; construcción por CLI sin Android Studio.
 - JDK compatible con la versión de Android Gradle Plugin seleccionada.
 - APK debug para investigación y APK release no depurable.

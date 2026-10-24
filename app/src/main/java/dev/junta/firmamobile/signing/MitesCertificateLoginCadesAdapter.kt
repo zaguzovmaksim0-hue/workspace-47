@@ -31,6 +31,7 @@ class MitesCertificateLoginCadesAdapter internal constructor(
                         clock = clock,
                         provider = provider,
                         expectedContentBytes = CHALLENGE_BYTES,
+                        signingAlgorithm = SigningAlgorithm.SHA512_WITH_RSA,
                     )
                 }
             }
@@ -70,6 +71,7 @@ class MitesCertificateLoginCadesAdapter internal constructor(
                         signatureValue = signature,
                         provider = provider,
                         expectedContentBytes = CHALLENGE_BYTES,
+                        signingAlgorithm = SigningAlgorithm.SHA512_WITH_RSA,
                     )
                 }
                 ProtocolCompletionResult.Success(LocalSignature(result))

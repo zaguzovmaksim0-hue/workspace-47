@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_cades_policy_notice">A sede solicita esta referencia de política de sinatura: %1$s. O identificador e a pegada incluiranse nos datos asinados. Non se descargou nin verificou o documento de política; a súa inclusión non acredita por si soa o cumprimento de todas as súas regras.</string>
+    <string name="native_cades_policy_batch">Esta solicitude inclúe %1$d elemento(s) cunha política de sinatura explícita. Cada referencia consérvase na súa sinatura; un dato incompleto fará fallar ese elemento. Non se descargan documentos de política nin se confirma automaticamente a operación.</string>
+</resources>

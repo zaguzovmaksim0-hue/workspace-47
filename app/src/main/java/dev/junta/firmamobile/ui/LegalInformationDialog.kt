@@ -1,9 +1,12 @@
 package dev.junta.firmamobile.ui
 
+import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -46,91 +49,149 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
             else -> onDismiss()
         }
     }
-    val title = document?.title ?: when (section) {
-        "licenses" -> stringResource(R.string.legal_licenses)
-        else -> stringResource(R.string.legal_information)
-    }
+    val title = legalDialogTitle(document, section)
     Dialog(onDismissRequest = { back() }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         BackHandler { back() }
         Surface(modifier = Modifier.fillMaxSize().testTag("legal-information-dialog")) {
             Column(Modifier.safeDrawingPadding().padding(16.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    TextButton(onClick = { back() }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(R.string.legal_back))
-                    }
-                    TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(R.string.close))
-                    }
-                }
-                Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(vertical = 12.dp).semantics { heading() })
-                HorizontalDivider()
+                legalDialogHeader(title, onBack = { back() }, onDismiss = onDismiss)
                 val selected = document
                 when {
                     selected != null -> {
                         val content by produceState<String?>(null, selected.asset, loadError) {
                             value = withContext(Dispatchers.IO) {
-                                runCatching {
-                                    require(validLegalAsset(selected.asset))
-                                    context.assets.open(selected.asset).bufferedReader(Charsets.UTF_8).use {
-                                        val text = it.readText()
-                                        require(text.length <= 2_000_000)
-                                        text
-                                    }
-                                }.getOrElse { loadError }
+                                readLegalDocument(context, selected.asset, loadError)
                             }
                         }
                         val chunks = remember(content) { content?.let(::legalTextChunks).orEmpty() }
-                        if (content == null) CircularProgressIndicator(Modifier.padding(16.dp))
-                        else LazyColumn(Modifier.weight(1f).testTag("legal-document-text"),
-                            contentPadding = PaddingValues(vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            items(chunks.size) { index -> Text(chunks[index], style = MaterialTheme.typography.bodyMedium) }
-                        }
+                        legalDocumentContent(content, chunks)
+                    }
+                    section == "feedback" -> {
+                        val report = remember { currentCompatibilityFeedbackReport() }
+                        compatibilityFeedbackPane(
+                            report = report,
+                            onCopy = { copyCompatibilityFeedback(context, it) },
+                            onOpenIssue = { openCompatibilityFeedback(context, it) },
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                     section == "licenses" -> {
                         val documents by produceState<List<LegalDocument>?>(null) {
                             value = withContext(Dispatchers.IO) {
-                                runCatching {
-                                    val data = context.assets.open("legal/documents.json").bufferedReader().use { it.readText() }
-                                    val array = JSONArray(data)
-                                    List(array.length()) { i ->
-                                        val item = array.getJSONObject(i)
-                                        LegalDocument(item.getString("title"), item.getString("asset")).also {
-                                            require(validLegalAsset(it.asset))
-                                        }
-                                    }
-                                }.getOrElse { emptyList() }
+                                readLegalDocuments(context)
                             }
                         }
-                        val list = documents
-                        if (list == null) CircularProgressIndicator(Modifier.padding(16.dp))
-                        else if (list.isEmpty()) Text(stringResource(R.string.legal_load_error))
-                        else LazyColumn(Modifier.weight(1f)) {
-                            items(list, key = { it.asset }) { item ->
-                                TextButton(onClick = { document = item },
-                                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                                    Text(item.title, modifier = Modifier.fillMaxWidth(), maxLines = 3, overflow = TextOverflow.Ellipsis)
-                                }
-                            }
-                        }
+                        legalLicenseList(documents, onSelect = { document = it })
                     }
                     else -> {
-                        TextButton(onClick = { document = LegalDocument(privacyTitle, "legal/privacy.txt") },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                            Text(stringResource(R.string.legal_privacy))
-                        }
-                        TextButton(onClick = { section = "licenses" },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                            Text(stringResource(R.string.legal_licenses))
-                        }
-                        TextButton(onClick = { document = LegalDocument(aboutTitle, "legal/about.txt") },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                            Text(stringResource(R.string.legal_about))
+                        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                            legalMenuItems(
+                                onPrivacy = { document = LegalDocument(privacyTitle, "legal/privacy.txt") },
+                                onLicenses = { section = "licenses" },
+                                onAbout = { document = LegalDocument(aboutTitle, "legal/about.txt") },
+                                onFeedback = { section = "feedback" },
+                            )
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun legalDialogTitle(document: LegalDocument?, section: String): String =
+    document?.title ?: when (section) {
+        "licenses" -> stringResource(R.string.legal_licenses)
+        "feedback" -> stringResource(R.string.compatibility_feedback_title)
+        else -> stringResource(R.string.legal_information)
+    }
+
+@Composable
+private fun legalDialogHeader(title: String, onBack: () -> Unit, onDismiss: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.legal_back))
+        }
+        TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.close))
+        }
+    }
+    Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.padding(vertical = 12.dp).semantics { heading() })
+    HorizontalDivider()
+}
+
+private fun readLegalDocument(context: Context, asset: String, loadError: String): String =
+    runCatching {
+        require(validLegalAsset(asset))
+        context.assets.open(asset).bufferedReader(Charsets.UTF_8).use {
+            val text = it.readText()
+            require(text.length <= 2_000_000)
+            text
+        }
+    }.getOrElse { loadError }
+
+private fun readLegalDocuments(context: Context): List<LegalDocument> =
+    runCatching {
+        val data = context.assets.open("legal/documents.json").bufferedReader().use { it.readText() }
+        val array = JSONArray(data)
+        List(array.length()) { i ->
+            val item = array.getJSONObject(i)
+            LegalDocument(item.getString("title"), item.getString("asset")).also {
+                require(validLegalAsset(it.asset))
+            }
+        }
+    }.getOrElse { emptyList() }
+
+@Composable
+private fun ColumnScope.legalDocumentContent(content: String?, chunks: List<String>) {
+    if (content == null) CircularProgressIndicator(Modifier.padding(16.dp))
+    else LazyColumn(Modifier.weight(1f).testTag("legal-document-text"),
+        contentPadding = PaddingValues(vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(chunks.size) { index -> Text(chunks[index], style = MaterialTheme.typography.bodyMedium) }
+    }
+}
+
+@Composable
+private fun ColumnScope.legalLicenseList(list: List<LegalDocument>?, onSelect: (LegalDocument) -> Unit) {
+    if (list == null) CircularProgressIndicator(Modifier.padding(16.dp))
+    else if (list.isEmpty()) Text(stringResource(R.string.legal_load_error))
+    else LazyColumn(Modifier.weight(1f)) {
+        items(list, key = { it.asset }) { item ->
+            TextButton(onClick = { onSelect(item) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(item.title, modifier = Modifier.fillMaxWidth(), maxLines = 3, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+@Composable
+private fun legalMenuItems(
+    onPrivacy: () -> Unit,
+    onLicenses: () -> Unit,
+    onAbout: () -> Unit,
+    onFeedback: () -> Unit,
+) {
+    TextButton(onClick = onPrivacy,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Text(stringResource(R.string.legal_privacy))
+    }
+    TextButton(onClick = onLicenses,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Text(stringResource(R.string.legal_licenses))
+    }
+    TextButton(onClick = onAbout,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Text(stringResource(R.string.legal_about))
+    }
+    TextButton(
+        onClick = onFeedback,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+            .testTag("legal-compatibility-feedback"),
+    ) {
+        Text(stringResource(R.string.compatibility_feedback_title))
     }
 }

@@ -50,32 +50,32 @@
   "androidx.collection:collection:1.5.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.animation:animation-android:1.11.3": [
+  "androidx.compose.animation:animation-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.animation:animation-core-android:1.11.3": [
+  "androidx.compose.animation:animation-core-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.animation:animation-core:1.11.3": [
+  "androidx.compose.animation:animation-core:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.animation:animation:1.11.3": [
+  "androidx.compose.animation:animation:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.foundation:foundation-android:1.11.3": [
+  "androidx.compose.foundation:foundation-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.foundation:foundation-layout-android:1.11.3": [
+  "androidx.compose.foundation:foundation-layout-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.foundation:foundation-layout:1.11.3": [
+  "androidx.compose.foundation:foundation-layout:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.foundation:foundation:1.11.3": [
+  "androidx.compose.foundation:foundation:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "androidx.compose.material3:material3-android:1.4.0": [
@@ -85,91 +85,91 @@
   "androidx.compose.material3:material3:1.4.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.material:material-ripple-android:1.11.3": [
+  "androidx.compose.material:material-ripple-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.material:material-ripple:1.11.3": [
+  "androidx.compose.material:material-ripple:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.runtime:runtime-android:1.11.3": [
+  "androidx.compose.runtime:runtime-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.runtime:runtime-annotation-android:1.11.3": [
+  "androidx.compose.runtime:runtime-annotation-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.runtime:runtime-annotation:1.11.3": [
+  "androidx.compose.runtime:runtime-annotation:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.runtime:runtime-retain-android:1.11.3": [
+  "androidx.compose.runtime:runtime-retain-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.runtime:runtime-retain:1.11.3": [
+  "androidx.compose.runtime:runtime-retain:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.runtime:runtime-saveable-android:1.11.3": [
+  "androidx.compose.runtime:runtime-saveable-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.runtime:runtime-saveable:1.11.3": [
+  "androidx.compose.runtime:runtime-saveable:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.runtime:runtime:1.11.3": [
+  "androidx.compose.runtime:runtime:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-android:1.11.3": [
+  "androidx.compose.ui:ui-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-geometry-android:1.11.3": [
+  "androidx.compose.ui:ui-geometry-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-geometry:1.11.3": [
+  "androidx.compose.ui:ui-geometry:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-graphics-android:1.11.3": [
+  "androidx.compose.ui:ui-graphics-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-graphics:1.11.3": [
+  "androidx.compose.ui:ui-graphics:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-text-android:1.11.3": [
+  "androidx.compose.ui:ui-text-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-text:1.11.3": [
+  "androidx.compose.ui:ui-text:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-tooling-preview-android:1.11.3": [
+  "androidx.compose.ui:ui-tooling-preview-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-tooling-preview:1.11.3": [
+  "androidx.compose.ui:ui-tooling-preview:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-unit-android:1.11.3": [
+  "androidx.compose.ui:ui-unit-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-unit:1.11.3": [
+  "androidx.compose.ui:ui-unit:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-util-android:1.11.3": [
+  "androidx.compose.ui:ui-util-android:1.12.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui-util:1.11.3": [
+  "androidx.compose.ui:ui-util:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose.ui:ui:1.11.3": [
+  "androidx.compose.ui:ui:1.12.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.compose:compose-bom:2026.06.00": [
+  "androidx.compose:compose-bom:2026.09.00": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "androidx.concurrent:concurrent-futures:1.1.0": [
@@ -246,13 +246,7 @@
   "androidx.datastore:datastore:1.2.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.documentfile:documentfile:1.0.0": [
-    "legal/upstream/Apache-2.0.txt"
-  ],
   "androidx.drawerlayout:drawerlayout:1.0.0": [
-    "legal/upstream/Apache-2.0.txt"
-  ],
-  "androidx.dynamicanimation:dynamicanimation:1.0.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "androidx.emoji2:emoji2:1.4.0": [
@@ -267,9 +261,6 @@
   "androidx.interpolator:interpolator:1.0.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.legacy:legacy-support-core-utils:1.0.0": [
-    "legal/upstream/Apache-2.0.txt"
-  ],
   "androidx.lifecycle:lifecycle-common-java8:2.10.0": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
@@ -281,15 +272,7 @@
   "androidx.lifecycle:lifecycle-common:2.10.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0": [
-    "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
-    "legal/upstream/Apache-2.0.txt"
-  ],
   "androidx.lifecycle:lifecycle-livedata-core:2.10.0": [
-    "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
-    "legal/upstream/Apache-2.0.txt"
-  ],
-  "androidx.lifecycle:lifecycle-livedata:2.10.0": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
@@ -337,10 +320,7 @@
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.loader:loader:1.0.0": [
-    "legal/upstream/Apache-2.0.txt"
-  ],
-  "androidx.localbroadcastmanager:localbroadcastmanager:1.0.0": [
+  "androidx.loader:loader:1.1.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "androidx.navigationevent:navigationevent-android:1.0.0": [
@@ -355,9 +335,6 @@
     "legal/upstream/Apache-2.0.txt"
   ],
   "androidx.navigationevent:navigationevent:1.0.0": [
-    "legal/upstream/Apache-2.0.txt"
-  ],
-  "androidx.print:print:1.0.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "androidx.profileinstaller:profileinstaller:1.4.0": [
@@ -389,10 +366,6 @@
   "androidx.tracing:tracing:1.2.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.transition:transition:1.6.0": [
-    "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
-    "legal/upstream/Apache-2.0.txt"
-  ],
   "androidx.vectordrawable:vectordrawable-animated:1.1.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
@@ -405,7 +378,7 @@
   "androidx.viewpager:viewpager:1.0.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.webkit:webkit:1.16.0": [
+  "androidx.webkit:webkit:1.17.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
@@ -477,16 +450,16 @@
   "com.google.guava:listenablefuture:1.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "com.squareup.okhttp3:okhttp-android:5.4.0": [
+  "com.squareup.okhttp3:okhttp-android:5.5.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "com.squareup.okhttp3:okhttp:5.4.0": [
+  "com.squareup.okhttp3:okhttp:5.5.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "com.squareup.okio:okio-jvm:3.17.0": [
+  "com.squareup.okio:okio-jvm:3.18.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "com.squareup.okio:okio:3.17.0": [
+  "com.squareup.okio:okio:3.18.1": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "com.tom-roush:pdfbox-android:2.0.27.0": [
@@ -528,7 +501,7 @@
   "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "org.jetbrains.kotlin:kotlin-stdlib:2.3.10": [
+  "org.jetbrains.kotlin:kotlin-stdlib:2.4.21": [
     "legal/upstream/Apache-2.0.txt"
   ],
   "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0": [

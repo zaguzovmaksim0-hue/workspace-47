@@ -28,7 +28,7 @@ concurrency:
 env:
   VERIFY_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
   JAVA_VERSION: "17"
-  GO_VERSION: "1.26.9"
+  GO_VERSION: "1.26.10"
   PYTHON_VERSION: "3.13"
 
 jobs:
@@ -89,7 +89,7 @@ jobs:
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Verify dependency metadata and portable toolchain
         run: ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon
       - name: Build optimized daily-use APK
@@ -222,7 +222,7 @@ jobs:
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Enable KVM
         shell: bash
         run: |
@@ -292,7 +292,7 @@ jobs:
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Enable KVM
         shell: bash
         run: |

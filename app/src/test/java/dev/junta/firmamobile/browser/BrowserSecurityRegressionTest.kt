@@ -812,11 +812,29 @@ class BrowserSecurityRegressionTest {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
         )
+        val moduleSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/signing/SigningModule.kt",
+        )
         val adaptersSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/signing/RuntimeSigningAdapters.kt",
         )
+        val moduleBlock = source
+            .substringAfter("val signingModule = app.appContainer.createSigningModule(", missingDelimiterValue = "")
+            .substringBefore("\n        )")
         val coordinatorBlock = source
-            .substringAfter("batchSigningCoordinator = BatchSigningCoordinator(", missingDelimiterValue = "")
+            .substringAfter("batchSigningCoordinator = signingModule.batch(", missingDelimiterValue = "")
+            .substringBefore("\n        )")
+        val moduleBatchBlock = moduleSource
+            .substringAfter("    fun batch(", missingDelimiterValue = "")
+            .substringBefore("\n    }")
+        val moduleCoordinatorBlock = moduleBatchBlock
+            .substringAfter("return BatchSigningCoordinator(", missingDelimiterValue = "")
+            .substringBefore("\n        )")
+        val melillaAdapterBlock = source
+            .substringAfter("melillaBatchSigningAdapter = MelillaBatchSigningAdapter(", missingDelimiterValue = "")
+            .substringBefore("\n        )")
+        val extremaduraAdapterBlock = source
+            .substringAfter("extremaduraBatchSigningAdapter = ExtremaduraBatchSigningAdapter(", missingDelimiterValue = "")
             .substringBefore("\n        )")
         val batchPrepareBlock = source
             .substringAfter("private fun prepareMelillaBatchSigning(", missingDelimiterValue = "")
@@ -832,25 +850,54 @@ class BrowserSecurityRegressionTest {
                 "ExtremaduraBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy()::validate))" in adaptersSource,
         )
         assertTrue(
-            "The batch coordinator must resolve its adapters and bind confirmation metadata to the active profile",
-            coordinatorBlock.isNotEmpty() &&
-                "adapterResolver = batchAdapters::resolve" in coordinatorBlock &&
+            "MainActivity must assemble batch signing through its owned module and active profile registry",
+            moduleBlock.isNotEmpty() &&
+                coordinatorBlock.isNotEmpty() &&
+                "certificateSession = app.certificateSession" in moduleBlock &&
+                "scope = lifecycleScope" in moduleBlock &&
+                "currentOrigin = { currentSigningOrigin() }" in coordinatorBlock &&
+                "currentNavigationEpoch = { currentNavigationEpoch }" in coordinatorBlock &&
+                "profileDisplayName = melillaProfile.displayName" in coordinatorBlock &&
+                "compatibilityStatus = melillaProfile.compatibilityStatus" in coordinatorBlock &&
                 "profileRegistry = BuiltInSiteProfiles.runtimeRegistry" in coordinatorBlock,
+        )
+        assertTrue(
+            "The batch coordinator must resolve its adapters and bind confirmation metadata to the active profile",
+            moduleCoordinatorBlock.isNotEmpty() &&
+                "val adapters = RuntimeSigningAdapters.batch()" in moduleBatchBlock &&
+                "certificateSession = certificateSession" in moduleCoordinatorBlock &&
+                "adapter = checkNotNull(adapters.resolve(MelillaBatchProtocolAdapter.ID))" in moduleCoordinatorBlock &&
+                "adapterResolver = adapters::resolve" in moduleCoordinatorBlock &&
+                "currentOrigin = currentOrigin" in moduleCoordinatorBlock &&
+                "currentNavigationEpoch = currentNavigationEpoch" in moduleCoordinatorBlock &&
+                "profileDisplayName = profileDisplayName" in moduleCoordinatorBlock &&
+                "compatibilityStatus = compatibilityStatus" in moduleCoordinatorBlock &&
+                "profileRegistry = profileRegistry" in moduleCoordinatorBlock,
+        )
+        assertTrue(
+            "Melilla and Extremadura normalizers must use the same active profile registry",
+            melillaAdapterBlock.isNotEmpty() &&
+                extremaduraAdapterBlock.isNotEmpty() &&
+                "registry = BuiltInSiteProfiles.runtimeRegistry" in melillaAdapterBlock &&
+                "registry = BuiltInSiteProfiles.runtimeRegistry" in extremaduraAdapterBlock,
         )
         assertTrue(
             "MainActivity must normalize an accepted batch with the adapter fixed to its exact profile id",
             batchPrepareBlock.isNotEmpty() &&
                 "when (request.profileId.value)" in batchPrepareBlock &&
-                "MelillaBatchBridgeAdapter.PROFILE_ID ->" in batchPrepareBlock &&
-                "ExtremaduraBatchBridgeAdapter.PROFILE_ID ->" in batchPrepareBlock &&
-                "melillaBatchSigningAdapter.normalize(request)" in batchPrepareBlock &&
-                "extremaduraBatchSigningAdapter.normalize(request)" in batchPrepareBlock,
+                "MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.normalize(request)" in batchPrepareBlock &&
+                "ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.normalize(request)" in batchPrepareBlock &&
+                "MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.replySink(reply)" in batchPrepareBlock &&
+                "ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.replySink(reply)" in batchPrepareBlock,
         )
         assertTrue(
             "Extremadura batch requests must retain the existing single BATCH ownership gate",
             batchPrepareBlock.isNotEmpty() &&
+                "val requestId = normalized.requestId" in batchPrepareBlock &&
                 "signingFlowOwnership.acquire(SigningFlowKind.BATCH, requestId)" in batchPrepareBlock &&
-                "batchSigningCoordinator.prepare(normalized, replySink)" in batchPrepareBlock,
+                "batchSigningCoordinator.prepare(normalized, replySink)" in batchPrepareBlock &&
+                batchPrepareBlock.indexOf("signingFlowOwnership.acquire(SigningFlowKind.BATCH, requestId)") <
+                    batchPrepareBlock.indexOf("batchSigningCoordinator.prepare(normalized, replySink)"),
         )
     }
 

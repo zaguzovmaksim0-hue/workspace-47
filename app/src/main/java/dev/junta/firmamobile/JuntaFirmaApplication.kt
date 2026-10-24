@@ -1,19 +1,12 @@
 package dev.junta.firmamobile
 
 import android.app.Application
-import android.os.SystemClock
 import android.util.Log
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import dev.junta.firmamobile.browser.ClientCertPreferenceCoordinator
-import dev.junta.firmamobile.certificate.AndroidKeystoreCertificateUnlockCache
 import dev.junta.firmamobile.certificate.CertificateGateway
 import dev.junta.firmamobile.certificate.CertificateUnlockCache
-import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.certificate.CertificateSession
-import dev.junta.firmamobile.certificate.ContentResolverCertificateDocumentAccess
-import dev.junta.firmamobile.certificate.Pkcs12Loader
-import dev.junta.firmamobile.certificate.PreferencesCertificateReferenceStore
-import dev.junta.firmamobile.certificate.certificateReferenceDataStore
 import dev.junta.firmamobile.network.BuildVariantSecureTunnelRuntimeFactory
 import dev.junta.firmamobile.network.SecureTunnelRuntime
 import dev.junta.firmamobile.profile.ProfileScopePreferences
@@ -56,6 +49,9 @@ class JuntaFirmaApplication : Application() {
     lateinit var clientCertPreferenceCoordinator: ClientCertPreferenceCoordinator
         internal set
 
+    internal lateinit var appContainer: AppContainer
+        private set
+
     internal lateinit var secureTunnelRuntime: SecureTunnelRuntime
         private set
 
@@ -72,15 +68,11 @@ class JuntaFirmaApplication : Application() {
         )
         secureTunnelRuntime = BuildVariantSecureTunnelRuntimeFactory.create(this)
         clientCertPreferenceCoordinator = ClientCertPreferenceCoordinator()
-        certificateSession = CertificateSession(monotonicNanos = SystemClock::elapsedRealtimeNanos)
-        certificateUnlockCache = AndroidKeystoreCertificateUnlockCache(
-            this, authentication = certificateUnlockAuthentication,
-        )
-        certificateGateway = CertificateRepository(
-            documentAccess = ContentResolverCertificateDocumentAccess(contentResolver),
-            referenceStore = PreferencesCertificateReferenceStore(certificateReferenceDataStore),
-            loader = Pkcs12Loader(),
-        )
+        appContainer = AppContainer.create(this, certificateUnlockAuthentication)
+        val certificateModule = appContainer.certificateModule
+        certificateSession = certificateModule.session
+        certificateUnlockCache = certificateModule.unlockCache
+        certificateGateway = certificateModule.gateway
     }
 
     private companion object {

@@ -113,13 +113,13 @@ jobs:
           set +o pipefail
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Verify Android runtime dependency lock
         run: ./gradlew :app:verifyRuntimeDependencyLocks --no-daemon
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.26.9"
+          go-version: "1.26.10"
           cache: false
       - name: Install pinned OSV-Scanner
         run: go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8

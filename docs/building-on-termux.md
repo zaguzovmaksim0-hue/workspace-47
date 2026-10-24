@@ -18,7 +18,7 @@ depends on a fail-closed verification task that requires an external private
 release signing configuration. QA remains separately debug-signed; the
 publication gate never supplies real release credentials.
 
-For Android SDK 36 host tests, Java/Kotlin bytecode targets remain JVM 17 while
+For Android SDK 37 compilation (target API36) and host tests, Java/Kotlin bytecode targets remain JVM 17 while
 Gradle `Test` workers use an OpenJDK 21 launcher required by Robolectric. Native
 Termux therefore requires both `openjdk-17` and `openjdk-21`; `JAVA_HOME` stays
 on Java 17 for Gradle/build execution and the wrapper exposes both installations

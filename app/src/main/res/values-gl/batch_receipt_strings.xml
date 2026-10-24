@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="native_batch_details_show">Ver os resultados por documento</string>
+    <string name="native_batch_details_hide">Ocultar os resultados por documento</string>
+    <string name="native_batch_origin_local">Resultados da operación local. Unha sinatura xerada non demostra que o sitio a recibise ou gardase. A entrega da resposta indícase por separado; non confirma a aceptación administrativa.</string>
+    <string name="native_batch_origin_service">Lote con servizo remoto: estados comunicados polo servizo e posibles omisións realizadas por este cliente. A entrega ao sitio indícase por separado. Non acredita a aceptación administrativa nin reverte os efectos parciais.</string>
+    <string name="native_batch_id">%1$d. Documento: %2$s</string>
+    <string name="native_batch_status">Código de resultado: %1$s</string>
+    <string name="native_batch_description">Descrición recibida: %1$s</string>
+    <string name="native_batch_status_done">Sinatura rematada; estado de gardado segundo a orixe indicada.</string>
+    <string name="native_batch_status_pending_save">Sinatura producida; gardado non confirmado.</string>
+    <string name="native_batch_status_save_skipped">Sinatura producida; gardado omitido.</string>
+    <string name="native_batch_status_save_failed">Erro ao gardar o resultado.</string>
+    <string name="native_batch_status_pre_failed">Erro na preparación ou na sinatura local.</string>
+    <string name="native_batch_status_post_failed">Erro na finalización do servizo.</string>
+    <string name="native_batch_status_skipped">Documento omitido.</string>
+    <string name="native_batch_status_not_started">Documento non iniciado.</string>
+    <string name="native_batch_status_rollback">O servizo declara unha reversión do gardado.</string>
+    <string name="native_batch_status_failed">Resultado negativo declarado polo servizo.</string>
+    <string name="native_batch_status_other">Consulta o código comunicado pola orixe do resultado.</string>
+</resources>

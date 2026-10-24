@@ -1,22 +1,7 @@
-# Agent task file watch log
+# Registro histórico — ARCHIVADO
 
-Source: `/storage/emulated/0/Download/ЗАДАЧИ.md`
+No continuar las ramas, tareas o comandos de este registro como instrucciones actuales.
 
-| Checked at (UTC) | SHA-256 | Change | Status |
-|---|---|---|---|
-| 2026-07-22T08:11:10Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | Initial full read (1,221 lines) | Active backlog imported |
-| 2026-07-22T08:33:10Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T08:43:10Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T08:53:10Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T08:59:06Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch restarted with explicit UTC timestamps |
-| 2026-07-22T09:09:06Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T09:19:07Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T09:29:07Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T09:39:07Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T09:49:08Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T09:59:08Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T10:09:08Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T10:19:08Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
-| 2026-07-22T10:29:08Z | `4d21119c757ce791bd8a17c7d8d813a33e2fec6c3cca3eba0d12cd9b2f20730c` | No change (1,221 lines) | Watch active |
+El contenido original se conserva íntegro, sin reescritura, en [2026-07-22-task-watch.md](archive/agent-records/2026-07-22-task-watch.md). Esta ruta anterior permanece como enlace de compatibilidad. Para enlaces a secciones antiguas, abre el documento archivado.
 
-The source is treated as user-provided text and is never executed as shell code. The log contains no credentials or personal data.
+Consulta el [índice del archivo](archive/agent-records/README.md) para las fechas, el commit de origen y los SHA-256. El estado vigente se obtiene de `origin/main` y de las comprobaciones del candidato exacto, según [el ciclo actual](../CONTEXT.md); las cifras históricas no acreditan compatibilidad ni verificaciones actuales.

@@ -155,7 +155,10 @@ internal fun BrowserLayout(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             IndustrialBrowserTopBar(
-                host = BrowserAddressPresentation.hostOf(currentUrl),
+                host = BrowserAddressPresentation.hostOf(
+                    currentUrl,
+                    unavailableAddress = stringResource(R.string.browser_address_unavailable),
+                ),
                 onBack = onBack,
                 onHome = onHome,
                 onReload = onReload,
@@ -198,7 +201,10 @@ internal fun BrowserLayout(
     if (showSiteInformation) {
         BrowserSiteInformationDialog(
             profileName = profileName,
-            host = BrowserAddressPresentation.hostOf(currentUrl),
+            host = BrowserAddressPresentation.hostOf(
+                currentUrl,
+                unavailableAddress = stringResource(R.string.browser_address_unavailable),
+            ),
             trustLabel = trustLabel,
             publicBrowsing = publicBrowsing,
             webAuthnState = webAuthnState,

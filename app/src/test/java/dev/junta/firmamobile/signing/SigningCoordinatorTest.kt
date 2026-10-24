@@ -34,6 +34,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -215,6 +216,7 @@ class SigningCoordinatorTest {
         assertEquals("Junta de Andalucía", state.profileName)
         assertEquals(CompatibilityStatus.EXPERIMENTAL, state.compatibilityStatus)
         assertEquals("Autenticación con certificado", state.safeDescription)
+        assertNull(state.batchDocumentReview)
         assertEquals("CAdES", state.format)
         assertEquals("SHA256withRSA", state.algorithm)
         assertEquals(identity.summary.ownerName, state.certificateOwner)
@@ -824,11 +826,160 @@ class SigningCoordinatorTest {
         assertEquals(listOf("failure:REQUEST_EXPIRED"), reply.events)
     }
 
+    @Test
+    fun documentConsentCancelClearsMetadataHeldByAnOldUiSnapshot() {
+        val metadataAdapter = DocumentEvidenceAdapter()
+        val local = documentCoordinator(metadataAdapter)
+        local.prepare(documentRequest(), RecordingReply(REQUEST_ID))
+        val awaiting = local.state.value as SigningUiState.AwaitingConfirmation
+        val document = checkNotNull(awaiting.documentConsent.actualDocument)
+        assertTrue(document.sha256ForDisplay() != null)
+        assertFalse(awaiting.toString().contains(document.sha256ForDisplay()!!))
+
+        assertTrue(local.cancel(SigningCancelReason.USER, REQUEST_ID))
+
+        assertEquals(SigningUiState.Idle, local.state.value)
+        assertNull(awaiting.documentConsent.actualDocument)
+        assertNull(document.sha256ForDisplay())
+        assertEquals(1, metadataAdapter.metadataCalls)
+        assertTrue(engine.events.isEmpty())
+        local.close()
+    }
+
+    @Test
+    fun documentConsentExpiryClearsAnOldUiSnapshotWithoutRefetching() {
+        val monotonic = MutableMonotonicClock(1_000L)
+        val metadataAdapter = DocumentEvidenceAdapter()
+        val local = SigningCoordinator(
+            certificateSession = session, adapter = metadataAdapter, localSignatureEngine = engine,
+            currentOrigin = { activeOrigin }, clock = clock, expiryScheduler = expiryScheduler,
+            monotonicNanos = monotonic::nowNanos,
+        )
+        local.prepare(documentRequest(observedAtMonotonicNanos = 1_000L), RecordingReply(REQUEST_ID))
+        val awaiting = local.state.value as SigningUiState.AwaitingConfirmation
+        val document = checkNotNull(awaiting.documentConsent.actualDocument)
+        monotonic.advance(Duration.ofMinutes(2))
+
+        expiryScheduler.runPending()
+
+        assertEquals(SigningUiState.Failed(REQUEST_ID, SigningErrorCode.REQUEST_EXPIRED), local.state.value)
+        assertNull(awaiting.documentConsent.actualDocument)
+        assertNull(document.sha256ForDisplay())
+        assertEquals(1, metadataAdapter.metadataCalls)
+        assertTrue(engine.events.isEmpty())
+        local.close()
+    }
+
+    @Test
+    fun documentConsentConfirmHidesDisplayBeforeValidationAndNeverRebuildsEvidence() = runTest {
+        val metadataAdapter = DocumentEvidenceAdapter()
+        var dismissedSnapshot: DocumentConsentEvidence? = null
+        var documentSnapshot: ActualDocumentMetadata? = null
+        val local = SigningCoordinator(
+            certificateSession = session, adapter = metadataAdapter, localSignatureEngine = engine,
+            currentOrigin = {
+                dismissedSnapshot?.let { assertNull(it.actualDocument) }
+                documentSnapshot?.let { assertNull(it.sha256ForDisplay()) }
+                activeOrigin
+            },
+            clock = clock, expiryScheduler = expiryScheduler,
+        )
+        local.prepare(documentRequest(), RecordingReply(REQUEST_ID))
+        val awaiting = local.state.value as SigningUiState.AwaitingConfirmation
+        dismissedSnapshot = awaiting.documentConsent
+        documentSnapshot = checkNotNull(awaiting.documentConsent.actualDocument)
+
+        assertEquals(SigningExecutionResult.Delivered(REQUEST_ID), local.confirm(REQUEST_ID))
+
+        assertNull(awaiting.documentConsent.actualDocument)
+        assertNull(checkNotNull(documentSnapshot).sha256ForDisplay())
+        assertEquals(1, metadataAdapter.metadataCalls)
+        assertEquals(listOf("local"), engine.events)
+        local.close()
+    }
+
+    @Test
+    fun documentEvidenceFromAnotherRequestWithTheSameIdIsRejectedAndCleared() {
+        val other = documentRequest()
+        val wrongEvidence = coordinatorDocumentEvidence(other)
+        val metadataAdapter = DocumentEvidenceAdapter { wrongEvidence }
+        val local = documentCoordinator(metadataAdapter)
+
+        val result = local.prepare(documentRequest(), RecordingReply(REQUEST_ID))
+
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.PAYLOAD_CHANGED), result)
+        assertNull(wrongEvidence.actualDocument)
+        assertEquals(SigningUiState.Failed(REQUEST_ID, SigningErrorCode.PAYLOAD_CHANGED), local.state.value)
+        assertTrue(engine.events.isEmpty())
+        other.close()
+        local.close()
+    }
+
+    @Test
+    fun documentConsentInvalidatedByNavigationIsNotRefetchedAndRetainsNoMetadata() = runTest {
+        val metadataAdapter = DocumentEvidenceAdapter()
+        val local = documentCoordinator(metadataAdapter)
+        local.prepare(documentRequest(), RecordingReply(REQUEST_ID))
+        val awaiting = local.state.value as SigningUiState.AwaitingConfirmation
+        val document = checkNotNull(awaiting.documentConsent.actualDocument)
+        activeOrigin = TrustedOrigin("https", "other.invalid", 443)
+
+        assertEquals(SigningExecutionResult.Failed(SigningErrorCode.ORIGIN_NOT_ALLOWED), local.confirm(REQUEST_ID))
+
+        assertNull(awaiting.documentConsent.actualDocument)
+        assertNull(document.sha256ForDisplay())
+        assertEquals(1, metadataAdapter.metadataCalls)
+        assertTrue(engine.events.isEmpty())
+        local.close()
+    }
+
+    @Test
+    fun documentConsentIsClearedIfSchedulingFailsBeforePublication() {
+        val metadataAdapter = DocumentEvidenceAdapter()
+        val local = SigningCoordinator(
+            certificateSession = session, adapter = metadataAdapter, localSignatureEngine = engine,
+            currentOrigin = { activeOrigin }, clock = clock,
+            expiryScheduler = object : SigningExpiryScheduler {
+                override fun schedule(delay: Duration, action: () -> Unit): SigningExpiryHandle =
+                    error("synthetic scheduler failure")
+            },
+        )
+
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.PROTOCOL_FAILED),
+            local.prepare(documentRequest(), RecordingReply(REQUEST_ID)))
+
+        assertNull(checkNotNull(metadataAdapter.evidence).actualDocument)
+        assertTrue(engine.events.isEmpty())
+        local.close()
+    }
+
+    private fun documentCoordinator(adapter: SigningProtocolAdapter) = SigningCoordinator(
+        certificateSession = session, adapter = adapter, localSignatureEngine = engine,
+        currentOrigin = { activeOrigin }, clock = clock, expiryScheduler = expiryScheduler,
+    )
+
+    private fun documentRequest(observedAtMonotonicNanos: Long = System.nanoTime()) = request(
+        observedAtMonotonicNanos = observedAtMonotonicNanos,
+        payload = MiniAppletPayloadCodec.encode("%PDF-synthetic".encodeToByteArray(), "fixed=true"),
+    )
+
+    private class DocumentEvidenceAdapter(
+        private val evidenceFor: (NormalizedSignRequest) -> DocumentConsentEvidence = ::coordinatorDocumentEvidence,
+    ) : SigningProtocolAdapter by RecordingAdapter() {
+        var metadataCalls = 0
+        var evidence: DocumentConsentEvidence? = null
+        override fun documentConsent(request: NormalizedSignRequest): DocumentConsentEvidence {
+            check(++metadataCalls == 1) { "Consent evidence must not be refetched" }
+            return evidenceFor(request).also { evidence = it }
+        }
+    }
+
     private fun request(
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA,
         navigationEpoch: Long = 0L,
         observedAtMonotonicNanos: Long = System.nanoTime(),
         pageUrl: String? = null,
+        payload: ByteArray = PAYLOAD.copyOf(),
     ) = NormalizedSignRequest(
         requestId = REQUEST_ID,
         protocolId = JuntaTriPhaseAdapter.ID,
@@ -844,7 +995,7 @@ class SigningCoordinatorTest {
         algorithm = algorithm,
         format = SigningFormat.CADES,
         safeDescription = "Autenticación con certificado",
-        payload = PAYLOAD.copyOf(),
+        payload = payload,
         observedAtMonotonicNanos = observedAtMonotonicNanos,
     )
 
@@ -1128,3 +1279,10 @@ class SigningCoordinatorTest {
         val FINAL_SIGNATURE = byteArrayOf(4, 5, 6)
     }
 }
+
+private fun coordinatorDocumentEvidence(request: NormalizedSignRequest): DocumentConsentEvidence =
+    request.withPayload { envelope ->
+        MiniAppletPayloadCodec.withDecoded(envelope) { document, _ ->
+            DocumentConsentEvidence.fromEnvelope(request, envelope, document)
+        }
+    }

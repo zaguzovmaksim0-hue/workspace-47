@@ -10,7 +10,7 @@
 
 - [Ciclo de trabajo del repositorio](../CONTEXT.md): main estable, ramas acotadas y verificación del commit exacto.
 - [Guía de contribución](../CONTRIBUTING.md).
-- [Política de verificación](agents/github-actions-verification.md): pruebas, lint y compilaciones en GitHub Actions; el emulador requiere activación manual explícita.
+- [Política de verificación](agents/github-actions-verification.md): pruebas, lint y compilaciones en GitHub Actions; el emulador se ejecuta en la programación nocturna de la rama predeterminada o mediante activación manual explícita, no en PR/push ordinarios.
 - [Plan de pruebas](test-plan.md) y [muestras sintéticas](test-fixtures.md).
 - [Configuración de firma](release-signing.md).
 - [Modelo de seguridad](../SECURITY.md) y [procedencia](provenance.md).
@@ -24,6 +24,8 @@
 - `e2e/` conserva evidencias históricas de operaciones acotadas, no una garantía de compatibilidad universal actual.
 
 ## Registros históricos
+
+- [Archivo acotado de registros de agentes](archive/agent-records/README.md): copias íntegras con manifiesto SHA-256 y enlaces desde las rutas anteriores.
 
 `autonomous/`, `superpowers/` y los informes antiguos conservan sus fechas y evidencias por commit. No indican que deban retomarse ramas obsoletas. La documentación técnica e histórica puede permanecer en inglés; se conservan sus rutas para no romper enlaces.
 

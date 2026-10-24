@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_cades_policy_notice">The site requests this signature policy reference: %1$s. The identifier and digest will be included in the signed data. The policy document has not been downloaded or verified; including it does not, by itself, establish compliance with all its rules.</string>
+    <string name="native_cades_policy_batch">This request includes %1$d item(s) with an explicit signature policy. Each reference is preserved in its signature; incomplete data will cause that item to fail. Policy documents are not downloaded and the operation is not confirmed automatically.</string>
+</resources>

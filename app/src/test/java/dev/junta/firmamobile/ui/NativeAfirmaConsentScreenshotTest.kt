@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
-@Config(sdk = [35], qualifiers = "w412dp-h915dp-mdpi")
+@Config(sdk = [35], qualifiers = "es-rES-w412dp-h915dp-mdpi")
 class NativeAfirmaConsentScreenshotTest {
     @get:Rule val rule = createComposeRule()
     @Test fun renderSyntheticConsentForReview() {

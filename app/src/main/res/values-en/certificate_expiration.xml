@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="certificate_expiration_soon_title">Your certificate expires soon</string>
+    <string name="certificate_expiration_week_title">Your certificate expires in the next 7 days</string>
+    <string name="certificate_expiration_today_title">Your certificate expires today</string>
+    <string name="certificate_expiration_expired_title">Your certificate has expired</string>
+    <plurals name="certificate_expiration_days">
+        <item quantity="one">%1$d calendar day remains. Expires on %2$s. Contact the issuing authority about renewal.</item>
+        <item quantity="other">%1$d calendar days remain. Expires on %2$s. Contact the issuing authority about renewal.</item>
+    </plurals>
+    <string name="certificate_expiration_timestamp_copy">Expiration date and time: %1$s. Contact the issuing authority about renewal.</string>
+</resources>

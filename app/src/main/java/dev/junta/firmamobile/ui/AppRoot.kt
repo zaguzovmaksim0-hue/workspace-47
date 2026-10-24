@@ -395,6 +395,7 @@ private fun CertificateSummaryDetails(summary: CertificateSummary) {
             color = JuntaInk,
             style = MaterialTheme.typography.bodyMedium,
         )
+        CertificateExpirationNotice(validUntil = summary.validUntil)
     }
 }
 

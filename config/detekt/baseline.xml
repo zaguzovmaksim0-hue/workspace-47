@@ -168,7 +168,6 @@
     <ID>CyclomaticComplexMethod:JuntaWebViewClient.kt$JuntaWebViewClient$override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?)</ID>
     <ID>CyclomaticComplexMethod:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, ): Boolean</ID>
     <ID>CyclomaticComplexMethod:JuntaWebViewClient.kt$JuntaWebViewClient$private fun recordVeaAuthReturnDiagnostic(rawUrl: String)</ID>
-    <ID>CyclomaticComplexMethod:LegalInformationDialog.kt$@Composable internal fun LegalInformationDialog(onDismiss: () -&gt; Unit)</ID>
     <ID>CyclomaticComplexMethod:LocalXadesDetachedAdapter.kt$XadesDetachedCodec$private fun createSignedProperties( document: Document, signedPropertiesId: String, referenceId: String, certificate: X509Certificate, clock: Clock, ): Element</ID>
     <ID>CyclomaticComplexMethod:LugoBatchBridgeAdapter.kt$LugoBatchBridgeAdapter$@Synchronized fun route(rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, navigationEpoch: Long = 0L): MelillaBatchBridgeRouteResult</ID>
     <ID>CyclomaticComplexMethod:LugoBatchBridgeAdapter.kt$LugoBatchBridgeAdapter$private fun parseBatch(value: String): MelillaBatchDocument?</ID>
@@ -356,7 +355,6 @@
     <ID>LongMethod:JuntaTriPhaseCodec.kt$AutoFirmaCadesTriPhaseCodec$override fun decodeRequest( request: NormalizedSignRequest, certificateChain: List&lt;X509Certificate&gt;, ): JuntaTriPhaseRequestData</ID>
     <ID>LongMethod:JuntaTriPhaseCodec.kt$AutoFirmaCadesTriPhaseCodec$private fun parsePreResponse( data: JuntaTriPhaseRequestData, response: ByteArray, ): PreSignResult</ID>
     <ID>LongMethod:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, ): Boolean</ID>
-    <ID>LongMethod:LegalInformationDialog.kt$@Composable internal fun LegalInformationDialog(onDismiss: () -&gt; Unit)</ID>
     <ID>LongMethod:LocalXadesDetachedAdapter.kt$XadesDetachedCodec$fun createPreSign( data: ByteArray, certificateChain: List&lt;X509Certificate&gt;, clock: Clock, ): XadesPreSignMaterial</ID>
     <ID>LongMethod:MainActivity.kt$MainActivity$private fun initializeReadyContent(repository: PortalCatalogRepository)</ID>
     <ID>LongMethod:MelillaBatchBridgeAdapter.kt$StaBatchBridgeAdapter$@Synchronized fun route( rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, navigationEpoch: Long = 0L, ): MelillaBatchBridgeRouteResult</ID>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="signing_batch_document_count">
+        <item quantity="one">%1$d dokumentu sortan</item>
+        <item quantity="other">%1$d dokumentu sortan</item>
+    </plurals>
+    <string name="signing_batch_documents_show">Ikusi dokumentuak</string>
+    <string name="signing_batch_documents_hide">Ezkutatu dokumentuak</string>
+    <string name="signing_batch_documents_explanation">Guneak emandako identifikatzaileak dira; ez dira dokumentuen edukiaren aurrebista.</string>
+    <string name="signing_batch_document_number">%1$d. dokumentua</string>
+    <string name="signing_batch_document_identifier">%1$d. dokumentua · ID: %2$s</string>
+</resources>
