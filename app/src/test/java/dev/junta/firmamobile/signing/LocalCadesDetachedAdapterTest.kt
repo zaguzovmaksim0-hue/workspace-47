@@ -11,6 +11,7 @@ import java.util.UUID
 import kotlinx.coroutines.test.runTest
 import org.bouncycastle.cms.CMSProcessableByteArray
 import org.bouncycastle.cms.CMSSignedData
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -176,6 +177,79 @@ class LocalCadesDetachedAdapterTest {
         prepared.preSign.close()
         first.close()
         second.close()
+    }
+
+    @Test
+    fun aragonMigrationMatchesLegacySignedBytesAndCompleteCms() = runTest {
+        val legacy = LegacyAragonCadesDetachedAdapter(clock)
+        val golden = adapterGoldenCases().first { it.name == "Aragon" }
+        request().use { oldOwner ->
+            request().use { newOwner ->
+                val oldPreSign = (legacy.prepare(oldOwner, identity.chain) as ProtocolPrepareResult.Success).preSign
+                val newPreSign = (adapter.prepare(newOwner, identity.chain) as ProtocolPrepareResult.Success).preSign
+                oldPreSign.use { old ->
+                    newPreSign.use { new ->
+                        old.withBytesToSign { before -> new.withBytesToSign { after -> assertArrayEquals(before, after) } }
+                        val signed = old.withBytesToSign {
+                            JcaLocalSignatureEngine().sign(it, identity, SigningAlgorithm.SHA1_WITH_RSA)
+                        } as LocalSignatureResult.Success
+                        signed.signature.use { local ->
+                            val before = legacy.complete(oldOwner, old, local) as ProtocolCompletionResult.Success
+                            val after = adapter.complete(newOwner, new, local) as ProtocolCompletionResult.Success
+                            before.signature.use { expected ->
+                                after.signature.use { actual ->
+                                    expected.withBytes { one ->
+                                        actual.withBytes { two ->
+                                            assertArrayEquals(one, two)
+                                            AdapterGoldenVerifier.verify(golden, one, identity.certificate)
+                                            AdapterGoldenVerifier.verify(golden, two, identity.certificate)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun aragonMigrationRetainsLegacyOwnerAndConsumptionOrder() = runTest {
+        for (candidate in listOf(LegacyAragonCadesDetachedAdapter(clock), adapter)) {
+            request().use { owner ->
+                request().use { impostor ->
+                    val preSign = (candidate.prepare(owner, identity.chain) as ProtocolPrepareResult.Success).preSign
+                    preSign.use { prepared ->
+                        val borrowed = prepared.withBytesToSign { it }
+                        val signed = prepared.withBytesToSign {
+                            JcaLocalSignatureEngine().sign(it, identity, SigningAlgorithm.SHA1_WITH_RSA)
+                        } as LocalSignatureResult.Success
+                        signed.signature.use { local ->
+                            assertEquals(owner.requestId, impostor.requestId)
+                            assertEquals(
+                                SigningErrorCode.PROTOCOL_FAILED,
+                                (candidate.complete(impostor, prepared, local) as ProtocolCompletionResult.Failure).code,
+                            )
+                            assertTrue(borrowed.any { it != 0.toByte() })
+                            assertEquals(
+                                SigningErrorCode.UNSUPPORTED_PROTOCOL,
+                                (ugrAdapter.complete(owner, prepared, local) as ProtocolCompletionResult.Failure).code,
+                            )
+                            // Aragón completes from its bound state even after the owner's payload is closed.
+                            owner.close()
+                            val completed = candidate.complete(owner, prepared, local) as ProtocolCompletionResult.Success
+                            completed.signature.close()
+                            assertTrue(borrowed.all { it == 0.toByte() })
+                            assertEquals(
+                                SigningErrorCode.PROTOCOL_FAILED,
+                                (candidate.complete(owner, prepared, local) as ProtocolCompletionResult.Failure).code,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private suspend fun assertFailure(
