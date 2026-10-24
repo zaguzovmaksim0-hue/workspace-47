@@ -27,6 +27,9 @@ interface CertificateReferenceStore {
     suspend fun write(reference: StoredCertificateReference)
 
     suspend fun clear()
+
+    /** Whether a saved reference still needs [uri]'s read grant; a single-reference store needs only its own. */
+    suspend fun references(uri: Uri): Boolean = read()?.uri == uri
 }
 
 val Context.certificateReferenceDataStore: DataStore<Preferences> by preferencesDataStore(
