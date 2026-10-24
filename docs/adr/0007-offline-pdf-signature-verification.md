@@ -1,4 +1,4 @@
-# 0006 — Bounded offline PDF signature verification
+# 0007 — Bounded offline PDF signature verification
 
 **Date:** 2026-10-24
 **Status:** Accepted
