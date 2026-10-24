@@ -2,6 +2,7 @@ package dev.junta.firmamobile.profile
 
 import java.net.URI
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 object SiteProfileCatalogParser {
     const val MAX_CATALOG_CHARS = 262_144
@@ -24,11 +25,21 @@ object SiteProfileCatalogParser {
 
     private fun profile(value: JValue): SiteProfile {
         val o = value.obj("profile")
-        o.exact(
+        val keys = arrayOf(
             "profileId", "profileVersion", "displayName", "compatibilityStatus", "activation",
             "startUrl", "initiatorOrigins", "redirectOrigins", "trustedBrowseOrigins", "endpoints",
             "operationPolicies", "capabilities", "clientAuthPolicy", "certificateRules", "evidence",
         )
+        require(o.values.keys == keys.toSet() + listOf("lastVerifiedOn").filter { it in o.values })
+        val compatibilityStatus = enum<CompatibilityStatus>(o.string("compatibilityStatus"))
+        val lastVerifiedOn = if ("lastVerifiedOn" in o.values) {
+            require(compatibilityStatus == CompatibilityStatus.VERIFIED_E2E)
+            val raw = o.string("lastVerifiedOn")
+            require(Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}").matches(raw))
+            LocalDate.parse(raw).also { require(it.year >= 1 && !it.isAfter(LocalDate.now(ZoneOffset.UTC))) }
+        } else {
+            null
+        }
         val profileId = ProfileId(o.string("profileId"))
         val endpoints = o.array("endpoints").map(::endpoint)
         require(endpoints.map { it.endpointId }.toSet().size == endpoints.size)
@@ -40,7 +51,8 @@ object SiteProfileCatalogParser {
             profileId = profileId,
             profileVersion = o.int("profileVersion").also { require(it >= 1) },
             displayName = o.string("displayName").also { require(it.isNotBlank() && it.length <= 128) },
-            compatibilityStatus = enum(o.string("compatibilityStatus")),
+            compatibilityStatus = compatibilityStatus,
+            lastVerifiedOn = lastVerifiedOn,
             activation = enum(o.string("activation")),
             startUrl = strictHttpsUrl(o.string("startUrl")),
             initiatorOrigins = origins(o.array("initiatorOrigins")),

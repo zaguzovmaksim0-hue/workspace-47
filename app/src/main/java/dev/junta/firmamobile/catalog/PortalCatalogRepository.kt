@@ -134,6 +134,9 @@ class PortalCatalogRepository(
             inventoryStatus = metadata.inventoryStatus,
             limitations = metadata.limitations,
             supportStatus = supportStatus,
+            lastVerifiedOn = profile?.takeIf {
+                bindingMatches && supportStatus == PortalSupportStatus.VERIFIED_E2E
+            }?.lastVerifiedOn,
             entryUrl = metadata.entryUrl,
             isEnabled = isOpenable,
             regionCode = metadata.regionCode,
