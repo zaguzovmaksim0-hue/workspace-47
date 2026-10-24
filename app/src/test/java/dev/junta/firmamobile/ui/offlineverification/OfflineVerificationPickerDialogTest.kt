@@ -86,7 +86,7 @@ class OfflineVerificationPickerDialogTest {
                 rule.onAllNodes(androidx.compose.ui.test.hasTestTag("offline-verification-result"))
                     .fetchSemanticsNodes().isNotEmpty()
             }
-            rule.onNodeWithText(context.getString(R.string.offline_verification_invalid)).performScrollTo().assertExists()
+            rule.onNodeWithText(context.getString(R.string.signature_verification_invalid)).performScrollTo().assertExists()
             assertEquals(listOf(OpenableColumns.SIZE), provider.projection.get())
             assertEquals(1, provider.closedCursors.get())
             assertTrue(context.contentResolver.persistedUriPermissions.isEmpty())

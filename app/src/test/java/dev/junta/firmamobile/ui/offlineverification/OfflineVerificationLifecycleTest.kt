@@ -189,7 +189,7 @@ class OfflineVerificationLifecycleTest {
         val owner = OfflineVerificationController(this, StandardTestDispatcher(testScheduler)) { _, _ ->
             error("oversize must never reach crypto")
         }
-        val source = SyntheticOfflineDocument(byteArrayOf(), 1_048_577L)
+        val source = SyntheticOfflineDocument(byteArrayOf(), 2_097_153L)
         choose(owner, OfflineInputKind.CMS, source)
         owner.verify(); advanceUntilIdle()
         assertEquals(OfflineVerificationOutcome.LIMIT_EXCEEDED, owner.state.value.outcome)
