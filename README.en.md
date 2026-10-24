@@ -65,7 +65,7 @@ The runtime catalog is generated from reviewed repository sources with `tools/ge
 
 ## Project navigation
 
-See [the documentation index](docs/README.md) for current engineering guidance, compatibility records, and historical archives. Start new work from current `origin/main`; historical worktrees are not continuation bases.
+See [the documentation index](docs/README.md) for current engineering guidance, compatibility records, and historical archives. Start new work from current `origin/main`; historical worktrees are not continuation bases. The [historical agent-record archive](docs/archive/agent-records/README.md) preserves the original bytes of the July task-watch log and two August handoffs, with SHA-256 records and compatibility links at their previous paths. Archived instructions and results are not current acceptance evidence.
 
 ## Build
 

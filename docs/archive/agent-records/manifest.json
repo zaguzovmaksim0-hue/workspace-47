@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "sourceCommit": "8827cbd7f236cc89714165b97c8d6e8f457afe12",
+  "records": [
+    {
+      "source": "docs/agent-task-watch-log.md",
+      "archive": "2026-07-22-task-watch.md",
+      "sha256": "43a0d28606e40e9b84e58a38fd9391234b33eb7764dcb188cde5d2809e8adcd0",
+      "bytes": 2225
+    },
+    {
+      "source": "docs/handoffs/F03_NEXT_CHAT_2026-08-01.md",
+      "archive": "2026-08-01-aeat-f03.md",
+      "sha256": "d4a7e9e33a9cb5fd8de8e3664948d5bad178f46f534d55a15974e95c2f5ed786",
+      "bytes": 8149
+    },
+    {
+      "source": "docs/handoffs/NEXT_CHAT_HANDOFF.md",
+      "archive": "2026-08-12-portal-cycle.md",
+      "sha256": "e45fe8cb0a69b3d9f3ad40f8c4468198f79f858a512375934bbe0d1a9b15ab42",
+      "bytes": 4896
+    }
+  ]
+}
