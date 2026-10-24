@@ -25,7 +25,7 @@ versionName=0.2.11
 Se admiten LF y CRLF y el salto final es opcional. El nombre debe ser
 `MAJOR.MINOR.PATCH` canónico. Al publicar un código superior a 13, actualizar
 el mínimo publicado en el validador Gradle, el helper y sus pruebas; no bajar
-ese mínimo. Véase [ADR 0006](adr/0006-android-version-source.md).
+ese mínimo. Véase [ADR 0008](adr/0008-android-version-source.md).
 
 ## Vista previa y escritura
 

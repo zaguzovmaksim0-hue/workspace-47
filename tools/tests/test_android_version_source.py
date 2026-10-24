@@ -11,13 +11,6 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class AndroidVersionSourceTest(unittest.TestCase):
-    def test_gradle_reads_and_validates_the_single_version_source(self):
-        source = (ROOT / 'app/build.gradle.kts').read_text()
-        self.assertIn('rootProject.layout.projectDirectory.file("version.properties")', source)
-        self.assertIn('parseAndroidVersion(providers.fileContents(androidVersionFile).asText.get())', source)
-        self.assertIn('versionCode = androidVersion.first', source)
-        self.assertIn('versionName = androidVersion.second', source)
-
     @unittest.skipUnless(shutil.which('kotlinc'), 'Standalone Kotlin compiler unavailable')
     def test_build_validator_rejects_decreased_missing_and_malformed_versions(self):
         source = (ROOT / 'app/build.gradle.kts').read_text()

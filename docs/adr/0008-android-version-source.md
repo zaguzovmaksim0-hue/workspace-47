@@ -1,4 +1,4 @@
-# 0006 — Deterministic Android version source
+# 0008 — Deterministic Android version source
 
 **Date:** 2026-10-24
 **Status:** Proposed
