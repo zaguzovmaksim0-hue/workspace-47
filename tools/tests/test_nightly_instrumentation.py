@@ -14,7 +14,9 @@ class NightlyInstrumentationTest(unittest.TestCase):
 
     def test_nightly_schedule_uses_off_peak_utc(self):
         self.assertEqual([{'cron': '23 2 * * *'}], self.workflow['on']['schedule'])
-        self.assertEqual('false', self.workflow['on']['workflow_dispatch']['inputs']['run_instrumentation']['default'])
+        manual = self.workflow['on']['workflow_dispatch']['inputs']['run_instrumentation']
+        self.assertEqual('false', manual['default'])
+        self.assertEqual('boolean', manual['type'])
 
     def test_only_schedule_or_explicit_manual_input_enables_both_emulator_jobs(self):
         expected = "${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_instrumentation) }}"

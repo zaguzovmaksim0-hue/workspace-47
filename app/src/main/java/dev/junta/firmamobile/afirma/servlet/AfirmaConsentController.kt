@@ -37,10 +37,15 @@ internal data class AfirmaConsentDetails(
     val signaturePolicyItems: Int = 0,
 )
 
+internal sealed interface AfirmaResultSummary {
+    data object ServiceResult : AfirmaResultSummary
+    data class Batch(val documents: Int, val positive: Int) : AfirmaResultSummary
+}
+
 internal interface PreparedAfirmaOperation : Closeable {
     val details: AfirmaConsentDetails
     val pdfPreviews: Map<Int, PdfPreviewSource?> get() = emptyMap()
-    val resultSummary: String? get() = null
+    val resultSummary: AfirmaResultSummary? get() = null
     val batchReceipt: NativeBatchReceipt? get() = null
     fun certificateCompatible(identity: UnlockedIdentity): Boolean
     /** Implementations call authorizeUpload immediately before the one upload.
@@ -67,7 +72,7 @@ internal data class AfirmaConsentPrompt(
     val phase: AfirmaConsentPhase,
     val certificateOwner: String?,
     val problem: AfirmaConsentProblem?,
-    val resultSummary: String? = null,
+    val resultSummary: AfirmaResultSummary? = null,
     val batchReceipt: NativeBatchReceipt? = null,
     val pdfPreviews: Map<Int, PdfPreviewSource?> = emptyMap(),
 ) {

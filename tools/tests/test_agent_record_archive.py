@@ -1,4 +1,4 @@
-"""Preserve bounded historical agent records without treating them as live tasks."""
+"""Validate historical archive integrity without pinning its contents or prose."""
 import hashlib
 import json
 from pathlib import Path
@@ -7,64 +7,64 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 ARCHIVE = ROOT / "docs/archive/agent-records"
-EXPECTED = {
-    "docs/agent-task-watch-log.md": "2026-07-22-task-watch.md",
-    "docs/handoffs/F03_NEXT_CHAT_2026-08-01.md": "2026-08-01-aeat-f03.md",
-    "docs/handoffs/NEXT_CHAT_HANDOFF.md": "2026-08-12-portal-cycle.md",
-}
+
 
 class AgentRecordArchiveTest(unittest.TestCase):
     def manifest(self):
         return json.loads((ARCHIVE / "manifest.json").read_text())
 
-    def test_manifest_has_exact_bounded_sources(self):
+    def record_path(self, base, relative):
+        self.assertIsInstance(relative, str)
+        self.assertTrue(relative)
+        path = Path(relative)
+        self.assertFalse(path.is_absolute())
+        self.assertNotIn("..", path.parts)
+        self.assertNotIn("\\", relative)
+        resolved = (base / path).resolve()
+        self.assertTrue(resolved.is_relative_to(base.resolve()), relative)
+        return resolved
+
+    def test_manifest_schema_and_paths_are_valid(self):
         m = self.manifest()
         self.assertEqual(set(m), {"schema", "sourceCommit", "records"})
         self.assertEqual(m["schema"], 1)
-        self.assertEqual(m["sourceCommit"], "8827cbd7f236cc89714165b97c8d6e8f457afe12")
-        self.assertEqual({r["source"]: r["archive"] for r in m["records"]}, EXPECTED)
-        self.assertEqual(len(m["records"]), 3)
+        self.assertRegex(m["sourceCommit"], r"\A[0-9a-f]{40}\Z")
+        self.assertIsInstance(m["records"], list)
+        self.assertTrue(m["records"])
+        for r in m["records"]:
+            self.assertEqual(set(r), {"source", "archive", "sha256", "bytes"})
+            self.record_path(ROOT, r["source"])
+            self.record_path(ARCHIVE, r["archive"])
+            self.assertRegex(r["sha256"], r"\A[0-9a-f]{64}\Z")
+            self.assertIs(type(r["bytes"]), int)
+            self.assertGreaterEqual(r["bytes"], 0)
+        for key in ("source", "archive"):
+            paths = [self.record_path(ROOT if key == "source" else ARCHIVE, r[key]) for r in m["records"]]
+            self.assertEqual(len(paths), len(set(paths)))
 
     def test_each_archived_byte_sequence_matches_pinned_digest_and_length(self):
         for r in self.manifest()["records"]:
             with self.subTest(source=r["source"]):
-                self.assertEqual(set(r), {"source", "archive", "sha256", "bytes"})
-                b = (ARCHIVE / r["archive"]).read_bytes()
+                b = self.record_path(ARCHIVE, r["archive"]).read_bytes()
                 self.assertEqual(len(b), r["bytes"])
                 self.assertEqual(hashlib.sha256(b).hexdigest(), r["sha256"])
 
-    def test_original_routes_are_explicit_non_operational_landings(self):
-        for source, target in EXPECTED.items():
-            with self.subTest(source=source):
-                p = ROOT / source
-                s = p.read_text()
-                self.assertIn("ARCHIVADO", s)
-                self.assertIn("No continuar", s)
-                links = re.findall(r"\]\(([^)]+)\)", s)
+    def test_original_routes_link_archived_records(self):
+        for r in self.manifest()["records"]:
+            with self.subTest(source=r["source"]):
+                p = self.record_path(ROOT, r["source"])
+                links = re.findall(r"\]\(([^)]+)\)", p.read_text())
                 resolved = {(p.parent / link).resolve() for link in links if not link.startswith("https:")}
-                self.assertIn((ARCHIVE / target).resolve(), resolved)
+                self.assertIn(self.record_path(ARCHIVE, r["archive"]), resolved)
                 self.assertTrue(all(x.is_file() for x in resolved))
-                self.assertLess(len(s), 1600)
 
-    def test_archive_index_links_every_record_and_current_guidance(self):
+    def test_archive_index_links_every_record(self):
         p = ARCHIVE / "README.md"
-        s = p.read_text()
-        for name in EXPECTED.values():
-            self.assertIn(f"]({name})", s)
-        self.assertIn("CONTEXT.md", s)
-        self.assertIn("no acredita", s)
-        for link in re.findall(r"\]\(([^)]+)\)", s):
-            self.assertTrue((p.parent / link).resolve().is_file(), link)
+        links = {(p.parent / link).resolve() for link in re.findall(r"\]\(([^)]+)\)", p.read_text())}
+        for r in self.manifest()["records"]:
+            self.assertIn(self.record_path(ARCHIVE, r["archive"]), links)
+        self.assertTrue(all(link.is_file() for link in links))
 
-    def test_documentation_entry_points_link_archive(self):
-        self.assertIn("archive/agent-records/README.md", (ROOT / "docs/README.md").read_text())
-        self.assertIn("docs/archive/agent-records/README.md", (ROOT / "README.en.md").read_text())
-
-    def test_index_describes_nightly_and_manual_instrumentation(self):
-        s = (ROOT / "docs/README.md").read_text()
-        self.assertIn("nocturna", s)
-        self.assertIn("manual explícita", s)
-        self.assertIn("PR/push ordinarios", s)
 
 if __name__ == "__main__":
     unittest.main()

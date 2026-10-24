@@ -45,7 +45,7 @@ internal class NativeMultiPhaseOperation(
         )
         else -> emptyMap()
     }
-    override var resultSummary: String? = null
+    override var resultSummary: AfirmaResultSummary? = null
         private set
     @Volatile override var batchReceipt: NativeBatchReceipt? = null
         private set
@@ -163,7 +163,7 @@ internal class NativeMultiPhaseOperation(
                         val text = response.toString(Charsets.UTF_8).trim(); require(text.startsWith("OK NEWID="))
                         AfirmaServletInvocationParser.strictBase64(text.removePrefix("OK NEWID="), 2_097_152)
                     } finally { response.fill(0) }
-                    resultSummary = "El servicio devolvió un resultado. No acredita por sí solo la aceptación del trámite."
+                    resultSummary = AfirmaResultSummary.ServiceResult
                 }
                 try {
                     checkOwner()

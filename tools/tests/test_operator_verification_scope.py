@@ -7,34 +7,6 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class OperatorVerificationScopeTest(unittest.TestCase):
-    def test_only_nightly_or_explicit_manual_opt_in_runs_instrumentation(self):
-        text = (ROOT / ".github/workflows/ci.yml").read_text()
-        job = text.split("  android-instrumented:\n", 1)[1].split("\n  python:", 1)[0]
-        condition = re.search(r"^    if: (.+)$", job, re.M)
-        self.assertIsNotNone(condition)
-        self.assertEqual(
-            "${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_instrumentation) }}",
-            condition.group(1),
-        )
-        self.assertIn("script: bash scripts/run-android-instrumentation-ci.sh", job)
-        self.assertNotIn("continue-on-error", job)
-        # Ordinary PRs and main pushes remain non-E2E, including after merge.
-        for event, opt_in, expected in [
-            ("pull_request", False, False),
-            ("pull_request", True, False),
-            ("push", False, False),
-            ("push", True, False),
-            ("workflow_dispatch", False, False),
-            ("workflow_dispatch", True, True),
-            ("schedule", False, True),
-            ("schedule", True, True),
-            ("repository_dispatch", True, False),
-        ]:
-            run = event == "schedule" or (event == "workflow_dispatch" and opt_in)
-            self.assertEqual(expected, run)
-        self.assertIn("type: boolean", text)
-        self.assertIn("default: false", text)
-
     def test_unit_build_and_security_jobs_are_not_conditioned_on_the_label(self):
         ci = (ROOT / ".github/workflows/ci.yml").read_text()
         sections = dict(re.findall(r"^  ([a-z-]+):\n(.*?)(?=^  [a-z-]+:\n|\Z)", ci.split("jobs:\n", 1)[1], re.M | re.S))

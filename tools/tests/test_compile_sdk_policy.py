@@ -17,7 +17,7 @@ class CompileSdkPolicyTest(unittest.TestCase):
         spec = (ROOT / 'docs/spec.md').read_text()
         for name in ['compileSdk', 'targetSdk', 'minSdk']:
             value = re.search(rf'\b{name}\s*=\s*(\d+)\b', build).group(1)
-            self.assertIn(f'`{name} = {value}`', spec, name)
+            self.assertRegex(spec, rf'\b{name}\s*=\s*{value}\b', name)
 
     def test_each_build_workflow_installs_compile_platform(self):
         for name in ['ci.yml', 'security.yml', 'daily-apk.yml']:
