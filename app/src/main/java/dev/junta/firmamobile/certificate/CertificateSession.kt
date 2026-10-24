@@ -48,6 +48,7 @@ internal data class CertificateUnlockLease(
 internal class CertificateSigningSnapshot(
     val summary: CertificateSummary,
     fingerprint: ByteArray,
+    internal val generation: Long = 0L,
     private val observer: SensitiveCertificateFingerprintObserver =
         SensitiveCertificateFingerprintObserver {},
 ) : Closeable {
@@ -76,6 +77,10 @@ class CertificateSession internal constructor(
     private var unlockedIdentity: UnlockedIdentity? = null
     private var lastSummary: CertificateSummary? = null
     private var unlockLease: CertificateUnlockLease? = null
+
+    // Every unlock and forget starts a new selection: a review taken before it never signs after it, even for
+    // the identical certificate (forget then re-unlock, or A to B to A).
+    private var generation = 0L
 
     init {
         require(!unlockDuration.isNegative && !unlockDuration.isZero)
@@ -138,6 +143,7 @@ class CertificateSession internal constructor(
         identity.certificate.checkValidity(java.util.Date.from(now))
         val currentMonotonic = monotonicNanos()
         require(!lease.isExpiredOrInvalid(currentMonotonic))
+        generation++
         unlockedIdentity = identity
         lastSummary = identity.summary
         unlockLease = lease
@@ -151,6 +157,7 @@ class CertificateSession internal constructor(
 
     @Synchronized
     fun forget() {
+        generation++
         unlockedIdentity = null
         lastSummary = null
         unlockLease = null
@@ -202,6 +209,7 @@ class CertificateSession internal constructor(
         return CertificateSigningSnapshot(
             summary = identity.summary,
             fingerprint = fingerprint,
+            generation = generation,
             observer = fingerprintObserver,
         )
     }
@@ -211,7 +219,7 @@ class CertificateSession internal constructor(
         expected: CertificateSigningSnapshot,
     ): UnlockedIdentity? {
         expireIfNeeded()
-        val identity = unlockedIdentity ?: return null
+        val identity = unlockedIdentity?.takeIf { expected.generation == generation } ?: return null
         val encoded = try {
             identity.certificate.encoded
         } catch (_: Exception) {
