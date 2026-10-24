@@ -11,26 +11,50 @@ internal data class AfirmaJavascriptShimConfiguration(
     val staBatchOrigin: String,
 )
 
-/** Builds the complete monolithic script or throws; never returns a partial fallback. */
+internal enum class AfirmaJavascriptShimFragment {
+    BOOTSTRAP,
+    HANDLERS,
+    INSTALLATION,
+}
+
+/** Builds the complete script or throws; never returns a partial fallback. */
 internal object AfirmaJavascriptShimAssembler {
     fun readAndAssemble(
         configuration: AfirmaJavascriptShimConfiguration,
         readResource: () -> Reader,
+    ): String = readTemplates(configuration, listOf(readResource))
+
+    fun readFragmentsAndAssemble(
+        configuration: AfirmaJavascriptShimConfiguration,
+        fragments: List<AfirmaJavascriptShimFragment> = AfirmaJavascriptShimFragment.entries,
+        readResource: (AfirmaJavascriptShimFragment) -> Reader,
+    ): String {
+        check(fragments == AfirmaJavascriptShimFragment.entries) { "Invalid shim fragment manifest" }
+        return readTemplates(configuration, fragments.map { fragment -> { readResource(fragment) } })
+    }
+
+    private fun readTemplates(
+        configuration: AfirmaJavascriptShimConfiguration,
+        readers: List<() -> Reader>,
     ): String {
         // Tokens only shrink when replaced except the origin. This conservative bound
         // permits every template whose configured output fits the unchanged final cap.
         val templateLimit = AfirmaJavascriptShim.MAX_SCRIPT_CHARS + PLACEHOLDERS.sumOf { it.length }
-        val template = readResource().use { reader ->
-            val buffer = CharArray(DEFAULT_BUFFER_SIZE)
-            val result = StringBuilder()
-            var count = reader.read(buffer, 0, minOf(buffer.size, templateLimit + 1))
-            while (count != -1) {
-                result.append(buffer, 0, count)
-                check(result.length <= templateLimit) { "Shim resource exceeds template limit" }
-                count = reader.read(buffer, 0, minOf(buffer.size, templateLimit + 1 - result.length))
+        val result = StringBuilder()
+        readers.forEach { open ->
+            open().use { reader ->
+                val start = result.length
+                val buffer = CharArray(DEFAULT_BUFFER_SIZE)
+                var count = reader.read(buffer, 0, minOf(buffer.size, templateLimit + 1 - result.length))
+                while (count != -1) {
+                    result.append(buffer, 0, count)
+                    check(result.length <= templateLimit) { "Shim resources exceed template limit" }
+                    count = reader.read(buffer, 0, minOf(buffer.size, templateLimit + 1 - result.length))
+                }
+                check(result.substring(start).isNotBlank()) { "Blank shim fragment" }
             }
-            result.toString()
         }
+        val template = result.toString()
         return assemble(configuration, template)
     }
 
