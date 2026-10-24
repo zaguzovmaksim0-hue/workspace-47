@@ -7,6 +7,9 @@ internal object CertificateErrorPresentation {
     private val uiErrors: Map<CertificateErrorCode, CertificateUiError> = mapOf(
         CertificateErrorCode.FILE_TOO_LARGE to CertificateUiError.FILE_TOO_LARGE,
         CertificateErrorCode.INVALID_PASSWORD_OR_FILE to CertificateUiError.PASSWORD_INVALID_OR_FILE,
+        CertificateErrorCode.INVALID_PASSWORD to CertificateUiError.INVALID_PASSWORD,
+        CertificateErrorCode.INVALID_PKCS12_FILE to CertificateUiError.INVALID_PKCS12_FILE,
+        CertificateErrorCode.UNSUPPORTED_PKCS12_ENCRYPTION to CertificateUiError.UNSUPPORTED_PKCS12_ENCRYPTION,
         CertificateErrorCode.TOO_MANY_ENTRIES to CertificateUiError.CERTIFICATE_NOT_USABLE,
         CertificateErrorCode.PRIVATE_KEY_MISSING to CertificateUiError.PRIVATE_KEY_MISSING,
         CertificateErrorCode.MULTIPLE_PRIVATE_KEYS to CertificateUiError.MULTIPLE_PRIVATE_KEYS,
@@ -31,6 +34,9 @@ internal object CertificateErrorPresentation {
 
 enum class CertificateUiError {
     PASSWORD_INVALID_OR_FILE,
+    INVALID_PASSWORD,
+    INVALID_PKCS12_FILE,
+    UNSUPPORTED_PKCS12_ENCRYPTION,
     FILE_TOO_LARGE,
     PRIVATE_KEY_MISSING,
     MULTIPLE_PRIVATE_KEYS,

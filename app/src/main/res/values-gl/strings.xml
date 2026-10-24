@@ -33,6 +33,9 @@
     <string name="lock_certificate">Bloquear certificado</string>
     <string name="forget_certificate">Esquecer certificado</string>
     <string name="error_password_or_file">O contrasinal non é correcto ou o ficheiro PKCS#12 non é válido.</string>
+    <string name="error_invalid_password">O contrasinal do certificado non é correcto.</string>
+    <string name="error_invalid_pkcs12_file">O ficheiro non é un PKCS#12 válido ou está danado.</string>
+    <string name="error_unsupported_pkcs12_encryption">Esta versión de Android non admite o algoritmo de cifrado do ficheiro PKCS#12.</string>
     <string name="error_file_too_large">O ficheiro supera o tamaño máximo permitido.</string>
     <string name="error_private_key_missing">O ficheiro non contén unha chave privada de sinatura.</string>
     <string name="error_multiple_private_keys">O ficheiro contén máis dunha identidade privada.</string>
@@ -301,6 +304,7 @@
     <string name="certificate_retention_fifteen_minutes">15 minutos</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 horas</string>
+    <string name="catalog_verified_on">Verificado o %1$s</string>
     <string name="certificate_auth_title">Protexer o desbloqueo gardado</string>
     <string name="certificate_auth_subtitle">Confirma con biometría ou co PIN, padrón ou contrasinal do dispositivo.</string>
     <string name="certificate_auth_help">Gardar e recuperar o desbloqueo require confirmación do dispositivo. Se cancelas ao gardalo, só se conserva a sesión en memoria.</string>

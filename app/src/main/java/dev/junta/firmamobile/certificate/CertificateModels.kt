@@ -23,6 +23,9 @@ class UnlockedIdentity internal constructor(
 enum class CertificateErrorCode {
     FILE_TOO_LARGE,
     INVALID_PASSWORD_OR_FILE,
+    INVALID_PASSWORD,
+    INVALID_PKCS12_FILE,
+    UNSUPPORTED_PKCS12_ENCRYPTION,
     TOO_MANY_ENTRIES,
     PRIVATE_KEY_MISSING,
     MULTIPLE_PRIVATE_KEYS,
