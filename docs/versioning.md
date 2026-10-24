@@ -1,9 +1,31 @@
-# Cambio explícito de versión de Android
+# Fuente única y cambio explícito de versión de Android
 
 `tools/bump_android_version.py` es una ayuda local para preparar un cambio de
 versión revisable. No crea una versión publicada ni aprueba una distribución.
 Necesita Python 3.8+ y Git; no ejecuta Gradle ni accede a claves, APK o servicios.
 La herramienta no cambia la versión al incorporarse al repositorio.
+
+## Fuente de la compilación
+
+`version.properties`, en la raíz, es la única fuente de `versionCode` y
+`versionName`. Se conserva la pareja `13` / `0.2.11`; este cambio no hace un bump.
+Gradle lee y valida el archivo durante la configuración, antes de compilar:
+si falta, está mal formado o el código no está entre **13** (mínimo publicado)
+y `2100000000`, la compilación falla sin valor alternativo. No hay overrides
+por `-P`, reloj, número de commits ni número de ejecución de CI.
+
+El formato es deliberadamente estricto: exactamente estas dos líneas, en ese
+orden, sin espacios, comentarios, claves duplicadas ni claves adicionales:
+
+```properties
+versionCode=13
+versionName=0.2.11
+```
+
+Se admiten LF y CRLF y el salto final es opcional. El nombre debe ser
+`MAJOR.MINOR.PATCH` canónico. Al publicar un código superior a 13, actualizar
+el mínimo publicado en el validador Gradle, el helper y sus pruebas; no bajar
+ese mínimo. Véase [ADR 0006](adr/0006-android-version-source.md).
 
 ## Vista previa y escritura
 
@@ -20,10 +42,10 @@ lock. Tras revisar la propuesta, la escritura exige el flag completo `--write`:
 ```bash
 python3 tools/bump_android_version.py \
   --expected-code 13 --expected-name 0.2.11 --next-name 0.2.12 --write
-git diff -- app/build.gradle.kts
+git diff -- version.properties
 ```
 
-Ambos modos requieren que `app/build.gradle.kts` esté seguido en Git y limpio
+Ambos modos requieren que `version.properties` esté seguido en Git y limpio
 frente a `HEAD`, tanto en el índice como en la copia de trabajo. Los cambios en
 otros archivos no bloquean la operación. La ruta se determina desde la ubicación
 de la herramienta en `tools/`, no desde el directorio de ejecución. No admite
@@ -36,23 +58,18 @@ una ruta de destino arbitraria ni componentes de ruta que sean enlaces simbólic
 - `versionCode` es un entero decimal canónico positivo; el único código propuesto
   es el actual **+1**, hasta `2100000000`. No se puede elegir un salto ni volver a
   cero. Si el código actual ya es el máximo, la herramienta no escribe.
-- `--next-name` es explícito. Los nombres usan el estilo estable existente
-  `MAJOR.MINOR.PATCH`: componentes ASCII sin ceros iniciales, salvo `0`, y sin
-  sufijos de prerelease/build. La comparación de componentes es numérica y el
-  nombre siguiente debe ser estrictamente mayor. No se deriva del código.
-- Sólo se reconocen las asignaciones literales únicas `versionCode = <entero>` y
-  `versionName = "<nombre>"`, cada una en una línea propia y directamente dentro
-  del único `defaultConfig` reconocido, hijo directo de `android`. Se conserva
-  el formato del repositorio: `android {` sin sangría y `defaultConfig {` con
-  cuatro espacios. Expresiones, setters, duplicados, nombres iguales o inferiores,
-  contenido inválido y layouts no reconocidos requieren revisión manual; no se
-  intenta adivinar la nueva fuente de versión.
-- El reconocimiento excluye comentarios y cadenas de documentación; no es un
-  parser/evaluador de Kotlin ni una validación de Gradle. No demuestra la versión
-  efectiva frente a plugins, scripts externos u overrides dinámicos. Si cambia
-  el modelo de versiones, revisar la herramienta y sus pruebas antes de usarla.
+- `--next-name` es opcional: omitirlo conserva el nombre y aumenta sólo el código.
+  Si se proporciona, debe ser estrictamente mayor en comparación numérica de
+  componentes `MAJOR.MINOR.PATCH`, sin ceros iniciales ni sufijos. No se deriva
+  del código. Por ejemplo, para subir sólo el código:
 
-Sólo se sustituyen los dos literales; se preservan los demás bytes, los saltos de
+  ```bash
+  python3 tools/bump_android_version.py --expected-code 13 --expected-name 0.2.11
+  ```
+- El helper rechaza también códigos inferiores al mínimo publicado 13 y archivos
+  que no siguen el formato de la fuente única. No analiza ni modifica Kotlin.
+
+Sólo se sustituyen los valores de versión; se preservan los demás bytes, los saltos de
 línea y el modo de permisos. No se modifica `versionNameSuffix`, el package,
 la configuración de firma, las variantes, los workflows ni la política de QA.
 No se usa el número de ejecución de CI, el recuento de commits ni un retry para
@@ -105,8 +122,17 @@ separados y expresamente autorizados.
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tools.tests.test_bump_android_version -v
 ```
 
-Las pruebas usan repositorios Git y declaraciones sintéticas en directorios
-temporales; no escriben el Gradle de la aplicación. Cubren preview/escritura,
-guards, límites, declaraciones ambiguas, rutas, locks, fallos de I/O, cambios
-durante la preparación y retries. Son evidencia local de desarrollo, no un
+Las pruebas usan repositorios Git y archivos de versión sintéticos en directorios
+temporales. Cubren preview/escritura, bump con y sin nombre, guards, límites,
+formatos inválidos, rutas, locks, fallos de I/O, cambios durante la preparación
+y retries. Además:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tools.tests.test_android_version_source -v
+```
+
+Esta prueba ejecuta con `kotlinc -script` el mismo validador que usa Gradle,
+incluyendo el rechazo del código 12, y comprueba la conexión con `defaultConfig`.
+No configura Android ni compila APK; la ejecución Kotlin se omite explícitamente
+si el compilador standalone no está disponible. Son evidencia local de desarrollo, no un
 sustituto del gate de GitHub Actions sobre el candidato final.
