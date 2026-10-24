@@ -56,9 +56,7 @@ internal object OfflineCmsAttributePolicy {
         when (attribute.getAttrType()) {
             CMSAttributes.contentType -> {
                 val contentType = ASN1ObjectIdentifier.getInstance(singleValue(attribute))
-                if (contentType != CMSObjectIdentifiers.data) {
-                    throw OfflineCmsUnsupportedProfileException()
-                }
+                requireSupported(contentType == CMSObjectIdentifiers.data)
             }
             CMSAttributes.messageDigest -> ASN1OctetString.getInstance(singleValue(attribute))
             PKCSObjectIdentifiers.id_aa_signingCertificateV2 -> OfflineCmsSigningCertificatePolicy.validate(
@@ -71,14 +69,17 @@ internal object OfflineCmsAttributePolicy {
             CMSAttributes.cmsAlgorithmProtect -> {
                 // RFC 6211: must name exactly the SignerInfo algorithms (BC verify re-checks this too).
                 val protection = CMSAlgorithmProtection.getInstance(singleValue(attribute))
-                if (protection.digestAlgorithm.algorithm.id != signer.getDigestAlgOID() ||
-                    protection.signatureAlgorithm?.algorithm?.id != signer.getEncryptionAlgOID()
-                ) {
-                    throw OfflineCmsUnsupportedProfileException()
-                }
+                requireSupported(
+                    protection.digestAlgorithm.algorithm.id == signer.getDigestAlgOID() &&
+                        protection.signatureAlgorithm?.algorithm?.id == signer.getEncryptionAlgOID(),
+                )
             }
             else -> throw OfflineCmsUnsupportedProfileException()
         }
+    }
+
+    private fun requireSupported(supported: Boolean) {
+        if (!supported) throw OfflineCmsUnsupportedProfileException()
     }
 
     private fun singleValue(attribute: Attribute): ASN1Encodable {
