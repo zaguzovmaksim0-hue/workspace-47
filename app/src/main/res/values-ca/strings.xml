@@ -301,4 +301,17 @@
     <string name="certificate_retention_fifteen_minutes">15 minuts</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 hores</string>
+    <string name="local_signing_title">Signar un fitxer local</string>
+    <string name="local_signing_unlock">Desbloca un certificat per signar el teu fitxer.</string>
+    <string name="local_signing_unnamed">fitxer</string>
+    <string name="local_signing_name">Fitxer: %1$s</string>
+    <string name="local_signing_scope">La signatura CAdES separada es genera al dispositiu, sense serveis de signatura ni segell de temps. Conserva el fitxer original juntament amb la signatura. Límit: 512 KiB.</string>
+    <string name="local_signing_loading">Llegint el fitxer…</string>
+    <string name="local_signing_signing">Signant i comprovant la signatura…</string>
+    <string name="local_signing_ready">Signatura comprovada amb el fitxer original. Tria on desar-la. Aquesta comprovació no avalua la confiança ni la revocació del certificat.</string>
+    <string name="local_signing_saving">Desant la signatura…</string>
+    <string name="local_signing_saved">Signatura desada.</string>
+    <string name="local_signing_failed">No s’ha pogut completar l’operació. Comprova que el certificat continua desblocat i que el fitxer no supera 512 KiB. Si falla el desament, pot quedar un fitxer incomplet a la destinació triada.</string>
+    <string name="local_signing_choose">Triar un altre fitxer</string>
+    <string name="local_signing_save">Desar la signatura</string>
 </resources>

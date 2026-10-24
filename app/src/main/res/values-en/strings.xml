@@ -301,4 +301,17 @@
     <string name="certificate_retention_fifteen_minutes">15 minutes</string>
     <string name="certificate_retention_one_hour">1 hour</string>
     <string name="certificate_retention_one_day">24 hours</string>
+    <string name="local_signing_title">Sign a local file</string>
+    <string name="local_signing_unlock">Unlock a certificate to sign your file.</string>
+    <string name="local_signing_unnamed">file</string>
+    <string name="local_signing_name">File: %1$s</string>
+    <string name="local_signing_scope">The detached CAdES signature is generated on this device, without signing services or a timestamp authority. Keep the original file with its signature. Limit: 512 KiB.</string>
+    <string name="local_signing_loading">Reading the file…</string>
+    <string name="local_signing_signing">Signing and checking the signature…</string>
+    <string name="local_signing_ready">Signature checked against the original file. Choose where to save it. This check does not evaluate certificate trust or revocation.</string>
+    <string name="local_signing_saving">Saving the signature…</string>
+    <string name="local_signing_saved">Signature saved.</string>
+    <string name="local_signing_failed">Could not complete the operation. Check that the certificate is still unlocked and the file is at most 512 KiB. A failed save may leave an incomplete file at the chosen destination.</string>
+    <string name="local_signing_choose">Choose another file</string>
+    <string name="local_signing_save">Save signature</string>
 </resources>

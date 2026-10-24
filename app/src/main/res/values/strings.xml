@@ -301,4 +301,17 @@
     <string name="certificate_retention_fifteen_minutes">15 minutos</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 horas</string>
+    <string name="local_signing_title">Firmar un archivo local</string>
+    <string name="local_signing_unlock">Desbloquea un certificado para firmar tu archivo.</string>
+    <string name="local_signing_unnamed">archivo</string>
+    <string name="local_signing_name">Archivo: %1$s</string>
+    <string name="local_signing_scope">La firma CAdES separada se genera en el dispositivo, sin servicios de firma ni sello de tiempo. Conserva el archivo original junto con la firma. Límite: 512 KiB.</string>
+    <string name="local_signing_loading">Leyendo el archivo…</string>
+    <string name="local_signing_signing">Firmando y comprobando la firma…</string>
+    <string name="local_signing_ready">Firma comprobada con el archivo original. Elige dónde guardarla. Esta comprobación no evalúa confianza ni revocación del certificado.</string>
+    <string name="local_signing_saving">Guardando la firma…</string>
+    <string name="local_signing_saved">Firma guardada.</string>
+    <string name="local_signing_failed">No se pudo completar la operación. Comprueba que el certificado sigue desbloqueado y que el archivo no supera 512 KiB. Si falló el guardado, puede quedar un archivo incompleto en el destino elegido.</string>
+    <string name="local_signing_choose">Elegir otro archivo</string>
+    <string name="local_signing_save">Guardar firma</string>
 </resources>

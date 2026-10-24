@@ -102,6 +102,7 @@ fun AppRoot(
             )
             Spacer(modifier = Modifier.height(12.dp))
             CertificateStateBanner(state)
+            localFileSigningEntry(state is CertificateUiState.Unlocked)
             if (state !is CertificateUiState.Unlocked) {
                 androidx.compose.material3.TextButton(
                     onClick = onContinue,
