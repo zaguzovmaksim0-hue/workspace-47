@@ -39,6 +39,24 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:theme="@style/Theme.JuntaFirmaMobile.Overlay" />
+        <!-- Untrusted external afirma:// requests. Holds no logic: the URI waits in an in-process slot until
+             a resumed, focused MainActivity admits it and the user confirms it once (ADR 0006). Default task
+             affinity on purpose: a separate task would send a foreground app to onStop and cancel its operation;
+             no excludeFromRecents, which would hide the whole app task when this is its root. -->
+        <activity
+            android:name=".afirma.external.ExternalAfirmaEntryActivity"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="afirma" />
+            </intent-filter>
+        </activity>
         <receiver
             android:name=".certificate.CertificateReminderReceiver"
             android:exported="false">

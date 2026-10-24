@@ -40,6 +40,15 @@ class JuntaFirmaApplication : Application() {
 
     val certificateUnlockAuthentication = dev.junta.firmamobile.certificate.AndroidCertificateUnlockAuthentication()
 
+    /** Shared by every MainActivity instance and the exported afirma entry (ADR 0006). */
+    internal val signingAdmission = dev.junta.firmamobile.afirma.external.SigningAdmission()
+
+    // Long enough for a cold catalog start on a slow phone, short enough that a later launch never replays it.
+    internal val externalAfirmaInbox = dev.junta.firmamobile.afirma.external.ExternalAfirmaInbox(
+        ttlNanos = java.util.concurrent.TimeUnit.SECONDS.toNanos(EXTERNAL_AFIRMA_INBOX_TTL_SECONDS),
+        nowNanos = dev.junta.firmamobile.security.MonotonicSecurityTime::nowNanos,
+    )
+
     lateinit var certificateUnlockCache: CertificateUnlockCache
         internal set
 
@@ -77,5 +86,6 @@ class JuntaFirmaApplication : Application() {
 
     private companion object {
         const val QA_DIAGNOSTIC_TAG = "JFM_QA"
+        const val EXTERNAL_AFIRMA_INBOX_TTL_SECONDS = 30L
     }
 }
