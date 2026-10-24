@@ -879,13 +879,6 @@
     <ID>MagicNumber:NativeTriphaseXml.kt$NativeTriphaseXml$262_144</ID>
     <ID>MagicNumber:NativeTriphaseXml.kt$NativeTriphaseXml$32</ID>
     <ID>MagicNumber:NativeTriphaseXml.kt$NativeTriphaseXml$64</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$16_384</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$3</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$32</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$5</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$64</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$65_536</ID>
-    <ID>MagicNumber:NativeXadesEngine.kt$NativeXadesEngine$8</ID>
     <ID>MagicNumber:NativeXadesOptions.kt$NativeXadesOptions.Companion$128</ID>
     <ID>MagicNumber:NativeXadesOptions.kt$NativeXadesOptions.Companion$256</ID>
     <ID>MagicNumber:PoliciaXadesDetachedAdapter.kt$PoliciaXadesDetachedAdapter$10</ID>
@@ -1352,43 +1345,6 @@
     <ID>MaxLineLength:NativeTriphaseCodec.kt$NativeTriphaseCodec$val parameters = objectValue(map["params"]).mapValues { (_, raw) -&gt; raw as? String ?: error("Parameter is not text") }</ID>
     <ID>MaxLineLength:NativeTriphaseCodec.kt$NativeTriphaseCodec$val pre = AfirmaServletInvocationParser.strictBase64(item.parameters["PRE"] ?: error("Missing PRE"), 262_144)</ID>
     <ID>MaxLineLength:NativeTriphaseXml.kt$NativeTriphaseXml$((node.nodeType == Node.TEXT_NODE || node.nodeType == Node.CDATA_SECTION_NODE) &amp;&amp; node.textContent.isBlank())</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$(if (options.packaging == NativeXadesPackaging.DETACHED) doc.createElement("CONTENT") else element(doc, DS, "ds:Object"))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$.</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$NativeXadesPackaging.DETACHED -&gt; doc.createElement("AFIRMA").also { doc.appendChild(it); it.appendChild(signature) }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$NativeXadesPackaging.EXTERNALLY_DETACHED -&gt; { dataUri = externalId(payload); dataTransforms = emptyList(); covered = payload }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$SigningAlgorithm.SHA1_WITH_RSA -&gt; "SHA-1"</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$SigningAlgorithm.SHA1_WITH_RSA -&gt; "SHA1withRSA"</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$SigningAlgorithm.SHA1_WITH_RSA -&gt; DS + "rsa-sha1"</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$SigningAlgorithm.SHA1_WITH_RSA -&gt; DS + "sha1"</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$certDigest.appendChild(element(doc, DS, "ds:DigestValue", b64(MessageDigest.getInstance("SHA-256").digest(certificate.encoded))))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$else</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$fun</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$if</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$if (options.packaging == NativeXadesPackaging.DETACHED) doc.documentElement.insertBefore(this, signature) else signature.appendChild(this)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$if (payload.isEmpty() || payload.size &gt; MAX_INPUT) return LocalSignatureResult.Failure(LocalSignatureError.INPUT_TOO_LARGE)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(element(doc, DS, "ds:CanonicalizationMethod").apply { setAttribute("Algorithm", NativeSigningXml.C14N) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(element(doc, DS, "ds:SignatureMethod").apply { setAttribute("Algorithm", signatureUri(algorithm)) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(reference(doc, "#$stem-key", NativeSigningXml.canonical(keyInfo), algorithm, listOf(NativeSigningXml.C14N)))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(reference(doc, "#$stem-props", NativeSigningXml.canonical(props), algorithm, listOf(NativeSigningXml.C14N)).apply { setAttribute("Type", SIGNED_PROPERTIES) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$info.appendChild(reference(doc, dataUri, covered, algorithm, dataTransforms).apply { setAttribute("Id", referenceId) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$private</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$private fun element(doc: Document, ns: String, name: String, text: String? = null)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$private fun externalId(payload: ByteArray)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(MessageDigest.isEqual(decode(one(certDigest, DS, "DigestValue").textContent, 32), MessageDigest.getInstance("SHA-256").digest(certificate.encoded)))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(MessageDigest.isEqual(digest(referenceData[index], algorithm), decode(one(ref, DS, "DigestValue").textContent, 64)))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(if (options.contentDescription == null) descriptions.isEmpty() else descriptions.single().textContent == options.contentDescription)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(references[1].getAttribute("URI") == expectedPropertyUri &amp;&amp; references[1].getAttribute("Type") == SIGNED_PROPERTIES)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$require(target.getAttribute("MimeType") == options.mimeType &amp;&amp; transforms(dataReference) == listOf(BASE64_TRANSFORM))</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$setAttribute("Id", dataId)</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$signed.appendChild(element(doc, XA, "xades:SignaturePolicyIdentifier").apply { appendChild(element(doc, XA, "xades:SignaturePolicyImplied")) })</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$transformations.forEach { appendChild(element(doc, DS, "ds:Transform").apply { setAttribute("Algorithm", it) }) }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val descriptions = NativeSigningXml.children(format).filter { it.localName == "Description" &amp;&amp; it.namespaceURI == XA }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val doc = if (options.packaging == NativeXadesPackaging.ENVELOPED) NativeSigningXml.parse(payload, MAX_INPUT) else NativeSigningXml.newDocument()</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val objectNodes = NativeSigningXml.children(signature).filter { it.namespaceURI == DS &amp;&amp; it.localName == "Object" }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val props = element(doc, XA, "xades:SignedProperties").apply { setAttribute("Id", "$stem-props") }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val qualifying = element(doc, XA, "xades:QualifyingProperties").apply { setAttribute("Target", "#$stem") }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val qualifying = objectNodes.flatMap(NativeSigningXml::children).single { it.namespaceURI == XA &amp;&amp; it.localName == "QualifyingProperties" }</ID>
-    <ID>MaxLineLength:NativeXadesEngine.kt$NativeXadesEngine$val referenceData = listOf(dataBytes, NativeSigningXml.canonical(properties), NativeSigningXml.canonical(keyInfo))</ID>
     <ID>MaxLineLength:PortalCatalogRepository.kt$PortalCatalogRepository$if (!item.isEnabled || item.opensWithoutProfile || item.entryUrl.toASCIIString() != entryUrl.toASCIIString()) return null</ID>
     <ID>MaxLineLength:PortalCatalogRepository.kt$PortalCatalogRepository$listOf(aliases[item.portalId].orEmpty(), item.displayName, item.organization, item.territory, item.purpose)</ID>
     <ID>MaxLineLength:PortalCatalogScreen.kt$Text(stringResource(R.string.catalog_my_region_label), color = JuntaMutedInk, style = MaterialTheme.typography.labelSmall)</ID>
@@ -1443,7 +1399,6 @@
     <ID>NestedBlockDepth:NativePadesEngine.kt$NativePadesEngine$fun sign(pdf: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm, options: NativePadesOptions = NativePadesOptions(), requireExistingSignature: Boolean = false): LocalSignatureResult</ID>
     <ID>NestedBlockDepth:NativePdfSignatureHistory.kt$NativePdfSignatureHistory$private fun earlierRevisionsMatch(pdf: ByteArray, expected: List&lt;NativePdfPriorSignature&gt;): Boolean</ID>
     <ID>NestedBlockDepth:NativePdfSignatureHistory.kt$NativePdfSignatureHistory$private fun read(pdf: ByteArray, document: PDDocument, verifyCryptography: Boolean, requireCompleteCoverage: Boolean = true): List&lt;NativePdfPriorSignature&gt;?</ID>
-    <ID>NestedBlockDepth:NativeXadesEngine.kt$NativeXadesEngine$fun sign(payload: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm, options: NativeXadesOptions): LocalSignatureResult</ID>
     <ID>NestedBlockDepth:SecureTunnelProtocol.kt$SecureTunnelProtocol$fun readResponse(input: InputStream): SecureTunnelConnectResult</ID>
     <ID>NestedBlockDepth:SigningCoordinator.kt$SigningCoordinator$@Synchronized internal fun onTunnelRouteEvent(requestId: UUID, event: TunnelRouteEvent): Boolean</ID>
     <ID>NestedBlockDepth:SigningCoordinator.kt$SigningCoordinator$suspend fun confirm(requestId: UUID): SigningExecutionResult</ID>
