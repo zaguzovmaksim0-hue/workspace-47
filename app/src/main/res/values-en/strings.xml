@@ -326,6 +326,18 @@
     <string name="local_signing_failed">Could not complete the operation. Check that the certificate is still unlocked and the file is at most 512 KiB. A failed save may leave an incomplete file at the chosen destination.</string>
     <string name="local_signing_choose">Choose another file</string>
     <string name="local_signing_save">Save signature</string>
+    <string name="certificate_reminder_settings">Reminder settings</string>
+    <string name="certificate_reminder_toggle">Certificate expiry reminders</string>
+    <string name="certificate_reminder_copy">Local reminders 30 and 7 calendar days before the saved certificate expires. Off by default. No personal data is included. Android may delay delivery to save battery.</string>
+    <string name="certificate_reminder_blocked">Android is blocking these reminders. You can enable them in notification settings.</string>
+    <string name="certificate_reminder_system_settings">Open notification settings</string>
+    <string name="certificate_reminder_done">Done</string>
+    <string name="certificate_reminder_save_failed">The setting could not be saved. Try again.</string>
+    <string name="certificate_reminder_channel">Certificate expiry</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">Your certificate expires in %1$d day</item>
+        <item quantity="other">Your certificate expires in %1$d days</item>
+    </plurals>
     <string name="certificate_auth_title">Protect saved unlock</string>
     <string name="certificate_auth_subtitle">Confirm with biometrics or the device PIN, pattern or password.</string>
     <string name="certificate_auth_help">Saving and restoring the unlock requires device confirmation. If you cancel when saving, only the in-memory session is kept.</string>

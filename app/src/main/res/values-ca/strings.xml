@@ -326,6 +326,18 @@
     <string name="local_signing_failed">No s’ha pogut completar l’operació. Comprova que el certificat continua desblocat i que el fitxer no supera 512 KiB. Si falla el desament, pot quedar un fitxer incomplet a la destinació triada.</string>
     <string name="local_signing_choose">Triar un altre fitxer</string>
     <string name="local_signing_save">Desar la signatura</string>
+    <string name="certificate_reminder_settings">Configuració dels recordatoris</string>
+    <string name="certificate_reminder_toggle">Avisar de la caducitat del certificat</string>
+    <string name="certificate_reminder_copy">Avisos locals 30 i 7 dies naturals abans que caduqui el certificat desat. Desactivats per defecte. No inclouen dades personals. Android pot retardar-los per estalviar bateria.</string>
+    <string name="certificate_reminder_blocked">Android bloqueja aquests avisos. Pots activar-los a la configuració de notificacions.</string>
+    <string name="certificate_reminder_system_settings">Obrir la configuració de notificacions</string>
+    <string name="certificate_reminder_done">Fet</string>
+    <string name="certificate_reminder_save_failed">No s’ha pogut desar la configuració. Torna-ho a provar.</string>
+    <string name="certificate_reminder_channel">Caducitat del certificat</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">El vostre certificat caduca d’aquí a %1$d dia</item>
+        <item quantity="other">El vostre certificat caduca d’aquí a %1$d dies</item>
+    </plurals>
     <string name="certificate_auth_title">Protegir el desbloqueig desat</string>
     <string name="certificate_auth_subtitle">Confirma amb biometria o amb el PIN, el patró o la contrasenya del dispositiu.</string>
     <string name="certificate_auth_help">Desar i recuperar el desbloqueig requereix la confirmació del dispositiu. Si cancel·les en desar-lo, només es conserva la sessió en memòria.</string>

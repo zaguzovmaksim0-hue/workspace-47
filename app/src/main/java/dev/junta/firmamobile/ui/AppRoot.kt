@@ -114,6 +114,7 @@ fun AppRoot(
                     Text(stringResource(R.string.browse_without_certificate))
                 }
             }
+            certificateReminderSettings()
             androidx.compose.material3.TextButton(
                 onClick = { legalInformationVisible = true },
                 modifier = Modifier.fillMaxWidth().testTag("open-legal-information"),
