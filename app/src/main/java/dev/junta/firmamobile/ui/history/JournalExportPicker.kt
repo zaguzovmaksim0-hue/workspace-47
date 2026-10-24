@@ -15,7 +15,9 @@ internal const val JOURNAL_EXPORT_FILENAME = "local-verification-journal.json"
 
 internal class LocalJournalCreateDocument : ActivityResultContracts.CreateDocument("application/json") {
     override fun createIntent(context: Context, input: String): Intent =
-        super.createIntent(context, input).putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+        super.createIntent(context, input)
+            .addCategory(Intent.CATEGORY_OPENABLE)
+            .putExtra(Intent.EXTRA_LOCAL_ONLY, true)
 }
 
 /** Registered only after an explicit click, with an immutable per-request ticket and a fresh registry key. */

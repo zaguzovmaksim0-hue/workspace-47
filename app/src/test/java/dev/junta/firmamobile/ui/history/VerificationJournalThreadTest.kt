@@ -20,18 +20,18 @@ class VerificationJournalThreadTest {
         val calls = Collections.synchronizedList(mutableListOf<String>())
         val output = object : ByteArrayOutputStream() {
             override fun write(bytes: ByteArray, offset: Int, length: Int) {
-                calls.add(Thread.currentThread().name)
+                calls.add(threadName())
                 super.write(bytes, offset, length)
             }
-            override fun flush() { calls.add(Thread.currentThread().name) }
-            override fun close() { calls.add(Thread.currentThread().name); super.close() }
+            override fun flush() { calls.add(threadName()) }
+            override fun close() { calls.add(threadName()); super.close() }
         }
         try {
             runBlocking(ui) {
-                assertEquals("journal-synthetic-ui", Thread.currentThread().name)
+                assertEquals("journal-synthetic-ui", threadName())
                 val owner = VerificationJournalController(InMemoryOperationJournal(), this, worker)
                 owner.exportTo(owner.beginExport()!!, JournalExportDestination {
-                    calls.add(Thread.currentThread().name)
+                    calls.add(threadName())
                     output
                 })
                 withTimeout(10_000) { owner.state.first { it.exportStatus == JournalExportStatus.EXPORTED } }
@@ -45,4 +45,7 @@ class VerificationJournalThreadTest {
             worker.close()
         }
     }
+
+    // CI enables coroutine debug mode, which appends " @coroutine#N" to thread names.
+    private fun threadName() = Thread.currentThread().name.substringBefore(" @coroutine#")
 }
