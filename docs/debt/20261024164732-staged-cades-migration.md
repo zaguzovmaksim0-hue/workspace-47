@@ -12,4 +12,4 @@ ai_authored: true
 created: 2026-10-24
 ---
 
-ADR docs/adr/0003-staged-cades-detached-seam.md introduces shared CAdES orchestration with Aragón as its only consumer. Existing wrappers, codecs and the remaining adapters deliberately stay in place to isolate contract, owner and error-order regressions. Extend the contract only when migrating the next separately reviewed adapter; assess wrapper removal after the series, rather than generalizing unobserved portal policies now.
+ADR docs/adr/0004-staged-cades-detached-seam.md introduces shared CAdES orchestration with Aragón as its only consumer. Existing wrappers, codecs and the remaining adapters deliberately stay in place to isolate contract, owner and error-order regressions. Extend the contract only when migrating the next separately reviewed adapter; assess wrapper removal after the series, rather than generalizing unobserved portal policies now.
