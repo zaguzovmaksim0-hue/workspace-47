@@ -29,6 +29,75 @@ class NativeAfirmaConsentDialogTest {
         AfirmaConsentPhase.REVIEW, "Certificado de prueba", null,
     )
 
+    @Test fun batchReviewPreservesOrderCollapsesAndNeverAuthorizes() {
+        val review = NativeBatchConsentReview.from(NativeBatchDescriptor(true,
+            dev.junta.firmamobile.signing.SigningAlgorithm.SHA256_WITH_RSA, false, listOf(
+                NativeBatchItem("second-id", "CAdES", "sign", "YWJj", emptyMap()),
+                NativeBatchItem("first-id", "CAdES", "sign", "https://private.example/doc?secret=1", emptyMap()),
+            )), localBatch = true)
+        val state = mutableStateOf(prompt().let { it.copy(details = it.details.copy(
+            operation = "batch", batchItems = 2, batchReview = review)) })
+        var actions = 0
+        rule.setContent { JuntaFirmaTheme {
+            NativeAfirmaConsentDialog(state.value, { actions++ }, { actions++ }, { actions++ }, { actions++ })
+        } }
+        rule.onNodeWithTag("native-batch-count").performScrollTo().assertTextEquals("Documentos en el lote: 2")
+        rule.onNodeWithTag("native-batch-documents").assertDoesNotExist()
+        rule.onNodeWithTag("native-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithTag("native-batch-document-0").performScrollTo()
+            .assertIsDisplayed().assertTextEquals("Documento 1 · ID: second-id")
+        rule.onNodeWithTag("native-batch-document-1").performScrollTo()
+            .assertIsDisplayed().assertTextEquals("Documento 2 · ID: first-id")
+        rule.onNodeWithTag("native-batch-document-bytes-0").assertTextEquals("Datos locales del documento: 3 bytes")
+        rule.onNodeWithTag("native-batch-document-sha256-0").assertTextEquals(
+            "SHA-256 calculado localmente: ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+        rule.onNodeWithTag("native-batch-document-unavailable-1").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("native-batch-document-sha256-1").assertDoesNotExist()
+        rule.onNodeWithText("secret=1", substring = true).assertDoesNotExist()
+        rule.onNodeWithTag("native-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithTag("native-batch-documents").assertDoesNotExist()
+        rule.onNodeWithTag("native-batch-count").assertExists()
+        rule.onNodeWithTag("native-batch-documents-toggle").performScrollTo().performClick()
+        rule.runOnIdle {
+            assertEquals(0, actions)
+            state.value = state.value.copy(token = UUID.randomUUID())
+        }
+        rule.onNodeWithTag("native-batch-documents").assertDoesNotExist()
+        rule.onNodeWithTag("native-afirma-cancel").performClick()
+        rule.runOnIdle { assertEquals(1, actions) }
+    }
+
+    @Test
+    @Config(qualifiers = "en")
+    fun maximumDelegatedListIsScrollableAndBlankIdsHaveANumberedFallback() {
+        val review = NativeBatchConsentReview.from(NativeBatchDescriptor(true,
+            dev.junta.firmamobile.signing.SigningAlgorithm.SHA256_WITH_RSA, false,
+            (32 downTo 1).map { NativeBatchItem(if (it == 32) "  " else "id-$it-" + "x".repeat(200),
+                "CAdES", "sign", "YWJj", emptyMap()) }), localBatch = false)
+        val state = mutableStateOf(prompt().let { it.copy(details = it.details.copy(
+            operation = "batch", batchItems = 32, delegatedSigning = true, batchReview = review),
+            certificateOwner = null, problem = AfirmaConsentProblem.LOCKED) })
+        var actions = 0
+        rule.setContent { JuntaFirmaTheme {
+            NativeAfirmaConsentDialog(state.value, { actions++ }, { actions++ }, { actions++ }, { actions++ })
+        } }
+        rule.onNodeWithTag("native-batch-count").performScrollTo().assertTextEquals("Documents in the batch: 32")
+        rule.onNodeWithTag("native-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithTag("native-batch-document-0").performScrollTo().assertTextEquals("Document 1")
+        for (index in 1..31) {
+            val id = "id-${32 - index}-" + "x".repeat(200)
+            rule.onNodeWithTag("native-batch-document-$index").performScrollTo().assertIsDisplayed()
+                .assertTextEquals("Document ${index + 1} · ID: " + id.take(119) + "…")
+            rule.onNodeWithTag("native-batch-document-sha256-$index").assertDoesNotExist()
+        }
+        rule.onNodeWithTag("native-batch-document-unavailable-31").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
+        rule.onNodeWithTag("native-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithTag("native-batch-documents").assertDoesNotExist()
+        rule.onNodeWithTag("native-afirma-unlock").performClick()
+        rule.runOnIdle { assertEquals(1, actions) }
+    }
+
     @Test
     @Config(qualifiers = "en")
     fun resultSummariesUseTheCurrentLocaleAndRetainPartialResults() {

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_batch_evidence_notice">La mida i l’empremta es calculen només sobre el contingut local disponible; no verifiquen el nom ni l’acceptació del tràmit.</string>
+    <string name="native_batch_evidence_unavailable">Mida i SHA-256 del document no disponibles abans de signar.</string>
+    <string name="native_batch_document_bytes">Dades locals del document: %1$d bytes</string>
+    <string name="native_batch_document_sha256">SHA-256 calculat localment: %1$s</string>
+    <string name="native_batch_descriptor_size">Descriptor del lot: %1$d bytes</string>
+    <string name="native_batch_descriptor_digest">SHA-256 del descriptor del lot (no dels documents): %1$s</string>
+</resources>
