@@ -43,7 +43,7 @@ private fun rememberOfflinePicker(controller: OfflineVerificationController, kin
         controller.beginSelection(kind)?.let { current ->
             ticket = current
             try {
-                // Providers do not consistently label CMS files; the verifier rejects other formats.
+                // Providers do not consistently label signatures; verification checks the actual bytes.
                 launcher.launch(arrayOf("*/*"))
             } catch (_: RuntimeException) {
                 ticket = null

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="signature_verification_title">CMS eta PDF sinaduren osotasuna</string>
+    <string name="signature_verification_scope">CMS/CAdES eta PDF/PAdES formatuen tokiko egiaztapen kriptografikoa. Osotasuna eta erantsitako ziurtagiriarekiko lotura egiaztatzen ditu, ez nortasuna, ziurtagiriaren konfiantza edo indarraldia. Errebokazioa ez da egiaztatu (OCSP/CRL gabe). Datak adierazitakoak dira; denbora-zigiluak ez dira balioztatzen. XML/XAdES ez da onartzen.</string>
+    <string name="signature_verification_limits">Tokiko fitxategiak soilik: PDF gehienez 2 MiB, CMS 1 MiB eta jatorrizkoa 512 KiB. Aukerako jatorrizkoa banandutako CMSrako soilik da; kendu PDFrako. Gehienez 8 PDF sinadura; RSA Adobe/ETSI onespen-profilak. Beste profilak eta dokumentu zifratuak baztertzen dira.</string>
+    <string name="signature_verification_pick">Hautatu CMS sinadura edo PDFa</string>
+    <string name="signature_verification_limit_exceeded">Muga gainditu da: PDF 2 MiB, CMS 1 MiB, jatorrizkoa 512 KiB. Osotasuna ez da egiaztatu.</string>
+    <string name="signature_verification_unsupported">Formatua edo profila ez da onartzen. Osotasuna ez da egiaztatu.</string>
+    <string name="signature_verification_invalid">Osotasuna ez da egiaztatu: sinadura baliogabea, aldatutako edukia, jatorrizko okerra edo onartu gabeko profila. PDFrako edo edukia duen CMSrako, kendu aukerako jatorrizkoa.</string>
+    <string name="signature_verification_no_signatures">Ez da sinadurarik aurkitu PDF honetan.</string>
+    <string name="signature_verification_signer">%1$d. sinadura · Ziurtagiria: %2$s</string>
+    <string name="signature_verification_date">Adierazitako data (ez fidagarria): %1$s</string>
+    <string name="signature_verification_valid">Sinatutako berrikuspenaren osotasuna egiaztatu da; konfiantza eta errebokazioa ez dira egiaztatu.</string>
+    <string name="signature_verification_unsigned_changes">Azken sinaduraren ondoren sinatu gabeko aldaketak edo byteak daude. Uneko PDFaren osotasuna ez da egiaztatu.</string>
+    <string name="signature_verification_later_changes">Sinadura honen ondoren berrikuspenak edo byteak daude; sinatutako berrikuspena soilik estaltzen du.</string>
+    <string name="signature_verification_unknown_time">Ez dago erabilgarri</string>
+</resources>

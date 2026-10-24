@@ -12,7 +12,13 @@ MAX_SCRIPT_CHARS = 96 * 1024
 MAX_SOURCE_BYTES = MAX_SCRIPT_CHARS * 4
 MAX_PARTS = 64
 NAME = re.compile(r"[0-9]{2}-[a-z0-9-]+\.js\Z")
-RESOURCE = Path("app/src/main/res/raw/afirma_shim.js")
+RAW = Path("app/src/main/res/raw")
+# Contiguous source ranges; all sections remain included in their original order.
+RESOURCE_RANGES = (
+    ("afirma_shim_bootstrap.js", 0, 3),
+    ("afirma_shim_handlers.js", 3, 9),
+    ("afirma_shim_installation.js", 9, 12),
+)
 
 
 def _object(pairs):
@@ -29,7 +35,7 @@ def _regular(path):
         raise ValueError("expected a regular non-symlink source file")
 
 
-def compose(root):
+def _read_parts(root):
     directory = Path(root) / "config/afirma_shim"
     if directory.is_symlink() or not directory.is_dir():
         raise ValueError("missing or linked source directory")
@@ -73,12 +79,28 @@ def compose(root):
     combined = b"".join(parts)
     if len(combined.decode("utf-8").encode("utf-16-le")) // 2 > MAX_SCRIPT_CHARS:
         raise ValueError("script exceeds runtime character bound")
-    return combined
+    return parts
+
+
+def compose(root):
+    return b"".join(_read_parts(root))
 
 
 def synchronize(root, *, write=False):
-    combined = compose(root)
-    output = Path(root) / RESOURCE
+    parts = _read_parts(root)
+    if len(parts) != RESOURCE_RANGES[-1][2]:
+        raise ValueError("unexpected packaged source count")
+    raw = Path(root) / RAW
+    expected = {name for name, _, _ in RESOURCE_RANGES}
+    if {p.name for p in raw.glob("afirma_shim*.js")} - expected:
+        raise ValueError("unlisted packaged shim fragment")
+    changed = False
+    for name, start, end in RESOURCE_RANGES:
+        changed = _synchronize_output(raw / name, b"".join(parts[start:end]), write=write) or changed
+    return changed
+
+
+def _synchronize_output(output, combined, *, write):
     if output.is_symlink():
         raise ValueError("output must not be a symlink")
     if output.exists():

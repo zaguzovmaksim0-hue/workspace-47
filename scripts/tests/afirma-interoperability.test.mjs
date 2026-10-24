@@ -7,7 +7,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 const root = dirname(fileURLToPath(import.meta.url));
-const source = readFileSync(join(root, '../../app/src/main/res/raw/afirma_shim.js'), 'utf8');
+const source = ['bootstrap', 'handlers', 'installation']
+  .map(part => readFileSync(join(root, `../../app/src/main/res/raw/afirma_shim_${part}.js`), 'utf8')).join('');
 import test from 'node:test';
 function fixture(options = {}) {
   const messages = [], errors = [], events = new Map(), docEvents = new Map(), timers = new Map(), intervals = new Map();

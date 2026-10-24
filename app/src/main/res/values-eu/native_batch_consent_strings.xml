@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_batch_evidence_notice">Tamaina eta hatz-marka eskuragarri dagoen eduki lokalean soilik kalkulatzen dira; ez dute fitxategi-izena edo izapidearen onarpena egiaztatzen.</string>
+    <string name="native_batch_evidence_unavailable">Dokumentuaren tamaina eta SHA-256 ez daude eskuragarri sinatu aurretik.</string>
+    <string name="native_batch_document_bytes">Dokumentuaren datu lokalak: %1$d byte</string>
+    <string name="native_batch_document_sha256">Lokalki kalkulatutako SHA-256: %1$s</string>
+    <string name="native_batch_descriptor_size">Sortaren deskriptorea: %1$d byte</string>
+    <string name="native_batch_descriptor_digest">Sortaren deskriptorearen SHA-256 (ez dokumentuena): %1$s</string>
+</resources>

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -34,65 +35,97 @@ val Context.certificateReferenceDataStore: DataStore<Preferences> by preferences
 
 class PreferencesCertificateReferenceStore(
     private val dataStore: DataStore<Preferences>,
-) : CertificateReferenceStore {
-    override suspend fun read(): StoredCertificateReference? {
+) : CertificateReferenceCatalogStore {
+    override suspend fun read(): StoredCertificateReference? = readCatalog().active?.reference
+
+    override suspend fun readCatalog(): StoredCertificateCatalog {
         val preferences = dataStore.data.first()
-        val rawUri = preferences[Keys.URI] ?: return null
-        val displayName = CertificateDisplayNamePolicy.sanitize(
-            preferences[Keys.DISPLAY_NAME] ?: return null,
-        )
-        val mimeType = preferences[Keys.MIME_TYPE] ?: return null
-        val summary = readSummary(preferences)
-        return StoredCertificateReference(
-            uri = rawUri.toUri(),
-            displayName = displayName,
-            mimeType = mimeType,
-            size = preferences[Keys.SIZE],
-            summary = summary,
-        )
+        if (Keys.CATALOG in preferences || Keys.LEGACY.none { it in preferences }) {
+            return readSnapshot(preferences)
+        }
+        val migrated = dataStore.edit { current -> persist(current, readSnapshot(current)) }
+        return CertificateReferenceCatalogCodec.decode(checkNotNull(migrated[Keys.CATALOG]))
+    }
+
+    override suspend fun add(reference: StoredCertificateReference): StoredCertificateEntry {
+        val entry = CertificateReferenceCatalogCodec.entry(reference)
+        dataStore.edit { preferences ->
+            val catalog = readSnapshot(preferences)
+            persist(preferences, catalog.copy(entries = catalog.entries + entry))
+        }
+        return entry
     }
 
     override suspend fun write(reference: StoredCertificateReference) {
         dataStore.edit { preferences ->
-            preferences[Keys.URI] = reference.uri.toString()
-            preferences[Keys.DISPLAY_NAME] = reference.displayName
-            preferences[Keys.MIME_TYPE] = reference.mimeType
-            reference.size?.let { preferences[Keys.SIZE] = it }
-                ?: preferences.remove(Keys.SIZE)
-
-            val summary = reference.summary
-            if (summary == null) {
-                preferences.remove(Keys.OWNER)
-                preferences.remove(Keys.ISSUER)
-                preferences.remove(Keys.VALID_FROM)
-                preferences.remove(Keys.VALID_UNTIL)
+            val catalog = readSnapshot(preferences)
+            val active = catalog.active
+            val entry = if (active != null) {
+                val metadataChanged = active.reference.copy(summary = null) != reference.copy(summary = null)
+                active.copy(
+                    reference = reference,
+                    revision = if (metadataChanged) Math.addExact(active.revision, 1) else active.revision,
+                )
             } else {
-                preferences[Keys.OWNER] = summary.ownerName
-                preferences[Keys.ISSUER] = summary.issuerName
-                preferences[Keys.VALID_FROM] = summary.validFrom.toEpochMilli()
-                preferences[Keys.VALID_UNTIL] = summary.validUntil.toEpochMilli()
+                CertificateReferenceCatalogCodec.entry(reference)
             }
+            val entries = if (active == null) catalog.entries + entry else catalog.entries.map {
+                if (it.id == active.id) entry else it
+            }
+            persist(preferences, StoredCertificateCatalog(entries, entry.id))
         }
     }
 
     override suspend fun clear() {
-        dataStore.edit { it.clear() }
+        dataStore.edit { preferences ->
+            val catalog = readSnapshot(preferences)
+            val remaining = catalog.entries.filterNot { it.id == catalog.activeId }
+            persist(preferences, StoredCertificateCatalog(remaining, null))
+        }
+    }
+
+    private fun readSnapshot(preferences: Preferences): StoredCertificateCatalog {
+        return when {
+            Keys.CATALOG in preferences -> {
+                CertificateReferenceCatalogCodec.decode(checkNotNull(preferences[Keys.CATALOG]))
+            }
+            Keys.LEGACY.none { it in preferences } -> StoredCertificateCatalog(emptyList(), null)
+            else -> {
+                val reference = StoredCertificateReference(
+                    uri = requireNotNull(preferences[Keys.URI]).toUri(),
+                    displayName = CertificateDisplayNamePolicy.sanitize(requireNotNull(preferences[Keys.DISPLAY_NAME])),
+                    mimeType = requireNotNull(preferences[Keys.MIME_TYPE]),
+                    size = preferences[Keys.SIZE],
+                    summary = readSummary(preferences),
+                )
+                CertificateReferenceCatalogCodec.validateReference(reference)
+                val entry = CertificateReferenceCatalogCodec.entry(reference)
+                StoredCertificateCatalog(listOf(entry), entry.id)
+            }
+        }
+    }
+
+    private fun persist(preferences: MutablePreferences, catalog: StoredCertificateCatalog) {
+        preferences[Keys.CATALOG] = CertificateReferenceCatalogCodec.encode(catalog)
+        Keys.LEGACY.forEach { preferences.remove(it) }
     }
 
     private fun readSummary(preferences: Preferences): CertificateSummary? {
-        val owner = preferences[Keys.OWNER] ?: return null
-        val issuer = preferences[Keys.ISSUER] ?: return null
-        val validFrom = preferences[Keys.VALID_FROM] ?: return null
-        val validUntil = preferences[Keys.VALID_UNTIL] ?: return null
+        val owner = preferences[Keys.OWNER]
+        val issuer = preferences[Keys.ISSUER]
+        val validFrom = preferences[Keys.VALID_FROM]
+        val validUntil = preferences[Keys.VALID_UNTIL]
+        if (Keys.SUMMARY.none { it in preferences }) return null
         return CertificateSummary(
-            ownerName = owner,
-            issuerName = issuer,
-            validFrom = Instant.ofEpochMilli(validFrom),
-            validUntil = Instant.ofEpochMilli(validUntil),
+            ownerName = requireNotNull(owner),
+            issuerName = requireNotNull(issuer),
+            validFrom = Instant.ofEpochMilli(requireNotNull(validFrom)),
+            validUntil = Instant.ofEpochMilli(requireNotNull(validUntil)),
         )
     }
 
     private object Keys {
+        val CATALOG = stringPreferencesKey("catalog")
         val URI = stringPreferencesKey("uri")
         val DISPLAY_NAME = stringPreferencesKey("display_name")
         val MIME_TYPE = stringPreferencesKey("mime_type")
@@ -101,5 +134,7 @@ class PreferencesCertificateReferenceStore(
         val ISSUER = stringPreferencesKey("summary_issuer")
         val VALID_FROM = longPreferencesKey("summary_valid_from")
         val VALID_UNTIL = longPreferencesKey("summary_valid_until")
+        val SUMMARY = listOf(OWNER, ISSUER, VALID_FROM, VALID_UNTIL)
+        val LEGACY = listOf(URI, DISPLAY_NAME, MIME_TYPE, SIZE) + SUMMARY
     }
 }

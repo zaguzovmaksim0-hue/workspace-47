@@ -1125,8 +1125,11 @@ fun BrowserScreen(
                 )
             }
             BrowserLoadingIndicator(
-                visible = clientCertPreferenceState == ClientCertPreferenceBarrierState.CLEARING ||
-                    clientAuthPreparing || pageLoading,
+                visible = browserLoadingVisible(
+                    clientCertPreferenceState = clientCertPreferenceState,
+                    clientAuthPreparing = clientAuthPreparing,
+                    pageLoading = pageLoading,
+                ),
             )
             if (!clientCertPreferenceBlocked) key(
                 clientAuthGrant != null,
@@ -1812,20 +1815,10 @@ fun BrowserScreen(
         )
     }
 
-    when (signingState) {
-        is SigningUiState.Signing,
-        is SigningUiState.ConnectingSecurely,
-        is SigningUiState.Completed,
-        is SigningUiState.Failed,
-        -> SigningStatusDialog(
-            state = signingState,
-            onDismiss = onDismissSigningState,
-        )
-
-        SigningUiState.Idle,
-        is SigningUiState.AwaitingConfirmation,
-        -> Unit
-    }
+    browserSigningStatus(
+        signingState = signingState,
+        onDismiss = onDismissSigningState,
+    )
     } // Retained parent content; no profile or native key authority is copied.
     activePopup?.let { popup ->
         key(popup.token) {

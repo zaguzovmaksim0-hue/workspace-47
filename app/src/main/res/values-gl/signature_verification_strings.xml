@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="signature_verification_title">Integridade de sinaturas CMS e PDF</string>
+    <string name="signature_verification_scope">Comprobación criptográfica local de CMS/CAdES e PDF/PAdES. Comproba a integridade e a vinculación co certificado incluído, non a identidade nin a confianza ou vixencia do certificado. Revogación non comprobada (sen OCSP/CRL). Datas declaradas; selos de tempo non validados. XML/XAdES non compatible.</string>
+    <string name="signature_verification_limits">Só ficheiros locais: PDF ata 2 MiB, CMS ata 1 MiB e orixinal ata 512 KiB. O orixinal opcional só é para CMS separado; elimínao para PDF. Ata 8 sinaturas PDF; perfís de aprobación RSA Adobe/ETSI. Rexéitanse outros perfís e documentos cifrados.</string>
+    <string name="signature_verification_pick">Seleccionar sinatura CMS ou PDF</string>
+    <string name="signature_verification_limit_exceeded">Límite superado: PDF 2 MiB, CMS 1 MiB, orixinal 512 KiB. Integridade non comprobada.</string>
+    <string name="signature_verification_unsupported">Formato ou perfil non compatible. Integridade non comprobada.</string>
+    <string name="signature_verification_invalid">Integridade non comprobada: sinatura inválida, contido modificado, orixinal incorrecto ou perfil non compatible. Para PDF ou CMS con contido incluído, elimina o orixinal opcional.</string>
+    <string name="signature_verification_no_signatures">Non se atoparon sinaturas neste PDF.</string>
+    <string name="signature_verification_signer">Sinatura %1$d · Certificado: %2$s</string>
+    <string name="signature_verification_date">Data declarada (non acreditada): %1$s</string>
+    <string name="signature_verification_valid">Integridade da revisión asinada comprobada; confianza e revogación non comprobadas.</string>
+    <string name="signature_verification_unsigned_changes">Hai cambios ou bytes sen asinar despois da última sinatura. A integridade do PDF actual non está comprobada.</string>
+    <string name="signature_verification_later_changes">Hai revisións ou bytes posteriores a esta sinatura; só cobre a súa revisión.</string>
+    <string name="signature_verification_unknown_time">Non dispoñible</string>
+</resources>

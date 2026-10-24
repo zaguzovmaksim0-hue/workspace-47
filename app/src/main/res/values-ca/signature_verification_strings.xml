@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="signature_verification_title">Integritat de signatures CMS i PDF</string>
+    <string name="signature_verification_scope">Comprovació criptogràfica local de CMS/CAdES i PDF/PAdES. Comprova la integritat i la vinculació amb el certificat inclòs, no la identitat ni la confiança o vigència del certificat. Revocació no comprovada (sense OCSP/CRL). Dates declarades; segells de temps no validats. XML/XAdES no compatible.</string>
+    <string name="signature_verification_limits">Només fitxers locals: PDF fins a 2 MiB, CMS fins a 1 MiB i original fins a 512 KiB. L’original opcional només és per a CMS separat; elimina’l per a PDF. Fins a 8 signatures PDF; perfils d’aprovació RSA Adobe/ETSI. Es rebutgen altres perfils i documents xifrats.</string>
+    <string name="signature_verification_pick">Seleccionar signatura CMS o PDF</string>
+    <string name="signature_verification_limit_exceeded">Límit superat: PDF 2 MiB, CMS 1 MiB, original 512 KiB. Integritat no comprovada.</string>
+    <string name="signature_verification_unsupported">Format o perfil no compatible. Integritat no comprovada.</string>
+    <string name="signature_verification_invalid">Integritat no comprovada: signatura invàlida, contingut modificat, original incorrecte o perfil no compatible. Per a PDF o CMS amb contingut inclòs, elimina l’original opcional.</string>
+    <string name="signature_verification_no_signatures">No s’han trobat signatures en aquest PDF.</string>
+    <string name="signature_verification_signer">Signatura %1$d · Certificat: %2$s</string>
+    <string name="signature_verification_date">Data declarada (no acreditada): %1$s</string>
+    <string name="signature_verification_valid">Integritat de la revisió signada comprovada; confiança i revocació no comprovades.</string>
+    <string name="signature_verification_unsigned_changes">Hi ha canvis o bytes sense signar després de l’última signatura. La integritat del PDF actual no està comprovada.</string>
+    <string name="signature_verification_later_changes">Hi ha revisions o bytes posteriors a aquesta signatura; només cobreix la seva revisió.</string>
+    <string name="signature_verification_unknown_time">No disponible</string>
+</resources>

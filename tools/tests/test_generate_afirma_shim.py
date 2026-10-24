@@ -17,12 +17,12 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.parts = self.root / "config/afirma_shim"
         self.parts.mkdir(parents=True)
         self.manifest = self.parts / "manifest.json"
-        self.output = self.root / "app/src/main/res/raw/afirma_shim.js"
+        self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = ["00-bootstrap.js", "10-feature.js"]
+        self.names = [f"{i:02d}-section.js" for i in range(12)]
         self.write_manifest()
-        (self.parts / self.names[0]).write_bytes(b"(() => {\n")
-        (self.parts / self.names[1]).write_bytes(b"})();\n")
+        for name in self.names:
+            (self.parts / name).write_bytes((name + "\n").encode())
 
     def write_manifest(self, **changes):
         data = {"format": 1, "parts": self.names}
@@ -31,14 +31,22 @@ class AfirmaShimGenerationTest(unittest.TestCase):
 
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
-        self.assertEqual((ROOT / "app/src/main/res/raw/afirma_shim.js").read_bytes(), actual)
+        legacy = ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js"
+        self.assertEqual(legacy.read_bytes(), actual)
         self.assertFalse(synchronize(ROOT, write=False))
 
+    def test_packaged_fragments_reconstruct_test_only_legacy_bytes(self):
+        raw = ROOT / "app/src/main/res/raw"
+        names = ["afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+        legacy = ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js"
+        self.assertEqual(legacy.read_bytes(), b"".join((raw / name).read_bytes() for name in names))
+        self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
+
     def test_concatenation_is_ordered_without_extra_separators(self):
-        self.assertEqual(b"(() => {\n})();\n", compose(self.root))
+        self.assertEqual("".join(name + "\n" for name in self.names).encode(), compose(self.root))
         self.names.reverse()
         self.write_manifest()
-        self.assertEqual(b"})();\n(() => {\n", compose(self.root))
+        self.assertEqual("".join(name + "\n" for name in self.names).encode(), compose(self.root))
 
     def test_check_is_read_only_and_detects_stale_output(self):
         self.output.write_bytes(b"stale")
@@ -71,6 +79,17 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         (self.parts / "99-unused.js").write_text("extra\n")
         with self.assertRaises(ValueError):
             compose(self.root)
+
+    def test_missing_and_extra_packaged_fragments_fail_closed(self):
+        synchronize(self.root, write=True)
+        self.output.unlink()
+        with self.assertRaises(ValueError):
+            synchronize(self.root)
+        synchronize(self.root, write=True)
+        (self.output.parent / "afirma_shim_unused.js").write_text("extra\n")
+        for write in (False, True):
+            with self.subTest(write=write), self.assertRaises(ValueError):
+                synchronize(self.root, write=write)
 
     def test_duplicate_and_unsafe_names_fail_closed(self):
         for names in [[self.names[0]] * 2, ["../escape.js"], ["/absolute.js"], ["subdir/10-file.js"], [], [1]]:
