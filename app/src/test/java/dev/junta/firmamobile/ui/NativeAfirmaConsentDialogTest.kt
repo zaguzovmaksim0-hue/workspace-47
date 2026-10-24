@@ -14,6 +14,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @ConscryptMode(ConscryptMode.Mode.OFF)
@@ -27,6 +28,23 @@ class NativeAfirmaConsentDialogTest {
             "sign", "CAdES detached", "SHA256withRSA", 12, "a".repeat(64)),
         AfirmaConsentPhase.REVIEW, "Certificado de prueba", null,
     )
+
+    @Test
+    @Config(qualifiers = "en")
+    fun resultSummariesUseTheCurrentLocaleAndRetainPartialResults() {
+        val state = mutableStateOf(prompt().copy(phase = AfirmaConsentPhase.FINISHED,
+            resultSummary = AfirmaResultSummary.Batch(3, 1)))
+        rule.setContent { JuntaFirmaTheme {
+            NativeAfirmaConsentDialog(state.value, {}, {}, {}, {})
+        } }
+        rule.onNodeWithTag("native-multiphase-results")
+            .assertTextEquals("Documents: 3; positive results: 1; other results: 2.")
+        rule.runOnIdle { state.value = state.value.copy(resultSummary = AfirmaResultSummary.ServiceResult) }
+        rule.onNodeWithTag("native-multiphase-results")
+            .assertTextEquals("The service returned a result. This alone does not prove acceptance of the procedure.")
+        rule.runOnIdle { state.value = state.value.copy(resultSummary = null) }
+        rule.onNodeWithTag("native-multiphase-results").assertDoesNotExist()
+    }
 
     @Test fun detailsAreCollapsedAndNeverGrantConsentAndResetForNewRequest() {
         val state = mutableStateOf(prompt())
