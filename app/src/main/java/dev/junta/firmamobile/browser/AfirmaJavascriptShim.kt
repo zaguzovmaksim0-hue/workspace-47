@@ -43,10 +43,15 @@ object AfirmaJavascriptShim {
         qaDiagnosticsEnabled: Boolean = BuildConfig.ALLOW_QA_PROFILES,
         flags: AfirmaShimCompatibilityFlags = AfirmaShimCompatibilityFlags(),
         staBatchOrigin: String = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
-    ): String = AfirmaJavascriptShimAssembler.readAndAssemble(
+    ): String = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(
         AfirmaJavascriptShimConfiguration(mode, qaDiagnosticsEnabled, flags, staBatchOrigin),
-    ) {
-        context.resources.openRawResource(R.raw.afirma_shim).bufferedReader(Charsets.UTF_8)
+    ) { fragment ->
+        val resourceId = when (fragment) {
+            AfirmaJavascriptShimFragment.BOOTSTRAP -> R.raw.afirma_shim_bootstrap
+            AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
+            AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
+        }
+        context.resources.openRawResource(resourceId).bufferedReader(Charsets.UTF_8)
     }
 }
 
