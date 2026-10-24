@@ -141,14 +141,15 @@ remote-peer verification; no se registra la dirección resuelta.
 esperado durante la ventana de desbloqueo.
 **Controles:** la clave privada y los bytes PKCS#12 no se persisten por este
 mecanismo y `PrivateKey.encoded` no se consulta. Tras un desbloqueo manual
-correcto, solo en API 28+, la contraseña puede persistir durante un máximo de 24 horas únicamente
+correcto, solo en API 30+, la contraseña puede persistir durante un máximo de 24 horas únicamente
 como ciphertext autenticado AES-256-GCM en `noBackupFilesDir`, nunca en texto
 plano ni Preferences/logs. El registro `JFMUC002` queda ligado mediante AAD a la referencia
 del certificado, a los timestamps civiles originales de emisión/expiración y a la
 observación de mismo arranque (`Settings.Global.BOOT_COUNT` +
 `SystemClock.elapsedRealtimeNanos()`). La clave AES es material no exportable de
-Android Keystore; en API 28+ el provider actual exige que el dispositivo esté
-desbloqueado para usarla. `noBackupFilesDir` excluye el
+Android Keystore; en API 30+ requiere autenticación por operación con biometría
+fuerte o PIN/patrón/contraseña del dispositivo, ligada al Cipher mediante CryptoObject.
+También exige que el dispositivo esté desbloqueado. `noBackupFilesDir` excluye el
 registro cifrado del backup/transfer. Además, el manifest mantiene `allowBackup=false`
 y los recursos legacy/Android 12+ excluyen
 explícitamente `root`, `file`, `database`, `sharedpref`, `external` y los cuatro
@@ -156,7 +157,7 @@ dominios device-protected, tanto para cloud backup como para device transfer; po
 `allowBackup=false` no es la única barrera D2D. La
 persistencia autentica la observación monotónica de la lease creada antes del IO, por
 lo que un retraso de escritura no desplaza el origen de autorización. La restauración
-automática conserva la expiración civil original, **no renueva** la ventana y, además,
+explícita conserva la expiración civil original, **no renueva** la ventana y, además,
 solo es válida durante el mismo arranque del dispositivo y durante el tiempo monotónico
 restante autenticado. Un rollback de `elapsedRealtime`, un cambio de `BOOT_COUNT`,
 una fuente de tiempo/boot no disponible o el límite exacto/ulterior de la lease
@@ -166,7 +167,7 @@ carecen de evidencia de mismo arranque y se eliminan en restore, lo que puede ex
 una única reentrada de contraseña tras la actualización. Los buffers temporales
 `CharArray`/`ByteArray` en claro se limpian best-effort.
 
-**Límite de plataforma:** en API 26–27 la persistencia del desbloqueo está
+**Límite de plataforma:** en API 26–29 la persistencia del desbloqueo está
 deshabilitada: store devuelve false y restore devuelve null antes de leer un
 registro u obtener una clave. Ambos intentan revocar la clave y eliminar cualquier
 registro anterior en el dispatcher de IO. Si la limpieza falla, la restauración
@@ -174,9 +175,19 @@ sigue denegada. La sesión en memoria no cambia; tras process death o al liberar
 esa identidad por memory pressure se exige introducir otra vez la contraseña.
 El plazo se elige en cada desbloqueo manual: 15 minutos (por defecto), 1 hora o 24 horas.
 Cambiar la selección solo afecta al siguiente desbloqueo; restore conserva el vencimiento
-original sin renovarlo. Esta política todavía no añade biometría/PIN.
+original sin renovarlo. Guardar y recuperar requieren confirmación nativa con biometría/PIN.
+Cancelar el guardado deja solo la sesión en memoria si se verifica la revocación
+del registro anterior; si falla, permanece locked con revocación pendiente;
+cancelar la recuperación conserva el registro para reintentar y mantiene el estado locked.
+El arranque, foreground y memory pressure no abren el prompt ni restauran automáticamente.
+El usuario debe pulsar «Recuperar desbloqueo guardado»; el prompt tiene un límite de
+60 segundos y solo acepta el mismo Cipher y Activity reanudada. La generación de
+revocación vuelve a comprobarse después de autenticar, antes de publicar o escribir.
+La nueva clave/archivo usan sufijo v2; la clave/archivo v1 se eliminan antes del siguiente
+store/restore (o al limpiar), sin descifrar ni migrar su contenido. Esto no promete
+borrado inmediato al iniciar ni borrado forense. La aceptación física PIN/OEM sigue pendiente.
 
-**Semántica lifecycle (cache persistente solo en API 28+):** bloqueo manual, clear session, cambio u olvido del
+**Semántica lifecycle (cache persistente solo en API 30+):** bloqueo manual, clear session, cambio u olvido del
 certificado, expiración, reference mismatch, ciphertext malformado/manipulado o
 unlock cacheado fallido eliminan el registro. Background, process death y force-stop
 no eliminan por sí solos un registro todavía válido **durante el mismo device boot**;
@@ -184,15 +195,14 @@ una actualización ordinaria tampoco lo invalida si el boot y la lease siguen si
 válidos. En cambio, un reinicio del dispositivo cambia `BOOT_COUNT`: la siguiente
 restauración elimina el registro y exige introducir de nuevo la contraseña PKCS#12.
 Ante memory pressure, `CertificateSession` suelta primero la identidad en memoria,
-pero el ViewModel puede restaurarla desde el cache válido del mismo boot y solo por
-la duración monotónica restante. Por tanto memory pressure o process death no
-garantizan un estado locked persistente dentro de esa lease; **device reboot sí es
-una frontera de bloqueo para la restauración automática**.
+y el ViewModel queda locked hasta una nueva recuperación explícita autenticada,
+solo por la duración monotónica restante. Process death tampoco desbloquea la
+identidad automáticamente; reiniciar el dispositivo invalida la lease persistente.
 
 **Riesgo residual:** antes de expirar el registro, código que ejecute con los
 privilegios de la app en un dispositivo elegible y desbloqueado puede intentar
-activar la recuperación local en API 28+. En API 26–27 no se permite recuperar
-la contraseña desde disco porque falta `setUnlockedDeviceRequired(true)`; la
+solicitar un prompt de recuperación en API 30+, pero no descifrar sin la autenticación
+por operación. En API 26–29 no se permite recuperar la contraseña desde disco. La
 eliminación de registros/claves legacy es best-effort, no una garantía de borrado
 forense. Un
 dispositivo/root con control del proceso sigue fuera de la garantía. Recuperar la

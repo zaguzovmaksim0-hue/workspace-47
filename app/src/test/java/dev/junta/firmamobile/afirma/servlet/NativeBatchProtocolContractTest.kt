@@ -56,8 +56,7 @@ class NativeBatchProtocolContractTest {
         val result = NativeBatchProtocol.results("<signs><sign id='one'><result>OK</result></sign><sign Id='two'><result>KO</result><reason>Local failure</reason></sign></signs>".toByteArray(), batch)
         assertEquals(listOf("one", "two"), result.map { it.id })
         assertEquals(listOf("OK", "KO"), result.map { it.status })
-        assertTrue(NativeBatchProtocol.summary(result).contains("positivo: 1"))
-        assertTrue(NativeBatchProtocol.summary(result).contains("otros resultados: 1"))
+        assertEquals(AfirmaResultSummary.Batch(2, 1), NativeBatchProtocol.summary(result))
     }
     @Test fun invalidDescriptorPropertiesCannotRemoveConstraintsWithoutNotice() {
         for (bad in listOf(7, listOf("not-properties"), mapOf("policyIdentifier" to "must-not-be-ignored"))) {

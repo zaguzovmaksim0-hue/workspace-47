@@ -8,14 +8,18 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.test.core.app.ApplicationProvider
 import java.io.File
 import java.nio.file.Files
 import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,7 +37,9 @@ import org.robolectric.shadows.ShadowContentResolver
 class DocumentDownloadSaveTest {
     @Test fun confirmedCopyUsesTheChosenProviderAndDeletesPrivateStaging() = fixture { f ->
         assertEquals(0, f.fetches)
+        f.waitState(DocumentDownloadState.OFFER)
         f.model.start(); f.waitState(DocumentDownloadState.READY)
+        f.waitState(DocumentDownloadState.READY)
         assertEquals(1, f.fetches); assertTrue(f.source.exists())
         assertTrue(f.model.beginPicker()); f.model.save(f.uri, f.context.contentResolver)
         f.waitState(DocumentDownloadState.SAVED)
@@ -97,10 +103,26 @@ class DocumentDownloadSaveTest {
             provider.attachInfo(context, ProviderInfo().apply { authority = "download-save-fixture" })
             ShadowContentResolver.registerProviderInternal("download-save-fixture", provider)
         }
-        fun waitState(expected: DocumentDownloadState) {
-            val until = System.nanoTime() + 5_000_000_000L
-            while (model.state != expected && System.nanoTime() < until) Thread.sleep(10)
-            assertEquals(expected, model.state)
+        fun waitState(expected: DocumentDownloadState) = runBlocking {
+            val changes = Channel<Unit>(Channel.CONFLATED)
+            val observer = Snapshot.registerGlobalWriteObserver { changes.trySend(Unit) }
+            try {
+                val reached = withTimeoutOrNull(5_000) {
+                    // Global write notifications are batched until the snapshot is
+                    // applied. Re-arm them before waiting for the next state change.
+                    Snapshot.sendApplyNotifications()
+                    while (model.state != expected) {
+                        changes.receive()
+                        Snapshot.sendApplyNotifications()
+                    }
+                    true
+                } ?: false
+                assertTrue("Expected $expected, actual ${model.state}", reached)
+                assertEquals(expected, model.state)
+            } finally {
+                observer.dispose()
+                changes.close()
+            }
         }
     }
     private class Provider(private val file: File) : ContentProvider() {

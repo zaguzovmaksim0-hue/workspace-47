@@ -623,24 +623,8 @@ private fun LocationResultDialog(
     onOpenAppSettings: () -> Unit,
 ) {
     if (state == CatalogLocationState.IDLE || state == CatalogLocationState.LOADING) return
-    val title = when (state) {
-        CatalogLocationState.PERMISSION_DENIED -> R.string.catalog_location_permission_title
-        CatalogLocationState.LOCATION_DISABLED -> R.string.catalog_location_disabled_title
-        CatalogLocationState.UNAVAILABLE -> R.string.catalog_location_unavailable_title
-        CatalogLocationState.GEOCODING_FAILED -> R.string.catalog_geocoding_failed_title
-        CatalogLocationState.LOCATION_TIMEOUT -> R.string.catalog_location_timeout_title
-        CatalogLocationState.OUTSIDE_SPAIN -> R.string.catalog_location_outside_title
-        CatalogLocationState.IDLE, CatalogLocationState.LOADING -> return
-    }
-    val copy = when (state) {
-        CatalogLocationState.PERMISSION_DENIED -> R.string.catalog_location_permission_copy
-        CatalogLocationState.LOCATION_DISABLED -> R.string.catalog_location_disabled_copy
-        CatalogLocationState.UNAVAILABLE -> R.string.catalog_location_unavailable_copy
-        CatalogLocationState.GEOCODING_FAILED -> R.string.catalog_geocoding_failed_copy
-        CatalogLocationState.LOCATION_TIMEOUT -> R.string.catalog_location_timeout_copy
-        CatalogLocationState.OUTSIDE_SPAIN -> R.string.catalog_location_outside_copy
-        CatalogLocationState.IDLE, CatalogLocationState.LOADING -> return
-    }
+    val title = locationDialogTitle(state) ?: return
+    val copy = locationDialogCopy(state) ?: return
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = CatalogShape,
@@ -650,39 +634,80 @@ private fun LocationResultDialog(
         title = { Text(stringResource(title)) },
         text = { Text(stringResource(copy)) },
         confirmButton = {
-            when (state) {
-                CatalogLocationState.LOCATION_DISABLED -> {
-                    Button(onClick = onOpenSettings, shape = CatalogShape) {
-                        Text(stringResource(R.string.catalog_open_location_settings))
-                    }
-                }
-                CatalogLocationState.PERMISSION_DENIED -> {
-                    Button(onClick = onOpenAppSettings, shape = CatalogShape) {
-                        Text(stringResource(R.string.catalog_open_permissions))
-                    }
-                }
-                else -> {
-                    Button(onClick = onChooseManually, shape = CatalogShape) {
-                        Text(stringResource(R.string.catalog_choose_manually))
-                    }
-                }
-            }
+            locationDialogConfirmButton(state, onChooseManually, onOpenSettings, onOpenAppSettings)
         },
         dismissButton = {
-            if (
-                state == CatalogLocationState.LOCATION_DISABLED ||
-                state == CatalogLocationState.PERMISSION_DENIED
-            ) {
-                OutlinedButton(onClick = onChooseManually, shape = CatalogShape) {
-                    Text(stringResource(R.string.catalog_choose_manually))
-                }
-            } else {
-                OutlinedButton(onClick = onDismiss, shape = CatalogShape) {
-                    Text(stringResource(R.string.close))
-                }
-            }
+            locationDialogDismissButton(state, onChooseManually, onDismiss)
         },
     )
+}
+
+@StringRes
+private fun locationDialogTitle(state: CatalogLocationState): Int? = when (state) {
+    CatalogLocationState.PERMISSION_DENIED -> R.string.catalog_location_permission_title
+    CatalogLocationState.LOCATION_DISABLED -> R.string.catalog_location_disabled_title
+    CatalogLocationState.UNAVAILABLE -> R.string.catalog_location_unavailable_title
+    CatalogLocationState.GEOCODING_FAILED -> R.string.catalog_geocoding_failed_title
+    CatalogLocationState.LOCATION_TIMEOUT -> R.string.catalog_location_timeout_title
+    CatalogLocationState.OUTSIDE_SPAIN -> R.string.catalog_location_outside_title
+    CatalogLocationState.IDLE, CatalogLocationState.LOADING -> null
+}
+
+@StringRes
+private fun locationDialogCopy(state: CatalogLocationState): Int? = when (state) {
+    CatalogLocationState.PERMISSION_DENIED -> R.string.catalog_location_permission_copy
+    CatalogLocationState.LOCATION_DISABLED -> R.string.catalog_location_disabled_copy
+    CatalogLocationState.UNAVAILABLE -> R.string.catalog_location_unavailable_copy
+    CatalogLocationState.GEOCODING_FAILED -> R.string.catalog_geocoding_failed_copy
+    CatalogLocationState.LOCATION_TIMEOUT -> R.string.catalog_location_timeout_copy
+    CatalogLocationState.OUTSIDE_SPAIN -> R.string.catalog_location_outside_copy
+    CatalogLocationState.IDLE, CatalogLocationState.LOADING -> null
+}
+
+@Composable
+private fun locationDialogConfirmButton(
+    state: CatalogLocationState,
+    onChooseManually: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenAppSettings: () -> Unit,
+) {
+    when (state) {
+        CatalogLocationState.LOCATION_DISABLED -> {
+            Button(onClick = onOpenSettings, shape = CatalogShape) {
+                Text(stringResource(R.string.catalog_open_location_settings))
+            }
+        }
+        CatalogLocationState.PERMISSION_DENIED -> {
+            Button(onClick = onOpenAppSettings, shape = CatalogShape) {
+                Text(stringResource(R.string.catalog_open_permissions))
+            }
+        }
+        else -> {
+            Button(onClick = onChooseManually, shape = CatalogShape) {
+                Text(stringResource(R.string.catalog_choose_manually))
+            }
+        }
+    }
+}
+
+@Composable
+private fun locationDialogDismissButton(
+    state: CatalogLocationState,
+    onChooseManually: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (
+        state == CatalogLocationState.LOCATION_DISABLED ||
+        state == CatalogLocationState.PERMISSION_DENIED
+    ) {
+        OutlinedButton(onClick = onChooseManually, shape = CatalogShape) {
+            Text(stringResource(R.string.catalog_choose_manually))
+        }
+    } else {
+        OutlinedButton(onClick = onDismiss, shape = CatalogShape) {
+            Text(stringResource(R.string.close))
+        }
+    }
 }
 
 @Composable
