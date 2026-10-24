@@ -7,6 +7,7 @@ import java.security.SecureRandom
 import java.time.Clock
 import java.util.Date
 import java.util.Hashtable
+import org.bouncycastle.asn1.ASN1Encoding
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERSet
 import org.bouncycastle.asn1.cms.Attribute
@@ -22,7 +23,6 @@ import org.bouncycastle.cms.CMSProcessableByteArray
 import org.bouncycastle.cms.CMSSignedDataGenerator
 import org.bouncycastle.cms.DefaultSignedAttributeTableGenerator
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
 
 interface CadesSigner {
@@ -83,21 +83,8 @@ class BouncyCastleCadesSigner internal constructor(
                     ),
                 )
             }
-            val contentSigner = identity.withPrivateKey { privateKey ->
-                if (!privateKey.algorithm.equals(RSA, ignoreCase = true)) {
-                    null
-                } else {
-                    JcaContentSignerBuilder(algorithm.jcaName())
-                        .apply {
-                            // Software keys use the isolated bundled provider.
-                            // Opaque KeyChain/Keystore handles must stay with
-                            // their JCA provider; never export or retry them.
-                            if (privateKey is java.security.interfaces.RSAPrivateKey) setProvider(provider)
-                        }
-                        .setSecureRandom(secureRandom)
-                        .build(privateKey)
-                }
-            } ?: return LocalSignatureResult.Failure(LocalSignatureError.UNSUPPORTED_KEY)
+            val contentSigner = identity.rsaContentSigner(algorithm, provider, secureRandom)
+                ?: return LocalSignatureResult.Failure(LocalSignatureError.UNSUPPORTED_KEY)
             val digestProvider = JcaDigestCalculatorProviderBuilder()
                 .setProvider(provider)
                 .build()
@@ -115,7 +102,8 @@ class BouncyCastleCadesSigner internal constructor(
                     ),
                 )
             }
-            val generated = generator.generate(CMSProcessableByteArray(contentCopy), false).encoded
+            val generated = generator.generate(CMSProcessableByteArray(contentCopy), false)
+                .getEncoded(ASN1Encoding.DER)
             encodedSignature = generated
             if (generated.size > maxOutputBytes) {
                 return LocalSignatureResult.Failure(LocalSignatureError.OUTPUT_TOO_LARGE)
@@ -135,7 +123,6 @@ class BouncyCastleCadesSigner internal constructor(
     companion object {
         const val MAX_INPUT_BYTES = 524_288
         const val MAX_OUTPUT_BYTES = 2_097_152
-        private const val RSA = "RSA"
         private const val SHA_256 = "SHA-256"
     }
 }

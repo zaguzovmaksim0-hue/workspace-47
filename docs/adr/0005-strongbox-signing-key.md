@@ -46,6 +46,6 @@ Key authorizations are fixed at import. Changing any of them later requires re-i
 
 ## Next slices (separate PRs)
 
-1. Route the engines' opaque-key signing through `KeystoreRsaSigning` for StrongBox keys. This covers `LocalSignatureEngine`, `CadesSigner` and `NativeCadesEngine`. `NativeOpaqueRsaKeyTest` already covers opaque handles with native digests.
+1. Done: `UnlockedIdentity.keystorePlacement` routes `LocalSignatureEngine`, `CadesSigner`, `NativeCadesEngine` (and PAdES through it) via `KeystoreRsaSigning`. The TLS paths (`ClientAuthWebViewClient`, `InteractiveClientAuthController`, `ClientTlsIdentity`) hand the key to the platform and belong to slice 3.
 2. A versioned reference record in agreement with the multi-certificate design (#417), explicit migration with crash-safe commit, deletion with tombstones, and UI strings in all five locales.
 3. Enable keystore-backed signing and TLS. This needs a physical acceptance check that the owner authorizes separately.
