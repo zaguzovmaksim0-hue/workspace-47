@@ -2,6 +2,7 @@ package dev.junta.firmamobile.afirma.servlet
 
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.security.MonotonicSecurityTime
+import dev.junta.firmamobile.signing.PdfPreviewSource
 import java.io.Closeable
 import java.security.MessageDigest
 import java.time.Duration
@@ -43,6 +44,7 @@ internal sealed interface AfirmaResultSummary {
 
 internal interface PreparedAfirmaOperation : Closeable {
     val details: AfirmaConsentDetails
+    val pdfPreviews: Map<Int, PdfPreviewSource?> get() = emptyMap()
     val resultSummary: AfirmaResultSummary? get() = null
     val batchReceipt: NativeBatchReceipt? get() = null
     fun certificateCompatible(identity: UnlockedIdentity): Boolean
@@ -72,6 +74,7 @@ internal data class AfirmaConsentPrompt(
     val problem: AfirmaConsentProblem?,
     val resultSummary: AfirmaResultSummary? = null,
     val batchReceipt: NativeBatchReceipt? = null,
+    val pdfPreviews: Map<Int, PdfPreviewSource?> = emptyMap(),
 ) {
     val canConfirm: Boolean get() = phase == AfirmaConsentPhase.REVIEW && problem == null && certificateOwner != null
 }
@@ -338,7 +341,8 @@ internal class AfirmaConsentController<Owner : Any>(
     private fun publish(pending: Pending<Owner>) {
         if (current === pending) onPrompt(AfirmaConsentPrompt(pending.token, pending.details,
             pending.phase, pending.certificateOwner, pending.problem, pending.operation.resultSummary,
-            if (pending.phase == AfirmaConsentPhase.FINISHED) pending.terminalBatchReceipt else null))
+            if (pending.phase == AfirmaConsentPhase.FINISHED) pending.terminalBatchReceipt else null,
+            if (pending.phase == AfirmaConsentPhase.REVIEW) pending.operation.pdfPreviews else emptyMap()))
     }
 
     private fun fingerprint(identity: UnlockedIdentity?): String? = runCatching {

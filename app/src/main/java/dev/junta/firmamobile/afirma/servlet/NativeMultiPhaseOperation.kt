@@ -2,6 +2,8 @@ package dev.junta.firmamobile.afirma.servlet
 
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.signing.LocalSignatureResult
+import dev.junta.firmamobile.signing.PdfPreviewSource
+import dev.junta.firmamobile.signing.AccedaPadesAdapter
 import java.net.URI
 import java.security.MessageDigest
 import java.time.Clock
@@ -26,6 +28,23 @@ internal class NativeMultiPhaseOperation(
     private val remote = checkNotNull(invocation.remoteOptions)
     private val started = AtomicBoolean(false)
     @Volatile private var closed = false
+    override val pdfPreviews: Map<Int, PdfPreviewSource?> = when {
+        remote.batch != null -> remote.batch.items.mapIndexedNotNull { index, item ->
+            if (NativePadesOptions.acceptsFormat(item.format)) {
+                index to PdfPreviewSource.fromLocalInput(AccedaPadesAdapter.MAX_PDF_BYTES) {
+                    check(!closed && !started.get())
+                    AfirmaServletInvocationParser.strictBase64(item.dataReference, AccedaPadesAdapter.MAX_PDF_BYTES)
+                }
+            } else null
+        }.toMap()
+        NativeRemoteOptions.wireFormat(remote.format) == "pades" -> mapOf(
+            0 to PdfPreviewSource.fromLocalInput(AccedaPadesAdapter.MAX_PDF_BYTES) {
+                check(!closed && !started.get())
+                invocation.payloadCopy()
+            },
+        )
+        else -> emptyMap()
+    }
     override var resultSummary: AfirmaResultSummary? = null
         private set
     @Volatile override var batchReceipt: NativeBatchReceipt? = null
@@ -223,7 +242,12 @@ internal class NativeMultiPhaseOperation(
         invocation.close(); authorizeUpload(); currentCoroutineContext().ensureActive(); check(!closed)
         return storage.store(endpoint, id, "CANCEL")
     }
-    override fun close() { closed = true; invocation.close(); batchReceipt = null }
+    override fun close() {
+        closed = true
+        invocation.close()
+        batchReceipt = null
+        pdfPreviews.values.forEach { it?.close() }
+    }
     private fun url64(bytes: ByteArray) = Base64.getUrlEncoder().encodeToString(bytes)
     private fun destination(uri: URI) = URI("https", null, uri.host, uri.port, uri.path, null, null).toASCIIString()
 }

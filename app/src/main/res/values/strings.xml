@@ -304,6 +304,14 @@
     <string name="certificate_retention_fifteen_minutes">15 minutos</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 horas</string>
+
+    <!-- Local, optional PDF consent preview. -->
+    <string name="pdf_preview_show">Ver vista previa</string>
+    <string name="pdf_preview_loading">Cargando vista previa…</string>
+    <string name="pdf_preview_failed">No se puede mostrar la vista previa.</string>
+    <string name="pdf_preview_unavailable">Vista previa no disponible.</string>
+    <string name="pdf_preview_pages">Primera página · %1$d páginas</string>
+    <string name="pdf_preview_description">Vista previa de la primera página del PDF</string>
     <string name="certificate_auth_title">Proteger el desbloqueo guardado</string>
     <string name="certificate_auth_subtitle">Confirma con biometría o el PIN, patrón o contraseña del dispositivo.</string>
     <string name="certificate_auth_help">Guardar y recuperar el desbloqueo requiere confirmación del dispositivo. Si cancelas al guardarlo, solo se conserva la sesión en memoria.</string>
