@@ -185,7 +185,7 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("scripts/tests/android-instrumentation-harness.test.mjs", source)
         self.assertIn("android-emulator-state-${{ env.VERIFY_REF }}", source)
         self.assertIn("timeout-minutes:", source)
-        self.assertIn('GO_VERSION: "1.26.9"', source)
+        self.assertIn('GO_VERSION: "1.26.10"', source)
         self.assertIn("android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd", source)
         self.assertIn("ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d", source)
         self.assertIn("actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9", source)
@@ -219,7 +219,7 @@ class CiPolicyTest(unittest.TestCase):
         self.assertIn("551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb", source)
         self.assertIn("gitleaks git --redact --no-banner", source)
         self.assertIn("github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8", source)
-        self.assertIn('go-version: "1.26.9"', source)
+        self.assertIn('go-version: "1.26.10"', source)
         self.assertIn("android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd", source)
         gradle_verify = "./gradlew :app:verifyRuntimeDependencyLocks --no-daemon"
         osv_install = "Install pinned OSV-Scanner"
@@ -298,7 +298,7 @@ class CiPolicyTest(unittest.TestCase):
 
     def test_go_module_requires_the_patched_toolchain(self) -> None:
         source = self.read(GO_MOD)
-        self.assertRegex(source, r"(?m)^go 1\.26\.9$")
+        self.assertRegex(source, r"(?m)^go 1\.26\.10$")
 
     def test_dependabot_covers_all_package_managers(self) -> None:
         source = self.read(DEPENDABOT)
