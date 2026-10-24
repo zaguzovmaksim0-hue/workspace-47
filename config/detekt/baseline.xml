@@ -489,13 +489,9 @@
     <ID>MagicNumber:AfirmaJavascriptShim.kt$AfirmaJavascriptShim$443</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$0x20</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$0x7e</ID>
-    <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$16</ID>
-    <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$3</ID>
-    <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$32</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$37</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$3L</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$4</ID>
-    <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$4096</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$45</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$4L</ID>
     <ID>MagicNumber:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$5</ID>
@@ -1021,35 +1017,9 @@
     <ID>MaxLineLength:AfirmaRetrievalDialog.kt$modifier = Modifier.testTag(if (prompt.loading) "afirma-retrieval-cancel" else "afirma-retrieval-close")</ID>
     <ID>MaxLineLength:AfirmaServletInvocation.kt$AfirmaServletInvocation$@Synchronized override fun close()</ID>
     <ID>MaxLineLength:AfirmaServletInvocation.kt$AfirmaServletInvocation$val cadesCoSign: Boolean get() = operation == AfirmaServletOperation.COSIGN &amp;&amp; padesOptions == null &amp;&amp; xadesOptions == null &amp;&amp; remoteOptions == null</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$algorithm</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$for (name in listOf("ver", "v")) values[name]?.let { if (it !in setOf("1", "2", "3", "4")) unsupported("protocol_version") }</ID>
     <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (!remote &amp;&amp; op == AfirmaServletOperation.COUNTERSIGN) unsupported("local_countersign_not_implemented")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (!remote &amp;&amp; pdfCoSign &amp;&amp; !pdf &amp;&amp; !format.equals("CAdES", true)) unsupported("local_cosign_format_not_implemented")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (!values["mcv"].isNullOrBlank() || !values["minkeysize"].isNullOrBlank()) unsupported("minimum_client_or_key_constraint")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (fields.keys.any { it !in setOf("algo", "key", "iv", "legDes", "legacydes") }) unsupported("cipher_parameter")</ID>
     <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (legacy.length != 8 || legacy.any { it.code !in 0x20..0x7e } || key != null &amp;&amp; key != legacy) invalid("conflicting_legacy_keys")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (local &amp;&amp; values.keys.any { it in setOf("batchpresignerurl", "batchpostsignerurl") }) invalid("conflicting_local_batch_services")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (local) null else checkedEndpoint(values["batchpostsignerurl"] ?: invalid("missing_batch_post"))</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (op == AfirmaServletOperation.SELECT_CERTIFICATE &amp;&amp; values.containsKey("serverurl")) invalid("service_on_certificate_selection")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (precalculatedHash!!.signingAlgorithm != algorithm) unsupported("precalculated_hash_algorithm_mismatch")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (properties.containsKey("mode") &amp;&amp; detached != preservedMode) unsupported("cosign_packaging_change_not_implemented")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (properties.isNotEmpty() || values.containsKey("serverurl")) unsupported("batch_properties_must_be_in_descriptor")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (properties.keys.any { it !in setOf("mode", NativePrecalculatedHash.PROPERTY) + NativeCadesPolicy.PROPERTY_NAMES }) unsupported("signature_property_not_implemented")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (values.keys.any { it in setOf("dat", "format", "algorithm", "cop") }) invalid("unexpected_signing_parameters")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (values.keys.any { it in setOf("dat", "format", "algorithm", "properties", "cop") }) invalid("mixed_inline_and_indirect")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (values["rid"] != null &amp;&amp; values["id"] != null &amp;&amp; values["rid"] != values["id"]) invalid("conflicting_response_id")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$if (values["ver"] != null &amp;&amp; values["v"] != null &amp;&amp; values["ver"] != values["v"]) invalid("conflicting_protocol_versions")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$precalculatedHash = NativePrecalculatedHash.parse(digest) ?: unsupported("precalculated_hash_algorithm")</ID>
     <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$private</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$remoteOptions</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$val batch = NativeBatchDescriptor.parse(payload, flag("jsonbatch")) ?: invalid("invalid_batch_descriptor")</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$val expected = when (op) { AfirmaServletOperation.SELECT_CERTIFICATE -&gt; "selectcert"; else -&gt; op.name.lowercase(Locale.ROOT) }</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$val serviceValues = listOfNotNull(values["serverurl"], properties["serverUrl"], properties["serverurl"]).distinct()</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$val source = URI("https", null, page.host.lowercase(Locale.ROOT), page.port, null, null, null).toASCIIString()</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$values["algorithm"]?.let { if (NativeBatchDescriptor.algorithm(it) != algorithm) invalid("conflicting_batch_algorithm") }</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$values["cop"]?.let { if (!it.equals("sign", true) || op != AfirmaServletOperation.SIGN) unsupported("cosign_or_countersign") }</ID>
-    <ID>MaxLineLength:AfirmaServletInvocationParser.kt$AfirmaServletInvocationParser$xadesOptions = NativeXadesOptions.parse(format, properties) ?: unsupported("xades_constraint_not_implemented")</ID>
     <ID>MaxLineLength:AfirmaServletTransport.kt$AfirmaEndpointPolicy$private val DNS = Regex("[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+", RegexOption.IGNORE_CASE)</ID>
     <ID>MaxLineLength:AfirmaServletTransport.kt$AfirmaRetrievalException : IOException</ID>
     <ID>MaxLineLength:AfirmaServletTransport.kt$AfirmaRetrievalProblem</ID>
