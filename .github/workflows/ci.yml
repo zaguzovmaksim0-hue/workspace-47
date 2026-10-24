@@ -28,7 +28,7 @@ concurrency:
 env:
   VERIFY_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
   JAVA_VERSION: "17"
-  GO_VERSION: "1.26.9"
+  GO_VERSION: "1.26.10"
   PYTHON_VERSION: "3.13"
 
 jobs:
