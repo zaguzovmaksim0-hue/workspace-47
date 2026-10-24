@@ -1,11 +1,12 @@
 package dev.junta.firmamobile.ui
 
+import android.view.KeyEvent
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.platform.ViewRootForTest
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertHeightIsEqualTo
@@ -17,8 +18,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performKeyInput
-import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.testing.createComposeRule
@@ -169,7 +168,7 @@ class IndustrialBrowserTopBarDecompositionTest {
         val events = mutableListOf<String>()
         showToolbar(onEvent = { events += it })
         openMenu()
-        rule.onNode(isPopup()).performKeyInput { pressKey(Key.Back) }
+        pressSystemBackOnPopup()
 
         assertMenuClosed()
         rule.runOnIdle { assertTrue(events.isEmpty()) }
@@ -224,6 +223,15 @@ class IndustrialBrowserTopBarDecompositionTest {
                     windowInsets = windowInsets,
                 )
             }
+        }
+    }
+
+    // performKeyInput targets Compose focus only; the popup window's View handles real Back.
+    private fun pressSystemBackOnPopup() {
+        val popupView = (rule.onNode(isPopup()).fetchSemanticsNode().root as ViewRootForTest).view.rootView
+        rule.runOnIdle {
+            popupView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK))
+            popupView.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK))
         }
     }
 
