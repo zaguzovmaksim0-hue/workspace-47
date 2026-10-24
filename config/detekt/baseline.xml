@@ -261,8 +261,6 @@
     <ID>EmptyElseBlock:NativePadesEngine.kt$NativePadesEngine$if (count &lt; 0) break</ID>
     <ID>EmptyElseBlock:NativePadesEngine.kt$NativePadesEngine.ClearingOutput$if (count &gt;= limit) throw LimitExceeded()</ID>
     <ID>EmptyElseBlock:NativeSigningXml.kt$NativeSigningXml$if (child is Element) add(child)</ID>
-    <ID>EmptyElseBlock:SiteProfileCatalogParser.kt$StrictJson$if (take(']')) return JArray(list)</ID>
-    <ID>EmptyElseBlock:SiteProfileCatalogParser.kt$StrictJson$if (take('}')) return JObject(map)</ID>
     <ID>FunctionNaming:AfirmaRetrievalDialog.kt$@Composable internal fun AfirmaRetrievalDialog(prompt: AfirmaRetrievalPrompt, onCancel: () -&gt; Unit, onClose: () -&gt; Unit)</ID>
     <ID>FunctionNaming:AppRoot.kt$@Composable fun AppRoot( state: CertificateUiState = CertificateUiState.NoCertificate(), onSelectCertificate: () -&gt; Unit = {}, onUnlock: (CharArray, CertificateUnlockRetention) -&gt; Unit = { _, _ -&gt; }, onRestoreSavedUnlock: (() -&gt; Unit)? = null, onLock: () -&gt; Unit = {}, onForget: () -&gt; Unit = {}, onContinue: () -&gt; Unit = {}, )</ID>
     <ID>FunctionNaming:AppRoot.kt$@Composable private fun CertificateError(error: CertificateUiError)</ID>
@@ -944,18 +942,6 @@
     <ID>MagicNumber:SevillaAtseXadesEnvelopingAdapter.kt$0x7a</ID>
     <ID>MagicNumber:SevillaAtseXadesEnvelopingAdapter.kt$0xff</ID>
     <ID>MagicNumber:SevillaAtseXadesEnvelopingAdapter.kt$SevillaAtseXadesEnvelopingCodec$3</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$128</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$15</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$160</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$2048</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$2_048</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$443</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$60</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$65_535</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$StrictJson$0x20</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$StrictJson$16</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$StrictJson$32</ID>
-    <ID>MagicNumber:SiteProfileCatalogParser.kt$StrictJson$4</ID>
     <ID>MagicNumber:SiteProfileRegistry.kt$SiteProfileRegistry$443</ID>
     <ID>MagicNumber:TunnelRouteEvent.kt$TunnelRouteDurationBucket.Companion$10</ID>
     <ID>MagicNumber:TunnelRouteEvent.kt$TunnelRouteDurationBucket.Companion$3</ID>
@@ -1342,22 +1328,6 @@
     <ID>MaxLineLength:RuntimeSigningAdapters.kt$RuntimeSigningAdapters$LaPalmaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.LaPalmaBatchUrlPolicy()::validate))</ID>
     <ID>MaxLineLength:RuntimeSigningAdapters.kt$RuntimeSigningAdapters$MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))</ID>
     <ID>MaxLineLength:SecureTunnelSocketFactory.kt$SecureTunnelSocketFactory$override fun createSocket(host: InetAddress?, port: Int, localHost: InetAddress?, localPort: Int): Socket</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$JObject$fun nullableObject(key: String)</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$"aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFsL2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw==/"</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$"https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&amp;DETALLE=6269000968832920507194&amp;PAGE_CODE=CATALOGO"</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$"https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$"https://sede.transportes.gob.es/proc-servicios-comunes/presentacion-quejas-sugerencias-ambito-ministerio-transportes-movilidad-sostenible"</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$"https://seu.conselldeivissa.es/sta/CarpetaPublic/Public?APP_CODE=STA&amp;PAGE_CODE=CATALOGO&amp;DETALLE=6269002703260065905043"</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$"https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB.SIMPL_DOC.INSTANCIA_GENERICA_SR&amp;version=1&amp;idioma=es&amp;servicioCatalogo=false&amp;idTramiteCatalogo=4213963&amp;parametros="</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$require(p.activation != ProfileActivation.ENABLED || p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED)</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$require(p.compatibilityStatus != CompatibilityStatus.UNSUPPORTED || p.activation == ProfileActivation.DISABLED)</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CAIB_PUBLIC_ORIGIN), ExactOrigin.parse(CAIB_SIGNING_ORIGIN)))</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$require(profile.redirectOrigins.isEmpty() &amp;&amp; profile.trustedBrowseOrigins.isEmpty() &amp;&amp; profile.endpoints.isEmpty())</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$}</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$StrictJson$'u' -&gt; { require(index + 4 &lt;= source.length); val hex = source.substring(index, index + 4); require(hex.all { it.isDigit() || it.lowercaseChar() in 'a'..'f' }); out.append(hex.toInt(16).toChar()); index += 4 }</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$StrictJson$else</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$StrictJson$private fun &lt;T : JValue&gt; literal(text: String, value: T): T</ID>
-    <ID>MaxLineLength:SiteProfileCatalogParser.kt$StrictJson$private fun whitespace()</ID>
     <ID>MaxLineLength:TransparenciaPadesAdapter.kt$TransparenciaPadesAdapter.Companion$const val PUBLIC_START_URL = "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&amp;idAmb=101524"</ID>
     <ID>MaxLineLength:TransportesXadesEnvelopedAdapter.kt$TransportesXadesEnvelopedAdapter.Companion$"""&lt;\?xml version="1\.0" encoding="UTF-8"\?&gt;&lt;tag1 Id="tag1"&gt;&lt;tag1_timestamp&gt;(\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2})&lt;/tag1_timestamp&gt;&lt;/tag1&gt;"""</ID>
     <ID>MaxLineLength:TrustedJuntaWebView.kt$TrustedJuntaWebView$fun</ID>
@@ -1712,7 +1682,6 @@
     <ID>UnusedPrivateProperty:JuntaTriPhaseCodec.kt$AutoFirmaCadesTriPhaseCodec.Companion$private const val DOCUMENT_ID_PROPERTY = "documentId"</ID>
     <ID>UnusedPrivateProperty:MelillaBatchBridgeAdapter.kt$StaBatchBridgeAdapter$val postSigner = when ( val result = contract.urlValidator.validate( postSignerUrl, MelillaBatchUrlOperation.POSTSIGN, operationId, null, ) ) { is MelillaBatchUrlValidation.Allowed -&gt; result is MelillaBatchUrlValidation.Rejected -&gt; return rejected(canonicalRequestId, result.error.signingErrorCode()) }</ID>
     <ID>UnusedPrivateProperty:PendingSignRequestStore.kt$PendingSignRequestStore$private val clock: Clock = Clock.systemUTC()</ID>
-    <ID>UnusedPrivateProperty:SiteProfileCatalogParser.kt$SiteProfileCatalogParser$private val PARAMETER_NAME = Regex("[A-Za-z][A-Za-z0-9_.]{0,63}")</ID>
     <ID>UseCheckOrError:BrowserDownloadCapture.kt$BrowserDownloadCapture.BlobRead$throw IllegalStateException("Blob larger than announced")</ID>
     <ID>UseCheckOrError:BrowserDownloadCapture.kt$BrowserDownloadCapture.BlobRead$throw IllegalStateException("Blob length mismatch")</ID>
     <ID>UseCheckOrError:ClientCertPreferenceCoordinator.kt$AndroidClientCertPreferenceTimeoutScheduler$throw IllegalStateException("Unable to schedule client certificate preference timeout")</ID>
