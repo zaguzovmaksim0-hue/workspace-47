@@ -1,6 +1,7 @@
 package dev.junta.firmamobile
 
 import android.app.Application
+import dev.junta.firmamobile.certificate.AndroidCertificateUnlockAuthentication
 import dev.junta.firmamobile.certificate.CertificateModule
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.signing.SigningModule
@@ -19,7 +20,10 @@ internal class AppContainer(
     ): SigningModule = SigningModule(certificateSession, scope)
 
     companion object {
-        fun create(application: Application): AppContainer =
-            AppContainer { CertificateModule.create(application) }
+        fun create(
+            application: Application,
+            unlockAuthentication: AndroidCertificateUnlockAuthentication,
+        ): AppContainer =
+            AppContainer { CertificateModule.create(application, unlockAuthentication) }
     }
 }

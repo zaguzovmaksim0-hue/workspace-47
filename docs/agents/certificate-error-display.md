@@ -66,7 +66,7 @@ java -cp "$OUT:$JUNIT:$HAMCREST:$KOTLIN_HOME/lib/kotlin-stdlib.jar" \
   org.junit.runner.JUnitCore \
   dev.junta.firmamobile.ui.CertificateErrorPresentationTest \
   dev.junta.firmamobile.ui.CertificateErrorPresentationMatrixTest
-python3 -m unittest tools.tests.test_certificate_error_display tools.tests.test_detekt_policy -v
+python3 -m unittest tools.tests.test_detekt_policy -v
 git diff --check
 ```
 
