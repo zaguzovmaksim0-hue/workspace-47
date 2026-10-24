@@ -33,6 +33,10 @@ interface CertificateReferenceCatalogStore : CertificateReferenceStore {
 
     suspend fun add(reference: StoredCertificateReference): StoredCertificateEntry
 
+    /** Activates [id] only if it still has [revision] and a file reference; a stale list row never selects a
+     * changed entry, and a key-only entry stays behind the authenticated keystore flow (see [read]). */
+    suspend fun selectEntry(id: String, revision: Long): Boolean
+
     /** Compare the complete entry, including its revision, inside the atomic edit. */
     suspend fun replace(expected: StoredCertificateEntry, replacement: StoredCertificateEntry)
 

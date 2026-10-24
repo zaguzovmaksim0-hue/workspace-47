@@ -292,6 +292,32 @@ class CertificateReferenceCatalogTest {
         }
     }
 
+    @Test
+    fun selectionIsConditionalOnTheListedRevisionAndSkipsKeyOnlyEntries() = runBlocking {
+        val data = dataStore(file())
+        val store = PreferencesCertificateReferenceStore(data)
+        val first = store.add(reference("a"))
+        val second = store.add(reference("b"))
+        assertTrue(store.selectEntry(first.id, first.revision))
+        assertEquals(first.reference, store.read())
+
+        store.write(reference("a-moved"))
+        val moved = checkNotNull(store.readCatalog().active)
+        assertEquals(first.revision + 1, moved.revision)
+        assertEquals(false, store.selectEntry(first.id, first.revision))
+        assertEquals(false, store.selectEntry("00000000-0000-0000-0000-000000000000", 1))
+
+        // Active, it would read as no certificate and a later file choice would retire its key.
+        val key = StoredSigningKeyReference(
+            1, KeystoreSigningKeyImporter.ALIAS_PREFIX + "a".repeat(32), StoredKeystoreLevel.TEE,
+            "b".repeat(64), "b.p12",
+        )
+        val keyOnly = second.copy(revision = second.revision + 1, reference = null, signingKey = key)
+        store.replace(second, keyOnly)
+        assertEquals(false, store.selectEntry(keyOnly.id, keyOnly.revision))
+        assertEquals(moved.id, PreferencesCertificateReferenceStore(data).readCatalog().activeId)
+    }
+
     private fun reference(name: String) = StoredCertificateReference(
         Uri.parse("content://documents/$name"), "$name.p12", "application/x-pkcs12", null, null,
     )

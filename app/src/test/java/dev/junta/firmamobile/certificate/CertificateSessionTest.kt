@@ -176,6 +176,28 @@ class CertificateSessionTest {
     }
 
     @Test
+    fun aReviewTakenBeforeAnotherSelectionNeverSignsEvenForTheSameCertificate() = runTest {
+        val first = validIdentity()
+        val second = validIdentity(TestCertificateFactory.freshValidRsa())
+        val session = CertificateSession(mutableClock, Duration.ofMinutes(10))
+        session.unlock(first)
+
+        session.signingSnapshot().use { review ->
+            session.forget()
+            session.unlock(first)
+            assertNull(session.identityForSigning(checkNotNull(review)))
+        }
+        session.signingSnapshot().use { review ->
+            session.unlock(second)
+            session.unlock(first)
+            assertNull(session.identityForSigning(checkNotNull(review)))
+        }
+        session.signingSnapshot().use { review ->
+            assertSame(first, session.identityForSigning(checkNotNull(review)))
+        }
+    }
+
+    @Test
     fun signingSnapshotMatchesOnlyTheSameUnlockedCertificateAndClearsItsFingerprint() = runTest {
         val clearedFingerprints = mutableListOf<Boolean>()
         val first = validIdentity()
