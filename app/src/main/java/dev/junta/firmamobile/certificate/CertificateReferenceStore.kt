@@ -56,6 +56,31 @@ class PreferencesCertificateReferenceStore(
         return entry
     }
 
+    override suspend fun selectEntry(id: String, revision: Long): Boolean {
+        var selected = false
+        dataStore.edit { preferences ->
+            val catalog = readSnapshot(preferences)
+            selected = catalog.entries.any { it.id == id && it.revision == revision }
+            if (selected) persist(preferences, catalog.copy(activeId = id))
+        }
+        return selected
+    }
+
+    override suspend fun remove(id: String, revision: Long): StoredCertificateEntry? {
+        var removed: StoredCertificateEntry? = null
+        dataStore.edit { preferences ->
+            val catalog = readSnapshot(preferences)
+            removed = catalog.entries.singleOrNull { it.id == id && it.revision == revision }
+            if (removed != null) {
+                persist(preferences, StoredCertificateCatalog(
+                    entries = catalog.entries.filterNot { it.id == id },
+                    activeId = catalog.activeId.takeIf { it != id },
+                ))
+            }
+        }
+        return removed
+    }
+
     override suspend fun write(reference: StoredCertificateReference) {
         dataStore.edit { preferences ->
             val catalog = readSnapshot(preferences)

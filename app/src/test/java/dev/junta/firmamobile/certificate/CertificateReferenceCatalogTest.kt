@@ -276,6 +276,30 @@ class CertificateReferenceCatalogTest {
         }
     }
 
+    @Test
+    fun selectionAndRemovalAreConditionalOnTheListedRevision() = runBlocking {
+        val data = dataStore(file())
+        val store = PreferencesCertificateReferenceStore(data)
+        val first = store.add(reference("a"))
+        val second = store.add(reference("b"))
+        assertTrue(store.selectEntry(first.id, first.revision))
+        assertEquals(first.reference, store.read())
+
+        store.write(reference("a-moved"))
+        val moved = checkNotNull(store.readCatalog().active)
+        assertEquals(first.revision + 1, moved.revision)
+        assertEquals(false, store.selectEntry(first.id, first.revision))
+        assertNull(store.remove(first.id, first.revision))
+        assertEquals(false, store.selectEntry("00000000-0000-0000-0000-000000000000", 1))
+        assertEquals(moved.id, store.readCatalog().activeId)
+
+        assertEquals(second, store.remove(second.id, second.revision))
+        assertEquals(listOf(moved), store.readCatalog().entries)
+        assertEquals(moved.reference, store.read())
+        assertEquals(moved, store.remove(moved.id, moved.revision))
+        assertEquals(StoredCertificateCatalog(emptyList(), null), PreferencesCertificateReferenceStore(data).readCatalog())
+    }
+
     private fun reference(name: String) = StoredCertificateReference(
         Uri.parse("content://documents/$name"), "$name.p12", "application/x-pkcs12", null, null,
     )

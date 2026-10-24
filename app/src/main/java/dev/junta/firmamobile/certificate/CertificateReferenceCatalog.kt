@@ -27,6 +27,14 @@ interface CertificateReferenceCatalogStore : CertificateReferenceStore {
     suspend fun readCatalog(): StoredCertificateCatalog
 
     suspend fun add(reference: StoredCertificateReference): StoredCertificateEntry
+
+    /** Activates [id] only if it still has [revision]; a stale list row never selects a changed entry. */
+    suspend fun selectEntry(id: String, revision: Long): Boolean
+
+    /** Removes [id] only if it still has [revision]; removing the active entry leaves none selected. Returns the
+     * removed entry so its caller can release that entry's grant. Catalogue URIs are unique, so no surviving
+     * entry can share it. */
+    suspend fun remove(id: String, revision: Long): StoredCertificateEntry?
 }
 
 internal object CertificateReferenceCatalogCodec {
