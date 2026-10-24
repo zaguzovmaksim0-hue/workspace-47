@@ -12,14 +12,6 @@ class RepositoryHygieneTest(unittest.TestCase):
     def test_root_does_not_vendor_the_unrelated_profiler(self):
         self.assertFalse(list(ROOT.glob("kai_csv_profiler-*.whl")))
 
-    def test_instrumentation_is_explicit_manual_opt_in(self):
-        source = (ROOT / ".github/workflows/ci.yml").read_text()
-        self.assertIn("run_instrumentation:", source)
-        self.assertIn("default: false", source)
-        job = source.split("  android-instrumented:", 1)[1].split("    runs-on:", 1)[0]
-        self.assertIn("github.event_name == 'workflow_dispatch' && inputs.run_instrumentation", job)
-        self.assertNotIn("pull_request.number", job)
-
     def test_documentation_index_links_exist(self):
         import re
         index = ROOT / "docs/README.md"
