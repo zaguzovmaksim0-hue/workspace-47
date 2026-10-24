@@ -917,10 +917,8 @@
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0x8000</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xfc00</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xfe80</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xff</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xff00</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xff9b</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$0xffff</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$10</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$100</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$113</ID>
@@ -936,24 +934,16 @@
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$193</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$196</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$198</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$20</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$203</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$224</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$23</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$254</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$3</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$31</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$32</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$48</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$51</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$52</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$64</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$7</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$8</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$88</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$96</ID>
     <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$99</ID>
-    <ID>MagicNumber:PublicIpAddressPolicy.kt$PublicIpAddressPolicy.Ipv6Prefix$0xff</ID>
     <ID>MagicNumber:PublicPortalCatalogParser.kt$PublicPortalCatalogParser$120</ID>
     <ID>MagicNumber:PublicPortalCatalogParser.kt$PublicPortalCatalogParser$150</ID>
     <ID>MagicNumber:PublicPortalCatalogParser.kt$PublicPortalCatalogParser$160</ID>
@@ -1697,8 +1687,6 @@
     <ID>ReturnCount:ProfileHttpCallPhaseTracker.kt$ProfileHttpCallPhaseTracker$private fun advanceTo(next: ProfileHttpFailurePhase)</ID>
     <ID>ReturnCount:ProfileHttpTransport.kt$HttpsProfileHttpTransport$override fun post( request: ProfileHttpRequest, cancellation: ProfileHttpCancellation, ): ProfileHttpResult</ID>
     <ID>ReturnCount:PublicBrowserAddress.kt$PublicBrowserAddress$fun parse(raw: String): URI?</ID>
-    <ID>ReturnCount:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$fun isPublicRoutable(address: InetAddress): Boolean</ID>
-    <ID>ReturnCount:PublicIpAddressPolicy.kt$PublicIpAddressPolicy$private fun isPublicIpv6(address: Inet6Address, raw: ByteArray): Boolean</ID>
     <ID>ReturnCount:PublicIpAddressPolicy.kt$PublicIpAddressPolicy.Ipv6Prefix$fun matches(candidate: ByteArray): Boolean</ID>
     <ID>ReturnCount:QaDiagnosticFileSink.kt$QaDiagnosticFileSink$private fun isSafeRecord(record: String): Boolean</ID>
     <ID>ReturnCount:SafeNetworkUrlPolicy.kt$SafeNetworkUrlPolicy$fun validateEndpoint(rawUrl: String): NetworkUrlValidation</ID>
