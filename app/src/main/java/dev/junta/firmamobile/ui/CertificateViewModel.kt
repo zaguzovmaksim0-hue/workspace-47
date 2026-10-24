@@ -52,6 +52,13 @@ class CertificateViewModel(
         withContext(ioDispatcher) { unlockCache.clear() }
     }
 
+    /** Verified revocation before the stored selection changes. An unverified saved unlock could otherwise
+     * restore without a password once the same file is chosen again, so the change is refused instead. */
+    private suspend fun revokeCacheBeforeSelectionChange(): Boolean {
+        revocationJob?.join()
+        return withContext(ioDispatcher) { runCatching { unlockCache.clearAndReport() }.getOrDefault(false) }
+    }
+
     init {
         require(!unlockDuration.isNegative && !unlockDuration.isZero)
         require(unlockDuration <= MAX_PERSISTED_UNLOCK_DURATION)
@@ -73,8 +80,9 @@ class CertificateViewModel(
         mutableState.value = CertificateUiState.LoadingReference
         operationJob = viewModelScope.launch {
             mutableState.value = try {
-                clearCache()
-                when (val result = gateway.select(uri)) {
+                if (!revokeCacheBeforeSelectionChange()) {
+                    previous.keptAfterRefusedChange()
+                } else when (val result = gateway.select(uri)) {
                     is CertificateSelectionResult.Success -> result.reference.toLockedState()
                     is CertificateSelectionResult.Failure -> {
                         val error = result.code.toUiError()
@@ -234,9 +242,12 @@ class CertificateViewModel(
         mutableState.value = CertificateUiState.LoadingReference
         operationJob = viewModelScope.launch {
             mutableState.value = try {
-                clearCache()
-                gateway.forget()
-                CertificateUiState.NoCertificate()
+                if (revokeCacheBeforeSelectionChange()) {
+                    gateway.forget()
+                    CertificateUiState.NoCertificate()
+                } else {
+                    previous.keptAfterRefusedChange()
+                }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: Exception) {
@@ -333,6 +344,11 @@ class CertificateViewModel(
     private fun StoredCertificateReference.toLockedState(
         error: CertificateUiError? = null,
     ) = CertificateUiState.Locked(this, summary, error)
+
+    // Like a lock whose revocation failed: the former selection stays, locked, with the error and no pending flag.
+    private fun StoredCertificateReference?.keptAfterRefusedChange(): CertificateUiState =
+        this?.toLockedState(CertificateUiError.STORAGE_FAILURE)
+            ?: CertificateUiState.NoCertificate(CertificateUiError.STORAGE_FAILURE)
 
     private fun StoredCertificateReference.toLockedState(
         summary: dev.junta.firmamobile.certificate.CertificateSummary?,

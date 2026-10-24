@@ -391,6 +391,36 @@ class CertificateViewModelTest {
     }
 
     @Test
+    fun unverifiedRevocationKeepsTheSelectionLockedUntilARetrySucceeds() = runTest(dispatcher) {
+        val selected = reference()
+        val replacement = selected.copy(uri = Uri.parse("content://documents/replacement"))
+        val gateway = FakeCertificateGateway().apply {
+            current = selected
+            selectionResult = CertificateSelectionResult.Success(replacement)
+        }
+        val session = CertificateSession(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
+        val cache = FakeCertificateUnlockCache().apply { clearVerified = false }
+        val model = viewModel(gateway, session, cache)
+        advanceUntilIdle()
+        val refused = CertificateUiState.Locked(selected, null, CertificateUiError.STORAGE_FAILURE)
+
+        model.onCertificateSelected(replacement.uri)
+        advanceUntilIdle()
+        assertEquals(refused, model.state.value)
+        model.forget()
+        advanceUntilIdle()
+        assertEquals(refused, model.state.value)
+        assertEquals(0, gateway.forgetCalls)
+        assertNull(session.identityForSigning())
+
+        cache.clearVerified = true
+        model.forget()
+        advanceUntilIdle()
+        assertEquals(1, gateway.forgetCalls)
+        assertEquals(CertificateUiState.NoCertificate(), model.state.value)
+    }
+
+    @Test
     fun explicitLockReportsUnverifiedRevocationAndStillLocksIdentity() = runTest(dispatcher) {
         val selected = reference()
         val gateway = FakeCertificateGateway().apply { current = selected }
