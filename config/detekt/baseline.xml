@@ -708,21 +708,6 @@
     <ID>MagicNumber:MelillaBatchUrlPolicy.kt$StaBatchUrlPolicy$10</ID>
     <ID>MagicNumber:MelillaBatchUrlPolicy.kt$StaBatchUrlPolicy$3</ID>
     <ID>MagicNumber:MelillaBatchUrlPolicy.kt$StaBatchUrlPolicy$4</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x20</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x30</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x39</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x41</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x5a</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x5f</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x61</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x66</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x7a</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0x7e</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$0xff</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$15</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$3</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$32</ID>
-    <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$4</ID>
     <ID>MagicNumber:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$443</ID>
     <ID>MagicNumber:MiniAppletPadesAdapter.kt$MiniAppletPadesAdapter$1024</ID>
     <ID>MagicNumber:MiniAppletPadesAdapter.kt$MiniAppletPadesAdapter$16L</ID>
@@ -1196,10 +1181,6 @@
     <ID>MaxLineLength:MelillaBatchSigningAdapter.kt$LugoBatchSigningAdapter$profile.capabilities != setOf(Capability.SIGN)</ID>
     <ID>MaxLineLength:MelillaBatchSigningAdapter.kt$LugoBatchSigningAdapter$request.format != "CAdES"</ID>
     <ID>MaxLineLength:MelillaBatchUrlPolicy.kt$BurgosBatchUrlPolicy$fun</ID>
-    <ID>MaxLineLength:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$FORMAT_PADES</ID>
-    <ID>MaxLineLength:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$operation.endpointId?.let(profile.endpoints::get)?.url?.toASCIIString() == XuntaPadesTriPhaseAdapter.ENDPOINT</ID>
-    <ID>MaxLineLength:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$profile.redirectOrigins.isEmpty()</ID>
-    <ID>MaxLineLength:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$val</ID>
     <ID>MaxLineLength:NativeAfirmaConsentDialog.kt$AfirmaConsentProblem.CANCEL_ACKNOWLEDGED -&gt; Text(stringResource(R.string.native_afirma_cancel_acknowledged))</ID>
     <ID>MaxLineLength:NativeAfirmaConsentDialog.kt$AfirmaConsentProblem.CANCEL_UNCERTAIN -&gt; Text(stringResource(R.string.native_afirma_cancel_uncertain))</ID>
     <ID>MaxLineLength:NativeAfirmaConsentDialog.kt$ConsentIdentityField(stringResource(R.string.native_consent_page_label), prompt.details.sourceOrigin)</ID>

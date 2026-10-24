@@ -408,12 +408,17 @@ internal class ProfileMiniAppletBridgeAdapter(
             )
         }
         val suppliedFormat = json.strictString(FORMAT_FIELD)
-        val normalizedFormat = if (isDiputacionBadajozContract && suppliedFormat.equals(FORMAT_CADES, ignoreCase = true)) {
+        val normalizedFormat = if (
+            isDiputacionBadajozContract && suppliedFormat.equals(FORMAT_CADES, ignoreCase = true)
+        ) {
             FORMAT_CADES
         } else suppliedFormat
         val format = when (normalizedFormat) {
             FORMAT_CADES -> SigningFormat.CADES to SignatureFormat.CADES
-            FORMAT_PADES -> if (isAccedaContract || isGranCanariaContract || isFuerteventuraContract || isMinecoContract || isTransparenciaContract) {
+            FORMAT_PADES -> if (
+                isAccedaContract || isGranCanariaContract || isFuerteventuraContract ||
+                isMinecoContract || isTransparenciaContract
+            ) {
                 SigningFormat.PADES to SignatureFormat.PADES
             } else {
                 null
@@ -889,12 +894,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             signingProtocolId == AccedaPadesAdapter.ID.value
 
     private fun ByteArray.isValidPdfPayload(): Boolean =
-        size in 32..AccedaPadesAdapter.MAX_PDF_BYTES &&
-            this[0] == 0x25.toByte() &&
-            this[1] == 0x50.toByte() &&
-            this[2] == 0x44.toByte() &&
-            this[3] == 0x46.toByte() &&
-            this[4] == 0x2D.toByte() &&
+        size in MIN_PDF_PAYLOAD_BYTES..AccedaPadesAdapter.MAX_PDF_BYTES &&
+            PDF_HEADER.indices.all { this[it] == PDF_HEADER[it] } &&
             String(this, Charsets.US_ASCII).contains("%%EOF")
 
     private fun isExactJccmRegistroContract(
@@ -928,7 +929,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty() &&
             clientAuth.linkedEphemeralQueryParameters.isEmpty() &&
             clientAuth.linkedEphemeralQueryParameterMappings.isEmpty() &&
-            clientAuth.allowEmptyIssuerList && clientAuth.grantTtlSeconds == 15 &&
+            clientAuth.allowEmptyIssuerList && clientAuth.grantTtlSeconds == CLIENT_AUTH_GRANT_TTL_SECONDS &&
             clientAuth.requestPort == 443 &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
             !profile.certificateRules.requireDigitalSignatureKeyUsage &&
@@ -1015,7 +1016,9 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.startUrl.toASCIIString() == EivissaCadesDetachedAdapter.START_URL &&
             origin.serialized == EivissaCadesDetachedAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(EivissaCadesDetachedAdapter.INITIATOR_ORIGIN)) &&
-            profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty() && profile.endpoints.isEmpty() &&
+            profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
             profile.capabilities == setOf(Capability.SIGN) && profile.clientAuthPolicy == null &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
             profile.certificateRules.requireDigitalSignatureKeyUsage && profile.operationPolicies.size == 1 &&
@@ -1132,7 +1135,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.redirectOrigins.isEmpty() &&
             profile.trustedBrowseOrigins.isEmpty() &&
             profile.endpoints.size == 1 &&
-            operation.endpointId?.let(profile.endpoints::get)?.url?.toASCIIString() == XuntaPadesTriPhaseAdapter.ENDPOINT &&
+            operation.endpointId?.let(profile.endpoints::get)?.url?.toASCIIString() ==
+                XuntaPadesTriPhaseAdapter.ENDPOINT &&
             profile.capabilities == setOf(Capability.SIGN, Capability.SELECT_CERTIFICATE, Capability.LEGACY_SHA1) &&
             profile.clientAuthPolicy == null &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
@@ -1363,7 +1367,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty() &&
             clientAuth.linkedEphemeralQueryParameters.isEmpty() &&
             clientAuth.allowEmptyIssuerList &&
-            clientAuth.grantTtlSeconds == 15 &&
+            clientAuth.grantTtlSeconds == CLIENT_AUTH_GRANT_TTL_SECONDS &&
             clientAuth.requestPort == 443 &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
             profile.certificateRules.requireDigitalSignatureKeyUsage &&
@@ -1512,12 +1516,12 @@ internal class ProfileMiniAppletBridgeAdapter(
 
     private fun ByteArray.isExactSevillaAtseChallenge(): Boolean =
         size == SEVILLA_ATSE_CHALLENGE_BYTES && all { byte ->
-            val value = byte.toInt() and 0xff
-            value in 0x30..0x39 ||
-                value in 0x41..0x5a ||
-                value in 0x61..0x7a ||
-                value == 0x5f ||
-                value == 0x2d
+            val value = byte.toInt() and UNSIGNED_BYTE_MASK
+            value in '0'.code..'9'.code ||
+                value in 'A'.code..'Z'.code ||
+                value in 'a'.code..'z'.code ||
+                value == '_'.code ||
+                value == '-'.code
         }
 
     private fun isExactUgrContract(
@@ -1593,8 +1597,8 @@ internal class ProfileMiniAppletBridgeAdapter(
 
     private fun ByteArray.isExactCantabriaChallenge(): Boolean =
         size == CANTABRIA_CHALLENGE_BYTES && all { byte ->
-            byte.toInt() in 0x30..0x39 ||
-                byte.toInt() in 0x61..0x66
+            byte.toInt() in '0'.code..'9'.code ||
+                byte.toInt() in 'a'.code..'f'.code
         }
 
     private fun isExactCanariasContract(
@@ -1675,8 +1679,8 @@ internal class ProfileMiniAppletBridgeAdapter(
 
     private fun ByteArray.isExactDiputacionLleidaChallenge(): Boolean =
         isNotEmpty() && size <= MAX_LLEIDA_CHALLENGE_BYTES && all { byte ->
-            val value = byte.toInt() and 0xff
-            value in 0x20..0x7e
+            val value = byte.toInt() and UNSIGNED_BYTE_MASK
+            value in ' '.code..'~'.code
         }
 
     private fun isExactDiputacionBadajozContract(
@@ -1718,8 +1722,8 @@ internal class ProfileMiniAppletBridgeAdapter(
 
     private fun ByteArray.isExactDiputacionBadajozChallenge(): Boolean =
         isNotEmpty() && size <= MAX_BADAJOZ_CHALLENGE_BYTES && all { byte ->
-            val value = byte.toInt() and 0xff
-            value in 0x20..0x7e
+            val value = byte.toInt() and UNSIGNED_BYTE_MASK
+            value in ' '.code..'~'.code
         }
 
     private fun canonicalExtraProperties(raw: String, fixed: Map<String, String>): String? {
@@ -1746,6 +1750,10 @@ internal class ProfileMiniAppletBridgeAdapter(
         const val MAX_DATA_BASE64_CHARS = 699_052
         const val MAX_EXTRA_PROPERTIES_CHARS = 65_536
         const val MAX_MESSAGE_CHARS = 786_432
+        private const val MIN_PDF_PAYLOAD_BYTES = 32
+        private val PDF_HEADER = "%PDF-".toByteArray(Charsets.US_ASCII)
+        private const val UNSIGNED_BYTE_MASK = 0xff
+        private const val CLIENT_AUTH_GRANT_TTL_SECONDS = 15
         private const val TYPE_FIELD = "type"
         private const val DOCUMENT_ID_FIELD = "documentId"
         private const val REQUEST_ID_FIELD = "requestId"
