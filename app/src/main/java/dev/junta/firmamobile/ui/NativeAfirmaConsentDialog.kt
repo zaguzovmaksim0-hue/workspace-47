@@ -50,6 +50,7 @@ internal fun NativeAfirmaConsentDialog(
     val confirmArmed = rememberConsentArmed(prompt.token to prompt.canConfirm)
     val finished = prompt.phase == AfirmaConsentPhase.FINISHED
     val review = prompt.phase == AfirmaConsentPhase.REVIEW
+    val external = prompt.details.externalContext != null
     val cancelling = prompt.phase == AfirmaConsentPhase.CANCELLING
     AlertDialog(
         onDismissRequest = if (finished || review) onDismiss else onCancel,
@@ -85,6 +86,18 @@ internal fun NativeAfirmaConsentDialog(
                     "batch" -> R.string.native_multiphase_batch
                     else -> R.string.native_afirma_sign
                 }))
+                if (external) {
+                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = JuntaPanelShape) {
+                        Text(stringResource(R.string.external_afirma_warning), Modifier.padding(12.dp)
+                            .testTag("external-afirma-warning"))
+                    }
+                    if (prompt.details.operation == "selectcert") {
+                        Text(stringResource(R.string.external_afirma_certificate_only))
+                    } else {
+                        Text(stringResource(R.string.native_afirma_size, prompt.details.payloadBytes))
+                        prompt.details.payloadSha256?.let { Text(stringResource(R.string.native_afirma_digest, it)) }
+                    }
+                }
                 Text(stringResource(R.string.compatibility_operation_notice))
                 Surface(
                     shape = JuntaPanelShape,
@@ -92,10 +105,17 @@ internal fun NativeAfirmaConsentDialog(
                     border = BorderStroke(1.dp, JuntaHairline),
                 ) {
                     Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ConsentIdentityField(stringResource(R.string.native_consent_page_label), prompt.details.sourceOrigin)
+                        if (external) ConsentIdentityField(stringResource(R.string.external_afirma_caller_label),
+                            stringResource(R.string.external_afirma_caller_unknown))
+                        else prompt.details.sourceOrigin?.let {
+                            ConsentIdentityField(stringResource(R.string.native_consent_page_label), it)
+                        }
                         ConsentIdentityField(stringResource(R.string.native_consent_recipient_label), prompt.details.destination)
                         prompt.certificateOwner?.let {
                             ConsentIdentityField(stringResource(R.string.native_consent_certificate_label), it)
+                        }
+                        if (external) prompt.certificateEvidence?.let {
+                            Text(stringResource(R.string.external_afirma_certificate_evidence, it.bytes, it.sha256))
                         }
                     }
                 }
@@ -138,7 +158,7 @@ internal fun NativeAfirmaConsentDialog(
                     Text(stringResource(R.string.native_cades_provided_hash_batch, prompt.details.providedDigestItems),
                         Modifier.testTag("native-cades-provided-hash-batch"))
                 }
-                if (review) Text(stringResource(R.string.native_afirma_cancel_notice))
+                if (review && !external) Text(stringResource(R.string.native_afirma_cancel_notice))
                 if (!review && !finished) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth().testTag("native-afirma-progress"))
                 }
@@ -220,7 +240,7 @@ internal fun NativeAfirmaConsentDialog(
                 modifier = Modifier.testTag(if (cancelling) "native-afirma-stop-cancel" else "native-afirma-cancel"),
             ) {
                 Text(stringResource(when {
-                    review -> R.string.native_afirma_cancel_notify
+                    review && !external -> R.string.native_afirma_cancel_notify
                     cancelling -> R.string.native_afirma_cancel_stop
                     else -> R.string.cancel
                 }))

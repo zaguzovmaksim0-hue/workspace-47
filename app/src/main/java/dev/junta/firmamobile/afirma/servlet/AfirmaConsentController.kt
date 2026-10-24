@@ -19,7 +19,7 @@ import kotlinx.coroutines.withTimeout
 
 /** Public facts only: never a session ID, cipher key, encoded payload or URL query. */
 internal data class AfirmaConsentDetails(
-    val sourceOrigin: String,
+    val sourceOrigin: String?,
     val destination: String,
     val operation: String,
     val format: String?,
@@ -35,6 +35,7 @@ internal data class AfirmaConsentDetails(
     val signaturePolicySummary: String? = null,
     val signaturePolicyItems: Int = 0,
     val batchReview: NativeBatchConsentReview? = null,
+    val externalContext: ExternalAfirmaContext? = null,
 )
 
 internal sealed interface AfirmaResultSummary {
@@ -65,6 +66,8 @@ internal interface PreparedAfirmaOperation : Closeable {
 
 internal enum class AfirmaConsentPhase { REVIEW, WORKING, SENDING, CANCELLING, FINISHED }
 internal enum class AfirmaConsentProblem { LOCKED, INCOMPATIBLE, EXPIRED, CANCELLED, FAILED, ACKNOWLEDGED, REJECTED, UNCERTAIN, NOT_SENT, CANCEL_ACKNOWLEDGED, CANCEL_NOT_SENT, CANCEL_REJECTED, CANCEL_UNCERTAIN }
+internal data class AfirmaCertificateEvidence(val bytes: Int, val sha256: String)
+
 internal data class AfirmaConsentPrompt(
     val token: UUID,
     val details: AfirmaConsentDetails,
@@ -73,6 +76,7 @@ internal data class AfirmaConsentPrompt(
     val problem: AfirmaConsentProblem?,
     val resultSummary: AfirmaResultSummary? = null,
     val batchReceipt: NativeBatchReceipt? = null,
+    val certificateEvidence: AfirmaCertificateEvidence? = null,
 ) {
     val canConfirm: Boolean get() = phase == AfirmaConsentPhase.REVIEW && problem == null && certificateOwner != null
 }
@@ -93,6 +97,7 @@ internal class AfirmaConsentController<Owner : Any>(
         var token = UUID.randomUUID()
         var fingerprint: String? = null
         var certificateOwner: String? = null
+        var certificateEvidence: AfirmaCertificateEvidence? = null
         var phase = AfirmaConsentPhase.REVIEW
         var problem: AfirmaConsentProblem? = null
         var job: Job? = null
@@ -126,7 +131,8 @@ internal class AfirmaConsentController<Owner : Any>(
         // Cancellation is key-free, including recompositions and foreground return.
         if (pending.cancellationOutcome != null) return
         val identity = identityProvider()
-        val fingerprint = fingerprint(identity)
+        val evidence = certificateEvidence(identity)
+        val fingerprint = evidence?.sha256
         if (pending.started) {
             if (fingerprint != pending.fingerprint) cancel(pending.token)
             return
@@ -139,6 +145,7 @@ internal class AfirmaConsentController<Owner : Any>(
         if (pending.fingerprint != fingerprint || pending.problem != problem) pending.token = UUID.randomUUID()
         pending.fingerprint = fingerprint
         pending.certificateOwner = identity?.summary?.ownerName
+        pending.certificateEvidence = evidence
         pending.problem = problem
         publish(pending)
     }
@@ -318,7 +325,9 @@ internal class AfirmaConsentController<Owner : Any>(
 
     private fun valid(pending: Pending<Owner>): Boolean = runCatching {
         !closed && isCurrent(pending.owner, pending.epoch) &&
-            !MonotonicSecurityTime.isExpiredOrInvalid(pending.born, LIFETIME.toNanos(), monotonicNanos())
+            !MonotonicSecurityTime.isExpiredOrInvalid(pending.born,
+                (if (pending.details.externalContext == null) LIFETIME else EXTERNAL_LIFETIME).toNanos(),
+                monotonicNanos())
     }.getOrDefault(false)
 
     private fun expire(pending: Pending<Owner>) {
@@ -339,14 +348,21 @@ internal class AfirmaConsentController<Owner : Any>(
     private fun publish(pending: Pending<Owner>) {
         if (current === pending) onPrompt(AfirmaConsentPrompt(pending.token, pending.details,
             pending.phase, pending.certificateOwner, pending.problem, pending.operation.resultSummary,
-            if (pending.phase == AfirmaConsentPhase.FINISHED) pending.terminalBatchReceipt else null))
+            if (pending.phase == AfirmaConsentPhase.FINISHED) pending.terminalBatchReceipt else null,
+            pending.certificateEvidence))
     }
 
-    private fun fingerprint(identity: UnlockedIdentity?): String? = runCatching {
+    private fun fingerprint(identity: UnlockedIdentity?): String? = certificateEvidence(identity)?.sha256
+
+    private fun certificateEvidence(identity: UnlockedIdentity?): AfirmaCertificateEvidence? = runCatching {
         val bytes = identity?.certificate?.encoded ?: return null
-        try { MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) } }
+        try { AfirmaCertificateEvidence(bytes.size,
+            MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }) }
         finally { bytes.fill(0) }
     }.getOrNull()
 
-    private companion object { val LIFETIME: Duration = Duration.ofMinutes(5) }
+    private companion object {
+        val LIFETIME: Duration = Duration.ofMinutes(5)
+        val EXTERNAL_LIFETIME: Duration = Duration.ofMinutes(2)
+    }
 }

@@ -31,6 +31,7 @@ internal class NativeAfirmaOperation(
         try {
             AfirmaConsentDetails(
                 sourceOrigin = invocation.sourceOrigin,
+                externalContext = invocation.externalContext,
                 destination = safeDestination(invocation.storageUrl),
                 operation = if (invocation.operation == AfirmaServletOperation.SELECT_CERTIFICATE) "selectcert" else invocation.operation.name.lowercase(),
                 format = if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
@@ -42,7 +43,8 @@ internal class NativeAfirmaOperation(
                 } else null,
                 algorithm = invocation.algorithm?.wireName(),
                 payloadBytes = payload.size,
-                payloadSha256 = if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
+                payloadSha256 = if (invocation.externalContext != null ||
+                    invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
                     MessageDigest.getInstance("SHA-256").digest(payload).joinToString("") { "%02x".format(it) }
                 } else null,
                 requiresExactCertificate = invocation.requiresExactCertificate,
