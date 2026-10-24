@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.signing
 
+import dev.junta.firmamobile.certificate.KeystorePlacement
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import java.security.AlgorithmParameters
 import java.security.InvalidKeyException
@@ -18,8 +19,14 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 /** JVM-only opaque-handle contract. This is not a mock Android implementation
  * and is not proof of a physical KeyChain/TEE operation. The private material
  * is visible only to this synthetic provider, never to production signing code. */
-internal class OpaqueRsaFixture private constructor() {
+internal class OpaqueRsaFixture private constructor(
+    /** Signature names the handle accepts; null accepts every service. */
+    private val authorized: Set<String>?,
+    placement: KeystorePlacement?,
+) {
     private val source = nonExportableSyntheticIdentity().identity
+    /** The same key as an in-memory PKCS#12 identity, for byte comparisons. */
+    val softwareIdentity: UnlockedIdentity get() = source
     val encodingReads = AtomicInteger()
     val formatReads = AtomicInteger()
     val initializations = AtomicInteger()
@@ -32,11 +39,10 @@ internal class OpaqueRsaFixture private constructor() {
         override fun getFormat(): String? { formatReads.incrementAndGet(); return null }
         override fun getEncoded(): ByteArray? { encodingReads.incrementAndGet(); throw IllegalStateException("Opaque key is not exportable") }
     }
-    val identity = UnlockedIdentity(handle, source.certificate, source.chain, source.summary)
+    val identity = UnlockedIdentity(handle, source.certificate, source.chain, source.summary, placement)
     private val provider = object : Provider("FirmaOpaqueTest-" + UUID.randomUUID(), 1.0, "Isolated synthetic opaque RSA contract") {
         init {
-            for (algorithm in SigningAlgorithm.entries) {
-                val name = algorithm.jcaName()
+            for (name in SigningAlgorithm.entries.map { it.jcaName() } + NONE_WITH_RSA) {
                 putService(object : Service(this, "Signature", name, Spi::class.java.name, emptyList(), emptyMap()) {
                     override fun supportsParameter(parameter: Any?) = parameter === handle
                     override fun newInstance(parameter: Any?): Any = Spi(name)
@@ -48,6 +54,8 @@ internal class OpaqueRsaFixture private constructor() {
         private var delegate: Signature? = null
         override fun engineInitSign(privateKey: PrivateKey) {
             if (privateKey !== handle) throw InvalidKeyException("Wrong opaque handle")
+            // Mirrors a keystore key whose authorizations lack this digest.
+            if (authorized != null && algorithm !in authorized) throw InvalidKeyException("Not authorized: $algorithm")
             initializations.incrementAndGet(); algorithms.add(algorithm)
             delegate = source.withPrivateKey { actual ->
                 Signature.getInstance(algorithm, BouncyCastleProvider()).apply { initSign(actual) }
@@ -71,8 +79,18 @@ internal class OpaqueRsaFixture private constructor() {
     }
     companion object {
         private val lock = Any()
-        fun <T> use(block: (OpaqueRsaFixture) -> T): T = synchronized(lock) {
-            val value = OpaqueRsaFixture()
+        const val NONE_WITH_RSA = "NONEwithRSA"
+        /** Digests IKeyMintDevice guarantees for StrongBox RSA keys. */
+        val STRONGBOX_SIGNATURES = setOf("SHA256withRSA", NONE_WITH_RSA)
+
+        fun <T> use(block: (OpaqueRsaFixture) -> T): T = use(null, null, block)
+
+        fun <T> use(
+            authorized: Set<String>?,
+            placement: KeystorePlacement?,
+            block: (OpaqueRsaFixture) -> T,
+        ): T = synchronized(lock) {
+            val value = OpaqueRsaFixture(authorized, placement)
             val originalProviders = Security.getProviders().map { it.name }
             check(Security.insertProviderAt(value.provider, 1) == 1)
             try { block(value) }
