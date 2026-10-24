@@ -74,7 +74,7 @@ class CertificateExpiryRemindersTest {
         assertEquals(AlarmManager.RTC, alarm.type)
         assertEquals(Instant.parse("2026-10-24T00:00:00Z").toEpochMilli(), alarm.triggerAtTime)
         assertEquals(21_600_000L, alarm.windowLengthMs)
-        assertTrue(alarm.operation.isImmutable)
+        assertTrue(alarm.operation!!.isImmutable)
         assertNull(shadowOf(alarm.operation).savedIntent.extras)
         assertTrue(shadowOf(notifications).allNotifications.isEmpty())
     }
@@ -219,7 +219,7 @@ class CertificateExpiryRemindersTest {
         reminders().setEnabled(true)
         reminders().refresh(deliver = true)
         notifications.cancel(CertificateReminderNotifications.NOTIFICATION_ID)
-        val pending = shadowOf(alarms).scheduledAlarms.single().operation
+        val pending = shadowOf(alarms).scheduledAlarms.single().operation!!
         alarms.cancel(pending) // Android drops scheduled alarms at reboot.
         reminders().refresh()
         assertEquals(1, shadowOf(alarms).scheduledAlarms.size)

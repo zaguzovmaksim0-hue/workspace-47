@@ -80,7 +80,7 @@ class CertificateReminderSettingsTest {
     @Test
     @Config(sdk = [33])
     fun api33RequestsPermissionOnlyOnExplicitOptInAndDenialLeavesRemindersOff() {
-        val context = RuntimeEnvironment.getApplication<Application>()
+        val context = RuntimeEnvironment.getApplication()
         context.getSharedPreferences("certificate_expiry_reminders", Context.MODE_PRIVATE).edit().clear().commit()
         shadowOf(context).denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
         val requested = mutableListOf<Any?>()
