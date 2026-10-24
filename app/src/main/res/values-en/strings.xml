@@ -312,6 +312,7 @@
     <string name="pdf_preview_unavailable">Preview unavailable.</string>
     <string name="pdf_preview_pages">First page · %1$d pages</string>
     <string name="pdf_preview_description">Preview of the first PDF page</string>
+    <string name="catalog_verified_on">Verified on %1$s</string>
     <string name="certificate_auth_title">Protect saved unlock</string>
     <string name="certificate_auth_subtitle">Confirm with biometrics or the device PIN, pattern or password.</string>
     <string name="certificate_auth_help">Saving and restoring the unlock requires device confirmation. If you cancel when saving, only the in-memory session is kept.</string>

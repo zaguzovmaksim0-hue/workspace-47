@@ -312,6 +312,7 @@
     <string name="pdf_preview_unavailable">Previsualització no disponible.</string>
     <string name="pdf_preview_pages">Primera pàgina · %1$d pàgines</string>
     <string name="pdf_preview_description">Previsualització de la primera pàgina del PDF</string>
+    <string name="catalog_verified_on">Verificat el %1$s</string>
     <string name="certificate_auth_title">Protegir el desbloqueig desat</string>
     <string name="certificate_auth_subtitle">Confirma amb biometria o amb el PIN, el patró o la contrasenya del dispositiu.</string>
     <string name="certificate_auth_help">Desar i recuperar el desbloqueig requereix la confirmació del dispositiu. Si cancel·les en desar-lo, només es conserva la sessió en memòria.</string>

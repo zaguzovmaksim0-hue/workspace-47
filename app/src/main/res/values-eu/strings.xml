@@ -312,6 +312,7 @@
     <string name="pdf_preview_unavailable">Aurrebista ez dago erabilgarri.</string>
     <string name="pdf_preview_pages">Lehen orria · %1$d orri</string>
     <string name="pdf_preview_description">PDFaren lehen orriaren aurrebista</string>
+    <string name="catalog_verified_on">Egiaztatze-data: %1$s</string>
     <string name="certificate_auth_title">Babestu gordetako desblokeoa</string>
     <string name="certificate_auth_subtitle">Berretsi biometriarekin edo gailuaren PIN, eredu edo pasahitzarekin.</string>
     <string name="certificate_auth_help">Desblokeoa gordetzeko eta berreskuratzeko gailuaren berrespena behar da. Gordetzean bertan behera uzten baduzu, memoriako saioa soilik gordeko da.</string>

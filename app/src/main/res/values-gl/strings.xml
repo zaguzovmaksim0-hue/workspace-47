@@ -312,6 +312,7 @@
     <string name="pdf_preview_unavailable">Vista previa non dispoñible.</string>
     <string name="pdf_preview_pages">Primeira páxina · %1$d páxinas</string>
     <string name="pdf_preview_description">Vista previa da primeira páxina do PDF</string>
+    <string name="catalog_verified_on">Verificado o %1$s</string>
     <string name="certificate_auth_title">Protexer o desbloqueo gardado</string>
     <string name="certificate_auth_subtitle">Confirma con biometría ou co PIN, padrón ou contrasinal do dispositivo.</string>
     <string name="certificate_auth_help">Gardar e recuperar o desbloqueo require confirmación do dispositivo. Se cancelas ao gardalo, só se conserva a sesión en memoria.</string>

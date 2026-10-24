@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+from datetime import date, datetime, timezone
 import json
 from pathlib import Path
 import re
@@ -117,6 +118,14 @@ def _site_profiles(source: Path) -> list[tuple[str, str]]:
     for index, raw_profile in enumerate(raw_profiles):
         if not isinstance(raw_profile, dict):
             raise ValueError(f"invalid site profile at index {index}")
+        if "lastVerifiedOn" in raw_profile:
+            raw_date = raw_profile["lastVerifiedOn"]
+            if raw_profile.get("compatibilityStatus") != "VERIFIED_E2E":
+                raise ValueError("lastVerifiedOn requires VERIFIED_E2E")
+            if not isinstance(raw_date, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", raw_date):
+                raise ValueError("invalid lastVerifiedOn ISO date")
+            if date.fromisoformat(raw_date) > datetime.now(timezone.utc).date():
+                raise ValueError("lastVerifiedOn cannot be in the future")
         profile_id = raw_profile.get("profileId")
         start_url = raw_profile.get("startUrl")
         if not isinstance(profile_id, str) or not profile_id.strip():

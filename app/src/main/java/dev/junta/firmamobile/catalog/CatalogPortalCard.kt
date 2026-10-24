@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -29,6 +30,8 @@ import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
 import dev.junta.firmamobile.ui.theme.JuntaPaperElevated
 import dev.junta.firmamobile.ui.theme.JuntaTeal
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 /** One visible action. Rare options are an explicit long-press/accessibility
  * menu, never an automatic choice of profile or second navigation attempt. */
@@ -55,6 +58,15 @@ internal fun CatalogPortalCard(
         Text((if (isFavorite) "★  " else "") + "${portal.organization} · ${portal.territory}",
             color = JuntaMutedInk, style = MaterialTheme.typography.bodySmall,
             maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (portal.supportStatus == PortalSupportStatus.VERIFIED_E2E && portal.lastVerifiedOn != null) {
+            val locale = LocalConfiguration.current.locales[0]
+            val date = portal.lastVerifiedOn.format(
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale),
+            )
+            Text(stringResource(R.string.catalog_verified_on, date),
+                color = JuntaMutedInk, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.testTag("catalog-verified-on-${portal.portalId.value}"))
+        }
         if (portal.supportStatus != PortalSupportStatus.VERIFIED_E2E) {
             Text(stringResource(R.string.compatibility_unverified_short),
                 color = JuntaMutedInk, style = MaterialTheme.typography.bodySmall)
