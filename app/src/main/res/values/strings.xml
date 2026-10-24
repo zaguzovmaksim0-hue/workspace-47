@@ -33,6 +33,9 @@
     <string name="lock_certificate">Bloquear certificado</string>
     <string name="forget_certificate">Olvidar certificado</string>
     <string name="error_password_or_file">La contraseña no es correcta o el archivo PKCS#12 no es válido.</string>
+    <string name="error_invalid_password">La contraseña del certificado no es correcta.</string>
+    <string name="error_invalid_pkcs12_file">El archivo no es un PKCS#12 válido o está dañado.</string>
+    <string name="error_unsupported_pkcs12_encryption">Esta versión de Android no admite el algoritmo de cifrado del archivo PKCS#12.</string>
     <string name="error_file_too_large">El archivo supera el tamaño máximo permitido.</string>
     <string name="error_private_key_missing">El archivo no contiene una clave privada de firma.</string>
     <string name="error_multiple_private_keys">El archivo contiene más de una identidad privada.</string>
@@ -301,4 +304,43 @@
     <string name="certificate_retention_fifteen_minutes">15 minutos</string>
     <string name="certificate_retention_one_hour">1 hora</string>
     <string name="certificate_retention_one_day">24 horas</string>
+
+    <!-- Local, optional PDF consent preview. -->
+    <string name="pdf_preview_show">Ver vista previa</string>
+    <string name="pdf_preview_loading">Cargando vista previa…</string>
+    <string name="pdf_preview_failed">No se puede mostrar la vista previa.</string>
+    <string name="pdf_preview_unavailable">Vista previa no disponible.</string>
+    <string name="pdf_preview_pages">Primera página · %1$d páginas</string>
+    <string name="pdf_preview_description">Vista previa de la primera página del PDF</string>
+    <string name="catalog_verified_on">Verificado el %1$s</string>
+    <string name="local_signing_title">Firmar un archivo local</string>
+    <string name="local_signing_unlock">Desbloquea un certificado para firmar tu archivo.</string>
+    <string name="local_signing_unnamed">archivo</string>
+    <string name="local_signing_name">Archivo: %1$s</string>
+    <string name="local_signing_scope">La firma CAdES separada se genera en el dispositivo, sin servicios de firma ni sello de tiempo. Conserva el archivo original junto con la firma. Límite: 512 KiB.</string>
+    <string name="local_signing_loading">Leyendo el archivo…</string>
+    <string name="local_signing_signing">Firmando y comprobando la firma…</string>
+    <string name="local_signing_ready">Firma comprobada con el archivo original. Elige dónde guardarla. Esta comprobación no evalúa confianza ni revocación del certificado.</string>
+    <string name="local_signing_saving">Guardando la firma…</string>
+    <string name="local_signing_saved">Firma guardada.</string>
+    <string name="local_signing_failed">No se pudo completar la operación. Comprueba que el certificado sigue desbloqueado y que el archivo no supera 512 KiB. Si falló el guardado, puede quedar un archivo incompleto en el destino elegido.</string>
+    <string name="local_signing_choose">Elegir otro archivo</string>
+    <string name="local_signing_save">Guardar firma</string>
+    <string name="certificate_reminder_settings">Ajustes de recordatorios</string>
+    <string name="certificate_reminder_toggle">Avisar de la caducidad del certificado</string>
+    <string name="certificate_reminder_copy">Avisos locales 30 y 7 días naturales antes de caducar el certificado guardado. Desactivados por defecto. No incluyen datos personales. Android puede retrasarlos para ahorrar batería.</string>
+    <string name="certificate_reminder_blocked">Android no permite estos avisos. Puedes habilitarlos en los ajustes de notificaciones.</string>
+    <string name="certificate_reminder_system_settings">Abrir ajustes de notificaciones</string>
+    <string name="certificate_reminder_done">Listo</string>
+    <string name="certificate_reminder_save_failed">No se pudo guardar el ajuste. Inténtalo de nuevo.</string>
+    <string name="certificate_reminder_channel">Caducidad del certificado</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">Su certificado caduca en %1$d día</item>
+        <item quantity="other">Su certificado caduca en %1$d días</item>
+    </plurals>
+    <string name="certificate_auth_title">Proteger el desbloqueo guardado</string>
+    <string name="certificate_auth_subtitle">Confirma con biometría o el PIN, patrón o contraseña del dispositivo.</string>
+    <string name="certificate_auth_help">Guardar y recuperar el desbloqueo requiere confirmación del dispositivo. Si cancelas al guardarlo, solo se conserva la sesión en memoria.</string>
+    <string name="certificate_auth_unsupported">En Android 8–10 el desbloqueo no se guarda entre reinicios de la aplicación. Introduce la contraseña del certificado.</string>
+    <string name="certificate_restore_saved">Recuperar desbloqueo guardado</string>
 </resources>

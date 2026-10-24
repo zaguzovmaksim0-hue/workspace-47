@@ -130,7 +130,7 @@ internal fun BrowserLayout(
     certificateOwner: String,
     currentUrl: String = JuntaOriginPolicy.START_URL,
     profileName: String = "Junta de Andalucía",
-    trustLabel: String = "Firma protegida",
+    trustLabel: String = stringResource(R.string.browser_trust_signing),
     browserInsets: WindowInsets = BrowserWindowInsetsPolicy.current(),
     onBack: () -> Unit,
     onHome: () -> Unit,

@@ -2,6 +2,7 @@ package dev.junta.firmamobile.profile
 
 import java.net.URI
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 object SiteProfileCatalogParser {
     const val MAX_CATALOG_CHARS = 262_144
@@ -33,11 +34,21 @@ object SiteProfileCatalogParser {
 
     private fun profile(value: JValue): SiteProfile {
         val o = value.obj("profile")
-        o.exact(
+        val keys = arrayOf(
             "profileId", "profileVersion", "displayName", "compatibilityStatus", "activation",
             "startUrl", "initiatorOrigins", "redirectOrigins", "trustedBrowseOrigins", "endpoints",
             "operationPolicies", "capabilities", "clientAuthPolicy", "certificateRules", "evidence",
         )
+        require(o.values.keys == keys.toSet() + listOf("lastVerifiedOn").filter { it in o.values })
+        val compatibilityStatus = enum<CompatibilityStatus>(o.string("compatibilityStatus"))
+        val lastVerifiedOn = if ("lastVerifiedOn" in o.values) {
+            require(compatibilityStatus == CompatibilityStatus.VERIFIED_E2E)
+            val raw = o.string("lastVerifiedOn")
+            require(Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}").matches(raw))
+            LocalDate.parse(raw).also { require(it.year >= 1 && !it.isAfter(LocalDate.now(ZoneOffset.UTC))) }
+        } else {
+            null
+        }
         val profileId = ProfileId(o.string("profileId"))
         val endpoints = o.array("endpoints").map(::endpoint)
         require(endpoints.map { it.endpointId }.toSet().size == endpoints.size)
@@ -51,7 +62,8 @@ object SiteProfileCatalogParser {
             displayName = o.string("displayName").also {
                 require(it.isNotBlank() && it.length <= MAX_DISPLAY_NAME_CHARS)
             },
-            compatibilityStatus = enum(o.string("compatibilityStatus")),
+            compatibilityStatus = compatibilityStatus,
+            lastVerifiedOn = lastVerifiedOn,
             activation = enum(o.string("activation")),
             startUrl = strictHttpsUrl(o.string("startUrl")),
             initiatorOrigins = origins(o.array("initiatorOrigins")),
@@ -429,6 +441,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == NAVARRA_PROFILE_ID) {
                 validateNavarraProfile(p)
             }
+            if (p.profileId.value == SORIA_PROFILE_ID) {
+                validateSoriaProfile(p)
+            }
             if (p.profileId.value == GVA_PROFILE_ID) {
                 validateGvaProfile(p)
             }
@@ -523,7 +538,7 @@ object SiteProfileCatalogParser {
                     NAVARRA_PROFILE_ID,
                     MENORCA_PROFILE_ID,
                     PATTEX_PROFILE_ID,
-                    "diputacion-soria-sede-client-auth",
+                    SORIA_PROFILE_ID,
                 ) &&
                     clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                     clientAuthPolicy.requestPort == HTTPS_PORT &&
@@ -593,7 +608,7 @@ object SiteProfileCatalogParser {
                             p.profileId.value == CUENCA_PROFILE_ID ||
                             p.profileId.value == MALLORCA_PROFILE_ID ||
                             p.profileId.value == GVA_PROFILE_ID ||
-                            p.profileId.value == "diputacion-soria-sede-client-auth"
+                            p.profileId.value == SORIA_PROFILE_ID
                     )
                 }
                 require(policy.sourceUrls.all { source ->
@@ -996,6 +1011,32 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    private fun validateSoriaProfile(profile: SiteProfile) {
+        require(profile.profileVersion == 1)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == SORIA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(SORIA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(SORIA_ORIGIN)),
+                sourceUrls = setOf(URI(SORIA_START_URL)),
+                requestPath = SORIA_REQUEST_PATH,
+                fixedQueryParameters = SORIA_FIXED_QUERY,
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+            ),
+        )
     }
 
     private fun validateMenorcaProfile(profile: SiteProfile) {
@@ -2833,6 +2874,17 @@ object SiteProfileCatalogParser {
         "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
             "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+    )
+    private const val SORIA_PROFILE_ID = "diputacion-soria-sede-client-auth"
+    private const val SORIA_ORIGIN = "https://portaltramitador.dipsoria.es"
+    private const val SORIA_START_URL = "$SORIA_ORIGIN/web/inicioWebc.do?opcion=cargar" +
+        "&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1"
+    private const val SORIA_REQUEST_PATH = "/web/inicioWebcCert.do"
+    private val SORIA_FIXED_QUERY = mapOf(
+        "opcion" to "ssl",
+        "entidad" to "SORIA",
+        "redirige" to "L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D",
+        "idioma" to "1",
     )
     private const val MENORCA_PROFILE_ID = "menorca-carpeta-ciutadana"
     private const val MENORCA_PROFILE_VERSION = 1

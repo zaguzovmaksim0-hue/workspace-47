@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="verification_journal_entry">This session’s verification journal</string>
+    <string name="verification_journal_title">Session verification journal</string>
+    <string name="verification_journal_scope">Only local CMS checks in this session, not a complete signing history. Entries disappear when the app is recreated or closed.</string>
+    <string name="verification_journal_integrity">Completed records local CMS integrity only, not certificate trust, validity, revocation, timestamp validation or remote acceptance.</string>
+    <string name="verification_journal_copies">Clear affects this journal only; snapshots and exported JSON copies cannot be revoked.</string>
+    <string name="verification_journal_provider_warning">A provider error can leave a partial external file. Cancellation cannot undo bytes already written.</string>
+    <string name="verification_journal_empty">No checks in this session yet.</string>
+    <string name="verification_journal_clear">Clear journal</string>
+    <string name="verification_journal_export">Export JSON snapshot</string>
+    <string name="verification_journal_close">Close</string>
+    <string name="verification_journal_kind_verify">Local CMS verification</string>
+    <string name="verification_journal_completed">Completed (local integrity only)</string>
+    <string name="verification_journal_cancelled">Cancelled</string>
+    <string name="verification_journal_failed">Failed</string>
+    <string name="verification_journal_row">No. %1$d · %2$s · %3$s · %4$s</string>
+    <string name="verification_journal_choosing">Choose a JSON destination or cancel.</string>
+    <string name="verification_journal_writing">Exporting snapshot…</string>
+    <string name="verification_journal_exported">Snapshot exported.</string>
+    <string name="verification_journal_export_cancelled">Export cancelled.</string>
+    <string name="verification_journal_export_failed">Export failed. A partial external file may remain.</string>
+</resources>

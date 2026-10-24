@@ -16,20 +16,24 @@ internal class CertificateModule(
     val gateway: CertificateGateway = gatewayFactory()
 
     companion object {
-        fun create(application: Application): CertificateModule {
+        fun create(
+            application: Application,
+            unlockAuthentication: AndroidCertificateUnlockAuthentication,
+        ): CertificateModule {
             val applicationContext = application.applicationContext
             return CertificateModule(
                 monotonicNanos = SystemClock::elapsedRealtimeNanos,
                 unlockCacheFactory = {
-                    AndroidKeystoreCertificateUnlockCache(applicationContext)
+                    AndroidKeystoreCertificateUnlockCache(applicationContext, authentication = unlockAuthentication)
                 },
                 gatewayFactory = {
                     CertificateRepository(
                         documentAccess = ContentResolverCertificateDocumentAccess(
                             applicationContext.contentResolver,
                         ),
-                        referenceStore = PreferencesCertificateReferenceStore(
-                            applicationContext.certificateReferenceDataStore,
+                        referenceStore = ReminderCertificateReferenceStore(
+                            applicationContext,
+                            PreferencesCertificateReferenceStore(applicationContext.certificateReferenceDataStore),
                         ),
                         loader = Pkcs12Loader(),
                     )

@@ -58,6 +58,115 @@ class MiniAppletBridgeAdapterTest {
     private val adapter = adapterFor("junta-andalucia")
 
     @Test
+    fun sevillaChallengePreservesTheExactAsciiAlphabetForEveryByte() {
+        val adapter = sevillaAdapter()
+        for (value in 0..255) {
+            val data = SEVILLA_CHALLENGE.encodeToByteArray().apply {
+                this[0] = value.toByte()
+                this[lastIndex] = value.toByte()
+            }
+            val result = adapter.route(
+                rawMessage = sevillaMessage(dataB64 = Base64.getEncoder().encodeToString(data)),
+                sourceOrigin = SEVILLA_ORIGIN,
+                isMainFrame = true,
+                currentPageUrl = SEVILLA_START_URL,
+            )
+            assertPayloadDecision(
+                result,
+                data,
+                value in 48..57 || value in 65..90 || value in 97..122 || value == 45 || value == 95,
+            )
+        }
+    }
+
+    @Test
+    fun cantabriaChallengePreservesLowercaseHexForEveryByte() {
+        val adapter = adapterFor(CANTABRIA_PROFILE_ID)
+        for (value in 0..255) {
+            val data = CANTABRIA_CHALLENGE.encodeToByteArray().apply {
+                this[0] = value.toByte()
+                this[lastIndex] = value.toByte()
+            }
+            val result = adapter.route(
+                rawMessage = cantabriaMessage(dataB64 = Base64.getEncoder().encodeToString(data)),
+                sourceOrigin = CANTABRIA_ORIGIN,
+                isMainFrame = true,
+                currentPageUrl = null,
+            )
+            assertPayloadDecision(result, data, value in 48..57 || value in 97..102)
+        }
+    }
+
+    @Test
+    fun lleidaChallengePreservesPrintableAsciiForEveryByte() {
+        val adapter = adapterFor(LLEIDA_PROFILE_ID)
+        for (value in 0..255) {
+            val data = LLEIDA_CHALLENGE.encodeToByteArray().apply {
+                this[0] = value.toByte()
+                this[lastIndex] = value.toByte()
+            }
+            val result = adapter.route(
+                rawMessage = lleidaMessage(dataB64 = Base64.getEncoder().encodeToString(data)),
+                sourceOrigin = LLEIDA_ORIGIN,
+                isMainFrame = true,
+                currentPageUrl = LLEIDA_LOGIN_PAGE_URL,
+            )
+            assertPayloadDecision(result, data, value in 32..126)
+        }
+    }
+
+    @Test
+    fun badajozChallengePreservesPrintableAsciiForEveryByte() {
+        val adapter = adapterFor(BADAJOZ_PROFILE_ID)
+        for (value in 0..255) {
+            val data = BADAJOZ_CHALLENGE.encodeToByteArray().apply {
+                this[0] = value.toByte()
+                this[lastIndex] = value.toByte()
+            }
+            val result = adapter.route(
+                rawMessage = badajozMessage(dataB64 = Base64.getEncoder().encodeToString(data)),
+                sourceOrigin = BADAJOZ_ORIGIN,
+                isMainFrame = true,
+                currentPageUrl = BADAJOZ_LOGIN_PAGE_URL,
+            )
+            assertPayloadDecision(result, data, value in 32..126)
+        }
+    }
+
+    @Test
+    fun pdfPayloadKeepsMinimumSizeExactHeaderAndEofRequirements() {
+        val adapter = adapterFor(ACCEDA_PROFILE_ID)
+        val minimumPdf = ("%PDF-" + " ".repeat(22) + "%%EOF").encodeToByteArray()
+        val invalidHeaders = (0..4).map { index ->
+            minimumPdf.copyOf().apply { this[index] = '!'.code.toByte() }
+        }
+        // Empty Base64 is rejected by the existing size guard before PDF validation.
+        val emptyResult = adapter.route(
+            rawMessage = accedaMessage(dataB64 = ""),
+            sourceOrigin = ACCEDA_ORIGIN,
+            isMainFrame = true,
+            currentPageUrl = AccedaPadesAdapter.START_URL,
+        ) as MiniAppletBridgeRouteResult.Rejected
+        assertEquals(SigningErrorCode.REQUEST_TOO_LARGE, emptyResult.code)
+        assertEquals(REQUEST_ID, emptyResult.requestId.toString())
+        val invalidPayloads = invalidHeaders + listOf(
+            ("%PDF-" + " ".repeat(21) + "%%EOF").encodeToByteArray(),
+            ("%PDF-" + " ".repeat(27)).encodeToByteArray(),
+        )
+        val cases = listOf(minimumPdf to true, (minimumPdf + byteArrayOf(0)) to true) +
+            invalidPayloads.map { it to false }
+        for ((data, accepted) in cases) {
+            val result = adapter.route(
+                rawMessage = accedaMessage(dataB64 = Base64.getEncoder().encodeToString(data)),
+                sourceOrigin = ACCEDA_ORIGIN,
+                isMainFrame = true,
+                currentPageUrl = AccedaPadesAdapter.START_URL,
+            )
+            assertPayloadDecision(result, data, accepted)
+        }
+    }
+
+    @Test
     fun exactTrustedJuntaMiniAppletCallNormalizesToOneOwnedRequest() {
         val result = adapter.route(
             rawMessage = message(),
@@ -1422,6 +1531,32 @@ class MiniAppletBridgeAdapterTest {
         assertTrue(adapterFor("eivissa-sede-electronica").route(
             wrongProps, Uri.parse("https://seu.conselldeivissa.es"), true, 61, page,
         ) is MiniAppletBridgeRouteResult.Rejected)
+    }
+
+    private fun assertPayloadDecision(
+        result: MiniAppletBridgeRouteResult,
+        expectedData: ByteArray,
+        accepted: Boolean,
+    ) {
+        if (accepted) {
+            assertTrue(
+                "Expected acceptance for ${expectedData.contentToString()}: $result",
+                result is MiniAppletBridgeRouteResult.Accepted,
+            )
+            (result as MiniAppletBridgeRouteResult.Accepted).request.normalized.use { request ->
+                request.withPayload { payload ->
+                    MiniAppletPayloadCodec.withDecoded(payload) { data, _ ->
+                        assertArrayEquals(expectedData, data)
+                    }
+                }
+            }
+        } else {
+            assertTrue(
+                "Expected rejection for ${expectedData.contentToString()}: $result",
+                result is MiniAppletBridgeRouteResult.Rejected,
+            )
+            assertEquals(SigningErrorCode.INVALID_REQUEST, (result as MiniAppletBridgeRouteResult.Rejected).code)
+        }
     }
 
     private fun sevillaAdapter(): ProfileMiniAppletBridgeAdapter {
