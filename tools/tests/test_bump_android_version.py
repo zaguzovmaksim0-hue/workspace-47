@@ -12,29 +12,15 @@ import unittest
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
-FIXTURE = '''// Keep unrelated configuration and UTF-8: versión.
-android {
-    compileSdk = 37
-    defaultConfig {
-        applicationId = "dev.junta.firmamobile"
-        versionCode = 13
-        versionName = "0.2.11"
-        minSdk = 26
-    }
-    buildTypes.create("qa") {
-        versionNameSuffix = "-qa"
-    }
-}
-'''.encode('utf-8')
+FIXTURE = b'versionCode=13\nversionName=0.2.11\n'
 
 
 class AndroidVersionBumpTest(unittest.TestCase):
     def setUp(self):
-        directory = tempfile.TemporaryDirectory()
+        directory = tempfile.TemporaryDirectory(dir=ROOT)
         self.addCleanup(directory.cleanup)
         self.root = Path(directory.name)
-        self.target = self.root / 'app/build.gradle.kts'
-        self.target.parent.mkdir()
+        self.target = self.root / 'version.properties'
         self.target.write_bytes(FIXTURE)
         self.tool = self.root / 'tools/bump_android_version.py'
         self.tool.parent.mkdir()
@@ -52,7 +38,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
         )
 
     def commit_target(self):
-        self.git('add', '--', 'app/build.gradle.kts')
+        self.git('add', '--', 'version.properties')
         self.git('commit', '-qm', 'Synthetic version fixture')
 
     def run_cli(self, *extra, code='13', name='0.2.11', next_name='0.2.12'):
@@ -70,22 +56,22 @@ class AndroidVersionBumpTest(unittest.TestCase):
         before = self.target_state()
         result = self.run_cli()
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn('+        versionCode = 14\n', result.stdout)
-        self.assertIn('+        versionName = "0.2.12"\n', result.stdout)
+        self.assertIn('+versionCode=14\n', result.stdout)
+        self.assertIn('+versionName=0.2.12\n', result.stdout)
         self.assertIn('dry-run', result.stdout.lower())
         self.assertEqual(before, self.target_state())
 
-    def test_explicit_write_replaces_only_the_literals_atomically_and_preserves_mode(self):
+    def test_explicit_write_replaces_only_the_values_atomically_and_preserves_mode(self):
         self.target.chmod(0o640)
         old_inode = self.target.stat().st_ino
         result = self.run_cli('--write')
         self.assertEqual(0, result.returncode, result.stderr)
-        expected = FIXTURE.replace(b'versionCode = 13', b'versionCode = 14').replace(
-            b'versionName = "0.2.11"', b'versionName = "0.2.12"')
+        expected = FIXTURE.replace(b'versionCode=13', b'versionCode=14').replace(
+            b'versionName=0.2.11', b'versionName=0.2.12')
         self.assertEqual(expected, self.target.read_bytes())
         self.assertEqual(0o640, stat.S_IMODE(self.target.stat().st_mode))
         self.assertNotEqual(old_inode, self.target.stat().st_ino)
-        self.assertEqual(['build.gradle.kts'], [p.name for p in self.target.parent.iterdir()])
+        self.assertEqual([], list(self.root.glob('.android-version-*')))
 
     def test_dirty_target_is_rejected_even_in_preview(self):
         self.target.write_bytes(FIXTURE + b'// An unrelated local target edit.\n')
@@ -95,14 +81,6 @@ class AndroidVersionBumpTest(unittest.TestCase):
             self.assertNotEqual(0, result.returncode)
             self.assertIn('clean', result.stderr.lower())
             self.assertEqual(before, self.target_state())
-
-    def test_literals_outside_the_single_default_config_are_rejected(self):
-        self.target.write_bytes(FIXTURE.replace(b'defaultConfig {', b'buildFeatures {'))
-        self.commit_target()
-        before = self.target_state()
-        result = self.run_cli('--write')
-        self.assertNotEqual(0, result.returncode)
-        self.assertEqual(before, self.target_state())
 
     def test_existing_writer_lock_fails_closed_without_removing_another_lock(self):
         name = self.git('rev-parse', '--git-path', 'bump-android-version.lock').stdout.strip()
@@ -121,13 +99,8 @@ class AndroidVersionBumpTest(unittest.TestCase):
         result = self.run_cli(*arguments, **options)
         self.assertNotEqual(0, result.returncode, result.stdout)
         self.assertEqual(before, self.target_state())
-        self.assertEqual(['build.gradle.kts'], [p.name for p in self.target.parent.iterdir()])
+        self.assertEqual([], list(self.root.glob('.android-version-*')))
         return result
-
-    def test_android_inside_an_uninvoked_function_is_not_the_target(self):
-        self.target.write_bytes(b'fun configureLater() {\n' + FIXTURE + b'}\n')
-        self.commit_target()
-        self.assert_rejected_unchanged('--write')
 
     def test_stale_expectations_fail_without_modification(self):
         for options in [dict(code='12'), dict(code='14'), dict(name='0.2.10'), dict(name='0.2.12')]:
@@ -147,62 +120,22 @@ class AndroidVersionBumpTest(unittest.TestCase):
                 self.assert_rejected_unchanged('--write', code=code)
 
     def test_maximum_code_overflow_is_rejected_and_boundary_increment_is_allowed(self):
-        self.target.write_bytes(FIXTURE.replace(b'versionCode = 13', b'versionCode = 2100000000'))
+        self.target.write_bytes(FIXTURE.replace(b'versionCode=13', b'versionCode=2100000000'))
         self.commit_target()
         self.assert_rejected_unchanged('--write', code='2100000000')
-        self.target.write_bytes(FIXTURE.replace(b'versionCode = 13', b'versionCode = 2099999999'))
+        self.target.write_bytes(FIXTURE.replace(b'versionCode=13', b'versionCode=2099999999'))
         self.commit_target()
         result = self.run_cli('--write', code='2099999999')
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn(b'versionCode = 2100000000\n', self.target.read_bytes())
+        self.assertIn(b'versionCode=2100000000\n', self.target.read_bytes())
 
     def test_name_order_is_numeric_not_lexical_and_is_not_derived_from_code(self):
         self.target.write_bytes(FIXTURE.replace(b'0.2.11', b'0.9.99'))
         self.commit_target()
         result = self.run_cli('--write', name='0.9.99', next_name='0.10.0')
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn(b'versionCode = 14\n', self.target.read_bytes())
-        self.assertIn(b'versionName = "0.10.0"\n', self.target.read_bytes())
-
-    def test_duplicate_missing_dynamic_and_malformed_declarations_fail_closed(self):
-        examples = [
-            FIXTURE.replace(b'versionCode = 13', b'versionCode = 13\n        versionCode = 13'),
-            FIXTURE.replace(b'versionName = "0.2.11"', b'versionName = "0.2.11"\n        versionName = "0.2.11"'),
-            FIXTURE.replace(b'versionCode = 13', b'versionCode = 12 + 1'),
-            FIXTURE.replace(b'versionCode = 13', b'versionCode = 13L'),
-            FIXTURE.replace(b'versionCode = 13', b'versionCode = 013'),
-            FIXTURE.replace(b'versionCode = 13', b'versionCode = 0'),
-            FIXTURE.replace(b'versionCode = 13', b'versionCode = 2100000001'),
-            FIXTURE.replace(b'versionCode = 13', b'setVersionCode(13)'),
-            FIXTURE.replace(b'        versionName = "0.2.11"\n', b''),
-            FIXTURE.replace(b'versionName = "0.2.11"', b'versionName = "0.2.11" + suffix'),
-            FIXTURE.replace(b'versionName = "0.2.11"', b'versionName = "$name"'),
-            FIXTURE.replace(b'versionName = "0.2.11"', b'versionName = "0.2.011"'),
-            FIXTURE.replace(b'        versionCode', b'/*\n        versionCode').replace(b'        minSdk', b'*/\n        minSdk'),
-            FIXTURE + b'androidComponents.onVariants { it.outputs.first().versionCode.set(14) }\n',
-            FIXTURE.replace(b'    defaultConfig {', b'    defaultConfig {\n        if (true) {').replace(b'        minSdk = 26', b'        }\n        minSdk = 26'),
-            FIXTURE + b'android {\n    defaultConfig {\n    }\n}\n',
-            FIXTURE + b'/* unterminated comment',
-            FIXTURE.replace(b'    defaultConfig {', b'    defaultConfig { /* nested /* unsupported */ */'),
-            FIXTURE + b'\xff',
-        ]
-        for number, source in enumerate(examples):
-            with self.subTest(example=number):
-                self.target.write_bytes(source)
-                self.commit_target()
-                self.assert_rejected_unchanged('--write')
-
-    def test_comments_and_raw_strings_do_not_become_declarations_or_change(self):
-        prefix = b'/* versionCode = 99; versionName = "9.9.9"; { } */\n'
-        prefix += b'val documentation = """\nandroid {\n    defaultConfig {\n        versionCode = 88\n        versionName = "8.8.8"\n    }\n}\n"""\n'
-        source = prefix + FIXTURE
-        self.target.write_bytes(source)
-        self.commit_target()
-        result = self.run_cli('--write')
-        self.assertEqual(0, result.returncode, result.stderr)
-        expected = prefix + FIXTURE.replace(b'versionCode = 13', b'versionCode = 14').replace(
-            b'versionName = "0.2.11"', b'versionName = "0.2.12"')
-        self.assertEqual(expected, self.target.read_bytes())
+        self.assertIn(b'versionCode=14\n', self.target.read_bytes())
+        self.assertIn(b'versionName=0.10.0\n', self.target.read_bytes())
 
     def test_crlf_and_unrelated_bytes_are_preserved(self):
         source = FIXTURE.replace(b'\n', b'\r\n')
@@ -210,45 +143,38 @@ class AndroidVersionBumpTest(unittest.TestCase):
         self.commit_target()
         result = self.run_cli('--write')
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(source.replace(b'versionCode = 13', b'versionCode = 14').replace(
-            b'versionName = "0.2.11"', b'versionName = "0.2.12"'), self.target.read_bytes())
+        self.assertEqual(source.replace(b'versionCode=13', b'versionCode=14').replace(
+            b'versionName=0.2.11', b'versionName=0.2.12'), self.target.read_bytes())
 
     def test_staged_and_index_hidden_changes_are_rejected(self):
         for situation in ['staged', 'staged-but-worktree-restored', 'assume-unchanged', 'skip-worktree']:
             with self.subTest(situation=situation):
-                self.git('update-index', '--no-assume-unchanged', '--no-skip-worktree', '--', 'app/build.gradle.kts')
-                self.git('reset', '-q', 'HEAD', '--', 'app/build.gradle.kts')
+                self.git('update-index', '--no-assume-unchanged', '--no-skip-worktree', '--', 'version.properties')
+                self.git('reset', '-q', 'HEAD', '--', 'version.properties')
                 self.target.write_bytes(FIXTURE)
                 if situation in ['assume-unchanged', 'skip-worktree']:
-                    self.git('update-index', '--' + situation, '--', 'app/build.gradle.kts')
+                    self.git('update-index', '--' + situation, '--', 'version.properties')
                 self.target.write_bytes(FIXTURE + b'// Changed target.\n')
                 if situation.startswith('staged'):
-                    self.git('add', '--', 'app/build.gradle.kts')
+                    self.git('add', '--', 'version.properties')
                 if situation == 'staged-but-worktree-restored':
                     self.target.write_bytes(FIXTURE)
                 self.assert_rejected_unchanged('--write')
 
     def test_untracked_target_and_missing_git_repository_are_rejected(self):
-        self.git('rm', '--cached', '--', 'app/build.gradle.kts')
+        self.git('rm', '--cached', '--', 'version.properties')
         self.assert_rejected_unchanged('--write')
         (self.root / '.git').rename(self.root / 'not-a-git-repository')
         self.assert_rejected_unchanged('--write')
 
-    def test_final_and_parent_symlinks_are_rejected_without_touching_the_referent(self):
-        referent = self.root / 'elsewhere.gradle.kts'
+    def test_symlink_is_rejected_without_touching_the_referent(self):
+        referent = self.root / 'elsewhere.properties'
         referent.write_bytes(FIXTURE)
         self.target.unlink()
         self.target.symlink_to(referent)
         self.assert_rejected_unchanged('--write')
         self.assertTrue(self.target.is_symlink())
         self.assertEqual(FIXTURE, referent.read_bytes())
-        self.target.unlink()
-        self.target.write_bytes(FIXTURE)
-        actual = self.root / 'real-app'
-        self.target.parent.rename(actual)
-        (self.root / 'app').symlink_to(actual, target_is_directory=True)
-        self.assert_rejected_unchanged('--write')
-        self.assertTrue((self.root / 'app').is_symlink())
 
     def test_identical_retry_cannot_consume_another_code_before_or_after_commit(self):
         self.assertEqual(0, self.run_cli('--write').returncode)
@@ -256,11 +182,11 @@ class AndroidVersionBumpTest(unittest.TestCase):
         self.commit_target()
         result = self.assert_rejected_unchanged('--write')
         self.assertIn('expected', result.stderr.lower())
-        self.assertIn(b'versionCode = 14\n', self.target.read_bytes())
+        self.assertIn(b'versionCode=14\n', self.target.read_bytes())
 
     def test_required_arguments_cannot_be_omitted(self):
         before = self.target_state()
-        for arguments in [[], ['--write'], ['--expected-code', '13', '--expected-name', '0.2.11']]:
+        for arguments in [[], ['--write'], ['--expected-code', '13']]:
             result = subprocess.run([sys.executable, str(self.tool), *arguments],
                                     capture_output=True, text=True)
             self.assertNotEqual(0, result.returncode)
@@ -278,7 +204,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
             module.main(['--expected-code', '13', '--expected-name', '0.2.11',
                          '--next-name', '0.2.12', '--write'])
         self.assertEqual(2, failure.exception.code)
-        self.assertEqual(['build.gradle.kts'], [p.name for p in self.target.parent.iterdir()])
+        self.assertEqual([], list(self.root.glob('.android-version-*')))
         name = self.git('rev-parse', '--git-path', 'bump-android-version.lock').stdout.strip()
         self.assertFalse((self.root / name).exists())
         return errors.getvalue()
@@ -333,7 +259,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
             result = self.run_cli(*arguments)
             self.assertNotEqual(0, result.returncode)
             self.assertFalse(self.target.exists())
-            self.assertEqual([], list(self.target.parent.iterdir()))
+            self.assertEqual([], list(self.root.glob('.android-version-*')))
 
     def test_linked_worktree_uses_its_own_target_and_lock_not_a_global_allocator(self):
         worktree = self.root / 'linked-worktree'
@@ -350,7 +276,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
             cwd=worktree, capture_output=True, text=True,
         )
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn(b'versionCode = 14\n', (worktree / 'app/build.gradle.kts').read_bytes())
+        self.assertIn(b'versionCode=14\n', (worktree / 'version.properties').read_bytes())
         self.assertEqual(FIXTURE, self.target.read_bytes())
         self.assertEqual(b'Only protects the original worktree.\n', lock.read_bytes())
 
@@ -359,16 +285,23 @@ class AndroidVersionBumpTest(unittest.TestCase):
             with self.subTest(abbreviation=abbreviation):
                 self.assert_rejected_unchanged(abbreviation)
 
-    def test_alternate_version_setters_are_ambiguous_even_with_one_literal(self):
-        for setter in [b'setVersionCode(99)', b'setVersionName("9.9.9")']:
-            with self.subTest(setter=setter):
-                self.target.write_bytes(FIXTURE.replace(b'        minSdk = 26',
-                                                       b'        ' + setter + b'\n        minSdk = 26'))
-                self.commit_target()
-                self.assert_rejected_unchanged('--write')
+    def test_code_only_bump_preserves_name_and_increments_exactly_once(self):
+        result = subprocess.run(
+            [sys.executable, str(self.tool), '--expected-code', '13',
+             '--expected-name', '0.2.11', '--write'], capture_output=True, text=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(b'versionCode=14\nversionName=0.2.11\n', self.target.read_bytes())
 
-    def test_unbalanced_outer_gradle_braces_are_rejected(self):
-        for source in [FIXTURE + b'}\n', b'}\n{\n' + FIXTURE, FIXTURE + b'{\n']:
+    def test_invalid_source_fails_closed(self):
+        for source in [b'versionCode=12\nversionName=0.2.11\n',
+                       b'versionCode=0\nversionName=0.2.11\n',
+                       b'versionCode=013\nversionName=0.2.11\n',
+                       b'versionCode=2100000001\nversionName=0.2.11\n',
+                       b'versionName=0.2.11\n',
+                       FIXTURE + b'versionCode=14\n',
+                       FIXTURE.replace(b'0.2.11', b'0.2.011'),
+                       FIXTURE + b'unknown=value\n', FIXTURE + b'\xff',
+                       FIXTURE.rstrip(b'\n') + b'\r']:
             with self.subTest(source=source):
                 self.target.write_bytes(source)
                 self.commit_target()
