@@ -16,6 +16,8 @@ class UnlockedIdentity internal constructor(
     val certificate: X509Certificate,
     val chain: List<X509Certificate>,
     val summary: CertificateSummary,
+    /** Where an AndroidKeyStore copy lives; null for an in-memory PKCS#12 key. */
+    internal val keystorePlacement: KeystorePlacement? = null,
 ) {
     internal fun <T> withPrivateKey(block: (PrivateKey) -> T): T = block(privateKey)
 }
