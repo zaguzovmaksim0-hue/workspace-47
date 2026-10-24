@@ -128,6 +128,8 @@ build a generic navigation framework or a saved stack; only model actual existin
 transitions. Reset host-bound Browser state on host replacement, while permitting
 existing catalog VM state to remain under its current owner.
 
+**Owner decision 2026-10-24: Navigation Compose is not added; PR 7 is dropped.** The text below stays only as history.
+
 **Optional Navigation Compose path, blocked on owner approval:** a distinct
 follow-up may add an explicit catalog alias and implementation dependency only
 after the owner approves version/license/verification metadata/lock implications.
