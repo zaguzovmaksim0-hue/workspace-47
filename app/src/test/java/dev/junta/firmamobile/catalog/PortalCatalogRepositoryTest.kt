@@ -42,6 +42,25 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
+    fun `verification date comes only from an exactly bound verified profile`() {
+        val items = qaRepository.portals()
+        val verified = items.filter { it.lastVerifiedOn != null }
+        assertEquals(4, verified.size)
+        verified.forEach { item ->
+            val profile = catalog.profiles.single { it.profileId == item.profileId }
+            assertEquals(PortalSupportStatus.VERIFIED_E2E, item.supportStatus)
+            assertEquals(profile.lastVerifiedOn, item.lastVerifiedOn)
+        }
+        val mismatched = publicCatalog.copy(entries = publicCatalog.entries.map { entry ->
+            if (entry.profileId == ProfileId("unizar-tramitador")) {
+                entry.copy(entryUrl = java.net.URI("https://example.invalid/unbound"))
+            } else entry
+        })
+        val repository = PortalCatalogRepository(SiteProfileRegistry(catalog, BuildTrustPolicy.QA), catalog, mismatched)
+        assertNull(repository.portals().single { it.profileId == ProfileId("unizar-tramitador") }.lastVerifiedOn)
+    }
+
+    @Test
     fun `public catalog stays complete while release opens only eligible trusted profiles`() {
         val qaPortals = qaRepository.portals()
         val releasePortals = releaseRepository.portals()
