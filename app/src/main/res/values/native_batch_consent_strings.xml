@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="native_batch_evidence_notice">El tamaño y la huella se calculan solo sobre el contenido local disponible; no verifican el nombre ni la aceptación del trámite.</string>
+    <string name="native_batch_evidence_unavailable">Tamaño y SHA-256 del documento no disponibles antes de firmar.</string>
+    <string name="native_batch_document_bytes">Datos locales del documento: %1$d bytes</string>
+    <string name="native_batch_document_sha256">SHA-256 calculado localmente: %1$s</string>
+    <string name="native_batch_descriptor_size">Descriptor del lote: %1$d bytes</string>
+    <string name="native_batch_descriptor_digest">SHA-256 del descriptor del lote (no de los documentos): %1$s</string>
+</resources>

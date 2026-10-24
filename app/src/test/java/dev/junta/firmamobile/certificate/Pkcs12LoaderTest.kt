@@ -1,6 +1,9 @@
 package dev.junta.firmamobile.certificate
 
 import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.security.NoSuchAlgorithmException
 import java.time.Clock
 import java.time.ZoneOffset
 import kotlinx.coroutines.test.runTest
@@ -51,10 +54,26 @@ class Pkcs12LoaderTest {
     }
 
     @Test
+    fun distinguishesWrongPrivateKeyPasswordAfterContainerAuthentication() = runTest {
+        assertFailure(CertificateErrorCode.INVALID_PASSWORD, load(TestCertificateFactory.separateKeyPassword()))
+    }
+
+    @Test
     fun rejectsMalformedInput() = runTest {
         val result = load(byteArrayOf(1, 2, 3, 4))
 
-        assertFailure(CertificateErrorCode.INVALID_PASSWORD_OR_FILE, result)
+        assertFailure(CertificateErrorCode.INVALID_PKCS12_FILE, result)
+    }
+
+    @Test
+    fun inputReadFailureIsNotClassifiedAsPkcs12Encryption() = runTest {
+        val input = object : InputStream() {
+            override fun read(): Int = throw IOException(NoSuchAlgorithmException())
+        }
+        assertFailure(
+            CertificateErrorCode.INVALID_PASSWORD_OR_FILE,
+            Pkcs12Loader(clock = clock).load(input, null, TestCertificateFactory.password()),
+        )
     }
 
     @Test

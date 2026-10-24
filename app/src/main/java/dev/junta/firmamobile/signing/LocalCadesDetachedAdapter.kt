@@ -49,81 +49,21 @@ import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
 
 /** Local detached CAdES adapter for Aragón SIRAW's observed MiniApplet login contract. */
 class LocalCadesDetachedAdapter internal constructor(
-    private val clock: Clock = Clock.systemUTC(),
-    private val provider: Provider = BundledBouncyCastle.provider,
-) : SigningProtocolAdapter {
-    override val id: SigningProtocolId = ID
-
-    override suspend fun prepare(
-        request: NormalizedSignRequest,
-        certificateChain: List<X509Certificate>,
-    ): ProtocolPrepareResult {
-        if (!request.matchesContract() || certificateChain.isEmpty() ||
-            certificateChain.size > MAX_CERTIFICATES
-        ) {
-            return ProtocolPrepareResult.Failure(SigningErrorCode.UNSUPPORTED_PROTOCOL)
-        }
-        return try {
-            val material = request.withPayload { payload ->
-                MiniAppletPayloadCodec.withDecoded(payload) { challenge, extraProperties ->
-                    require(challenge.size == CHALLENGE_BYTES)
-                    require(extraProperties == EXPECTED_EXTRA_PROPERTIES)
-                    CadesDetachedCodec.createPreSign(challenge, CHALLENGE_BYTES, certificateChain, clock, provider)
-                }
-            }
-            ProtocolPrepareResult.Success(
-                PreSignResult(
-                    requestOwner = request,
-                    bytesToSign = material.signedAttributes,
-                    state = CadesPreSignState(
-                        placeholderCms = material.placeholderCms,
-                        detachedContent = material.detachedContent,
-                        signingCertificateFingerprint = material.signingCertificateFingerprint,
-                    ),
-                ),
-            )
-        } catch (_: Exception) {
-            ProtocolPrepareResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
-        }
-    }
-
-    override suspend fun complete(
-        request: NormalizedSignRequest,
-        preSign: PreSignResult,
-        localSignature: LocalSignature,
-    ): ProtocolCompletionResult {
-        if (!request.matchesContract()) {
-            return ProtocolCompletionResult.Failure(SigningErrorCode.UNSUPPORTED_PROTOCOL)
-        }
-        val state = preSign.consumeState(request) as? CadesPreSignState
-            ?: return ProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
-        return state.use { ownedState ->
-            try {
-                val result = localSignature.withBytes { signature ->
-                    CadesDetachedCodec.complete(
-                        placeholderCms = ownedState.placeholderCms(),
-                        detachedContent = ownedState.detachedContent(),
-                        expectedContentBytes = CHALLENGE_BYTES,
-                        signingCertificateFingerprint = ownedState.signingCertificateFingerprint(),
-                        signatureValue = signature,
-                        provider = provider,
-                    )
-                }
-                ProtocolCompletionResult.Success(LocalSignature(result))
-            } catch (_: Exception) {
-                ProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
-            }
-        }
-    }
-
-    private fun NormalizedSignRequest.matchesContract(): Boolean =
-        protocolId == ID &&
-            context.profileId == PROFILE_ID &&
-            context.profileVersion == PROFILE_VERSION &&
-            context.origin.serialized == INITIATOR_ORIGIN &&
-            format == SigningFormat.CADES &&
-            algorithm == SigningAlgorithm.SHA1_WITH_RSA
-
+    clock: Clock = Clock.systemUTC(),
+    provider: Provider = BundledBouncyCastle.provider,
+) : SigningProtocolAdapter by ParameterizedCadesDetachedAdapter(
+    contract = CadesDetachedContract(
+        id = ID,
+        profileId = PROFILE_ID,
+        profileVersion = PROFILE_VERSION,
+        initiatorOrigin = INITIATOR_ORIGIN,
+        algorithm = SigningAlgorithm.SHA1_WITH_RSA,
+        contentBytes = CHALLENGE_BYTES,
+        extraProperties = EXPECTED_EXTRA_PROPERTIES,
+    ),
+    clock = clock,
+    provider = provider,
+) {
     companion object {
         val ID = SigningProtocolId("aragon-siraw-local-cades-v1")
         const val PROFILE_ID = "aragon-siraw"
@@ -131,7 +71,6 @@ class LocalCadesDetachedAdapter internal constructor(
         const val INITIATOR_ORIGIN = "https://aplicaciones.aragon.es"
         internal const val EXPECTED_EXTRA_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         internal const val CHALLENGE_BYTES = 20
-        private const val MAX_CERTIFICATES = 10
     }
 }
 

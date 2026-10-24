@@ -6,6 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tools.generate_afirma_shim import RESOURCE_RANGES
+
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / "docs/archive/workflows/real-e2e.yml.disabled"
 RUNNER = ROOT / "scripts/ci/run-real-e2e.sh"
@@ -718,7 +720,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn('form.submit()', helper)
 
     def test_badajoz_hook_diagnostics_are_sanitized_and_bounded(self) -> None:
-        source = self.read(ROOT / "app/src/main/res/raw/afirma_shim.js")
+        source = "".join(self.read(ROOT / "app/src/main/res/raw" / name) for name, _, _ in RESOURCE_RANGES)
         self.assertIn('postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED")', source)
         self.assertIn('postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY")', source)
         self.assertIn('window.__jfmBadajozSignHookReady = true', source)

@@ -2,10 +2,18 @@ package dev.junta.firmamobile.network
 
 import java.net.InetAddress
 import java.net.URI
+import java.util.concurrent.Executors
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
 
 class StaBatchHttpTransportTest {
+    private val dnsExecutor = Executors.newSingleThreadExecutor { Thread(it).apply { isDaemon = true } }
+
+    @After fun shutDownDnsExecutor() {
+        dnsExecutor.shutdownNow()
+    }
+
     @Test fun allFiveProductionPoliciesAdmitOnlyTheirExactValidatedPostEndpoint() {
         val policies: List<Pair<String, (String) -> MelillaBatchUrlValidation>> = listOf(
             "sede.melilla.es" to MelillaBatchUrlPolicy()::validate,
@@ -20,6 +28,8 @@ class StaBatchHttpTransportTest {
                 HttpsProfileHttpTransport(
                     urlPolicy = SafeNetworkUrlPolicy(setOf(endpoint)),
                     dnsResolver = DnsResolver { listOf(InetAddress.getByAddress(byteArrayOf(8, 8, 8, 8))) },
+                    // The shared 2-thread DNS pool rejects work while other tests in this JVM hold it.
+                    dnsExecutor = dnsExecutor,
                     executor = ProfileHttpExecutor { url, _, _, _, _, _, _, _ ->
                         assertEquals(endpoint, url)
                         executions++

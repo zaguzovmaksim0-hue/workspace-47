@@ -52,13 +52,18 @@ class DocumentConsentEvidence private constructor(
     val payloadKind: SigningPayloadKind,
     binding: RequestBinding?,
     document: ActualDocumentMetadata?,
+    preview: PdfPreviewSource? = null,
 ) : Closeable {
     private var ownedBinding = binding
     private var ownedDocument = document
+    private var ownedPreview = preview
     private var closed = false
 
     val actualDocument: ActualDocumentMetadata?
         @Synchronized get() = ownedDocument
+
+    val pdfPreview: PdfPreviewSource?
+        @Synchronized get() = ownedPreview
 
     /** Pure local verification, including the exact envelope; never re-decode/refetch at consent. */
     @Synchronized
@@ -68,6 +73,8 @@ class DocumentConsentEvidence private constructor(
     /** Remove display hashes immediately when the consent UI is dismissed, before signing work. */
     @Synchronized
     internal fun dismissDisplay() {
+        ownedPreview?.close()
+        ownedPreview = null
         ownedDocument?.close()
         ownedDocument = null
     }
@@ -102,6 +109,9 @@ class DocumentConsentEvidence private constructor(
                     SigningPayloadKind.ENVELOPE,
                     binding,
                     ActualDocumentMetadata(document.size, sha256(document), observer),
+                    if (document.size <= AccedaPadesAdapter.MAX_PDF_BYTES && PdfPreviewSource.isPdf(document)) {
+                        PdfPreviewSource.copyOf(document, AccedaPadesAdapter.MAX_PDF_BYTES)
+                    } else null,
                 ).also { retainedBinding = true }
             } finally {
                 if (!retainedBinding) binding.close()

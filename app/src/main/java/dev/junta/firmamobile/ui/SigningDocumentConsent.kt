@@ -10,7 +10,8 @@ import dev.junta.firmamobile.signing.DocumentConsentEvidence
 
 @Suppress("FunctionNaming") // Compose UI naming convention.
 @Composable
-internal fun SigningDocumentConsent(evidence: DocumentConsentEvidence) {
+internal fun SigningDocumentConsent(evidence: DocumentConsentEvidence, showPdfPreview: Boolean) {
+    if (showPdfPreview) pdfPreview(evidence.pdfPreview)
     val document = evidence.actualDocument
     val digest = document?.sha256ForDisplay()
     if (document == null || digest == null) {

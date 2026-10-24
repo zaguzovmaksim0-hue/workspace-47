@@ -33,6 +33,9 @@
     <string name="lock_certificate">Lock certificate</string>
     <string name="forget_certificate">Forget certificate</string>
     <string name="error_password_or_file">The password is incorrect or the PKCS#12 file is invalid.</string>
+    <string name="error_invalid_password">The certificate password is incorrect.</string>
+    <string name="error_invalid_pkcs12_file">The file is not a valid PKCS#12 file or is damaged.</string>
+    <string name="error_unsupported_pkcs12_encryption">This Android version does not support the encryption algorithm of the PKCS#12 file.</string>
     <string name="error_file_too_large">The file exceeds the maximum allowed size.</string>
     <string name="error_private_key_missing">The file does not contain a private signing key.</string>
     <string name="error_multiple_private_keys">The file contains more than one private identity.</string>
@@ -301,4 +304,43 @@
     <string name="certificate_retention_fifteen_minutes">15 minutes</string>
     <string name="certificate_retention_one_hour">1 hour</string>
     <string name="certificate_retention_one_day">24 hours</string>
+
+    <!-- Local, optional PDF consent preview. -->
+    <string name="pdf_preview_show">Show preview</string>
+    <string name="pdf_preview_loading">Loading preview…</string>
+    <string name="pdf_preview_failed">The preview cannot be displayed.</string>
+    <string name="pdf_preview_unavailable">Preview unavailable.</string>
+    <string name="pdf_preview_pages">First page · %1$d pages</string>
+    <string name="pdf_preview_description">Preview of the first PDF page</string>
+    <string name="catalog_verified_on">Verified on %1$s</string>
+    <string name="local_signing_title">Sign a local file</string>
+    <string name="local_signing_unlock">Unlock a certificate to sign your file.</string>
+    <string name="local_signing_unnamed">file</string>
+    <string name="local_signing_name">File: %1$s</string>
+    <string name="local_signing_scope">The detached CAdES signature is generated on this device, without signing services or a timestamp authority. Keep the original file with its signature. Limit: 512 KiB.</string>
+    <string name="local_signing_loading">Reading the file…</string>
+    <string name="local_signing_signing">Signing and checking the signature…</string>
+    <string name="local_signing_ready">Signature checked against the original file. Choose where to save it. This check does not evaluate certificate trust or revocation.</string>
+    <string name="local_signing_saving">Saving the signature…</string>
+    <string name="local_signing_saved">Signature saved.</string>
+    <string name="local_signing_failed">Could not complete the operation. Check that the certificate is still unlocked and the file is at most 512 KiB. A failed save may leave an incomplete file at the chosen destination.</string>
+    <string name="local_signing_choose">Choose another file</string>
+    <string name="local_signing_save">Save signature</string>
+    <string name="certificate_reminder_settings">Reminder settings</string>
+    <string name="certificate_reminder_toggle">Certificate expiry reminders</string>
+    <string name="certificate_reminder_copy">Local reminders 30 and 7 calendar days before the saved certificate expires. Off by default. No personal data is included. Android may delay delivery to save battery.</string>
+    <string name="certificate_reminder_blocked">Android is blocking these reminders. You can enable them in notification settings.</string>
+    <string name="certificate_reminder_system_settings">Open notification settings</string>
+    <string name="certificate_reminder_done">Done</string>
+    <string name="certificate_reminder_save_failed">The setting could not be saved. Try again.</string>
+    <string name="certificate_reminder_channel">Certificate expiry</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">Your certificate expires in %1$d day</item>
+        <item quantity="other">Your certificate expires in %1$d days</item>
+    </plurals>
+    <string name="certificate_auth_title">Protect saved unlock</string>
+    <string name="certificate_auth_subtitle">Confirm with biometrics or the device PIN, pattern or password.</string>
+    <string name="certificate_auth_help">Saving and restoring the unlock requires device confirmation. If you cancel when saving, only the in-memory session is kept.</string>
+    <string name="certificate_auth_unsupported">On Android 8–10 the unlock is not saved across app restarts. Enter the certificate password.</string>
+    <string name="certificate_restore_saved">Restore saved unlock</string>
 </resources>

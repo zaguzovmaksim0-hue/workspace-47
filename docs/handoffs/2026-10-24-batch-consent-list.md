@@ -1,5 +1,7 @@
 # Batch-document consent audit (task 11)
 
+> Update: the native pre-sign list (count, ordered IDs, local size/SHA-256) landed in #439 (batch #453); its native-dialog test supersedes the one audited here. The gaps below describe the state before that merge.
+
 ## Scope and evidence
 
 Audited `origin/main` at `07b8232d`, against project-plan sections 3 and 6.
