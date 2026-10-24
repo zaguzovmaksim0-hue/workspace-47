@@ -5,6 +5,7 @@ import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -163,14 +164,10 @@ class CertificateRepository(
         try {
             referenceStore.write(reference)
         } catch (cancellation: CancellationException) {
-            if (previous?.uri != uri) {
-                releaseQuietly(uri)
-            }
+            withContext(NonCancellable) { releaseUnlessReferenced(uri) }
             throw cancellation
         } catch (_: Exception) {
-            if (previous?.uri != uri) {
-                releaseQuietly(uri)
-            }
+            releaseUnlessReferenced(uri)
             return CertificateSelectionResult.Failure(CertificateSelectionErrorCode.STORAGE_FAILURE)
         }
 
@@ -178,6 +175,16 @@ class CertificateRepository(
             releaseQuietly(previous.uri)
         }
         return CertificateSelectionResult.Success(reference)
+    }
+
+    // Another saved entry, or a write that committed before cancellation, may still need this grant.
+    private suspend fun releaseUnlessReferenced(uri: Uri) {
+        val referenced = try {
+            referenceStore.references(uri)
+        } catch (_: Exception) {
+            true // Unknown ownership keeps the grant; a stale grant is non-secret state.
+        }
+        if (!referenced) releaseQuietly(uri)
     }
 
     private fun releaseQuietly(uri: Uri) {

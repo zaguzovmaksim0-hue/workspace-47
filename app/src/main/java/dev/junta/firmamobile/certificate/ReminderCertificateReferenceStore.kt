@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.certificate
 
 import android.content.Context
+import android.net.Uri
 
 /** Decorates only local persistence; portal protocols, validation and unlock policy are unchanged. */
 internal class ReminderCertificateReferenceStore(
@@ -15,4 +16,6 @@ internal class ReminderCertificateReferenceStore(
     }
 
     override suspend fun clear() = reminders.changeReference { delegate.clear() }
+
+    override suspend fun references(uri: Uri): Boolean = delegate.references(uri)
 }

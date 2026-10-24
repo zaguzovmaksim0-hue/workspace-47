@@ -29,6 +29,9 @@ interface CertificateReferenceCatalogStore : CertificateReferenceStore {
     /** Legacy file facade: key-only entries require the authenticated keystore flow. */
     override suspend fun read(): StoredCertificateReference? = readCatalog().active?.reference
 
+    /** Inactive entries keep their grants too; catalogue URIs are unique. */
+    override suspend fun references(uri: Uri): Boolean = readCatalog().entries.any { it.reference?.uri == uri }
+
     suspend fun readCatalog(): StoredCertificateCatalog
 
     suspend fun add(reference: StoredCertificateReference): StoredCertificateEntry
