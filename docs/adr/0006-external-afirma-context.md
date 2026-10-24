@@ -66,9 +66,15 @@ every portal entry point refuses new work.
 `ExternalAfirmaEntryActivity` is the only exported entry. It reads just the VIEW
 action and `afirma:` data string (no extras, clip data or selectors), parks it
 in a 30-second in-process slot and opens the app with the launcher intent, never
-forwarding the URI. It keeps the app's task affinity, so a foreground app is
-paused, not stopped, and its current operation survives. A second delivery while
-one is parked is refused and never replaces it.
+forwarding the URI. It runs in its own empty-affinity task excluded from
+recents, the standard trampoline shape: with the app's affinity, a cold start
+with NEW_TASK would make it the task root and Android would drop the following
+launcher intent. Accepted cost: a delivery while Firma itself is in the
+foreground (from a notification or split screen) briefly stops it, which cancels
+its current operation as any other app switch does. A second delivery while one
+is parked is refused and never replaces it. Outgoing afirma:// never resolves to
+this entry: the scheme is reserved for page intent links and the official
+AutoFirma handoff names its package.
 
 MainActivity takes the slot only when resumed. A busy app answers at once with
 "busy" and leaves the current operation untouched; an idle app waits for window

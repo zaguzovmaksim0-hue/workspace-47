@@ -46,7 +46,8 @@ class JuntaFirmaApplication : Application() {
     // Long enough for a cold catalog start on a slow phone, short enough that a later launch never replays it.
     internal val externalAfirmaInbox = dev.junta.firmamobile.afirma.external.ExternalAfirmaInbox(
         ttlNanos = java.util.concurrent.TimeUnit.SECONDS.toNanos(EXTERNAL_AFIRMA_INBOX_TTL_SECONDS),
-        nowNanos = dev.junta.firmamobile.security.MonotonicSecurityTime::nowNanos,
+        // Keeps counting in deep sleep, unlike System.nanoTime.
+        nowNanos = android.os.SystemClock::elapsedRealtimeNanos,
     )
 
     lateinit var certificateUnlockCache: CertificateUnlockCache
