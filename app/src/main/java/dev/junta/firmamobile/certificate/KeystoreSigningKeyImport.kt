@@ -56,6 +56,8 @@ internal interface SigningKeyStoreBackend {
     fun importKey(alias: String, key: PrivateKey, chain: List<X509Certificate>, placement: KeystorePlacement)
     fun privateKey(alias: String): PrivateKey?
     fun securityLevel(alias: String): KeystoreSecurityLevel
+    fun certificateChain(alias: String): List<X509Certificate>
+    fun aliases(): Set<String>
     fun delete(alias: String)
 }
 
@@ -97,7 +99,7 @@ internal class KeystoreSigningKeyImporter(
         return outcome
     }
 
-    private fun verify(
+    internal fun verify(
         alias: String,
         certificate: X509Certificate,
         placement: KeystorePlacement,
@@ -242,6 +244,11 @@ internal class AndroidSigningKeyStoreBackend(context: Context) : SigningKeyStore
             KeystoreSecurityLevel.SOFTWARE
         }
     }
+
+    override fun certificateChain(alias: String): List<X509Certificate> =
+        keyStore().getCertificateChain(alias)?.map { it as X509Certificate }.orEmpty()
+
+    override fun aliases(): Set<String> = keyStore().aliases().toList().toSet()
 
     override fun delete(alias: String) {
         if (alias.startsWith(KeystoreSigningKeyImporter.ALIAS_PREFIX)) keyStore().deleteEntry(alias)

@@ -267,7 +267,7 @@ private fun privateKeyAliases(keyStore: KeyStore): List<String>? {
     return aliases.filter { keyStore.entryInstanceOf(it, KeyStore.PrivateKeyEntry::class.java) }
 }
 
-private fun certificateSummary(certificate: X509Certificate): CertificateSummary = CertificateSummary(
+internal fun certificateSummary(certificate: X509Certificate): CertificateSummary = CertificateSummary(
     ownerName = commonName(certificate.subjectX500Principal),
     issuerName = commonName(certificate.issuerX500Principal),
     validFrom = certificate.notBefore.toInstant(),
