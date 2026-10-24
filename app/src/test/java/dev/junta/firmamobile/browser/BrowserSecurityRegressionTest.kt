@@ -819,7 +819,7 @@ class BrowserSecurityRegressionTest {
             "app/src/main/java/dev/junta/firmamobile/signing/RuntimeSigningAdapters.kt",
         )
         val moduleBlock = source
-            .substringAfter("val signingModule = SigningModule(", missingDelimiterValue = "")
+            .substringAfter("val signingModule = app.appContainer.createSigningModule(", missingDelimiterValue = "")
             .substringBefore("\n        )")
         val coordinatorBlock = source
             .substringAfter("batchSigningCoordinator = signingModule.batch(", missingDelimiterValue = "")
