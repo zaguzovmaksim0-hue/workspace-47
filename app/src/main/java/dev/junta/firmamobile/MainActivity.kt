@@ -543,6 +543,7 @@ class MainActivity : ComponentActivity() {
                         state = certificateState.value,
                         onSelectCertificate = ::launchCertificatePicker,
                         onUnlock = certificateViewModel::unlock,
+                        onRestoreSavedUnlock = certificateViewModel::restoreSavedUnlock,
                         onLock = certificateViewModel::lock,
                         onForget = certificateViewModel::forget,
                         onContinue = { destination = AppDestination.Catalog },
@@ -611,6 +612,7 @@ class MainActivity : ComponentActivity() {
                             state = certificateState.value,
                             onSelectCertificate = ::launchCertificatePicker,
                             onUnlock = certificateViewModel::unlock,
+                        onRestoreSavedUnlock = certificateViewModel::restoreSavedUnlock,
                             onLock = certificateViewModel::lock,
                             onForget = certificateViewModel::forget,
                             onContinue = { certificatePanelVisible = false },
@@ -623,6 +625,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        (application as JuntaFirmaApplication).certificateUnlockAuthentication.bind(this)
         certificateViewModel.onAppForegrounded()
         if (::catalogSmokeHook.isInitialized) catalogSmokeHook.start()
     }
@@ -714,6 +717,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        (application as JuntaFirmaApplication).certificateUnlockAuthentication.unbind(this)
         browserFileChooser.cancel()
         if (::catalogSmokeHook.isInitialized) catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
