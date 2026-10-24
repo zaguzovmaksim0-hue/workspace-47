@@ -33,6 +33,9 @@
     <string name="lock_certificate">Blokeatu ziurtagiria</string>
     <string name="forget_certificate">Ahaztu ziurtagiria</string>
     <string name="error_password_or_file">Pasahitza ez da zuzena edo PKCS#12 fitxategia ez da baliozkoa.</string>
+    <string name="error_invalid_password">Ziurtagiriaren pasahitza ez da zuzena.</string>
+    <string name="error_invalid_pkcs12_file">Fitxategia ez da baliozko PKCS#12 fitxategia edo hondatuta dago.</string>
+    <string name="error_unsupported_pkcs12_encryption">Android bertsio honek ez du onartzen PKCS#12 fitxategiaren zifratze-algoritmoa.</string>
     <string name="error_file_too_large">Fitxategiak baimendutako gehieneko tamaina gainditzen du.</string>
     <string name="error_private_key_missing">Fitxategiak ez dauka sinatzeko gako pribaturik.</string>
     <string name="error_multiple_private_keys">Fitxategiak identitate pribatu bat baino gehiago dauka.</string>

@@ -33,6 +33,9 @@
     <string name="lock_certificate">Bloqueja el certificat</string>
     <string name="forget_certificate">Oblida el certificat</string>
     <string name="error_password_or_file">La contrasenya no és correcta o el fitxer PKCS#12 no és vàlid.</string>
+    <string name="error_invalid_password">La contrasenya del certificat no és correcta.</string>
+    <string name="error_invalid_pkcs12_file">El fitxer no és un PKCS#12 vàlid o està malmès.</string>
+    <string name="error_unsupported_pkcs12_encryption">Aquesta versió d’Android no admet l’algorisme de xifratge del fitxer PKCS#12.</string>
     <string name="error_file_too_large">El fitxer supera la mida màxima permesa.</string>
     <string name="error_private_key_missing">El fitxer no conté cap clau privada de signatura.</string>
     <string name="error_multiple_private_keys">El fitxer conté més d’una identitat privada.</string>

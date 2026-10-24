@@ -341,6 +341,9 @@ class CertificateViewModel(
     private fun CertificateErrorCode.toUiError() = when (this) {
         CertificateErrorCode.FILE_TOO_LARGE -> CertificateUiError.FILE_TOO_LARGE
         CertificateErrorCode.INVALID_PASSWORD_OR_FILE -> CertificateUiError.PASSWORD_INVALID_OR_FILE
+        CertificateErrorCode.INVALID_PASSWORD -> CertificateUiError.INVALID_PASSWORD
+        CertificateErrorCode.INVALID_PKCS12_FILE -> CertificateUiError.INVALID_PKCS12_FILE
+        CertificateErrorCode.UNSUPPORTED_PKCS12_ENCRYPTION -> CertificateUiError.UNSUPPORTED_PKCS12_ENCRYPTION
         CertificateErrorCode.TOO_MANY_ENTRIES,
         CertificateErrorCode.CHAIN_TOO_LONG,
         -> CertificateUiError.CERTIFICATE_NOT_USABLE

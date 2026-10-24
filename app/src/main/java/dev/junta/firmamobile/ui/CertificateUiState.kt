@@ -30,6 +30,9 @@ sealed interface CertificateUiState {
 
 enum class CertificateUiError {
     PASSWORD_INVALID_OR_FILE,
+    INVALID_PASSWORD,
+    INVALID_PKCS12_FILE,
+    UNSUPPORTED_PKCS12_ENCRYPTION,
     FILE_TOO_LARGE,
     PRIVATE_KEY_MISSING,
     MULTIPLE_PRIVATE_KEYS,

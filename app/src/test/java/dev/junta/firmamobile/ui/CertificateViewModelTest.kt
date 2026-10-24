@@ -2,6 +2,7 @@ package dev.junta.firmamobile.ui
 
 import android.net.Uri
 import dev.junta.firmamobile.certificate.CachedCertificateUnlock
+import dev.junta.firmamobile.certificate.CertificateErrorCode
 import dev.junta.firmamobile.certificate.CertificateGateway
 import dev.junta.firmamobile.certificate.CertificateUnlockRetention
 import dev.junta.firmamobile.certificate.CertificateUnlockCache
@@ -269,28 +270,27 @@ class CertificateViewModelTest {
     }
 
     @Test
-    fun wrongPasswordReturnsLockedStateWithClosedUiError() = runTest(dispatcher) {
-        val selected = reference()
-        val gateway = FakeCertificateGateway().apply {
-            current = selected
-            unlockResult = CertificateLoadResult.Failure(
-                dev.junta.firmamobile.certificate.CertificateErrorCode.INVALID_PASSWORD_OR_FILE,
-            )
-        }
-        val viewModel = viewModel(gateway)
-        advanceUntilIdle()
-
-        viewModel.unlock("wrong".toCharArray())
-        advanceUntilIdle()
-
-        assertEquals(
-            CertificateUiState.Locked(
-                selected,
-                null,
-                CertificateUiError.PASSWORD_INVALID_OR_FILE,
-            ),
-            viewModel.state.value,
+    fun preciseImportErrorsReturnLockedStateWithClosedUiErrors() = runTest(dispatcher) {
+        val cases = listOf(
+            CertificateErrorCode.INVALID_PASSWORD to CertificateUiError.INVALID_PASSWORD,
+            CertificateErrorCode.INVALID_PKCS12_FILE to CertificateUiError.INVALID_PKCS12_FILE,
+            CertificateErrorCode.UNSUPPORTED_PKCS12_ENCRYPTION to CertificateUiError.UNSUPPORTED_PKCS12_ENCRYPTION,
+            CertificateErrorCode.INVALID_PASSWORD_OR_FILE to CertificateUiError.PASSWORD_INVALID_OR_FILE,
         )
+        for ((code, error) in cases) {
+            val selected = reference()
+            val gateway = FakeCertificateGateway().apply {
+                current = selected
+                unlockResult = CertificateLoadResult.Failure(code)
+            }
+            val viewModel = viewModel(gateway)
+            advanceUntilIdle()
+
+            viewModel.unlock("wrong".toCharArray())
+            advanceUntilIdle()
+
+            assertEquals(CertificateUiState.Locked(selected, null, error), viewModel.state.value)
+        }
     }
 
     @Test
