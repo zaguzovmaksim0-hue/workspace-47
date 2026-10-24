@@ -301,6 +301,18 @@
     <string name="certificate_retention_fifteen_minutes">15 minutu</string>
     <string name="certificate_retention_one_hour">ordu 1</string>
     <string name="certificate_retention_one_day">24 ordu</string>
+    <string name="certificate_reminder_settings">Abisuen ezarpenak</string>
+    <string name="certificate_reminder_toggle">Ziurtagiriaren iraungitze-abisuak</string>
+    <string name="certificate_reminder_copy">Tokiko abisuak gordetako ziurtagiria iraungi baino 30 eta 7 egun natural lehenago. Lehenespenez desaktibatuta daude. Ez dute datu pertsonalik. Android-ek atzeratu egin ditzake bateria aurrezteko.</string>
+    <string name="certificate_reminder_blocked">Android-ek abisu hauek blokeatzen ditu. Jakinarazpenen ezarpenetan aktiba ditzakezu.</string>
+    <string name="certificate_reminder_system_settings">Ireki jakinarazpenen ezarpenak</string>
+    <string name="certificate_reminder_done">Eginda</string>
+    <string name="certificate_reminder_save_failed">Ezin izan da ezarpena gorde. Saiatu berriro.</string>
+    <string name="certificate_reminder_channel">Ziurtagiriaren iraungitzea</string>
+    <plurals name="certificate_reminder_days">
+        <item quantity="one">Zure ziurtagiria %1$d egun barru iraungiko da</item>
+        <item quantity="other">Zure ziurtagiria %1$d egun barru iraungiko da</item>
+    </plurals>
     <string name="certificate_auth_title">Babestu gordetako desblokeoa</string>
     <string name="certificate_auth_subtitle">Berretsi biometriarekin edo gailuaren PIN, eredu edo pasahitzarekin.</string>
     <string name="certificate_auth_help">Desblokeoa gordetzeko eta berreskuratzeko gailuaren berrespena behar da. Gordetzean bertan behera uzten baduzu, memoriako saioa soilik gordeko da.</string>
