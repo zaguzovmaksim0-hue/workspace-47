@@ -49,6 +49,15 @@ internal object TestCertificateFactory {
         )
     }
 
+    fun separateKeyPassword(): ByteArray = store {
+        val keyPassword = "separate-key-password".toCharArray()
+        try {
+            setKeyEntry("identidad", validIdentity.keyPair.private, keyPassword, arrayOf(validIdentity.certificate))
+        } finally {
+            keyPassword.fill('\u0000')
+        }
+    }
+
     fun digitalSignatureCertificate(): X509Certificate = validIdentity.certificate
 
     fun nonRepudiationCertificate(): X509Certificate = identity(

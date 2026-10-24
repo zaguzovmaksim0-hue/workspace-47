@@ -33,6 +33,9 @@
     <string name="lock_certificate">Bloquear certificado</string>
     <string name="forget_certificate">Olvidar certificado</string>
     <string name="error_password_or_file">La contraseña no es correcta o el archivo PKCS#12 no es válido.</string>
+    <string name="error_invalid_password">La contraseña del certificado no es correcta.</string>
+    <string name="error_invalid_pkcs12_file">El archivo no es un PKCS#12 válido o está dañado.</string>
+    <string name="error_unsupported_pkcs12_encryption">Esta versión de Android no admite el algoritmo de cifrado del archivo PKCS#12.</string>
     <string name="error_file_too_large">El archivo supera el tamaño máximo permitido.</string>
     <string name="error_private_key_missing">El archivo no contiene una clave privada de firma.</string>
     <string name="error_multiple_private_keys">El archivo contiene más de una identidad privada.</string>
