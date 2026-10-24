@@ -14,7 +14,9 @@ import androidx.compose.ui.platform.LocalContext
 /** Only transient SAF access. No persistable grant is taken and no URI is saved. */
 internal class LocalOfflineOpenDocument : ActivityResultContracts.OpenDocument() {
     override fun createIntent(context: Context, input: Array<String>): Intent =
-        super.createIntent(context, input).putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+        super.createIntent(context, input)
+            .addCategory(Intent.CATEGORY_OPENABLE)
+            .putExtra(Intent.EXTRA_LOCAL_ONLY, true)
 }
 
 internal class OfflineVerificationPickers(val cms: () -> Unit, val original: () -> Unit)
