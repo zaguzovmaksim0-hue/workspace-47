@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true), "https://sede.example.test",
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true), "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
         .first { it.isDirectory }
@@ -38,12 +38,12 @@ class AfirmaJavascriptShimFragmentTest {
             read += fragment
             File(raw, "afirma_shim_${fragment.name.lowercase()}.js").reader(Charsets.UTF_8)
         }
-        assertCantabriaExtraction(
+        assertPortalExtractions(
             AfirmaJavascriptShimLegacy.assemble(
                 template, configuration.mode, false, configuration.flags, configuration.staBatchOrigin,
             ),
             actual,
-            true,
+            configuration.flags,
         )
         assertEquals(AfirmaJavascriptShimFragment.entries, read)
     }
@@ -51,7 +51,7 @@ class AfirmaJavascriptShimFragmentTest {
     @Test
     fun disabledCantabriaOmitsOnlyItsBodyAndDoesNotReadItsResource() {
         val reads = mutableListOf<AfirmaJavascriptShimFragment>()
-        val disabled = configuration.copy(flags = AfirmaShimCompatibilityFlags())
+        val disabled = configuration.copy(flags = configuration.flags.copy(cantabria = false))
         val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
             reads += it
             check(it != AfirmaJavascriptShimFragment.CANTABRIA)
@@ -67,6 +67,28 @@ class AfirmaJavascriptShimFragmentTest {
         val body = File(raw, "afirma_shim_cantabria.js").readText(Charsets.UTF_8)
         assertEquals(enabled.replace(body, "").replace(
             "const cantabriaCompatibilityEnabled = true;", "const cantabriaCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledJccmOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(jccm = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.JCCM)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.JCCM, reads)
+        assertFalse(output.contains("https://ventanillaelectronica.jccm.es"))
+        assertFalse(output.contains("QUJDREU="))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_jccm.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const jccmCompatibilityEnabled = true;", "const jccmCompatibilityEnabled = false;",
         ), output)
     }
 
@@ -123,8 +145,10 @@ class AfirmaJavascriptShimFragmentTest {
     }
 }
 
-// Compare every unchanged byte with the frozen fixture after undoing only this extraction.
-internal fun assertCantabriaExtraction(legacy: String, actual: String, enabled: Boolean) {
+// Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
+internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
+    val actual = restoreJccmExtraction(legacy, assembled, flags.jccm)
+    val enabled = flags.cantabria
     val constants = legacy.substring(
         legacy.indexOf("  const cantabriaOrigin"), legacy.indexOf("  const ugrLiteral ="),
     )
@@ -139,4 +163,19 @@ internal fun assertCantabriaExtraction(legacy: String, actual: String, enabled: 
         .replace("  let matchesCantabriaSign = () => false;\n", constants)
         .replace("    const isExactCantabriaCall = matchesCantabriaSign(args);\n", branch)
     assertArrayEquals(legacy.toByteArray(Charsets.UTF_8), restored.toByteArray(Charsets.UTF_8))
+}
+
+private fun restoreJccmExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(
+        legacy.indexOf("  const jccmOrigin ="), legacy.indexOf("  const jccmRegistroOrigin ="),
+    )
+    val start = legacy.indexOf("    const isJccmOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    const dataB64 =", start))
+    val module = "\n  matchesJccmSign = args => {\n" + constants.replace("  const", "    const") +
+        branch + "    return isExactJccmCall;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("  let matchesJccmSign = () => false;\n", constants)
+        .replace("    const isExactJccmCall = matchesJccmSign(args);\n", branch)
 }

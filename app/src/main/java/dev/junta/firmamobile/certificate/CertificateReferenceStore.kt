@@ -19,6 +19,8 @@ data class StoredCertificateReference(
     val mimeType: String,
     val size: Long?,
     val summary: CertificateSummary?,
+    /** Lowercase hex SHA-256 of the chosen entry's certificate when the file holds several keys. */
+    val selectedCertificateSha256: String? = null,
 )
 
 interface CertificateReferenceStore {

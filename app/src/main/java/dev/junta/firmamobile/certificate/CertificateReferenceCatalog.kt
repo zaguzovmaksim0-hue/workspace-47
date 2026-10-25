@@ -52,13 +52,15 @@ interface CertificateReferenceCatalogStore : CertificateReferenceStore {
 
 internal object CertificateReferenceCatalogCodec {
     const val MAX_ENTRIES = 16
-    private const val VERSION = 2
+    private const val VERSION = 3
+    private const val SELECTED_ENTRY_VERSION = 3
     private const val MAX_TOMBSTONES = 128
     private const val MAX_ENCODED_LENGTH = 524288
     private const val MAX_URI_LENGTH = 4096
     private const val MAX_NAME_LENGTH = 256
     private const val MAX_MIME_LENGTH = 128
     private const val MAX_SUMMARY_LENGTH = 1024
+    private val SHA256_HEX = Regex("[0-9a-f]{64}")
 
     fun entry(reference: StoredCertificateReference) = StoredCertificateEntry(
         id = UUID.randomUUID().toString(), revision = 1, reference = reference,
@@ -77,6 +79,7 @@ internal object CertificateReferenceCatalogCodec {
             require(it.ownerName.length <= MAX_SUMMARY_LENGTH && it.issuerName.length <= MAX_SUMMARY_LENGTH)
             require(!it.validUntil.isBefore(it.validFrom))
         }
+        reference.selectedCertificateSha256?.let { require(SHA256_HEX.matches(it)) }
     }
 
     fun encode(catalog: StoredCertificateCatalog): String {
@@ -119,7 +122,7 @@ internal object CertificateReferenceCatalogCodec {
             val entries = List(count) {
                 val id = input.readUTF()
                 val revision = input.readLong()
-                val reference = if (version == 1 || input.readBoolean()) readReference(input) else null
+                val reference = if (version == 1 || input.readBoolean()) readReference(input, version) else null
                 val key = if (version >= 2 && input.readBoolean()) {
                     StoredSigningKeyReference(
                         input.readInt(), input.readUTF(), StoredKeystoreLevel.valueOf(input.readUTF()),
@@ -168,9 +171,10 @@ internal object CertificateReferenceCatalogCodec {
             output.writeLong(it.validFrom.toEpochMilli())
             output.writeLong(it.validUntil.toEpochMilli())
         }
+        output.writeUTF(reference.selectedCertificateSha256.orEmpty())
     }
 
-    private fun readReference(input: DataInputStream): StoredCertificateReference {
+    private fun readReference(input: DataInputStream, version: Int): StoredCertificateReference {
         val uri = Uri.parse(input.readUTF())
         val name = input.readUTF()
         val mime = input.readUTF()
@@ -184,6 +188,7 @@ internal object CertificateReferenceCatalogCodec {
         } else {
             null
         }
-        return StoredCertificateReference(uri, name, mime, size.takeIf { it >= 0 }, summary)
+        val selected = if (version >= SELECTED_ENTRY_VERSION) input.readUTF().ifEmpty { null } else null
+        return StoredCertificateReference(uri, name, mime, size.takeIf { it >= 0 }, summary, selected)
     }
 }
