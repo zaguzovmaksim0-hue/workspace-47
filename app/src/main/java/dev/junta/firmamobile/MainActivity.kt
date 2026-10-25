@@ -45,14 +45,11 @@ import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
 import dev.junta.firmamobile.browser.MelillaBatchSigningAdapter
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
-import dev.junta.firmamobile.catalog.AndroidRegionDetector
 import dev.junta.firmamobile.catalog.PortalCatalogViewModel
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalCatalogScreen
 import dev.junta.firmamobile.catalog.PortalOpenTarget
-import dev.junta.firmamobile.catalog.PreferencesCatalogPreferencesStore
 import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
-import dev.junta.firmamobile.catalog.catalogPreferencesDataStore
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.network.HttpsProfileHttpTransport
 import dev.junta.firmamobile.network.JuntaOriginPolicy
@@ -178,7 +175,7 @@ class MainActivity : ComponentActivity() {
 
     private val certificateViewModel: CertificateViewModel by viewModels {
         val app = application as JuntaFirmaApplication
-        CertificateViewModel.Factory(
+        app.appContainer.certificateViewModelFactory(
             app.certificateGateway,
             app.certificateSession,
             app.certificateUnlockCache,
@@ -330,13 +327,7 @@ class MainActivity : ComponentActivity() {
         catalogRepository = repository
         catalogViewModel = ViewModelProvider(
             this,
-            PortalCatalogViewModel.Factory(
-                repository = catalogRepository,
-                preferencesStore = PreferencesCatalogPreferencesStore(
-                    applicationContext.catalogPreferencesDataStore,
-                ),
-                regionDetector = AndroidRegionDetector(applicationContext),
-            ),
+            app.appContainer.catalogViewModelFactory(applicationContext, catalogRepository),
         )[PortalCatalogViewModel::class.java]
         catalogSmokeHook = CatalogSmokeHook(
             activity = this,
