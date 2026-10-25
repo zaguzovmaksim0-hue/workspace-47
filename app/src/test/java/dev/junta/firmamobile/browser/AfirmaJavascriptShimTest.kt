@@ -387,7 +387,7 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("args[2] === \"XADES\""))
         assertTrue(enabled.contains("args[3] === jccmRegistroExtraProperties"))
         assertTrue(enabled.contains("format=XAdES Detached\\nmode=implicit"))
-        assertTrue(enabled.contains("if (isJccmRegistroOrigin && !isExactJccmRegistroCall)"))
+        assertTrue(enabled.contains("if (isExactJccmRegistroCall === false)"))
     }
 
     @Test

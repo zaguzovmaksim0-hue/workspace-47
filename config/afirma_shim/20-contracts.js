@@ -6,10 +6,8 @@
   const ugrStorageUrl = "https://sede.ugr.es/afirma-signature-storage/StorageService";
   const ugrRetrieveUrl = "https://sede.ugr.es/afirma-signature-retriever/RetrieveService";
   let matchesJccmSign = () => false;
-  const jccmRegistroOrigin = "https://registrounicociudadanos.jccm.es";
-  const jccmRegistroProtectedPage =
-    "https://registrounicociudadanos.jccm.es/registrounicociudadanos/accesoclvd.do";
-  const jccmRegistroExtraProperties = "format=XAdES Detached\nmode=implicit";
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesJccmRegistroSign = () => null;
   const sevillaAtseOrigin = "https://www.sevilla.org";
   const sevillaAtsePage = "/ovweb/ov-web-certificado/index.xhtml";
   const sevillaAtseStorageUrl = "https://www.sevilla.org/ovweb/sign/StorageService";
