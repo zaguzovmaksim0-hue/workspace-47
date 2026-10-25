@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.ui
 
 import dev.junta.firmamobile.certificate.CertificateSummary
+import dev.junta.firmamobile.certificate.StoredCertificateEntry
 import dev.junta.firmamobile.certificate.StoredCertificateReference
 
 sealed interface CertificateUiState {
@@ -27,3 +28,9 @@ sealed interface CertificateUiState {
         val summary: CertificateSummary,
     ) : CertificateUiState
 }
+
+/** Saved catalogue entries beside the selection; [error] reports the last failed add or remove. */
+data class SavedCertificatesUiState(
+    val entries: List<StoredCertificateEntry> = emptyList(),
+    val error: CertificateUiError? = null,
+)

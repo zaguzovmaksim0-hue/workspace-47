@@ -95,10 +95,7 @@ class CertificateFileCatalogTest {
         val saved = before.entries.single { it.id != active.id }
         val keyed = saved.copy(
             revision = saved.revision + 1,
-            signingKey = StoredSigningKeyReference(
-                1, KeystoreSigningKeyImporter.ALIAS_PREFIX + "a".repeat(32), StoredKeystoreLevel.TEE,
-                "b".repeat(64), "saved.p12",
-            ),
+            signingKey = signingKey(),
         )
         store.replace(saved, keyed)
 
@@ -110,6 +107,30 @@ class CertificateFileCatalogTest {
         assertEquals(active.id, after.activeId)
         assertTrue(access.released.isEmpty())
     }
+
+    @Test
+    fun repositoryActivatesOnlyUnchangedFileEntries() = runBlocking {
+        val repository = CertificateRepository(access, store, Pkcs12Loader(), Dispatchers.IO)
+        store.write(reference("active"))
+        repository.saveInactive(uri("saved"))
+        val saved = repository.savedEntries().single { it.reference?.uri == uri("saved") }
+
+        // A stale revision and a key-backed entry are refused without changing the selection.
+        assertFailure(repository.activate(saved.copy(revision = saved.revision + 1)))
+        assertFailure(repository.activate(saved.copy(signingKey = signingKey())))
+        assertEquals(uri("active"), repository.currentReference()?.uri)
+
+        assertEquals(uri("saved"), (repository.activate(saved) as CertificateSelectionResult.Success).reference.uri)
+        assertEquals(uri("saved"), repository.currentReference()?.uri)
+        val former = repository.savedEntries().single { it.reference?.uri == uri("active") }
+        repository.removeInactive(former)
+        assertEquals(listOf(uri("saved")), repository.savedEntries().map { it.reference?.uri })
+        assertEquals(listOf(uri("active")), access.released)
+    }
+
+    private fun signingKey() = StoredSigningKeyReference(
+        1, KeystoreSigningKeyImporter.ALIAS_PREFIX + "a".repeat(32), StoredKeystoreLevel.TEE, "b".repeat(64), "k.p12",
+    )
 
     private fun assertFailure(result: CertificateSelectionResult) = assertEquals(
         CertificateSelectionErrorCode.STORAGE_FAILURE,
