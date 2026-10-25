@@ -24,6 +24,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.ConscryptMode
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
 
@@ -34,6 +35,27 @@ import org.robolectric.annotation.SQLiteMode
 class LegalInformationDialogTest {
     @get:Rule
     val rule = createComposeRule()
+
+    @Test
+    @Config(qualifiers = "en")
+    fun licenseListAndSelectedDocumentUseTheAppLanguage() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val title = "Firma Mobile — Notices and attributions"
+        val opening = documentOpening(context, "legal/project-notice.txt")
+        rule.setContent { JuntaFirmaTheme { LegalInformationDialog(onDismiss = {}) } }
+
+        rule.onNodeWithText(context.getString(R.string.legal_licenses)).performScrollTo().performClick()
+        waitForText(title)
+        rule.onNodeWithText("Firma Mobile — Avisos y atribuciones").assertDoesNotExist()
+        rule.onNodeWithText(title).performClick()
+        waitForText(opening)
+        rule.onNodeWithText(title).assertIsDisplayed()
+        rule.onNodeWithTag("legal-document-text").assertIsDisplayed()
+
+        rule.onNodeWithText(context.getString(R.string.legal_back)).performClick()
+        waitForText(title)
+        rule.onNodeWithTag("legal-document-text").assertDoesNotExist()
+    }
 
     @Test
     fun selectedDocumentSurvivesRecompositionAndBackPreservesTheLicenseSection() {
