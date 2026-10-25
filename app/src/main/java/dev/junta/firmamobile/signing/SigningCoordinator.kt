@@ -122,6 +122,10 @@ class SigningCoordinator internal constructor(
         }
         val certificateSnapshot = certificateSession.signingSnapshot()
             ?: return reject(request, reply, SigningErrorCode.CERTIFICATE_LOCKED)
+        if (certificateSession.identityForSigning(certificateSnapshot)?.supportsPortalSigning() == false) {
+            certificateSnapshot.close()
+            return reject(request, reply, SigningErrorCode.UNSUPPORTED_CERTIFICATE_KEY)
+        }
         val payloadFingerprint = try {
             request.withPayload(::sha256)
         } catch (_: Exception) {

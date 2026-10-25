@@ -20,7 +20,8 @@ internal fun clientCertificateRejection(
 ): ClientAuthRequestDiagnostic? {
     val certificate = identity.certificate
     val algorithm = certificate.publicKey.algorithm.uppercase(java.util.Locale.ROOT)
-    if (algorithm !in allowedKeyAlgorithms) {
+    // shortcut: EC identities are not offered for TLS until EC client auth is reviewed; profile rules keep "EC".
+    if (algorithm !in allowedKeyAlgorithms || algorithm != "RSA") {
         return ClientAuthRequestDiagnostic.REJECTED_ALGORITHM
     }
     if (requireOfferedKeyTypeMatch) {
