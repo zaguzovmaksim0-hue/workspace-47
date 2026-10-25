@@ -252,6 +252,48 @@ class CertificateReferenceCatalogTest {
         assertEquals(snapshot, PreferencesCertificateReferenceStore(dataStore(file)).readCatalog())
     }
 
+    @Test
+    fun schemaTwoRecordsStillReadAndTheSelectedEntryBindingSurvivesReopening() = runBlocking {
+        val file = file()
+        val data = dataStore(file)
+        val id = "00000000-0000-0000-0000-000000000002"
+        val bytes = ByteArrayOutputStream()
+        DataOutputStream(bytes).use { output ->
+            output.writeInt(2)
+            output.writeUTF(id)
+            output.writeInt(1)
+            output.writeUTF(id)
+            output.writeLong(1)
+            output.writeBoolean(true)
+            output.writeUTF("content://docs/old")
+            output.writeUTF("old.p12")
+            output.writeUTF("application/x-pkcs12")
+            output.writeLong(-1)
+            output.writeBoolean(false)
+            output.writeBoolean(false)
+            output.writeInt(0)
+        }
+        data.edit { it[stringPreferencesKey("catalog")] = Base64.getEncoder().encodeToString(bytes.toByteArray()) }
+        val store = PreferencesCertificateReferenceStore(data)
+        val old = checkNotNull(store.read())
+        assertEquals("old.p12", old.displayName)
+        assertNull(old.selectedCertificateSha256)
+
+        store.write(old.copy(selectedCertificateSha256 = "c".repeat(64)))
+        assertEquals(2L, store.readCatalog().active?.revision)
+        scopes.last().coroutineContext[kotlinx.coroutines.Job]!!.let { it.cancel(); it.join() }
+        assertEquals("c".repeat(64), PreferencesCertificateReferenceStore(dataStore(file)).read()?.selectedCertificateSha256)
+    }
+
+    @Test
+    fun malformedSelectedEntryBindingCannotEnterCatalog() = runBlocking {
+        val store = PreferencesCertificateReferenceStore(dataStore(file()))
+        for (bad in listOf("", "C".repeat(64), "c".repeat(63), "g".repeat(64))) {
+            assertRejected { store.add(reference("bad").copy(selectedCertificateSha256 = bad)) }
+        }
+        assertTrue(store.readCatalog().entries.isEmpty())
+    }
+
     // Independent wire fixtures exercise rejection through the storage interface, not the codec.
     private fun payload(
         version: Int = 1,

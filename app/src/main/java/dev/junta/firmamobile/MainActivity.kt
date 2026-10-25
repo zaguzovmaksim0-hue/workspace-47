@@ -148,8 +148,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private var currentWebView: WebView? = null
-    private var destination by mutableStateOf<AppDestination>(AppDestination.Certificate)
-    private var certificatePanelVisible by mutableStateOf(false)
+    private val navigation = AppNavigationState()
+    private val destination get() = navigation.destination
+    private val certificatePanelVisible get() = navigation.certificatePanelVisible
     private lateinit var signingCoordinator: SigningCoordinator
     private lateinit var batchSigningCoordinator: BatchSigningCoordinator
     private lateinit var melillaBatchSigningAdapter: MelillaBatchSigningAdapter
@@ -347,7 +348,7 @@ class MainActivity : ComponentActivity() {
                 openProfile = { launch ->
                     cancelSigning(SigningCancelReason.NAVIGATION)
                     currentWebView = null
-                    destination = AppDestination.Browser(
+                    navigation.openBrowser(
                         profileId = launch.profileId,
                         entryUrl = launch.entryUrl,
                     )
@@ -451,14 +452,14 @@ class MainActivity : ComponentActivity() {
                         onDismissSigningState = ::dismissSigningState,
                         onExitBrowser = {
                             cancelSigning(SigningCancelReason.NAVIGATION)
-                            destination = AppDestination.Catalog
+                            navigation.showCatalog()
                         },
                         onOpenExternal = { uri -> requestExternalHandoff(dev.junta.firmamobile.browser.ExternalHandoff.Kind.BROWSER, uri) },
                         onOpenOfficialAutoFirma = { uri -> requestExternalHandoff(dev.junta.firmamobile.browser.ExternalHandoff.Kind.AUTOFIRMA, uri) },
                         onExternalAppRequest = ::requestExternalApp,
                         onChangeCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            certificatePanelVisible = true
+                            navigation.showCertificatePanel()
                         },
                         onLockCertificate = {
                             cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
@@ -542,14 +543,14 @@ class MainActivity : ComponentActivity() {
                         },
                         onDismissLocationMessage = catalogViewModel::dismissLocationMessage,
                         onToggleFavorite = catalogViewModel::toggleFavorite,
-                        onBackToCertificate = { destination = AppDestination.Certificate },
+                        onBackToCertificate = { navigation.showCertificate() },
                         onOpenPortal = { item ->
                             val target = catalogRepository.resolveUniversalOpenTarget(item)
                             if (target == null) catalogViewModel.onOpenFailed() else {
                                 cancelSigning(SigningCancelReason.NAVIGATION)
                                 currentWebView = null
                                 catalogViewModel.recordOpened(item.portalId)
-                                destination = AppDestination.Browser(profileId = null, entryUrl = target.entryUrl)
+                                navigation.openBrowser(profileId = null, entryUrl = target.entryUrl)
                             }
                         },
                         // Opt-in only: preserves reviewed proprietary flows
@@ -560,7 +561,7 @@ class MainActivity : ComponentActivity() {
                                     cancelSigning(SigningCancelReason.NAVIGATION)
                                     currentWebView = null
                                     catalogViewModel.recordOpened(item.portalId)
-                                    destination = AppDestination.Browser(
+                                    navigation.openBrowser(
                                         profileId = target.launch.profileId,
                                         entryUrl = target.launch.entryUrl,
                                     )
@@ -569,7 +570,7 @@ class MainActivity : ComponentActivity() {
                                     cancelSigning(SigningCancelReason.NAVIGATION)
                                     currentWebView = null
                                     catalogViewModel.recordOpened(item.portalId)
-                                    destination = AppDestination.Browser(profileId = null, entryUrl = target.entryUrl)
+                                    navigation.openBrowser(profileId = null, entryUrl = target.entryUrl)
                                 }
                                 null -> catalogViewModel.onOpenFailed()
                             }
@@ -580,7 +581,7 @@ class MainActivity : ComponentActivity() {
                             if (accepted == null) catalogViewModel.onOpenFailed() else {
                                 cancelSigning(SigningCancelReason.NAVIGATION)
                                 currentWebView = null
-                                destination = AppDestination.Browser(profileId = null, entryUrl = accepted)
+                                navigation.openBrowser(profileId = null, entryUrl = accepted)
                             }
                         },
                     )
@@ -592,7 +593,7 @@ class MainActivity : ComponentActivity() {
                         onRestoreSavedUnlock = certificateViewModel::restoreSavedUnlock,
                         onLock = certificateViewModel::lock,
                         onForget = certificateViewModel::forget,
-                        onContinue = { destination = AppDestination.Catalog },
+                        onContinue = { navigation.showCatalog() },
                     )
                 }
                 pendingExternalApp?.let { request ->
@@ -622,7 +623,7 @@ class MainActivity : ComponentActivity() {
                         dev.junta.firmamobile.ui.NativeAfirmaConsentDialog(
                             prompt = prompt,
                             onConfirm = { externalAfirma?.confirm(prompt.token) },
-                            onUnlock = { certificatePanelVisible = true },
+                            onUnlock = { navigation.showCertificatePanel() },
                             onCancel = { externalAfirma?.cancel(prompt.token) },
                             onDismiss = { externalAfirma?.dismiss(prompt.token) },
                         )
@@ -667,7 +668,7 @@ class MainActivity : ComponentActivity() {
                 }
                 if (certificatePanelVisible) {
                     androidx.compose.ui.window.Dialog(
-                        onDismissRequest = { certificatePanelVisible = false },
+                        onDismissRequest = { navigation.hideCertificatePanel() },
                         properties = androidx.compose.ui.window.DialogProperties(
                             usePlatformDefaultWidth = false,
                             securePolicy = androidx.compose.ui.window.SecureFlagPolicy.SecureOn,
@@ -680,7 +681,7 @@ class MainActivity : ComponentActivity() {
                         onRestoreSavedUnlock = certificateViewModel::restoreSavedUnlock,
                             onLock = certificateViewModel::lock,
                             onForget = certificateViewModel::forget,
-                            onContinue = { certificatePanelVisible = false },
+                            onContinue = { navigation.hideCertificatePanel() },
                         )
                     }
                 }
@@ -1043,17 +1044,6 @@ class MainActivity : ComponentActivity() {
             CertificateRepository.MIME_OCTET_STREAM,
         )
     }
-}
-
-private sealed interface AppDestination {
-    data object Certificate : AppDestination
-
-    data object Catalog : AppDestination
-
-    data class Browser(
-        val profileId: ProfileId?,
-        val entryUrl: URI,
-    ) : AppDestination
 }
 
 internal enum class SigningFlowKind {

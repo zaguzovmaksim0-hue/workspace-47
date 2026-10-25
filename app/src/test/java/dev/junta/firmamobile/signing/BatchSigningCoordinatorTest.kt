@@ -38,6 +38,26 @@ class BatchSigningCoordinatorTest {
     )
 
     @Test
+    fun ecCertificateIsRejectedAtPrepareBeforeAnyAdapterOrEngineUse() {
+        val ecCoordinator = BatchSigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(syntheticEcIdentity("secp384r1")) },
+            adapter = adapter,
+            localSignatureEngine = engine,
+            currentOrigin = { MELILLA_ORIGIN },
+            currentNavigationEpoch = { NAVIGATION_EPOCH },
+            expiryScheduler = expiryScheduler,
+            profileDisplayName = "Sede Electrónica de Melilla",
+            compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT,
+        )
+        val reply = RecordingBatchReply(REQUEST_ID, timeline)
+
+        val result = ecCoordinator.prepare(request(), reply)
+
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.UNSUPPORTED_CERTIFICATE_KEY), result)
+        assertEquals(listOf("failure:UNSUPPORTED_CERTIFICATE_KEY"), timeline)
+    }
+
+    @Test
     fun preparePublishesSafeBatchConfirmationWithoutNetworkOrPrivateKeyUse() {
         val reply = RecordingBatchReply(REQUEST_ID, timeline)
 
