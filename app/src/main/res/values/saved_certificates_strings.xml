@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved_certificates_title">Certificados guardados</string>
+    <string name="saved_certificate_add">Añadir certificado</string>
+    <string name="saved_certificate_use">Usar</string>
+    <string name="saved_certificate_remove">Quitar</string>
+    <string name="saved_certificate_use_named">Usar el certificado %1$s</string>
+    <string name="saved_certificate_remove_named">Quitar el certificado %1$s</string>
+    <string name="saved_certificate_error">No se pudo actualizar la lista de certificados</string>
+</resources>

@@ -16,6 +16,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -74,6 +75,8 @@ import dev.junta.firmamobile.signing.SigningUiState
 import dev.junta.firmamobile.smoke.CatalogSmokeController
 import dev.junta.firmamobile.smoke.CatalogSmokeHook
 import dev.junta.firmamobile.ui.AppRoot
+import dev.junta.firmamobile.ui.LocalSavedCertificates
+import dev.junta.firmamobile.ui.SavedCertificatesActions
 import dev.junta.firmamobile.ui.BrowserScreen
 import dev.junta.firmamobile.ui.CertificateUiState
 import dev.junta.firmamobile.ui.CertificateViewModel
@@ -187,6 +190,14 @@ class MainActivity : ComponentActivity() {
         certificateReturnToken?.let(browserExternalReturn::finish)
         certificateReturnToken = null
         uri?.let(certificateViewModel::onCertificateSelected)
+    }
+
+    private val savedCertificatePicker = registerForActivityResult(
+        OpenableDocumentContract,
+    ) { uri ->
+        certificateReturnToken?.let(browserExternalReturn::finish)
+        certificateReturnToken = null
+        uri?.let(certificateViewModel::addSavedCertificate)
     }
 
     private val coarseLocationPermission = registerForActivityResult(
@@ -390,7 +401,22 @@ class MainActivity : ComponentActivity() {
                 ),
                 updateSecure = updateSecureWindow,
             )
-            JuntaFirmaTheme {
+            val savedCertificates = certificateViewModel.savedCertificates.collectAsStateWithLifecycle().value
+            val savedCertificateActions = SavedCertificatesActions(
+                state = savedCertificates,
+                onAdd = {
+                    withBrowserExternalReturn(onToken = { certificateReturnToken = it }) {
+                        savedCertificatePicker.launch(PKCS12_MIME_TYPES)
+                    }
+                },
+                onSwitch = { entry ->
+                    // Same signing cancellation as choosing a new file.
+                    cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+                    certificateViewModel.switchToSavedCertificate(entry)
+                },
+                onRemove = certificateViewModel::removeSavedCertificate,
+            )
+            CompositionLocalProvider(LocalSavedCertificates provides savedCertificateActions) { JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
                 val browserDestination = destination as? AppDestination.Browser
                 if (browserDestination != null) {
@@ -658,7 +684,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
-            }
+            } }
         }
     }
 
