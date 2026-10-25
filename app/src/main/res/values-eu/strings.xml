@@ -113,6 +113,7 @@
     <string name="signing_in_progress_copy">Ez itxi aplikazioa.</string>
     <string name="signing_secure_connection_copy">Sinadura-zerbitzuarekin modu seguruan konektatzen…</string>
     <string name="signing_service_unavailable_copy">Ezin izan da Juntaren sinadura-zerbitzuarekin konektatu. Saiatu berriro geroago.</string>
+    <string name="signing_unsupported_certificate_key_copy">Ziurtagiri honek kurba eliptikoko gako bat (EC) erabiltzen du. Oraingoz, atariek RSA ziurtagiriekin bakarrik onartzen dute sinatzea.</string>
     <string name="signing_network_result_uncertain_copy">Sareko emaitza ez da ziurra. Itzuli atarira eta hasi berriro eragiketa.</string>
     <string name="signing_completed_title">Sinadura atarira bidali da</string>
     <string name="signing_completed_copy">Aplikazioak emaitza orriari entregatu dio. Sarbidea atariak baieztatzen duenean soilik amaitzen da.</string>

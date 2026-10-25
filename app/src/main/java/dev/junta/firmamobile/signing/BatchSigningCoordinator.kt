@@ -63,6 +63,10 @@ internal class BatchSigningCoordinator(
         }
         val certificateSnapshot = certificateSession.signingSnapshot()
             ?: return reject(request, reply, SigningErrorCode.CERTIFICATE_LOCKED)
+        if (certificateSession.identityForSigning(certificateSnapshot)?.supportsPortalSigning() == false) {
+            certificateSnapshot.close()
+            return reject(request, reply, SigningErrorCode.UNSUPPORTED_CERTIFICATE_KEY)
+        }
         val startedAtNanos: Long
         val expiryDelay: Duration
         try {
