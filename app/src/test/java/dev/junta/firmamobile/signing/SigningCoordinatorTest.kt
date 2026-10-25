@@ -204,6 +204,30 @@ class SigningCoordinatorTest {
     }
 
     @Test
+    fun ecCertificateIsRejectedAtPrepareBeforeAnyAdapterOrEngineUse() {
+        val ecCoordinator = SigningCoordinator(
+            certificateSession = CertificateSession(clock).apply { unlock(syntheticEcIdentity()) },
+            adapter = adapter,
+            localSignatureEngine = engine,
+            currentOrigin = { activeOrigin },
+            clock = clock,
+            expiryScheduler = expiryScheduler,
+        )
+        val reply = RecordingReply(REQUEST_ID)
+
+        val result = ecCoordinator.prepare(request(), reply)
+
+        assertEquals(SigningPreparationResult.Rejected(SigningErrorCode.UNSUPPORTED_CERTIFICATE_KEY), result)
+        assertEquals(
+            SigningUiState.Failed(REQUEST_ID, SigningErrorCode.UNSUPPORTED_CERTIFICATE_KEY),
+            ecCoordinator.state.value,
+        )
+        assertEquals(listOf("failure:UNSUPPORTED_CERTIFICATE_KEY"), reply.events)
+        assertTrue(adapter.events.isEmpty())
+        assertTrue(engine.events.isEmpty())
+    }
+
+    @Test
     fun preparePublishesOnlySafeConfirmationAndDoesNotStartSigning() {
         val reply = RecordingReply(REQUEST_ID)
 

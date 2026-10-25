@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.browser.NavigationId
+import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.browser.WebBridgeMessage
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.security.MonotonicSecurityTime
@@ -50,7 +51,12 @@ enum class SigningErrorCode {
     PROTOCOL_FAILED,
     RESULT_DELIVERY_FAILED,
     USER_CANCELLED,
+    UNSUPPORTED_CERTIFICATE_KEY,
 }
+
+/** shortcut: portal signing adapters are RSA-only; widen per reviewed EC portal capability. */
+internal fun UnlockedIdentity.supportsPortalSigning(): Boolean =
+    certificate.publicKey.algorithm.equals("RSA", ignoreCase = true)
 
 data class SigningContext(
     val profileId: String,
