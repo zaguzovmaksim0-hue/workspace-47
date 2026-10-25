@@ -33,6 +33,20 @@ interface CertificateGateway {
     suspend fun unlock(password: CharArray): CertificateLoadResult
 
     suspend fun forget()
+
+    /** Saved catalogue entries; empty where the store keeps a single reference. */
+    suspend fun savedEntries(): List<StoredCertificateEntry> = emptyList()
+
+    /** Saves [uri] beside the selection without selecting, unlocking or scheduling it. */
+    suspend fun saveInactive(uri: Uri): CertificateSelectionResult =
+        CertificateSelectionResult.Failure(CertificateSelectionErrorCode.STORAGE_FAILURE)
+
+    /** Removes an inactive file entry and its grant; the active entry leaves only through [forget]. */
+    suspend fun removeInactive(entry: StoredCertificateEntry): Unit = error("No certificate catalogue")
+
+    /** Makes an unchanged file [entry] active. Callers revoke the saved unlock first, as for [select]. */
+    suspend fun activate(entry: StoredCertificateEntry): CertificateSelectionResult =
+        CertificateSelectionResult.Failure(CertificateSelectionErrorCode.STORAGE_FAILURE)
 }
 
 class CertificateRepository(
@@ -41,6 +55,9 @@ class CertificateRepository(
     private val loader: Pkcs12Loader,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : CertificateGateway {
+    private val catalogStore = referenceStore as? CertificateReferenceCatalogStore
+    private val fileCatalog = catalogStore?.let { CertificateFileCatalog(documentAccess, it, ioDispatcher) }
+
     override suspend fun currentReference(): StoredCertificateReference? = withContext(ioDispatcher) {
         referenceStore.read()
     }
@@ -103,6 +120,25 @@ class CertificateRepository(
             }
         }
     }
+
+    override suspend fun savedEntries(): List<StoredCertificateEntry> = withContext(ioDispatcher) {
+        catalogStore?.readCatalog()?.entries.orEmpty()
+    }
+
+    override suspend fun saveInactive(uri: Uri): CertificateSelectionResult =
+        fileCatalog?.add(uri) ?: super.saveInactive(uri)
+
+    override suspend fun removeInactive(entry: StoredCertificateEntry) =
+        checkNotNull(fileCatalog) { "No certificate catalogue" }.remove(entry)
+
+    override suspend fun activate(entry: StoredCertificateEntry): CertificateSelectionResult =
+        withContext(ioDispatcher) {
+            val reference = entry.reference
+            // Key-backed entries unlock through the keystore catalogue, not a file password.
+            val selected = reference != null && entry.signingKey == null &&
+                catalogStore?.selectEntry(entry.id, entry.revision) == true
+            if (selected) CertificateSelectionResult.Success(checkNotNull(reference)) else super.activate(entry)
+        }
 
     private suspend fun selectOnIo(uri: Uri): CertificateSelectionResult {
         val inspected = documentAccess.inspectCertificate(uri)

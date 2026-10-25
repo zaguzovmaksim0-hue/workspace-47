@@ -13,6 +13,9 @@ internal data class CadesDetachedContract(
     val algorithm: SigningAlgorithm,
     val contentBytes: Int,
     val extraProperties: String,
+    val contentLiteral: String? = null,
+    val safeDescription: String? = null,
+    val revalidatePayloadOnComplete: Boolean = false,
 )
 
 /** Owns prepare/complete sequencing; the existing codec and state retain CMS and buffer ownership. */
@@ -35,8 +38,7 @@ internal class ParameterizedCadesDetachedAdapter(
         return try {
             val material = request.withPayload { payload ->
                 MiniAppletPayloadCodec.withDecoded(payload) { challenge, extraProperties ->
-                    require(challenge.size == contract.contentBytes)
-                    require(extraProperties == contract.extraProperties)
+                    require(matchesPayload(challenge, extraProperties))
                     CadesDetachedCodec.createPreSign(
                         challenge, contract.contentBytes, certificateChain, clock, provider,
                         signingAlgorithm = contract.algorithm,
@@ -64,9 +66,13 @@ internal class ParameterizedCadesDetachedAdapter(
         preSign: PreSignResult,
         localSignature: LocalSignature,
     ): ProtocolCompletionResult {
-        if (!request.matchesContract()) {
-            return ProtocolCompletionResult.Failure(SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        val validationError = when {
+            !request.matchesContract() -> SigningErrorCode.UNSUPPORTED_PROTOCOL
+            contract.revalidatePayloadOnComplete && !request.matchesPayloadContract() ->
+                SigningErrorCode.PROTOCOL_FAILED
+            else -> null
         }
+        if (validationError != null) return ProtocolCompletionResult.Failure(validationError)
         val state = preSign.consumeState(request) as? CadesPreSignState
         return if (state == null) {
             ProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
@@ -95,8 +101,22 @@ internal class ParameterizedCadesDetachedAdapter(
             context.profileId == contract.profileId &&
             context.profileVersion == contract.profileVersion &&
             context.origin.serialized == contract.initiatorOrigin &&
+            (contract.safeDescription == null || safeDescription == contract.safeDescription) &&
             format == SigningFormat.CADES &&
             algorithm == contract.algorithm
+
+    private fun matchesPayload(data: ByteArray, extraProperties: String): Boolean =
+        data.size == contract.contentBytes &&
+            (contract.contentLiteral == null || data.contentEquals(contract.contentLiteral.encodeToByteArray())) &&
+            extraProperties == contract.extraProperties
+
+    private fun NormalizedSignRequest.matchesPayloadContract(): Boolean = runCatching {
+        withPayload { payload ->
+            MiniAppletPayloadCodec.withDecoded(payload) { data, extraProperties ->
+                matchesPayload(data, extraProperties)
+            }
+        }
+    }.getOrDefault(false)
 
     private companion object {
         const val MAX_CERTIFICATES = 10
