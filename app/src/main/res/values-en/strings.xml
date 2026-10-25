@@ -113,6 +113,7 @@
     <string name="signing_in_progress_copy">Do not close the app.</string>
     <string name="signing_secure_connection_copy">Connecting securely to the signing service…</string>
     <string name="signing_service_unavailable_copy">Could not connect to the Junta signing service. Try again later.</string>
+    <string name="signing_unsupported_certificate_key_copy">This certificate uses an elliptic-curve (EC) key. For now, portals only support signing with RSA certificates.</string>
     <string name="signing_network_result_uncertain_copy">The network result is uncertain. Return to the portal and start the operation again.</string>
     <string name="signing_completed_title">Signature sent to the portal</string>
     <string name="signing_completed_copy">The app delivered the result to the page. Access is only complete when the portal confirms it.</string>

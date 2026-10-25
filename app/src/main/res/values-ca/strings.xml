@@ -113,6 +113,7 @@
     <string name="signing_in_progress_copy">No tanquis l’aplicació.</string>
     <string name="signing_secure_connection_copy">Connectant de manera segura amb el servei de signatura…</string>
     <string name="signing_service_unavailable_copy">No s’ha pogut connectar amb el servei de signatura de la Junta. Torna-ho a provar més tard.</string>
+    <string name="signing_unsupported_certificate_key_copy">Aquest certificat fa servir una clau de corba el·líptica (EC). De moment, els portals només admeten signar amb certificats RSA.</string>
     <string name="signing_network_result_uncertain_copy">El resultat de xarxa és incert. Torna al portal i inicia de nou l’operació.</string>
     <string name="signing_completed_title">Signatura enviada al portal</string>
     <string name="signing_completed_copy">L’aplicació ha lliurat el resultat a la pàgina. L’accés només acaba quan el portal ho confirma.</string>

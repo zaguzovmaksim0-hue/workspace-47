@@ -13,11 +13,13 @@ MAX_SOURCE_BYTES = MAX_SCRIPT_CHARS * 4
 MAX_PARTS = 64
 NAME = re.compile(r"[0-9]{2}-[a-z0-9-]+\.js\Z")
 RAW = Path("app/src/main/res/raw")
-# Contiguous source ranges; all sections remain included in their original order.
+# Fixed source ranges; Kotlin selects the optional portal resources.
 RESOURCE_RANGES = (
     ("afirma_shim_bootstrap.js", 0, 3),
-    ("afirma_shim_handlers.js", 3, 9),
-    ("afirma_shim_installation.js", 9, 12),
+    ("afirma_shim_cantabria.js", 3, 4),
+    ("afirma_shim_jccm.js", 4, 5),
+    ("afirma_shim_handlers.js", 5, 11),
+    ("afirma_shim_installation.js", 11, 14),
 )
 
 

@@ -48,6 +48,8 @@ object AfirmaJavascriptShim {
     ) { fragment ->
         val resourceId = when (fragment) {
             AfirmaJavascriptShimFragment.BOOTSTRAP -> R.raw.afirma_shim_bootstrap
+            AfirmaJavascriptShimFragment.CANTABRIA -> R.raw.afirma_shim_cantabria
+            AfirmaJavascriptShimFragment.JCCM -> R.raw.afirma_shim_jccm
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }

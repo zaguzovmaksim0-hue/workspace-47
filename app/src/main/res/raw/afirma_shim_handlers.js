@@ -543,22 +543,8 @@
       args[1] === "SHA1withRSA" &&
       args[2] === "CAdES" &&
       args[3] === "";
-    const isExactCantabriaCall =
-      cantabriaCompatibilityEnabled &&
-      window.location.origin === cantabriaOrigin &&
-      typeof args[0] === "string" &&
-      cantabriaChallengePattern.test(args[0]) &&
-      args[1] === "SHA512withRSA" &&
-      args[2] === "CAdES" &&
-      args[3] === cantabriaExtraProperties;
-    const isJccmOrigin =
-      jccmCompatibilityEnabled && window.location.origin === jccmOrigin;
-    const isExactJccmCall =
-      isJccmOrigin &&
-      args[0] === jccmPayloadBase64 &&
-      args[1] === "SHA1withRSA" &&
-      args[2] === "CAdES" &&
-      (args[3] === null || args[3] === "");
+    const isExactCantabriaCall = matchesCantabriaSign(args);
+    const isExactJccmCall = matchesJccmSign(args);
     const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 :
       isExactCantabriaCall && typeof globalThis.btoa === "function" ?
         globalThis.btoa(args[0]) :

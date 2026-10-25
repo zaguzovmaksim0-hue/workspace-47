@@ -62,11 +62,11 @@ class AfirmaJavascriptShimAssemblerTest {
                     val config = configuration.copy(mode = mode, qaDiagnosticsEnabled = qa, flags = selection)
                     val expected = AfirmaJavascriptShimLegacy.assemble(
                         template, mode, qa, selection, config.staBatchOrigin,
-                    ).toByteArray(Charsets.UTF_8)
+                    )
                     val assembled = AfirmaJavascriptShimAssembler.readAndAssemble(config) { StringReader(template) }
                     val facade = AfirmaJavascriptShim.load(context, mode, qa, selection, config.staBatchOrigin)
-                    assertArrayEquals(expected, assembled.toByteArray(Charsets.UTF_8))
-                    assertArrayEquals(expected, facade.toByteArray(Charsets.UTF_8))
+                    assertArrayEquals(expected.toByteArray(Charsets.UTF_8), assembled.toByteArray(Charsets.UTF_8))
+                    assertPortalExtractions(expected, facade, selection)
                     assertFalse(assembled.contains("__JFM_"))
                 }
             }
@@ -184,7 +184,9 @@ class AfirmaJavascriptShimAssemblerTest {
     @Test
     fun acceptedOriginNormalizationAndQuotingMatchLegacyIncludingExplicitHttpsPort() {
         val template = legacyTemplate
-        for (origin in listOf("https://sede.example.test", "https://sede.example.test/", "https://sede.example.test:443/")) {
+        for (origin in listOf(
+            "https://sede.example.test", "https://sede.example.test/", "https://sede.example.test:443/",
+        )) {
             val config = configuration.copy(staBatchOrigin = origin)
             assertEquals(
                 AfirmaJavascriptShimLegacy.assemble(template, config.mode, false, config.flags, origin),

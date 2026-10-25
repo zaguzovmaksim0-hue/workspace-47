@@ -4,6 +4,8 @@
     "00-bootstrap.js",
     "10-diagnostics.js",
     "20-contracts.js",
+    "25-cantabria.js",
+    "26-jccm.js",
     "30-euskadi-post.js",
     "40-request-lifecycle.js",
     "50-single-sign.js",

@@ -6,6 +6,8 @@ import java.time.ZoneOffset
 
 object SiteProfileCatalogParser {
     const val MAX_CATALOG_CHARS = 262_144
+    private const val MAX_REVIEWED_ORIGIN_SHARES = 128
+    private const val MAX_LATER_ORIGIN_OWNERS = 32
     private const val MAX_DISPLAY_NAME_CHARS = 128
     private const val MAX_CONTENT_TYPE_CHARS = 128
     private const val MAX_SAFE_DESCRIPTION_CHARS = 160
@@ -19,17 +21,73 @@ object SiteProfileCatalogParser {
     fun parse(json: String): SiteProfileCatalog {
         require(json.length <= MAX_CATALOG_CHARS)
         val root = StrictJson(json).parse().obj("catalog")
-        root.exact("schemaVersion", "catalogVersion", "profiles")
+        val requiredKeys = setOf("schemaVersion", "catalogVersion", "profiles")
+        require(root.values.keys == requiredKeys + listOf("reviewedOriginShares").filter { it in root.values })
         val schemaVersion = root.int("schemaVersion")
         require(schemaVersion == 1)
         val catalog = SiteProfileCatalog(
             schemaVersion = schemaVersion,
             catalogVersion = root.int("catalogVersion").also { require(it >= 1) },
             profiles = root.array("profiles").map(::profile),
+            reviewedOriginShares = if ("reviewedOriginShares" in root.values) {
+                root.array("reviewedOriginShares").also { require(it.size <= MAX_REVIEWED_ORIGIN_SHARES) }
+                    .map(::reviewedOriginShare)
+            } else {
+                emptyList()
+            },
         )
         require(catalog.profiles.map { it.profileId }.toSet().size == catalog.profiles.size)
+        validateReviewedOriginShares(catalog)
         validateCatalog(catalog)
         return catalog
+    }
+
+    private fun reviewedOriginShare(value: JValue): ReviewedOriginShare {
+        val o = value.obj("reviewedOriginShare")
+        o.exact("origin", "firstOwner", "laterOwners", "redirectRoles", "evidence")
+        return ReviewedOriginShare(
+            origin = ExactOrigin.parse(o.string("origin")).also { require(it.serialized == o.string("origin")) },
+            firstOwner = ProfileId(o.string("firstOwner")),
+            laterOwners = strings(o.array("laterOwners")).also {
+                require(it.size in 1..MAX_LATER_ORIGIN_OWNERS)
+            }.map(::ProfileId).toSet(),
+            redirectRoles = enums<RedirectOriginRoles>(o.array("redirectRoles")).also { require(it.isNotEmpty()) },
+            evidence = evidence(o.objValue("evidence")),
+        )
+    }
+
+    private fun validateReviewedOriginShares(catalog: SiteProfileCatalog) {
+        val declared = mutableMapOf<Triple<ExactOrigin, ProfileId, ProfileId>, Set<RedirectOriginRoles>>()
+        val profiles = catalog.profiles.associateBy { it.profileId }
+        catalog.reviewedOriginShares.forEach { share ->
+            require(share.evidence in requireNotNull(profiles[share.firstOwner]).evidence)
+            share.laterOwners.forEach { later ->
+                require(declared.put(Triple(share.origin, share.firstOwner, later), share.redirectRoles) == null)
+            }
+        }
+        val expected = catalog.profiles.flatMap { profile -> profile.allOrigins().map { it to profile.profileId } }
+            .groupBy({ it.first }, { it.second })
+            .also { claims -> require(claims.values.all { it.size <= MAX_LATER_ORIGIN_OWNERS + 1 }) }
+            .flatMap { (origin, owners) -> reviewedOriginRelations(origin, owners) }.toMap()
+        require(declared == expected)
+    }
+
+    private fun reviewedOriginRelations(origin: ExactOrigin, owners: List<ProfileId>) = owners.flatMap { first ->
+        owners.mapNotNull { later ->
+            val roles = RedirectOriginRoles.entries.filter { role ->
+                isReviewedSharedNavigationOrigin(origin, first, later, role.first, role.later)
+            }.toSet()
+            if (roles.isEmpty()) null else Triple(origin, first, later) to roles
+        }
+    }
+
+    private fun SiteProfileCatalog.declaresSharedOrigin(
+        origin: ExactOrigin,
+        first: NavigationOriginOwner,
+        later: NavigationOriginOwner,
+    ) = reviewedOriginShares.any { share ->
+        share.origin == origin && share.firstOwner == first.profileId && later.profileId in share.laterOwners &&
+            share.redirectRoles.any { it.first == first.isRedirectOrigin && it.later == later.isRedirectOrigin }
     }
 
     private fun profile(value: JValue): SiteProfile {
@@ -863,13 +921,15 @@ object SiteProfileCatalogParser {
                 )
                 require(
                     previousOwner == null ||
-                        isReviewedSharedNavigationOrigin(
+                        (catalog.declaresSharedOrigin(
+                            origin, previousOwner, NavigationOriginOwner(p.profileId, origin in p.redirectOrigins),
+                        ) && isReviewedSharedNavigationOrigin(
                             origin,
                             previousOwner.profileId,
                             p.profileId,
                             previousOwner.isRedirectOrigin,
                             origin in p.redirectOrigins,
-                        ),
+                        )),
                 )
             }
         }

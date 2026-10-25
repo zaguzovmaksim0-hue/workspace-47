@@ -113,6 +113,7 @@
     <string name="signing_in_progress_copy">Non peches a aplicación.</string>
     <string name="signing_secure_connection_copy">Conectando de forma segura co servizo de sinatura…</string>
     <string name="signing_service_unavailable_copy">Non se puido conectar co servizo de sinatura da Junta. Téntao de novo máis tarde.</string>
+    <string name="signing_unsupported_certificate_key_copy">Este certificado usa unha clave de curva elíptica (EC). Polo de agora, os portais só admiten asinar con certificados RSA.</string>
     <string name="signing_network_result_uncertain_copy">Non hai certeza sobre o resultado da rede. Volve ao portal e inicia a operación de novo.</string>
     <string name="signing_completed_title">Sinatura enviada ao portal</string>
     <string name="signing_completed_copy">A aplicación entregou o resultado á páxina. O acceso só remata cando o portal o confirma.</string>
