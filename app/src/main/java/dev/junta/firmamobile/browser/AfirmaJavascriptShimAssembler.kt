@@ -13,6 +13,7 @@ internal data class AfirmaJavascriptShimConfiguration(
 
 internal enum class AfirmaJavascriptShimFragment {
     BOOTSTRAP,
+    CANTABRIA,
     HANDLERS,
     INSTALLATION,
 }
@@ -30,7 +31,10 @@ internal object AfirmaJavascriptShimAssembler {
         readResource: (AfirmaJavascriptShimFragment) -> Reader,
     ): String {
         check(fragments == AfirmaJavascriptShimFragment.entries) { "Invalid shim fragment manifest" }
-        return readTemplates(configuration, fragments.map { fragment -> { readResource(fragment) } })
+        val selected = fragments.filter { fragment ->
+            fragment != AfirmaJavascriptShimFragment.CANTABRIA || configuration.flags.cantabria
+        }
+        return readTemplates(configuration, selected.map { fragment -> { readResource(fragment) } })
     }
 
     private fun readTemplates(

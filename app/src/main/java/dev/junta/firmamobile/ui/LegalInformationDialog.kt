@@ -101,7 +101,7 @@ internal fun LegalInformationDialog(onDismiss: () -> Unit) {
 
 @Composable
 private fun legalDialogTitle(document: LegalDocument?, section: String): String =
-    document?.title ?: when (section) {
+    document?.localizedTitle() ?: when (section) {
         "licenses" -> stringResource(R.string.legal_licenses)
         "feedback" -> stringResource(R.string.compatibility_feedback_title)
         else -> stringResource(R.string.legal_information)
@@ -162,7 +162,10 @@ private fun ColumnScope.legalLicenseList(list: List<LegalDocument>?, onSelect: (
         items(list, key = { it.asset }) { item ->
             TextButton(onClick = { onSelect(item) },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(item.title, modifier = Modifier.fillMaxWidth(), maxLines = 3, overflow = TextOverflow.Ellipsis)
+                Text(
+                    item.localizedTitle(), modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3, overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }

@@ -215,6 +215,7 @@ private fun CertificatePanel(
                 onForget = onForget,
             )
         }
+        savedCertificatesSection(state)
     }
 }
 
