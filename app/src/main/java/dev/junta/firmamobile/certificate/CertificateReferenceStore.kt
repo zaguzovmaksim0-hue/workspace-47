@@ -117,10 +117,11 @@ class PreferencesCertificateReferenceStore(
         }
     }
 
-    override suspend fun remove(expected: StoredCertificateEntry) {
+    override suspend fun remove(expected: StoredCertificateEntry, onlyIfInactive: Boolean) {
         dataStore.edit { preferences ->
             val catalog = readSnapshot(preferences)
             check(catalog.entries.singleOrNull { it.id == expected.id } == expected) { "Stale certificate entry" }
+            check(!onlyIfInactive || catalog.activeId != expected.id) { "Active certificate entry" }
             persist(preferences, catalog.copy(
                 entries = catalog.entries.filterNot { it.id == expected.id },
                 activeId = catalog.activeId.takeUnless { it == expected.id },

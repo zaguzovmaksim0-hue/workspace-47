@@ -26,8 +26,8 @@ internal class ReminderCertificateReferenceStore(
     override suspend fun replace(expected: StoredCertificateEntry, replacement: StoredCertificateEntry) =
         reminders.changeReference { delegate.replace(expected, replacement) }
 
-    override suspend fun remove(expected: StoredCertificateEntry) = reminders.changeReference {
-        delegate.remove(expected)
+    override suspend fun remove(expected: StoredCertificateEntry, onlyIfInactive: Boolean) = reminders.changeReference {
+        delegate.remove(expected, onlyIfInactive)
     }
 
     // Tombstones only: no entry or selection changes.
