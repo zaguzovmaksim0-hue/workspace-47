@@ -74,9 +74,7 @@
   postShimDiagnostic("SCRIPT_INSTALLED");
 
   const ugrOrigin = "https://sede.ugr.es";
-  const cantabriaOrigin = "https://rec.cantabria.es";
-  const cantabriaChallengePattern = /^[0-9a-f]{40}$/;
-  const cantabriaExtraProperties = "filters=\nmode=implicit";
+  let matchesCantabriaSign = () => false;
   const ugrLiteral = "Universidad de Granada";
   const ugrLiteralBase64 = "VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ==";
   const ugrStorageUrl = "https://sede.ugr.es/afirma-signature-storage/StorageService";
