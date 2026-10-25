@@ -90,6 +90,14 @@ jobs:
           yes | sdkmanager --licenses >/dev/null
           set -o pipefail
           sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Raise CI Gradle heap
+        # Release unit-test compilation hit GC overhead at the project's 2 GB default; phone builds keep it.
+        shell: bash
+        run: |
+          set -euo pipefail
+          dir="${GRADLE_USER_HOME:-$HOME/.gradle}"
+          mkdir -p "$dir"
+          printf 'org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8\n' >> "$dir/gradle.properties"
       - name: Verify dependency metadata and portable toolchain
         run: ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon
       - name: Build optimized daily-use APK
