@@ -49,6 +49,8 @@ internal fun SigningStatusDialog(
                         stringResource(R.string.signing_service_unavailable_copy)
                     SigningErrorCode.NETWORK_RESULT_UNCERTAIN ->
                         stringResource(R.string.signing_network_result_uncertain_copy)
+                    SigningErrorCode.UNSUPPORTED_CERTIFICATE_KEY ->
+                        stringResource(R.string.signing_unsupported_certificate_key_copy)
                     else -> stringResource(R.string.signing_closed_error_code, state.code.name)
                 }
                 Text(closedCopy)
