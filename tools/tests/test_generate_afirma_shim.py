@@ -19,7 +19,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(12)]
+        self.names = [f"{i:02d}-section.js" for i in range(13)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -29,17 +29,34 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         data.update(changes)
         self.manifest.write_text(json.dumps(data), encoding="utf-8")
 
+    def test_cantabria_is_packaged_separately_from_unchanged_core(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_cantabria.js"
+        self.assertTrue(module.is_file(), "Cantabria needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        constants = legacy[legacy.index("  const cantabriaOrigin"):legacy.index("  const ugrLiteral =")]
+        start = legacy.index("    const isExactCantabriaCall =")
+        end = legacy.index("    const isJccmOrigin =", start)
+        branch = legacy[start:end]
+        expression = branch.split("=\n", 1)[1]
+        expected_module = "\n  matchesCantabriaSign = args => {\n" + constants.replace("  const", "    const") + "    return " + expression.lstrip() + "  };\n"
+        self.assertEqual(expected_module, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        expected_core = legacy.replace(constants, "  let matchesCantabriaSign = () => false;\n").replace(
+            branch, "    const isExactCantabriaCall = matchesCantabriaSign(args);\n")
+        self.assertEqual(expected_core, core)
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
-        legacy = ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js"
-        self.assertEqual(legacy.read_bytes(), actual)
+        self.assertIn(b"matchesCantabriaSign(args)", actual)
         self.assertFalse(synchronize(ROOT, write=False))
 
-    def test_packaged_fragments_reconstruct_test_only_legacy_bytes(self):
+    def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
-        names = ["afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
-        legacy = ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js"
-        self.assertEqual(legacy.read_bytes(), b"".join((raw / name).read_bytes() for name in names))
+        names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js",
+                 "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+        self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 
     def test_concatenation_is_ordered_without_extra_separators(self):

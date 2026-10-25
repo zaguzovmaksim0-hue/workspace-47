@@ -42,6 +42,14 @@ SPEC.loader.exec_module(GENERATOR)
 
 
 class PublicPortalCatalogGeneratorTest(unittest.TestCase):
+    def test_reviewed_origin_shares_do_not_change_the_public_projection(self) -> None:
+        data = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))
+        data["reviewedOriginShares"] = []
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "profiles.json"
+            source.write_text(json.dumps(data), encoding="utf-8")
+            self.assertEqual(GENERATOR.generate(SOURCE, SITE_PROFILES), GENERATOR.generate(SOURCE, source))
+
     def test_last_verified_on_rejects_invalid_profile_dates(self) -> None:
         tomorrow = (datetime.now(timezone.utc).date() + timedelta(days=1)).isoformat()
         for value in (None, 42, "", "2026-7-21", "2026-02-30", "20260721",

@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.certificate.CertificateLoadResult
+import dev.junta.firmamobile.certificate.CertificateSummary
 import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.TestCertificateFactory
 import dev.junta.firmamobile.certificate.UnlockedIdentity
@@ -16,6 +17,23 @@ internal data class NonExportableSyntheticIdentity(
     val identity: UnlockedIdentity,
     val encodedReads: AtomicInteger,
 )
+
+/** In-memory EC identity; Pkcs12Loader still rejects EC, so it is built directly. */
+internal fun syntheticEcIdentity(curve: String = "secp256r1"): UnlockedIdentity {
+    val keys = SoftwareEcTestFixtures.keys(curve)
+    val certificate = SoftwareEcTestFixtures.certificate(keys)
+    return UnlockedIdentity(
+        keys.private,
+        certificate,
+        listOf(certificate),
+        CertificateSummary(
+            "Synthetic EC owner",
+            "Synthetic EC issuer",
+            certificate.notBefore.toInstant(),
+            certificate.notAfter.toInstant(),
+        ),
+    )
+}
 
 internal fun syntheticIdentity(): UnlockedIdentity = runBlocking {
     loadSyntheticIdentity(TestCertificateFactory.validRsa())
