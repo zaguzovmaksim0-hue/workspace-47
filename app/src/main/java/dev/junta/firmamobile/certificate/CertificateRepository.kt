@@ -85,12 +85,7 @@ class CertificateRepository(
         }
 
         val result = try {
-            val selected = reference.selectedCertificateSha256
-            if (selected == null) {
-                documentAccess.open(reference.uri).use { input -> loader.load(input, reference.size, password) }
-            } else {
-                loadBoundEntry(reference, password, selected)
-            }
+            documentAccess.loadReferenced(loader, reference, password)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {
@@ -142,26 +137,6 @@ class CertificateRepository(
                 catalogStore?.selectEntry(entry.id, entry.revision) == true
             if (selected) CertificateSelectionResult.Success(checkNotNull(reference)) else super.activate(entry)
         }
-
-    /** Reopens exactly the entry chosen earlier; a file without it fails instead of picking another key. */
-    private suspend fun loadBoundEntry(
-        reference: StoredCertificateReference,
-        password: CharArray,
-        certificateSha256: String,
-    ): CertificateLoadResult {
-        val inspected = documentAccess.open(reference.uri).use { loader.inspect(it, reference.size, password) }
-        if (inspected is Pkcs12InspectionResult.Failure) return CertificateLoadResult.Failure(inspected.code)
-        return (inspected as Pkcs12InspectionResult.Success).selection.use { selection ->
-            val candidate = selection.candidates.singleOrNull { it.certificateSha256 == certificateSha256 }
-            if (candidate == null) {
-                CertificateLoadResult.Failure(CertificateErrorCode.NO_CERTIFICATE_SELECTED)
-            } else {
-                documentAccess.open(reference.uri).use {
-                    loader.loadSelected(it, reference.size, password, selection, candidate)
-                }
-            }
-        }
-    }
 
     private suspend fun selectOnIo(uri: Uri): CertificateSelectionResult {
         val inspected = documentAccess.inspectCertificate(uri)
@@ -225,6 +200,25 @@ internal fun CertificateDocumentAccess.inspectCertificate(uri: Uri): Certificate
             summary = null,
         ),
     )
+}
+
+/** Loads [reference]'s file. A bound reference reopens exactly its chosen entry; a file without it fails
+ * instead of falling back to another key. */
+internal suspend fun CertificateDocumentAccess.loadReferenced(
+    loader: Pkcs12Loader,
+    reference: StoredCertificateReference,
+    password: CharArray,
+): CertificateLoadResult {
+    val bound = reference.selectedCertificateSha256
+        ?: return open(reference.uri).use { loader.load(it, reference.size, password) }
+    return when (val inspected = open(reference.uri).use { loader.inspect(it, reference.size, password) }) {
+        is Pkcs12InspectionResult.Failure -> CertificateLoadResult.Failure(inspected.code)
+        // A null candidate consumes the selection and fails closed inside loadSelected.
+        is Pkcs12InspectionResult.Success -> inspected.selection.use { selection ->
+            val candidate = selection.candidates.singleOrNull { it.certificateSha256 == bound }
+            open(reference.uri).use { loader.loadSelected(it, reference.size, password, selection, candidate) }
+        }
+    }
 }
 
 /** Takes [uri]'s read grant, then runs [persist]. A failed or cancelled [persist] releases the grant unless a
