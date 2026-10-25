@@ -210,6 +210,16 @@ class MainActivityRootNavigationTest {
         scenario.onActivity { assertTrue(webViews(it.window.decorView).isEmpty()) }
     }
 
+    @Test fun forcedActivityRecreationClosesTheCertificatePanelOverABrowser() {
+        openPublicBrowser()
+        openCertificatePanel()
+        scenario.recreate()
+        awaitHome()
+        assertFalse(ShadowDialog.getLatestDialog()?.isShowing == true)
+        rule.onNodeWithContentDescription("Inicio de la aplicación").assertDoesNotExist()
+        scenario.onActivity { assertTrue(webViews(it.window.decorView).isEmpty()) }
+    }
+
     private fun awaitHome() {
         rule.waitUntil(20_000) {
             rule.onAllNodesWithTag("browse-without-certificate").fetchSemanticsNodes().size == 1
