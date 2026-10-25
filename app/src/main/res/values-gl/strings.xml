@@ -39,6 +39,8 @@
     <string name="error_file_too_large">O ficheiro supera o tamaño máximo permitido.</string>
     <string name="error_private_key_missing">O ficheiro non contén unha chave privada de sinatura.</string>
     <string name="error_multiple_private_keys">O ficheiro contén máis dunha identidade privada.</string>
+    <string name="certificate_entry_choose_title">Escolle o certificado de %1$s</string>
+    <string name="certificate_entry_cancel">Cancelar a escolla</string>
     <string name="error_certificate_not_x509">O certificado non ten un formato X.509 compatible.</string>
     <string name="error_unsupported_key_type">Só se admiten certificados RSA.</string>
     <string name="error_certificate_expired">O certificado caducou.</string>

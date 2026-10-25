@@ -200,13 +200,17 @@ private fun CertificatePanel(
                 state = state,
                 onSelectCertificate = onSelectCertificate,
             )
-            is CertificateUiState.Locked -> LockedCertificate(
-                state = state,
-                onUnlock = onUnlock,
-                onRestoreSavedUnlock = onRestoreSavedUnlock,
-                onSelectCertificate = onSelectCertificate,
-                onForget = onForget,
-            )
+            is CertificateUiState.Locked -> if (state.choices.isNotEmpty()) {
+                certificateEntryChooser(state)
+            } else {
+                LockedCertificate(
+                    state = state,
+                    onUnlock = onUnlock,
+                    onRestoreSavedUnlock = onRestoreSavedUnlock,
+                    onSelectCertificate = onSelectCertificate,
+                    onForget = onForget,
+                )
+            }
             is CertificateUiState.Unlocking -> UnlockingCertificate(state)
             is CertificateUiState.Unlocked -> UnlockedCertificate(
                 state = state,

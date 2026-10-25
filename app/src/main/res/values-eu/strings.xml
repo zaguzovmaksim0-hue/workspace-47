@@ -39,6 +39,8 @@
     <string name="error_file_too_large">Fitxategiak baimendutako gehieneko tamaina gainditzen du.</string>
     <string name="error_private_key_missing">Fitxategiak ez dauka sinatzeko gako pribaturik.</string>
     <string name="error_multiple_private_keys">Fitxategiak identitate pribatu bat baino gehiago dauka.</string>
+    <string name="certificate_entry_choose_title">Aukeratu %1$s fitxategiko ziurtagiria</string>
+    <string name="certificate_entry_cancel">Utzi aukeraketa</string>
     <string name="error_certificate_not_x509">Ziurtagiriak ez du X.509 formatu bateragarririk.</string>
     <string name="error_unsupported_key_type">RSA ziurtagiriak soilik onartzen dira.</string>
     <string name="error_certificate_expired">Ziurtagiria iraungi da.</string>
