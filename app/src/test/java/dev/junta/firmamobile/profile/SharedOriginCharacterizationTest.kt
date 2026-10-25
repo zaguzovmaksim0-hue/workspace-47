@@ -435,7 +435,7 @@ class SharedOriginCharacterizationTest {
         var quoted = false
         var escaped = false
         var start = -1
-        BuiltInSiteProfiles.JSON.forEachIndexed { index, char ->
+        BuiltInSiteProfiles.JSON.substringBefore(",\n  \"reviewedOriginShares\"").forEachIndexed { index, char ->
             if (quoted) {
                 when {
                     escaped -> escaped = false
@@ -458,8 +458,69 @@ class SharedOriginCharacterizationTest {
         profileBlocks.single { it.contains("\"profileId\": \"$id\"") }
 
     private fun parse(blocks: List<String>): SiteProfileCatalog = SiteProfileCatalogParser.parse(
-        """{"schemaVersion":1,"catalogVersion":1,"profiles":[${blocks.joinToString(",")}]}""",
+        """{"schemaVersion":1,"catalogVersion":1,"profiles":[${blocks.joinToString(",")}],
+            "reviewedOriginShares":[${declarations(blocks)}]}""",
     )
+
+    // Independent gate-0 fixtures supply the new schema; assertions above retain the legacy decisions.
+    private fun declarations(blocks: List<String>): String {
+        val profiles = blocks.map { block ->
+            SiteProfileCatalogParser.parse(
+                """{"schemaVersion":1,"catalogVersion":1,"profiles":[$block]}""",
+            ).profiles.single()
+        }
+        return profiles.flatMap { first ->
+            allOrigins(first).flatMap { origin -> fixtureDeclarations(first, origin, profiles) }
+        }.joinToString(",")
+    }
+
+    private fun fixtureDeclarations(
+        first: SiteProfile,
+        origin: ExactOrigin,
+        profiles: List<SiteProfile>,
+    ): List<String> =
+        profiles.filter { it.profileId != first.profileId && origin in allOrigins(it) }
+            .groupBy { fixtureRoles(origin.serialized, first.profileId.value, it.profileId.value) }
+            .filterKeys { it.isNotEmpty() }
+            .map { (roles, later) ->
+                val evidence = first.evidence.first()
+                val peers = later.joinToString(",") { "\"${it.profileId.value}\"" }
+                """{"origin":"${origin.serialized}","firstOwner":"${first.profileId.value}",
+                    "laterOwners":[$peers],"redirectRoles":[$roles],
+                    "evidence":{"url":"${evidence.url}","reviewedOn":"${evidence.reviewedOn}"}}"""
+            }
+
+    private fun allOrigins(profile: SiteProfile) = profile.initiatorOrigins + profile.redirectOrigins +
+        profile.trustedBrowseOrigins + (profile.clientAuthPolicy?.requestOrigins ?: emptySet())
+
+    private fun fixtureRoles(origin: String, first: String, later: String): String {
+        val family = families.singleOrNull { it.origin == origin } ?: return ""
+        val additionalIdentOwners = if (origin == "https://pasarela-ident.clave.gob.es") {
+            listOf("ctbg-solicitud-informacion", "catastro-solicitudes-genericas",
+                "fega-solicitud-general-ofvsg02", "diputacion-caceres-instancia-general")
+        } else emptyList()
+        val owners = family.owners + additionalIdentOwners
+        return if (first !in owners || later !in owners) "" else roleCombinations(origin, first, later)
+    }
+
+    private fun roleCombinations(origin: String, first: String, later: String): String = when (origin) {
+            "https://valid.aoc.cat" ->
+                if ("diputacion-tarragona-sede" in listOf(first, later)) ALL_ROLES else "\"BOTH\""
+            "https://cert.valid.aoc.cat" ->
+                if ("diputacion-tarragona-sede" in listOf(first, later)) ALL_ROLES else "\"FIRST\""
+            "https://tramits.gencat.cat", "https://miprincipado.asturias.es", "https://gestiona.comunidad.madrid",
+            "https://lanzaroteylagraciosa.sedelectronica.es" -> "\"FIRST\",\"LATER\""
+            "https://ovt.gencat.cat" -> "\"BOTH\""
+            "https://identificacionssl.sedipualba.es" ->
+                if ("diputacion-leon-sede" in listOf(first, later)) ALL_ROLES else ""
+            "https://sede.transportes.gob.es", "https://ws235.juntadeandalucia.es",
+            "https://elhierro.sedelectronica.es", "https://lagomera.sedelectronica.es" -> "\"NEITHER\""
+            else -> ALL_ROLES
+        }
+
+    private companion object {
+        const val ALL_ROLES = "\"NEITHER\",\"LATER\",\"FIRST\",\"BOTH\""
+    }
 
     private fun rejects(label: String, blocks: List<String>) {
         assertThrows(label, IllegalArgumentException::class.java) { parse(blocks) }

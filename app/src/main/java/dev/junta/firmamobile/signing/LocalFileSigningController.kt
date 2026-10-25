@@ -2,6 +2,7 @@ package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.CertificateSigningSnapshot
+import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.verification.OFFLINE_CMS_MAX_CONTENT_BYTES
 import dev.junta.firmamobile.verification.OfflineCmsStatus
 import dev.junta.firmamobile.verification.OfflineCmsVerifier
@@ -33,6 +34,7 @@ internal sealed interface LocalFileSigningState {
 internal class LocalFileSigningController(
     private val session: CertificateSession,
     private val signer: CadesSigner = BouncyCastleCadesSigner(),
+    private val ecSigner: SoftwareEcCadesEngine = SoftwareEcCadesEngine(),
 ) : Closeable {
     private val mutableState = MutableStateFlow<LocalFileSigningState>(LocalFileSigningState.Idle)
     val state = mutableState.asStateFlow()
@@ -96,9 +98,7 @@ internal class LocalFileSigningController(
         try {
             checkCurrent(token)
             val identity = checkNotNull(session.identityForSigning(snapshot))
-            val result = signer.signDetached(bytes, identity, SigningAlgorithm.SHA256_WITH_RSA)
-            check(result is LocalSignatureResult.Success)
-            generated = result.signature
+            generated = signDetached(bytes, identity)
             checkCurrent(token)
             check(generated.withBytes { OfflineCmsVerifier.verify(it, bytes).status } == OfflineCmsStatus.VERIFIED)
             synchronized(this) {
@@ -161,6 +161,24 @@ internal class LocalFileSigningController(
         signature?.close()
         signature = null
         mutableState.value = LocalFileSigningState.Idle
+    }
+
+    /** RSA keeps the existing signer; only in-memory P-256/P-384 keys reach the software EC engine. */
+    private fun signDetached(bytes: ByteArray, identity: UnlockedIdentity): LocalSignature {
+        val ecAlgorithm = SoftwareEcSignatureAlgorithm.entries.firstOrNull {
+            SoftwareEcCurvePolicy.publicSpec(identity.certificate, SoftwareEcCurvePolicy.parameters(it)) != null
+        }
+        if (ecAlgorithm == null) {
+            val result = signer.signDetached(bytes, identity, SigningAlgorithm.SHA256_WITH_RSA)
+            check(result is LocalSignatureResult.Success)
+            return result.signature
+        }
+        check(identity.keystorePlacement == null)
+        val result = identity.withPrivateKey {
+            ecSigner.signDetached(bytes, SoftwareEcSignatureRequest(it, identity.certificate, ecAlgorithm))
+        }
+        check(result is SoftwareEcCadesResult.Success)
+        return LocalSignature(result.cmsDer)
     }
 
     private fun readBounded(token: Long, input: InputStream, buffer: ByteArray): Int {

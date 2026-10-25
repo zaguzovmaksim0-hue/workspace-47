@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.certificate.CertificateSession
+import dev.junta.firmamobile.certificate.CertificateSummary
 import dev.junta.firmamobile.certificate.TestCertificateFactory
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.verification.OfflineCmsStatus
@@ -169,6 +170,53 @@ class LocalFileSigningControllerTest {
         var opened = false
         controller.save(token) { opened = true; ByteArrayOutputStream() }
         assertFalse(opened)
+    }
+
+    @Test
+    fun inMemoryP256AndP384KeysProduceVerifiedDetachedEcdsaCms() {
+        for ((curve, signatureOid) in listOf(
+            "secp256r1" to "1.2.840.10045.4.3.2",
+            "secp384r1" to "1.2.840.10045.4.3.3",
+        )) {
+            val ec = LocalFileSigningController(ecSession(curve))
+            val document = "abc".encodeToByteArray()
+            val token = ec.begin()
+            ec.load(token, "document.txt") { document.inputStream() }
+            ec.sign(token)
+            assertTrue(curve, ec.state.value is LocalFileSigningState.Ready)
+            val output = ByteArrayOutputStream()
+            ec.save(token) { output }
+            val cms = output.toByteArray()
+            assertNull(CMSSignedData(cms).signedContent)
+            assertEquals(signatureOid, CMSSignedData(cms).signerInfos.signers.single().encryptionAlgOID)
+            assertEquals(OfflineCmsStatus.VERIFIED, OfflineCmsVerifier.verify(cms, document).status)
+            assertEquals(OfflineCmsStatus.INVALID, OfflineCmsVerifier.verify(cms, byteArrayOf(0)).status)
+            ec.close()
+        }
+    }
+
+    @Test
+    fun ecKeyOutsideTheAllowedCurvesFailsWithoutExport() {
+        val ec = LocalFileSigningController(ecSession("secp256k1"))
+        val token = ec.begin()
+        ec.load(token, "document.txt") { "abc".encodeToByteArray().inputStream() }
+        ec.sign(token)
+        assertTrue(ec.state.value is LocalFileSigningState.Failed)
+        var opened = false
+        ec.save(token) { opened = true; ByteArrayOutputStream() }
+        assertFalse(opened)
+    }
+
+    private fun ecSession(curve: String): CertificateSession {
+        val keys = SoftwareEcTestFixtures.keys(curve)
+        val certificate = SoftwareEcTestFixtures.certificate(keys)
+        val identity = UnlockedIdentity(keys.private, certificate, listOf(certificate), CertificateSummary(
+            "Synthetic EC owner",
+            "Synthetic EC issuer",
+            certificate.notBefore.toInstant(),
+            certificate.notAfter.toInstant(),
+        ))
+        return CertificateSession(clock = clock).apply { unlock(identity) }
     }
 
     private fun withSigner(
