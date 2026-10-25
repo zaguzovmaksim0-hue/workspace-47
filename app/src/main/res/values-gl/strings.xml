@@ -40,7 +40,7 @@
     <string name="error_private_key_missing">O ficheiro non contén unha chave privada de sinatura.</string>
     <string name="error_multiple_private_keys">O ficheiro contén máis dunha identidade privada.</string>
     <string name="error_certificate_not_x509">O certificado non ten un formato X.509 compatible.</string>
-    <string name="error_unsupported_key_type">Só se admiten certificados RSA.</string>
+    <string name="error_unsupported_key_type">Só se admiten certificados RSA ou de curva elíptica P-256/P-384.</string>
     <string name="error_certificate_expired">O certificado caducou.</string>
     <string name="error_certificate_not_yet_valid">O certificado aínda non é válido.</string>
     <string name="error_key_usage">O certificado non permite a sinatura dixital.</string>

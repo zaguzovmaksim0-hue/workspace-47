@@ -40,7 +40,7 @@
     <string name="error_private_key_missing">The file does not contain a private signing key.</string>
     <string name="error_multiple_private_keys">The file contains more than one private identity.</string>
     <string name="error_certificate_not_x509">The certificate is not in a supported X.509 format.</string>
-    <string name="error_unsupported_key_type">Only RSA certificates are supported.</string>
+    <string name="error_unsupported_key_type">Only RSA or P-256/P-384 elliptic-curve certificates are supported.</string>
     <string name="error_certificate_expired">The certificate has expired.</string>
     <string name="error_certificate_not_yet_valid">The certificate is not yet valid.</string>
     <string name="error_key_usage">The certificate does not permit digital signing.</string>

@@ -40,7 +40,7 @@
     <string name="error_private_key_missing">El fitxer no conté cap clau privada de signatura.</string>
     <string name="error_multiple_private_keys">El fitxer conté més d’una identitat privada.</string>
     <string name="error_certificate_not_x509">El certificat no té un format X.509 compatible.</string>
-    <string name="error_unsupported_key_type">Només s’admeten certificats RSA.</string>
+    <string name="error_unsupported_key_type">Només s’admeten certificats RSA o de corba el·líptica P-256/P-384.</string>
     <string name="error_certificate_expired">El certificat ha caducat.</string>
     <string name="error_certificate_not_yet_valid">El certificat encara no és vàlid.</string>
     <string name="error_key_usage">El certificat no permet la signatura digital.</string>
