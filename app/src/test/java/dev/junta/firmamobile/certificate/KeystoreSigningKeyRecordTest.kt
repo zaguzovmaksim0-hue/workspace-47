@@ -236,6 +236,14 @@ class KeystoreSigningKeyRecordTest {
         assertEquals(entry, store.readCatalog().active)
     }
 
+    @Test fun boundSourceWhoseChosenEntryIsGoneCannotImportTheFilesOtherKey() = runBlocking {
+        store.write(source().copy(selectedCertificateSha256 = "0".repeat(64)))
+        val entry = checkNotNull(store.readCatalog().active)
+        assertTrue(runCatching { keys().migrate(entry, TestCertificateFactory.password(), true, false) }.isFailure)
+        assertTrue(backend.keys.isEmpty())
+        assertEquals(entry, store.readCatalog().active)
+    }
+
     @Test fun ambiguousCommittedWriteNeverDeletesThePublishedKey() = runBlocking {
         store.write(source())
         val before = checkNotNull(store.readCatalog().active)

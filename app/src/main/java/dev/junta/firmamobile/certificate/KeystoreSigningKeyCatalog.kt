@@ -52,7 +52,7 @@ internal class KeystoreSigningKeyCatalog(
                 check(enabled && acknowledgeKeyLoss && expected.signingKey == null)
                 checkCurrent(expected)
                 val source = checkNotNull(expected.reference)
-                val loaded = documentAccess.open(source.uri).use { loader.load(it, source.size, password) }
+                val loaded = documentAccess.loadReferenced(loader, source, password)
                 check(loaded is CertificateLoadResult.Success) { "Source certificate unlock failed" }
                 importAndPublish(expected, loaded.identity, allowTrustedEnvironment)
             }

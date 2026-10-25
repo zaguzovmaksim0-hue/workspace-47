@@ -406,6 +406,43 @@ class CertificateRepositoryTest {
     }
 
     @Test
+    fun boundSelectionReopensOnlyTheStoredEntryAndNeverFallsBack() = runTest {
+        val bytes = TestCertificateFactory.multiplePrivateEntries()
+        val loader = Pkcs12Loader(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC))
+        val hashes = (loader.inspect(ByteArrayInputStream(bytes), null, TestCertificateFactory.password())
+            as Pkcs12InspectionResult.Success).selection.use { selection -> selection.candidates.map { it.certificateSha256 } }
+        val access = validAccess().apply { content = bytes }
+        val plain = StoredCertificateReference(
+            Uri.parse("content://documents/several"), "several.p12", "application/x-pkcs12", null, null,
+        )
+        val store = FakeReferenceStore()
+
+        store.reference = plain
+        assertFailure(
+            CertificateErrorCode.MULTIPLE_PRIVATE_KEYS,
+            repository(access, store).unlock(TestCertificateFactory.password()),
+        )
+
+        for (hash in hashes) {
+            store.reference = plain.copy(selectedCertificateSha256 = hash)
+            val loaded = repository(access, store).unlock(TestCertificateFactory.password()) as CertificateLoadResult.Success
+            val actual = java.security.MessageDigest.getInstance("SHA-256").digest(loaded.identity.certificate.encoded)
+                .joinToString("") { "%02x".format(it) }
+            assertEquals(hash, actual)
+            assertEquals(hash, store.reference?.selectedCertificateSha256)
+            assertEquals(loaded.identity.summary, store.reference?.summary)
+        }
+
+        val missing = plain.copy(selectedCertificateSha256 = "0".repeat(64))
+        store.reference = missing
+        assertFailure(
+            CertificateErrorCode.NO_CERTIFICATE_SELECTED,
+            repository(access, store).unlock(TestCertificateFactory.password()),
+        )
+        assertEquals(missing, store.reference)
+    }
+
+    @Test
     fun forgetClearsReferenceEvenWhenPermissionReleaseFails() = runTest {
         val uri = Uri.parse("content://documents/forget")
         val access = validAccess().apply { releaseFailure = true }
