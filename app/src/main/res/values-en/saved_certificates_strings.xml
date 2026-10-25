@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved_certificates_title">Saved certificates</string>
+    <string name="saved_certificate_add">Add certificate</string>
+    <string name="saved_certificate_use">Use</string>
+    <string name="saved_certificate_remove">Remove</string>
+    <string name="saved_certificate_use_named">Use certificate %1$s</string>
+    <string name="saved_certificate_remove_named">Remove certificate %1$s</string>
+    <string name="saved_certificate_error">The certificate list could not be updated</string>
+</resources>

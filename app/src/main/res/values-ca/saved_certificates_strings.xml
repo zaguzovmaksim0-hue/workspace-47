@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved_certificates_title">Certificats desats</string>
+    <string name="saved_certificate_add">Afegeix un certificat</string>
+    <string name="saved_certificate_use">Utilitza</string>
+    <string name="saved_certificate_remove">Treu</string>
+    <string name="saved_certificate_use_named">Utilitza el certificat %1$s</string>
+    <string name="saved_certificate_remove_named">Treu el certificat %1$s</string>
+    <string name="saved_certificate_error">No s’ha pogut actualitzar la llista de certificats</string>
+</resources>
