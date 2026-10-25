@@ -353,8 +353,8 @@ class CertificateExpiryRemindersTest {
             check(expected in catalog.entries)
             catalog = catalog.copy(entries = catalog.entries.map { if (it == expected) replacement else it })
         }
-        override suspend fun remove(expected: StoredCertificateEntry) {
-            check(expected in catalog.entries)
+        override suspend fun remove(expected: StoredCertificateEntry, onlyIfInactive: Boolean) {
+            check(expected in catalog.entries && !(onlyIfInactive && catalog.activeId == expected.id))
             catalog = catalog.copy(
                 entries = catalog.entries - expected,
                 activeId = catalog.activeId.takeUnless { it == expected.id },

@@ -43,7 +43,9 @@ interface CertificateReferenceCatalogStore : CertificateReferenceStore {
     /** Compare the complete entry, including its revision, inside the atomic edit. */
     suspend fun replace(expected: StoredCertificateEntry, replacement: StoredCertificateEntry)
 
-    suspend fun remove(expected: StoredCertificateEntry)
+    /** With [onlyIfInactive] the active entry is refused inside the same atomic edit: it leaves only through
+     * [clear], after its saved unlock is revoked. */
+    suspend fun remove(expected: StoredCertificateEntry, onlyIfInactive: Boolean = false)
 
     suspend fun acknowledgeKeyDeletion(alias: String)
 }
