@@ -42,7 +42,7 @@
     <string name="certificate_entry_choose_title">Aukeratu %1$s fitxategiko ziurtagiria</string>
     <string name="certificate_entry_cancel">Utzi aukeraketa</string>
     <string name="error_certificate_not_x509">Ziurtagiriak ez du X.509 formatu bateragarririk.</string>
-    <string name="error_unsupported_key_type">RSA ziurtagiriak soilik onartzen dira.</string>
+    <string name="error_unsupported_key_type">RSA edo P-256/P-384 kurba eliptikoko ziurtagiriak soilik onartzen dira.</string>
     <string name="error_certificate_expired">Ziurtagiria iraungi da.</string>
     <string name="error_certificate_not_yet_valid">Ziurtagiria ez da baliozkoa oraindik.</string>
     <string name="error_key_usage">Ziurtagiriak ez du sinadura digitala baimentzen.</string>
