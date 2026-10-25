@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_afirma_warning">Esta petición chegou de fóra da aplicación. Non se pode verificar a súa orixe. Os datos enviaranse aos destinatarios indicados. Confirma só se esperabas esta operación.</string>
+    <string name="external_afirma_caller_label">Solicitante</string>
+    <string name="external_afirma_caller_unknown">Descoñecido · non verificado</string>
+    <string name="external_afirma_certificate_only">Non hai datos de documento. Só se enviará o certificado público seleccionado.</string>
+    <string name="external_afirma_certificate_evidence">Certificado público: %1$d bytes · SHA-256: %2$s</string>
+    <string name="external_afirma_busy">Xa hai unha operación de sinatura en curso. Rexeitouse a petición externa e a operación actual continúa.</string>
+    <string name="external_afirma_rejected">A petición externa non é válida ou non se admite. Non se asinou nin se enviou nada.</string>
+    <string name="external_afirma_expired">A petición externa caducou antes de poder revisala. Volve iniciala desde a súa orixe.</string>
+</resources>

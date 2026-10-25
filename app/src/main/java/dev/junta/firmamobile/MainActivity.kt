@@ -157,6 +157,14 @@ class MainActivity : ComponentActivity() {
     private lateinit var caibBatchSigningAdapter: CaibBatchSigningAdapter
     private lateinit var burgosBatchSigningAdapter: BurgosBatchSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
+    private var externalAfirma: dev.junta.firmamobile.afirma.servlet.ExternalAfirmaController? = null
+    private var externalAfirmaPrompt by mutableStateOf<dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt?>(null)
+    /** Activity-owned operations that survive onStop; an external afirma delivery is refused while any holds. */
+    private val activityPortalBusy: () -> Boolean = {
+        signingFlowOwnership.current() != null || pendingExternalApp != null || pendingExternalHandoff != null ||
+            certificatePanelVisible || certificateReturnToken != null || documentDownloadReturnToken != null ||
+            browserFileReturnToken != null
+    }
     private var startupJob: kotlinx.coroutines.Job? = null
     private lateinit var catalogRepository: PortalCatalogRepository
     private lateinit var catalogViewModel: PortalCatalogViewModel
@@ -196,6 +204,7 @@ class MainActivity : ComponentActivity() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             window.setHideOverlayWindows(true)
         }
+        (application as JuntaFirmaApplication).signingAdmission.registerPortal(this, activityPortalBusy)
         beginCatalogStartup()
     }
 
@@ -336,6 +345,17 @@ class MainActivity : ComponentActivity() {
                 adapterIdForProfile = { profileId -> smokeAdapterId(profileId) },
             )::execute,
         )
+        externalAfirma = dev.junta.firmamobile.afirma.servlet.ExternalAfirmaController(
+            scope = lifecycleScope,
+            canRespond = { lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) },
+            identityProvider = { app.certificateSession.identityForSigning() },
+            prepare = { dev.junta.firmamobile.afirma.servlet.nativeOperation(it) },
+            onPrompt = {
+                externalAfirmaPrompt = it
+                if (it == null) app.signingAdmission.releaseExternal(this)
+            },
+        )
+        window.decorView.post(::drainExternalAfirma)
         val paperSystemBar = getColor(R.color.jfm_paper)
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.light(
@@ -543,6 +563,7 @@ class MainActivity : ComponentActivity() {
                         state = certificateState.value,
                         onSelectCertificate = ::launchCertificatePicker,
                         onUnlock = certificateViewModel::unlock,
+                        onRestoreSavedUnlock = certificateViewModel::restoreSavedUnlock,
                         onLock = certificateViewModel::lock,
                         onForget = certificateViewModel::forget,
                         onContinue = { destination = AppDestination.Catalog },
@@ -563,6 +584,25 @@ class MainActivity : ComponentActivity() {
                         onCancel = ::clearExternalApp,
                     )
                 }
+                externalAfirmaPrompt?.let { prompt ->
+                    LaunchedEffect(prompt.token, prompt.phase) {
+                        while (prompt.phase != dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase.FINISHED) {
+                            kotlinx.coroutines.delay(EXTERNAL_AFIRMA_TICK_MILLIS)
+                            externalAfirma?.tick()
+                        }
+                    }
+                    // Hidden, not cancelled, while the user unlocks a certificate for it.
+                    if (!certificatePanelVisible) {
+                        dev.junta.firmamobile.ui.NativeAfirmaConsentDialog(
+                            prompt = prompt,
+                            onConfirm = { externalAfirma?.confirm(prompt.token) },
+                            onUnlock = { certificatePanelVisible = true },
+                            onCancel = { externalAfirma?.cancel(prompt.token) },
+                            onDismiss = { externalAfirma?.dismiss(prompt.token) },
+                        )
+                    }
+                }
+                LaunchedEffect(certificateState.value, certificatePanelVisible) { externalAfirma?.refreshIdentity() }
                 pendingExternalHandoff?.let { request ->
                     androidx.compose.material3.AlertDialog(
                         onDismissRequest = { pendingExternalHandoff = null },
@@ -611,6 +651,7 @@ class MainActivity : ComponentActivity() {
                             state = certificateState.value,
                             onSelectCertificate = ::launchCertificatePicker,
                             onUnlock = certificateViewModel::unlock,
+                        onRestoreSavedUnlock = certificateViewModel::restoreSavedUnlock,
                             onLock = certificateViewModel::lock,
                             onForget = certificateViewModel::forget,
                             onContinue = { certificatePanelVisible = false },
@@ -623,14 +664,58 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        (application as JuntaFirmaApplication).certificateUnlockAuthentication.bind(this)
         certificateViewModel.onAppForegrounded()
+        externalAfirma?.onForeground()
         if (::catalogSmokeHook.isInitialized) catalogSmokeHook.start()
     }
+
+    override fun onResume() {
+        super.onResume()
+        drainExternalAfirma()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) drainExternalAfirma()
+    }
+
+    /** Admits a parked external afirma delivery only into a resumed, focused, unlocked window, or reports why
+     * not. Exactly one outcome per delivery: consent dialog, busy, rejected or expired (ADR 0006). */
+    private fun drainExternalAfirma() {
+        val app = application as JuntaFirmaApplication
+        val pending = externalAfirma != null && app.externalAfirmaInbox.hasPending() &&
+            lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)
+        val busy = app.signingAdmission.externalActive || app.signingAdmission.portalBusy()
+        // A busy app answers at once; otherwise wait for focus so nothing is admitted behind another window.
+        if (!pending || !(busy || readyForExternalConsent())) return
+        externalAfirmaOutcome(app, busy)?.let {
+            android.widget.Toast.makeText(this, it, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun readyForExternalConsent(): Boolean = hasWindowFocus() &&
+        getSystemService(android.app.KeyguardManager::class.java)?.isKeyguardLocked == false
+
+    private fun externalAfirmaOutcome(app: JuntaFirmaApplication, busy: Boolean): Int? =
+        when (val delivery = app.externalAfirmaInbox.take()) {
+            dev.junta.firmamobile.afirma.external.ExternalAfirmaDelivery.None -> null
+            dev.junta.firmamobile.afirma.external.ExternalAfirmaDelivery.Stale -> R.string.external_afirma_expired
+            is dev.junta.firmamobile.afirma.external.ExternalAfirmaDelivery.Fresh -> when {
+                busy || !app.signingAdmission.tryAcquireExternal(this) -> R.string.external_afirma_busy
+                externalAfirma?.receive(delivery.rawUri) == true -> null
+                else -> {
+                    app.signingAdmission.releaseExternal(this)
+                    R.string.external_afirma_rejected
+                }
+            }
+        }
 
     override fun onStop() {
         clearExternalApp()
         if (::catalogSmokeHook.isInitialized) catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
+        externalAfirma?.onBackground()
         certificateViewModel.onAppBackgrounded()
         super.onStop()
     }
@@ -714,6 +799,13 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        (application as JuntaFirmaApplication).certificateUnlockAuthentication.unbind(this)
+        externalAfirma?.close()
+        externalAfirma = null
+        (application as JuntaFirmaApplication).signingAdmission.let {
+            it.releaseExternal(this)
+            it.unregisterPortal(this, activityPortalBusy)
+        }
         browserFileChooser.cancel()
         if (::catalogSmokeHook.isInitialized) catalogSmokeHook.stop()
         cancelSigning(SigningCancelReason.BACKGROUND)
@@ -722,12 +814,14 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    private fun externalAfirmaActive() = (application as JuntaFirmaApplication).signingAdmission.externalActive
+
     private fun prepareMiniAppletSigning(
         request: MiniAppletBridgeRequest,
         reply: SigningReplySink,
     ) {
         val requestId = request.normalized.requestId
-        if (!signingFlowOwnership.acquire(SigningFlowKind.ORDINARY, requestId)) {
+        if (externalAfirmaActive() || !signingFlowOwnership.acquire(SigningFlowKind.ORDINARY, requestId)) {
             recordMiniAppletBridgeDiagnostic(
                 request = request,
                 stage = "OWNERSHIP_REJECTED",
@@ -802,7 +896,7 @@ class MainActivity : ComponentActivity() {
             return
         }
         val requestId = normalized.requestId
-        if (!signingFlowOwnership.acquire(SigningFlowKind.BATCH, requestId)) {
+        if (externalAfirmaActive() || !signingFlowOwnership.acquire(SigningFlowKind.BATCH, requestId)) {
             normalized.close()
             runCatching { replySink.failure(SigningErrorCode.PROTOCOL_FAILED) }
             return
@@ -910,6 +1004,8 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val EXTERNAL_AFIRMA_TICK_MILLIS = 1_000L
+
         private object OpenableDocumentContract : ActivityResultContracts.OpenDocument() {
             override fun createIntent(context: Context, input: Array<String>): Intent =
                 super.createIntent(context, input).addCategory(Intent.CATEGORY_OPENABLE)

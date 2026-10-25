@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="verification_journal_entry">Diario de comprobaciones de esta sesión</string>
+    <string name="verification_journal_title">Diario de comprobaciones de la sesión</string>
+    <string name="verification_journal_scope">Solo comprobaciones CMS/PDF locales de esta sesión; no es un historial completo de firmas. Las entradas desaparecen al recrear o cerrar la aplicación.</string>
+    <string name="verification_journal_integrity">Completada indica solo integridad CMS/PDF local, no confianza, vigencia o revocación del certificado, validación de sellos de tiempo ni aceptación remota.</string>
+    <string name="verification_journal_copies">Borrar afecta solo a este diario; no revoca las instantáneas ni las copias JSON ya exportadas.</string>
+    <string name="verification_journal_provider_warning">Un fallo del proveedor puede dejar un archivo externo parcial. Cancelar no deshace los bytes ya escritos.</string>
+    <string name="verification_journal_empty">Todavía no hay comprobaciones en esta sesión.</string>
+    <string name="verification_journal_clear">Borrar diario</string>
+    <string name="verification_journal_export">Exportar instantánea JSON</string>
+    <string name="verification_journal_close">Cerrar</string>
+    <string name="verification_journal_kind_verify">Verificación CMS/PDF local</string>
+    <string name="verification_journal_completed">Completada (solo integridad local)</string>
+    <string name="verification_journal_cancelled">Cancelada</string>
+    <string name="verification_journal_failed">Fallida</string>
+    <string name="verification_journal_row">N.º %1$d · %2$s · %3$s · %4$s</string>
+    <string name="verification_journal_choosing">Elige un destino JSON o cancela.</string>
+    <string name="verification_journal_writing">Exportando la instantánea…</string>
+    <string name="verification_journal_exported">Instantánea exportada.</string>
+    <string name="verification_journal_export_cancelled">Exportación cancelada.</string>
+    <string name="verification_journal_export_failed">No se pudo exportar. Puede quedar un archivo externo parcial.</string>
+</resources>

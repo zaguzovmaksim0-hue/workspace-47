@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Original monochrome document geometry, authored for this reminder. -->
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+        android:pathData="M5,2H14L19,7V22H5ZM8,10V12H16V10ZM8,14V16H16V14ZM8,18V20H13V18Z" />
+</vector>

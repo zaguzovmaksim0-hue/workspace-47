@@ -2,6 +2,8 @@ package dev.junta.firmamobile.afirma.servlet
 
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.signing.LocalSignatureResult
+import dev.junta.firmamobile.signing.PdfPreviewSource
+import dev.junta.firmamobile.signing.AccedaPadesAdapter
 import java.net.URI
 import java.security.MessageDigest
 import java.time.Clock
@@ -26,7 +28,24 @@ internal class NativeMultiPhaseOperation(
     private val remote = checkNotNull(invocation.remoteOptions)
     private val started = AtomicBoolean(false)
     @Volatile private var closed = false
-    override var resultSummary: String? = null
+    override val pdfPreviews: Map<Int, PdfPreviewSource?> = when {
+        remote.batch != null -> remote.batch.items.mapIndexedNotNull { index, item ->
+            if (NativePadesOptions.acceptsFormat(item.format)) {
+                index to PdfPreviewSource.fromLocalInput(AccedaPadesAdapter.MAX_PDF_BYTES) {
+                    check(!closed && !started.get())
+                    AfirmaServletInvocationParser.strictBase64(item.dataReference, AccedaPadesAdapter.MAX_PDF_BYTES)
+                }
+            } else null
+        }.toMap()
+        NativeRemoteOptions.wireFormat(remote.format) == "pades" -> mapOf(
+            0 to PdfPreviewSource.fromLocalInput(AccedaPadesAdapter.MAX_PDF_BYTES) {
+                check(!closed && !started.get())
+                invocation.payloadCopy()
+            },
+        )
+        else -> emptyMap()
+    }
+    override var resultSummary: AfirmaResultSummary? = null
         private set
     @Volatile override var batchReceipt: NativeBatchReceipt? = null
         private set
@@ -44,8 +63,10 @@ internal class NativeMultiPhaseOperation(
             else "${remote.format} · trifásico",
             checkNotNull(invocation.algorithm).let { with(NativeTriphaseCodec) { it.wireName() } }, bytes.size,
             MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) },
+            externalContext = invocation.externalContext,
             serviceDestinations = listOfNotNull(remote.preUrl, remote.postUrl).map(::destination).distinct(),
             batchItems = remote.batch?.items?.size, delegatedSigning = !remote.localBatch,
+            batchReview = remote.batch?.let { NativeBatchConsentReview.from(it, remote.localBatch) },
             requiresExactCertificate = invocation.requiresExactCertificate,
             providedDigestItems = if (remote.localBatch) remote.batch?.items?.count {
                 it.operation == "sign" && it.format.equals("CAdES", true) &&
@@ -144,7 +165,7 @@ internal class NativeMultiPhaseOperation(
                         val text = response.toString(Charsets.UTF_8).trim(); require(text.startsWith("OK NEWID="))
                         AfirmaServletInvocationParser.strictBase64(text.removePrefix("OK NEWID="), 2_097_152)
                     } finally { response.fill(0) }
-                    resultSummary = "El servicio devolvió un resultado. No acredita por sí solo la aceptación del trámite."
+                    resultSummary = AfirmaResultSummary.ServiceResult
                 }
                 try {
                     checkOwner()
@@ -223,7 +244,12 @@ internal class NativeMultiPhaseOperation(
         invocation.close(); authorizeUpload(); currentCoroutineContext().ensureActive(); check(!closed)
         return storage.store(endpoint, id, "CANCEL")
     }
-    override fun close() { closed = true; invocation.close(); batchReceipt = null }
+    override fun close() {
+        closed = true
+        invocation.close()
+        batchReceipt = null
+        pdfPreviews.values.forEach { it?.close() }
+    }
     private fun url64(bytes: ByteArray) = Base64.getUrlEncoder().encodeToString(bytes)
     private fun destination(uri: URI) = URI("https", null, uri.host, uri.port, uri.path, null, null).toASCIIString()
 }

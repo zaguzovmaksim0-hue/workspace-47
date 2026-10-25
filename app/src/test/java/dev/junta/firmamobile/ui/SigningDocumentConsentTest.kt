@@ -149,6 +149,39 @@ class SigningDocumentConsentTest {
         rule.onNodeWithText("private-reference", substring = true).assertDoesNotExist()
     }
 
+    @Test
+    fun multipleBatchDocumentsKeepRequestOrderAndReviewNeverConfirmsSigning() {
+        val events = mutableListOf<String>()
+        rule.setContent {
+            JuntaFirmaTheme {
+                SigningConfirmationDialog(state().copy(
+                    batchDocumentReview = BatchSigningDocumentReview(listOf(
+                        NormalizedBatchSigningDocument("second-id", "private-reference-2", BatchSigningFormat.CADES),
+                        NormalizedBatchSigningDocument("first-id", "private-reference-1", BatchSigningFormat.PADES),
+                    )),
+                ), onConfirm = { events += "confirm" }, onCancel = { events += "cancel" })
+            }
+        }
+        rule.onNodeWithTag("signing-batch-documents-count").performScrollTo()
+            .assertTextEquals("2 documentos en el lote")
+        rule.onNodeWithTag("signing-batch-documents").assertDoesNotExist()
+        rule.onNodeWithTag("signing-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithTag("signing-batch-document-0").performScrollTo()
+            .assertIsDisplayed().assertTextEquals("Documento 1 · ID: second-id")
+        rule.onNodeWithTag("signing-batch-document-1").performScrollTo()
+            .assertIsDisplayed().assertTextEquals("Documento 2 · ID: first-id")
+        rule.onNodeWithText("Identificadores facilitados por el sitio; no son una vista previa del contenido de los documentos.")
+            .performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("signing-document-bytes").assertDoesNotExist()
+        rule.onNodeWithTag("signing-document-sha256").assertDoesNotExist()
+        rule.onNodeWithText("private-reference-", substring = true).assertDoesNotExist()
+        rule.onNodeWithTag("signing-batch-documents-toggle").performScrollTo().performClick()
+        rule.onNodeWithTag("signing-batch-documents").assertDoesNotExist()
+        rule.runOnIdle { assertEquals(emptyList<String>(), events) }
+        rule.onNodeWithText("Cancelar").performClick()
+        rule.runOnIdle { assertEquals(listOf("cancel"), events) }
+    }
+
     private fun advanceThroughArmingFrames() {
         // Start the delay coroutine, then publish enabled semantics on a subsequent Compose frame.
         rule.mainClock.advanceTimeByFrame()

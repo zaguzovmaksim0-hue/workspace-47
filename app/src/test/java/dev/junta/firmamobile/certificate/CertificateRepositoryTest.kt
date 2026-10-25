@@ -1,24 +1,34 @@
 package dev.junta.firmamobile.certificate
 
 import android.net.Uri
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.test.core.app.ApplicationProvider
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.io.InputStream
 import java.time.Clock
 import java.time.ZoneOffset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.ConscryptMode
@@ -31,6 +41,12 @@ import org.robolectric.annotation.SQLiteMode
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 @OptIn(ExperimentalCoroutinesApi::class)
 class CertificateRepositoryTest {
+    @get:Rule val temporaryFolder = TemporaryFolder()
+    private val scopes = mutableListOf<CoroutineScope>()
+
+    @After
+    fun tearDown() = scopes.forEach { it.cancel() }
+
     @Test
     fun selectsSupportedContentDocumentAndPersistsReadPermissionBeforeReference() = runTest {
         val events = mutableListOf<String>()
@@ -245,6 +261,36 @@ class CertificateRepositoryTest {
         assertSelectionFailure(CertificateSelectionErrorCode.STORAGE_FAILURE, result)
         assertTrue(access.released.isEmpty())
         assertEquals(existing, store.reference)
+    }
+
+    @Test
+    fun failedSelectionOfAnotherSavedEntryNeverReleasesThatEntryPermission() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO).also { scopes += it }
+        val catalog = PreferencesCertificateReferenceStore(PreferenceDataStoreFactory.create(scope = scope) {
+            File(temporaryFolder.root, "catalog.preferences_pb")
+        })
+        val active = StoredCertificateReference(
+            Uri.parse("content://documents/active"), "active.p12", "application/x-pkcs12", 100, null,
+        )
+        val saved = active.copy(uri = Uri.parse("content://documents/saved"), displayName = "saved.p12")
+        catalog.write(active)
+        catalog.add(saved)
+        val access = validAccess()
+        val repository = CertificateRepository(
+            documentAccess = access,
+            // Same decoration as the production module.
+            referenceStore = ReminderCertificateReferenceStore(ApplicationProvider.getApplicationContext(), catalog),
+            loader = Pkcs12Loader(clock = Clock.fixed(TestCertificateFactory.now, ZoneOffset.UTC)),
+            ioDispatcher = Dispatchers.IO,
+        )
+
+        // The catalogue refuses a second entry for one URI, so replacing the active entry with it fails.
+        val result = repository.select(saved.uri)
+
+        assertSelectionFailure(CertificateSelectionErrorCode.STORAGE_FAILURE, result)
+        assertTrue(access.released.isEmpty())
+        assertEquals(listOf(active.uri, saved.uri), catalog.readCatalog().entries.map { it.reference?.uri })
+        assertEquals(active, catalog.read())
     }
 
     @Test

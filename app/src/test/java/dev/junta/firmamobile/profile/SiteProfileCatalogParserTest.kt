@@ -1,6 +1,9 @@
 package dev.junta.firmamobile.profile
 
 import dev.junta.firmamobile.BuildConfig
+import org.json.JSONObject
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -20,6 +23,109 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SiteProfileCatalogParserTest {
+    @Test
+    fun escapedSchemaKeyAndJsonWhitespacePreserveTheCatalog() {
+        val json = BuiltInSiteProfiles.JSON
+        assertTrue(json.contains("\"schemaVersion\""))
+        val escaped = json.replaceFirst("\"schemaVersion\"", "\"schema\\u0056ersion\"")
+        assertEquals(
+            BuiltInSiteProfiles.catalog,
+            SiteProfileCatalogParser.parse(" \t\r\n$escaped\n\r\t "),
+        )
+    }
+
+    @Test
+    fun malformedUnicodeEscapesAndRawControlCharactersFailClosed() {
+        val invalidKeys = listOf(
+            "schema\\u00" to IllegalArgumentException::class.java,
+            "schema\\u00xzersion" to IllegalArgumentException::class.java,
+            "schema\\qVersion" to IllegalStateException::class.java,
+            "schema${0x1f.toChar()}Version" to IllegalStateException::class.java,
+        )
+        for ((key, errorType) in invalidKeys) {
+            val json = BuiltInSiteProfiles.JSON.replaceFirst("\"schemaVersion\"", "\"$key\"")
+            assertThrows("Key must be rejected: $key", errorType) {
+                SiteProfileCatalogParser.parse(json)
+            }
+        }
+    }
+
+    @Test
+    fun lastVerifiedOnPreservesDocumentedE2EDates() {
+        val expected = mapOf(
+            "unizar-tramitador" to "2026-07-30",
+            "carne-joven-andalucia" to "2026-07-21",
+            "junta-ofvirtual" to "2026-07-29",
+            "aragon-siraw" to "2026-07-28",
+        )
+        val actual = SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON).profiles
+            .filter { it.lastVerifiedOn != null }
+            .associate { it.profileId.value to it.lastVerifiedOn.toString() }
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun lastVerifiedOnIsOptionalAndAcceptsLeapDayAndToday() {
+        val withoutDates = JSONObject(BuiltInSiteProfiles.JSON)
+        val profiles = withoutDates.getJSONArray("profiles")
+        for (index in 0 until profiles.length()) profiles.getJSONObject(index).remove("lastVerifiedOn")
+        assertTrue(SiteProfileCatalogParser.parse(withoutDates.toString()).profiles.all { it.lastVerifiedOn == null })
+        for (date in listOf("2024-02-29", LocalDate.now(ZoneOffset.UTC).toString())) {
+            val json = profileDateJson("unizar-tramitador", date)
+            val profile = SiteProfileCatalogParser.parse(json).profiles.single { it.profileId.value == "unizar-tramitador" }
+            assertEquals(LocalDate.parse(date), profile.lastVerifiedOn)
+        }
+    }
+
+    @Test
+    fun lastVerifiedOnRejectsInvalidTypesDatesAndFuture() {
+        val tomorrow = LocalDate.now(ZoneOffset.UTC).plusDays(1).toString()
+        for (date in listOf(JSONObject.NULL, 42, "", "2026-7-21", "2026-02-30", "20260721",
+            "2026-07-21T00:00:00Z", " 2026-07-21", "0000-01-01", tomorrow)) {
+            assertThrows(RuntimeException::class.java) {
+                SiteProfileCatalogParser.parse(profileDateJson("unizar-tramitador", date))
+            }
+        }
+    }
+
+    @Test
+    fun collectionSeparatorsAndTrailingInputRemainStrict() {
+        val json = """{"schemaVersion":1,"catalogVersion":1,"profiles":[]}"""
+        val catalog = SiteProfileCatalogParser.parse(json)
+        assertTrue(catalog.profiles.isEmpty())
+        val invalid = listOf(
+            json.replace("[]", "[,]") to IllegalStateException::class.java,
+            json.replace("[]", "[{},]") to IllegalStateException::class.java,
+            json.replace("1,\"catalogVersion\"", "1 \"catalogVersion\"") to IllegalArgumentException::class.java,
+            (json.dropLast(1) + ",}") to IllegalArgumentException::class.java,
+            "$json false" to IllegalArgumentException::class.java,
+        )
+        for ((candidate, errorType) in invalid) {
+            assertThrows(errorType) {
+                SiteProfileCatalogParser.parse(candidate)
+            }
+        }
+    }
+
+    @Test
+    fun lastVerifiedOnRejectsNonE2EProfiles() {
+        for (id in listOf("junta-andalucia", "reg-age-redsara")) {
+            assertThrows(RuntimeException::class.java) {
+                SiteProfileCatalogParser.parse(profileDateJson(id, "2026-07-21"))
+            }
+        }
+    }
+
+    private fun profileDateJson(profileId: String, value: Any): String {
+        val root = JSONObject(BuiltInSiteProfiles.JSON)
+        val profiles = root.getJSONArray("profiles")
+        for (index in 0 until profiles.length()) {
+            val profile = profiles.getJSONObject(index)
+            if (profile.getString("profileId") == profileId) profile.put("lastVerifiedOn", value)
+        }
+        return root.toString()
+    }
+
     @Test
     fun generatedBuildConfigSourceMatchesTheCompiledCatalog() {
         assertEquals(BuildConfig.SITE_PROFILE_CATALOG_JSON, BuiltInSiteProfiles.JSON)

@@ -2,17 +2,27 @@ package dev.junta.firmamobile.certificate
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.EOFException
+import java.io.IOException
 import java.io.InputStream
+import java.security.GeneralSecurityException
 import java.security.KeyStore
 import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
 import java.security.Signature
+import java.security.UnrecoverableKeyException
+import java.security.cert.CertificateException
 import java.security.cert.CertificateExpiredException
 import java.security.cert.CertificateNotYetValidException
 import java.security.cert.X509Certificate
 import java.time.Clock
+import java.util.Collections
 import java.util.Date
+import java.util.IdentityHashMap
 import java.util.concurrent.CancellationException
+import javax.crypto.BadPaddingException
+import javax.crypto.NoSuchPaddingException
 import javax.security.auth.x500.X500Principal
 
 class Pkcs12Loader internal constructor(
@@ -112,6 +122,8 @@ class Pkcs12Loader internal constructor(
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
+        } catch (error: Pkcs12ReadFailure) {
+            failure(error.code)
         } catch (_: Exception) {
             failure(CertificateErrorCode.INVALID_PASSWORD_OR_FILE)
         } finally {
@@ -140,7 +152,9 @@ class Pkcs12Loader internal constructor(
         } else {
             val protection = KeyStore.PasswordProtection(password)
             try {
-                val entry = keyStore.getEntry(checkNotNull(alias), protection) as? KeyStore.PrivateKeyEntry
+                val entry = pkcs12Operation(null) {
+                    keyStore.getEntry(checkNotNull(alias), protection)
+                } as? KeyStore.PrivateKeyEntry
                 if (entry == null) CertificateLoadResult.Failure(CertificateErrorCode.PRIVATE_KEY_MISSING)
                 else validateEntry(entry)
             } finally {
@@ -253,7 +267,7 @@ private fun privateKeyAliases(keyStore: KeyStore): List<String>? {
     return aliases.filter { keyStore.entryInstanceOf(it, KeyStore.PrivateKeyEntry::class.java) }
 }
 
-private fun certificateSummary(certificate: X509Certificate): CertificateSummary = CertificateSummary(
+internal fun certificateSummary(certificate: X509Certificate): CertificateSummary = CertificateSummary(
     ownerName = commonName(certificate.subjectX500Principal),
     issuerName = commonName(certificate.issuerX500Principal),
     validFrom = certificate.notBefore.toInstant(),
@@ -299,7 +313,9 @@ private const val MAX_ALIASES = 32
 private const val MAX_DISPLAY_NAME_LENGTH = 256
 
 private fun readPkcs12KeyStore(bytes: ByteArray, password: CharArray): KeyStore =
-    KeyStore.getInstance("PKCS12").apply { load(ByteArrayInputStream(bytes), password) }
+    pkcs12Operation(bytes) {
+        KeyStore.getInstance("PKCS12").apply { load(ByteArrayInputStream(bytes), password) }
+    }
 
 private fun readBounded(input: InputStream): ByteArray? {
     val output = ClearingByteArrayOutputStream()
@@ -326,3 +342,60 @@ private class ClearingByteArrayOutputStream : ByteArrayOutputStream() {
         reset()
     }
 }
+
+/** Provider messages are neither stable diagnostics nor safe display text. */
+internal fun classifyPkcs12Failure(error: Exception, bytes: ByteArray?): CertificateErrorCode {
+    val causes = Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
+    var cause: Throwable? = error
+    while (cause != null && causes.add(cause)) cause = cause.cause
+    return when {
+        bytes != null && invalidPkcs12Envelope(bytes) -> CertificateErrorCode.INVALID_PKCS12_FILE
+        causes.any { it is NoSuchAlgorithmException || it is NoSuchPaddingException } ->
+            CertificateErrorCode.UNSUPPORTED_PKCS12_ENCRYPTION
+        causes.any { it is EOFException || it is CertificateException } -> CertificateErrorCode.INVALID_PKCS12_FILE
+        causes.any { it is UnrecoverableKeyException } && causes.any { it is BadPaddingException } ->
+            CertificateErrorCode.INVALID_PASSWORD
+        // Android providers can discard the cause of both MAC and encryption failures.
+        else -> CertificateErrorCode.INVALID_PASSWORD_OR_FILE
+    }
+}
+
+private fun invalidPkcs12Envelope(bytes: ByteArray): Boolean {
+    if (bytes.size < 2 || bytes[0] != ASN1_SEQUENCE_TAG.toByte()) return true
+    val firstLength = bytes[1].toInt() and UNSIGNED_BYTE_MASK
+    return when {
+        firstLength == ASN1_LONG_LENGTH_FLAG -> false // BER indefinite length needs the platform parser.
+        firstLength < ASN1_LONG_LENGTH_FLAG -> firstLength != bytes.size - 2
+        else -> {
+            val lengthBytes = firstLength and ASN1_LENGTH_MASK
+            if (lengthBytes == ASN1_LENGTH_MASK || lengthBytes > bytes.size - 2) {
+                true
+            } else {
+                var length = 0L
+                for (index in 2 until 2 + lengthBytes) {
+                    length = minOf(
+                        (length shl BITS_PER_BYTE) or (bytes[index].toLong() and UNSIGNED_BYTE_MASK.toLong()),
+                        bytes.size + 1L,
+                    )
+                }
+                length != (bytes.size - 2 - lengthBytes).toLong()
+            }
+        }
+    }
+}
+
+private class Pkcs12ReadFailure(val code: CertificateErrorCode) : Exception()
+
+private inline fun <T> pkcs12Operation(bytes: ByteArray?, block: () -> T): T = try {
+    block()
+} catch (error: IOException) {
+    throw Pkcs12ReadFailure(classifyPkcs12Failure(error, bytes))
+} catch (error: GeneralSecurityException) {
+    throw Pkcs12ReadFailure(classifyPkcs12Failure(error, bytes))
+}
+
+private const val ASN1_SEQUENCE_TAG = 0x30
+private const val ASN1_LONG_LENGTH_FLAG = 0x80
+private const val ASN1_LENGTH_MASK = 0x7f
+private const val UNSIGNED_BYTE_MASK = 0xff
+private const val BITS_PER_BYTE = 8

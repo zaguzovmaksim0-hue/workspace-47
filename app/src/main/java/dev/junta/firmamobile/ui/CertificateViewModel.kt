@@ -52,6 +52,13 @@ class CertificateViewModel(
         withContext(ioDispatcher) { unlockCache.clear() }
     }
 
+    /** Verified revocation before the stored selection changes. An unverified saved unlock could otherwise
+     * restore without a password once the same file is chosen again, so the change is refused instead. */
+    private suspend fun revokeCacheBeforeSelectionChange(): Boolean {
+        revocationJob?.join()
+        return withContext(ioDispatcher) { runCatching { unlockCache.clearAndReport() }.getOrDefault(false) }
+    }
+
     init {
         require(!unlockDuration.isNegative && !unlockDuration.isZero)
         require(unlockDuration <= MAX_PERSISTED_UNLOCK_DURATION)
@@ -73,8 +80,9 @@ class CertificateViewModel(
         mutableState.value = CertificateUiState.LoadingReference
         operationJob = viewModelScope.launch {
             mutableState.value = try {
-                clearCache()
-                when (val result = gateway.select(uri)) {
+                if (!revokeCacheBeforeSelectionChange()) {
+                    previous.keptAfterRefusedChange()
+                } else when (val result = gateway.select(uri)) {
                     is CertificateSelectionResult.Success -> result.reference.toLockedState()
                     is CertificateSelectionResult.Failure -> {
                         val error = result.code.toUiError()
@@ -112,13 +120,15 @@ class CertificateViewModel(
                         val issuedAt = clock.instant()
                         val expiresAt = issuedAt.plus(duration)
                         val lease = session.createUnlockLease(expiresAt, duration)
-                        unlockCache.store(
+                        val persisted = unlockCache.store(
                             reference = locked.reference,
                             password = password,
                             issuedAt = issuedAt,
                             expiresAt = expiresAt,
                             observedAtMonotonicNanos = lease.observedAtMonotonicNanos,
                         )
+                        ensureActive()
+                        if (!persisted && !clearFailedPersistence(locked)) return@launch
                         ensureActive()
                         session.unlock(result.identity, lease)
                         restoreSuppressed = false
@@ -145,6 +155,14 @@ class CertificateViewModel(
         }
         unlockJob.invokeOnCompletion { password.fill('\u0000') }
         operationJob = unlockJob
+    }
+
+    private suspend fun clearFailedPersistence(locked: CertificateUiState.Locked): Boolean {
+        if (withContext(ioDispatcher) { unlockCache.clearAndReport() }) return true
+        session.lock()
+        restoreSuppressed = true
+        mutableState.value = locked.copy(error = CertificateUiError.STORAGE_FAILURE, revocationPending = true)
+        return false
     }
 
     fun lock() {
@@ -190,6 +208,12 @@ class CertificateViewModel(
     }
 
     fun onAppBackgrounded() {
+        // Native credential UI may temporarily cover the host. The controller
+        // resumes only the same live/resumed host, with a bounded timeout.
+        if (unlockCache.isAwaitingAuthentication) {
+            session.onAppBackgrounded()
+            return
+        }
         cancelUnlockOperation()
         session.onAppBackgrounded()
         if (session.identityForSigning() != null) return
@@ -218,9 +242,12 @@ class CertificateViewModel(
         mutableState.value = CertificateUiState.LoadingReference
         operationJob = viewModelScope.launch {
             mutableState.value = try {
-                clearCache()
-                gateway.forget()
-                CertificateUiState.NoCertificate()
+                if (revokeCacheBeforeSelectionChange()) {
+                    gateway.forget()
+                    CertificateUiState.NoCertificate()
+                } else {
+                    previous.keptAfterRefusedChange()
+                }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: Exception) {
@@ -235,6 +262,8 @@ class CertificateViewModel(
         if (reference == null) {
             clearCache()
             CertificateUiState.NoCertificate()
+        } else if (unlockCache.requiresExplicitRestore) {
+            reference.toLockedState()
         } else {
             restore(reference)
         }
@@ -244,9 +273,17 @@ class CertificateViewModel(
         CertificateUiState.NoCertificate(CertificateUiError.STORAGE_FAILURE)
     }
 
-    private fun restoreFromCache(reference: StoredCertificateReference) {
+    fun restoreSavedUnlock() {
+        val locked = mutableState.value as? CertificateUiState.Locked ?: return
+        if (locked.revocationPending || restoreSuppressed || revocationJob?.isActive == true) return
+        restoreFromCache(locked.reference, explicit = true)
+    }
+
+    private fun restoreFromCache(reference: StoredCertificateReference, explicit: Boolean = false) {
         if (restoreSuppressed || revocationJob?.isActive == true) return
+        if (unlockCache.requiresExplicitRestore && !explicit) return
         cancelCurrentOperation()
+        if (explicit) mutableState.value = CertificateUiState.Unlocking(reference, reference.summary)
         operationJob = viewModelScope.launch {
             mutableState.value = restore(reference)
         }
@@ -308,6 +345,11 @@ class CertificateViewModel(
         error: CertificateUiError? = null,
     ) = CertificateUiState.Locked(this, summary, error)
 
+    // Like a lock whose revocation failed: the former selection stays, locked, with the error and no pending flag.
+    private fun StoredCertificateReference?.keptAfterRefusedChange(): CertificateUiState =
+        this?.toLockedState(CertificateUiError.STORAGE_FAILURE)
+            ?: CertificateUiState.NoCertificate(CertificateUiError.STORAGE_FAILURE)
+
     private fun StoredCertificateReference.toLockedState(
         summary: dev.junta.firmamobile.certificate.CertificateSummary?,
     ) = CertificateUiState.Locked(this, summary, null)
@@ -338,24 +380,7 @@ class CertificateViewModel(
         CertificateSelectionErrorCode.STORAGE_FAILURE -> CertificateUiError.STORAGE_FAILURE
     }
 
-    private fun CertificateErrorCode.toUiError() = when (this) {
-        CertificateErrorCode.FILE_TOO_LARGE -> CertificateUiError.FILE_TOO_LARGE
-        CertificateErrorCode.INVALID_PASSWORD_OR_FILE -> CertificateUiError.PASSWORD_INVALID_OR_FILE
-        CertificateErrorCode.TOO_MANY_ENTRIES,
-        CertificateErrorCode.CHAIN_TOO_LONG,
-        -> CertificateUiError.CERTIFICATE_NOT_USABLE
-        CertificateErrorCode.PRIVATE_KEY_MISSING -> CertificateUiError.PRIVATE_KEY_MISSING
-        CertificateErrorCode.MULTIPLE_PRIVATE_KEYS -> CertificateUiError.MULTIPLE_PRIVATE_KEYS
-        CertificateErrorCode.CERTIFICATE_NOT_X509 -> CertificateUiError.CERTIFICATE_NOT_X509
-        CertificateErrorCode.UNSUPPORTED_KEY_TYPE -> CertificateUiError.UNSUPPORTED_KEY_TYPE
-        CertificateErrorCode.CERTIFICATE_EXPIRED -> CertificateUiError.CERTIFICATE_EXPIRED
-        CertificateErrorCode.CERTIFICATE_NOT_YET_VALID -> CertificateUiError.CERTIFICATE_NOT_YET_VALID
-        CertificateErrorCode.KEY_USAGE_NOT_PERMITTED -> CertificateUiError.KEY_USAGE_NOT_PERMITTED
-        CertificateErrorCode.KEY_CERTIFICATE_MISMATCH -> CertificateUiError.KEY_CERTIFICATE_MISMATCH
-        CertificateErrorCode.NO_CERTIFICATE_SELECTED -> CertificateUiError.CERTIFICATE_NOT_SELECTED
-        CertificateErrorCode.DOCUMENT_UNAVAILABLE -> CertificateUiError.DOCUMENT_UNAVAILABLE
-        CertificateErrorCode.REFERENCE_STORAGE_FAILURE -> CertificateUiError.STORAGE_FAILURE
-    }
+    private fun CertificateErrorCode.toUiError() = CertificateErrorPresentation.forCode(this)
 
     class Factory(
         private val gateway: CertificateGateway,

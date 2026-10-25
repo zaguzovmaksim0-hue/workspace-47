@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="verification_journal_entry">Diari de comprovacions d’aquesta sessió</string>
+    <string name="verification_journal_title">Diari de comprovacions de la sessió</string>
+    <string name="verification_journal_scope">Només comprovacions CMS/PDF locals d’aquesta sessió; no és un historial complet de signatures. Les entrades desapareixen en recrear o tancar l’aplicació.</string>
+    <string name="verification_journal_integrity">Completada indica només integritat CMS/PDF local, no confiança, vigència o revocació del certificat, validació de segells de temps ni acceptació remota.</string>
+    <string name="verification_journal_copies">Esborrar afecta només aquest diari; no revoca les instantànies ni les còpies JSON ja exportades.</string>
+    <string name="verification_journal_provider_warning">Una fallada del proveïdor pot deixar un fitxer extern parcial. Cancel·lar no desfà els bytes ja escrits.</string>
+    <string name="verification_journal_empty">Encara no hi ha comprovacions en aquesta sessió.</string>
+    <string name="verification_journal_clear">Esborra el diari</string>
+    <string name="verification_journal_export">Exporta una instantània JSON</string>
+    <string name="verification_journal_close">Tanca</string>
+    <string name="verification_journal_kind_verify">Verificació CMS/PDF local</string>
+    <string name="verification_journal_completed">Completada (només integritat local)</string>
+    <string name="verification_journal_cancelled">Cancel·lada</string>
+    <string name="verification_journal_failed">Fallida</string>
+    <string name="verification_journal_row">Núm. %1$d · %2$s · %3$s · %4$s</string>
+    <string name="verification_journal_choosing">Tria una destinació JSON o cancel·la.</string>
+    <string name="verification_journal_writing">S’està exportant la instantània…</string>
+    <string name="verification_journal_exported">Instantània exportada.</string>
+    <string name="verification_journal_export_cancelled">Exportació cancel·lada.</string>
+    <string name="verification_journal_export_failed">No s’ha pogut exportar. Pot quedar un fitxer extern parcial.</string>
+</resources>

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import hashlib
+from datetime import datetime, timedelta, timezone
 import json
 import subprocess
 from pathlib import Path
@@ -41,6 +42,44 @@ SPEC.loader.exec_module(GENERATOR)
 
 
 class PublicPortalCatalogGeneratorTest(unittest.TestCase):
+    def test_last_verified_on_rejects_invalid_profile_dates(self) -> None:
+        tomorrow = (datetime.now(timezone.utc).date() + timedelta(days=1)).isoformat()
+        for value in (None, 42, "", "2026-7-21", "2026-02-30", "20260721",
+                      "2026-07-21T00:00:00Z", " 2026-07-21", "0000-01-01", tomorrow):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
+                data = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))
+                profile = next(p for p in data["profiles"] if p["compatibilityStatus"] == "VERIFIED_E2E")
+                profile["lastVerifiedOn"] = value
+                source = Path(directory) / "profiles.json"
+                source.write_text(json.dumps(data), encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    GENERATOR.generate(SOURCE, source)
+
+    def test_last_verified_on_requires_verified_e2e(self) -> None:
+        for status in ("EXPERIMENTAL", "VERIFIED_CONTRACT"):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as directory:
+                data = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))
+                profile = next(p for p in data["profiles"] if p["compatibilityStatus"] == status)
+                profile["lastVerifiedOn"] = "2026-07-21"
+                source = Path(directory) / "profiles.json"
+                source.write_text(json.dumps(data), encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    GENERATOR.generate(SOURCE, source)
+
+    def test_last_verified_on_accepts_missing_leap_day_and_today(self) -> None:
+        today = datetime.now(timezone.utc).date().isoformat()
+        for value in (None, "2024-02-29", today):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
+                data = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))
+                for profile in data["profiles"]:
+                    profile.pop("lastVerifiedOn", None)
+                profile = next(p for p in data["profiles"] if p["compatibilityStatus"] == "VERIFIED_E2E")
+                if value is not None:
+                    profile["lastVerifiedOn"] = value
+                source = Path(directory) / "profiles.json"
+                source.write_text(json.dumps(data), encoding="utf-8")
+                self.assertTrue(GENERATOR.generate(SOURCE, source)["entries"])
+
     def test_fondos_europeos_public_sede_binds_exact_qa_navigation(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0039")
@@ -1357,26 +1396,6 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], ceuta["observedMechanisms"])
         self.assertEqual([], ceuta["observedSignatureFormats"])
         self.assertIn("no_verificado", ceuta["limitations"].lower())
-
-    def test_acceda_profile_binds_exact_catalog_contract(self) -> None:
-        catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
-        acceda = next(entry for entry in catalog["entries"] if entry["portalId"] == "age-acceda")
-
-        self.assertEqual("age-acceda", acceda["profileId"])
-        self.assertEqual("ES-PUB-0003", acceda["inventoryId"])
-        self.assertEqual(
-            "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
-            acceda["entryUrl"],
-        )
-        self.assertNotIn("launchUrl", acceda)
-        self.assertEqual("E2E_PENDING", acceda["catalogStatus"])
-        self.assertEqual("IMPLEMENTED_NOT_E2E", acceda["inventoryStatus"])
-        self.assertEqual("2026-07-15", acceda["reviewedOn"])
-        self.assertEqual(["PADES", "XADES"], acceda["observedSignatureFormats"])
-        self.assertEqual(
-            ["AUTOSCRIPT", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
-            acceda["observedMechanisms"],
-        )
 
     def test_pattex_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import dev.junta.firmamobile.ui.theme.JuntaTeal
@@ -35,6 +36,8 @@ import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentProblem
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt
+import dev.junta.firmamobile.afirma.servlet.NativeBatchConsentReview
+import dev.junta.firmamobile.afirma.servlet.AfirmaResultSummary
 
 @Composable
 internal fun NativeAfirmaConsentDialog(
@@ -45,9 +48,11 @@ internal fun NativeAfirmaConsentDialog(
     onDismiss: () -> Unit,
 ) {
     var detailsExpanded by remember(prompt.token) { mutableStateOf(false) }
+    var previewIndex by remember(prompt.token) { mutableStateOf(prompt.pdfPreviews.keys.firstOrNull()) }
     val confirmArmed = rememberConsentArmed(prompt.token to prompt.canConfirm)
     val finished = prompt.phase == AfirmaConsentPhase.FINISHED
     val review = prompt.phase == AfirmaConsentPhase.REVIEW
+    val external = prompt.details.externalContext != null
     val cancelling = prompt.phase == AfirmaConsentPhase.CANCELLING
     AlertDialog(
         onDismissRequest = if (finished || review) onDismiss else onCancel,
@@ -83,6 +88,18 @@ internal fun NativeAfirmaConsentDialog(
                     "batch" -> R.string.native_multiphase_batch
                     else -> R.string.native_afirma_sign
                 }))
+                if (external) {
+                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = JuntaPanelShape) {
+                        Text(stringResource(R.string.external_afirma_warning), Modifier.padding(12.dp)
+                            .testTag("external-afirma-warning"))
+                    }
+                    if (prompt.details.operation == "selectcert") {
+                        Text(stringResource(R.string.external_afirma_certificate_only))
+                    } else {
+                        Text(stringResource(R.string.native_afirma_size, prompt.details.payloadBytes))
+                        prompt.details.payloadSha256?.let { Text(stringResource(R.string.native_afirma_digest, it)) }
+                    }
+                }
                 Text(stringResource(R.string.compatibility_operation_notice))
                 Surface(
                     shape = JuntaPanelShape,
@@ -90,10 +107,17 @@ internal fun NativeAfirmaConsentDialog(
                     border = BorderStroke(1.dp, JuntaHairline),
                 ) {
                     Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ConsentIdentityField(stringResource(R.string.native_consent_page_label), prompt.details.sourceOrigin)
+                        if (external) ConsentIdentityField(stringResource(R.string.external_afirma_caller_label),
+                            stringResource(R.string.external_afirma_caller_unknown))
+                        else prompt.details.sourceOrigin?.let {
+                            ConsentIdentityField(stringResource(R.string.native_consent_page_label), it)
+                        }
                         ConsentIdentityField(stringResource(R.string.native_consent_recipient_label), prompt.details.destination)
                         prompt.certificateOwner?.let {
                             ConsentIdentityField(stringResource(R.string.native_consent_certificate_label), it)
+                        }
+                        if (external) prompt.certificateEvidence?.let {
+                            Text(stringResource(R.string.external_afirma_certificate_evidence, it.bytes, it.sha256))
                         }
                     }
                 }
@@ -102,11 +126,33 @@ internal fun NativeAfirmaConsentDialog(
                         Modifier.testTag("native-afirma-exact-certificate"))
                 }
                 prompt.details.serviceDestinations.forEach { endpoint -> Text(stringResource(R.string.native_multiphase_service, endpoint)) }
-                prompt.details.batchItems?.let { Text(stringResource(R.string.native_multiphase_count, it)) }
+                prompt.details.batchItems?.let {
+                    Text(stringResource(R.string.native_multiphase_count, it), Modifier.testTag("native-batch-count"))
+                }
+                if (review) prompt.details.batchReview?.let { nativeBatchDocuments(it, prompt.token) }
                 if (prompt.details.delegatedSigning) Text(stringResource(R.string.native_multiphase_delegated))
-                prompt.resultSummary?.let { Text(it, Modifier.testTag("native-multiphase-results")) }
+                prompt.resultSummary?.let { summary ->
+                    val text = when (summary) {
+                        AfirmaResultSummary.ServiceResult -> stringResource(R.string.native_multiphase_result)
+                        is AfirmaResultSummary.Batch -> stringResource(R.string.native_multiphase_batch_result,
+                            summary.documents, summary.positive, summary.documents - summary.positive)
+                    }
+                    Text(text, Modifier.testTag("native-multiphase-results"))
+                }
                 if (finished) prompt.batchReceipt?.let { NativeBatchResultDetails(it) }
                 if (prompt.details.format?.startsWith("PDF") == true) Text(stringResource(R.string.native_afirma_pdf_prior_signatures))
+                if (review && (prompt.details.format?.contains("PAdES", ignoreCase = true) == true ||
+                        prompt.pdfPreviews.isNotEmpty())) {
+                    if (prompt.details.batchItems != null) {
+                        prompt.pdfPreviews.keys.forEach { index ->
+                            TextButton(onClick = { previewIndex = index }) {
+                                Text(stringResource(R.string.signing_batch_document_number, index + 1))
+                            }
+                        }
+                        previewIndex?.let { Text(stringResource(R.string.signing_batch_document_number, it + 1)) }
+                    }
+                    key(prompt.token, previewIndex) { pdfPreview(previewIndex?.let(prompt.pdfPreviews::get)) }
+                }
                 if (!prompt.details.delegatedSigning &&
                     (prompt.details.operation == "cosign" && prompt.details.format?.startsWith("CAdES") == true ||
                         prompt.details.operation == "batch" && prompt.details.format?.contains("CAdES co-sign") == true)) {
@@ -126,7 +172,7 @@ internal fun NativeAfirmaConsentDialog(
                     Text(stringResource(R.string.native_cades_provided_hash_batch, prompt.details.providedDigestItems),
                         Modifier.testTag("native-cades-provided-hash-batch"))
                 }
-                if (review) Text(stringResource(R.string.native_afirma_cancel_notice))
+                if (review && !external) Text(stringResource(R.string.native_afirma_cancel_notice))
                 if (!review && !finished) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth().testTag("native-afirma-progress"))
                 }
@@ -170,10 +216,16 @@ internal fun NativeAfirmaConsentDialog(
                         prompt.details.format?.let { Text(stringResource(R.string.native_afirma_format, it)) }
                         prompt.details.algorithm?.let { Text(stringResource(R.string.native_afirma_algorithm, it)) }
                         if (prompt.details.operation != "selectcert") {
-                            Text(stringResource(if (prompt.details.providedDigestAlgorithm == null) R.string.native_afirma_size
-                                else R.string.native_cades_provided_hash_size, prompt.details.payloadBytes))
-                            prompt.details.payloadSha256?.let { Text(stringResource(if (prompt.details.providedDigestAlgorithm == null)
-                                R.string.native_afirma_digest else R.string.native_cades_received_hash_fingerprint, it)) }
+                            Text(stringResource(when {
+                                prompt.details.batchItems != null -> R.string.native_batch_descriptor_size
+                                prompt.details.providedDigestAlgorithm == null -> R.string.native_afirma_size
+                                else -> R.string.native_cades_provided_hash_size
+                            }, prompt.details.payloadBytes))
+                            prompt.details.payloadSha256?.let { Text(stringResource(when {
+                                prompt.details.batchItems != null -> R.string.native_batch_descriptor_digest
+                                prompt.details.providedDigestAlgorithm == null -> R.string.native_afirma_digest
+                                else -> R.string.native_cades_received_hash_fingerprint
+                            }, it)) }
                         }
                     }
                 }
@@ -202,7 +254,7 @@ internal fun NativeAfirmaConsentDialog(
                 modifier = Modifier.testTag(if (cancelling) "native-afirma-stop-cancel" else "native-afirma-cancel"),
             ) {
                 Text(stringResource(when {
-                    review -> R.string.native_afirma_cancel_notify
+                    review && !external -> R.string.native_afirma_cancel_notify
                     cancelling -> R.string.native_afirma_cancel_stop
                     else -> R.string.cancel
                 }))
@@ -230,5 +282,44 @@ private fun ConsentPrimaryButton(
     Button(onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth().heightIn(min = 50.dp),
         shape = JuntaPanelShape) {
         Text(text, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+private fun nativeBatchDocuments(review: NativeBatchConsentReview, token: java.util.UUID) {
+    var expanded by remember(token) { mutableStateOf(false) }
+    val state = stringResource(
+        if (expanded) R.string.native_consent_expanded else R.string.native_consent_collapsed,
+    )
+    TextButton(
+        onClick = { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+            .testTag("native-batch-documents-toggle").semantics { stateDescription = state },
+    ) {
+        Text(stringResource(
+            if (expanded) R.string.signing_batch_documents_hide else R.string.signing_batch_documents_show,
+        ))
+    }
+    if (expanded) {
+        Column(Modifier.fillMaxWidth().testTag("native-batch-documents"),
+            verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.signing_batch_documents_explanation))
+            Text(stringResource(R.string.native_batch_evidence_notice))
+            review.documents.forEachIndexed { index, document ->
+                Text(stringResource(if (document.identifier.isEmpty()) R.string.signing_batch_document_number
+                    else R.string.signing_batch_document_identifier, index + 1, document.identifier),
+                    Modifier.testTag("native-batch-document-$index"))
+                val evidence = document.evidence
+                if (evidence == null) {
+                    Text(stringResource(R.string.native_batch_evidence_unavailable),
+                        Modifier.testTag("native-batch-document-unavailable-$index"))
+                } else {
+                    Text(stringResource(R.string.native_batch_document_bytes, evidence.bytes),
+                        Modifier.testTag("native-batch-document-bytes-$index"))
+                    Text(stringResource(R.string.native_batch_document_sha256, evidence.sha256),
+                        Modifier.testTag("native-batch-document-sha256-$index"))
+                }
+            }
+        }
     }
 }

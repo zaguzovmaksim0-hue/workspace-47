@@ -2,9 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".JuntaFirmaApplication"
@@ -36,6 +39,35 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:theme="@style/Theme.JuntaFirmaMobile.Overlay" />
+        <!-- Untrusted external afirma:// requests. Holds no logic: the URI waits in an in-process slot until
+             a resumed, focused MainActivity admits it and the user confirms it once (ADR 0006). Its own empty
+             task lets the launcher intent reuse or create the app task without dropping or duplicating it. -->
+        <activity
+            android:name=".afirma.external.ExternalAfirmaEntryActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="afirma" />
+            </intent-filter>
+        </activity>
+        <receiver
+            android:name=".certificate.CertificateReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

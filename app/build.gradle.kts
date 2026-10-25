@@ -110,6 +110,22 @@ fun parseRelayPins(value: String): List<String>? {
     return pins.takeIf { valid }
 }
 
+fun parseAndroidVersion(text: String): Pair<Int, String> {
+    val match = requireNotNull(
+        Regex(
+            """versionCode=([1-9][0-9]*)\r?\nversionName=((?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))(?:\r?\n)?""",
+        ).matchEntire(text),
+    ) { "Expected canonical versionCode/versionName lines in version.properties" }
+    val code = match.groupValues[1].toIntOrNull()
+    require(code != null && code in 13..2_100_000_000) {
+        "versionCode must be an integer from published floor 13 to 2100000000"
+    }
+    return code to match.groupValues[2]
+}
+
+val androidVersionFile = rootProject.layout.projectDirectory.file("version.properties")
+val androidVersion = parseAndroidVersion(providers.fileContents(androidVersionFile).asText.get())
+
 val siteProfileCatalogFile = rootProject.layout.projectDirectory.file("config/site_profiles_v1.json")
 val siteProfileCatalogJson = providers.fileContents(siteProfileCatalogFile).asText.get()
 
@@ -195,8 +211,8 @@ android {
         applicationId = "dev.junta.firmamobile"
         minSdk = 26
         targetSdk = 36
-        versionCode = 13
-        versionName = "0.2.11"
+        versionCode = androidVersion.first
+        versionName = androidVersion.second
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(

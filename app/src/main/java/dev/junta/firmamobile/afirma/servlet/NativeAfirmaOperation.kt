@@ -3,6 +3,8 @@ package dev.junta.firmamobile.afirma.servlet
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.signing.LocalSignatureResult
 import dev.junta.firmamobile.signing.SigningAlgorithm
+import dev.junta.firmamobile.signing.PdfPreviewSource
+import dev.junta.firmamobile.signing.AccedaPadesAdapter
 import java.net.URI
 import java.time.Clock
 import java.security.MessageDigest
@@ -26,11 +28,17 @@ internal class NativeAfirmaOperation(
     private val lock = Any()
     private var closed = false
     private val invoked = AtomicBoolean(false)
+    override val pdfPreviews: Map<Int, PdfPreviewSource?> = if (invocation.padesOptions != null) {
+        mapOf(0 to PdfPreviewSource(AccedaPadesAdapter.MAX_PDF_BYTES) {
+            synchronized(lock) { check(!closed && !invoked.get()); invocation.payloadCopy() }
+        })
+    } else emptyMap()
     override val details: AfirmaConsentDetails = run {
         val payload = invocation.payloadCopy()
         try {
             AfirmaConsentDetails(
                 sourceOrigin = invocation.sourceOrigin,
+                externalContext = invocation.externalContext,
                 destination = safeDestination(invocation.storageUrl),
                 operation = if (invocation.operation == AfirmaServletOperation.SELECT_CERTIFICATE) "selectcert" else invocation.operation.name.lowercase(),
                 format = if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
@@ -42,7 +50,8 @@ internal class NativeAfirmaOperation(
                 } else null,
                 algorithm = invocation.algorithm?.wireName(),
                 payloadBytes = payload.size,
-                payloadSha256 = if (invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
+                payloadSha256 = if (invocation.externalContext != null ||
+                    invocation.operation != AfirmaServletOperation.SELECT_CERTIFICATE) {
                     MessageDigest.getInstance("SHA-256").digest(payload).joinToString("") { "%02x".format(it) }
                 } else null,
                 requiresExactCertificate = invocation.requiresExactCertificate,
@@ -127,8 +136,11 @@ internal class NativeAfirmaOperation(
         } finally { close() }
     }
 
-    override fun close() = synchronized(lock) {
-        if (!closed) { closed = true; invocation.close() }
+    override fun close() {
+        synchronized(lock) {
+            if (!closed) { closed = true; invocation.close() }
+        }
+        pdfPreviews.values.forEach { it?.close() }
     }
 
     private class Snapshot(val operation: AfirmaServletOperation, val endpoint: URI, val sessionId: String,

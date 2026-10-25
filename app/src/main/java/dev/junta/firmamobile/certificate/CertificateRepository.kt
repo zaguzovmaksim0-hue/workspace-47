@@ -5,6 +5,7 @@ import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -104,38 +105,8 @@ class CertificateRepository(
     }
 
     private suspend fun selectOnIo(uri: Uri): CertificateSelectionResult {
-        if (!isValidContentUri(uri)) {
-            return CertificateSelectionResult.Failure(CertificateSelectionErrorCode.INVALID_URI)
-        }
-        val metadata = try {
-            documentAccess.queryMetadata(uri)
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (_: Exception) {
-            return CertificateSelectionResult.Failure(
-                CertificateSelectionErrorCode.DOCUMENT_UNAVAILABLE,
-            )
-        }
-        val normalizedMime = metadata.mimeType
-            ?.substringBefore(';')
-            ?.trim()
-            ?.lowercase(Locale.ROOT)
-        val rawDisplayName = metadata.displayName?.trim()
-        val hasPkcs12Extension = rawDisplayName?.let(::hasPkcs12Extension) == true
-        val supported = when (normalizedMime) {
-            MIME_PKCS12, MIME_X_PKCS12 -> true
-            MIME_OCTET_STREAM -> hasPkcs12Extension
-            else -> false
-        }
-        if (!supported) {
-            return CertificateSelectionResult.Failure(
-                CertificateSelectionErrorCode.UNSUPPORTED_FILE,
-            )
-        }
-        if (metadata.size != null && metadata.size > Pkcs12Loader.MAX_INPUT_BYTES) {
-            return CertificateSelectionResult.Failure(CertificateSelectionErrorCode.FILE_TOO_LARGE)
-        }
-
+        val inspected = documentAccess.inspectCertificate(uri)
+        if (inspected !is CertificateSelectionResult.Success) return inspected
         val previous = try {
             referenceStore.read()
         } catch (cancellation: CancellationException) {
@@ -143,60 +114,13 @@ class CertificateRepository(
         } catch (_: Exception) {
             return CertificateSelectionResult.Failure(CertificateSelectionErrorCode.STORAGE_FAILURE)
         }
-        try {
-            documentAccess.takePersistableReadPermission(uri)
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (_: Exception) {
-            return CertificateSelectionResult.Failure(
-                CertificateSelectionErrorCode.PERMISSION_DENIED,
-            )
-        }
-
-        val reference = StoredCertificateReference(
-            uri = uri,
-            displayName = CertificateDisplayNamePolicy.sanitize(rawDisplayName),
-            mimeType = checkNotNull(normalizedMime),
-            size = metadata.size?.takeIf { it >= 0 },
-            summary = null,
-        )
-        try {
-            referenceStore.write(reference)
-        } catch (cancellation: CancellationException) {
-            if (previous?.uri != uri) {
-                releaseQuietly(uri)
-            }
-            throw cancellation
-        } catch (_: Exception) {
-            if (previous?.uri != uri) {
-                releaseQuietly(uri)
-            }
-            return CertificateSelectionResult.Failure(CertificateSelectionErrorCode.STORAGE_FAILURE)
-        }
+        documentAccess.grantAndPersist(uri, referenceStore) { referenceStore.write(inspected.reference) }
+            ?.let { return CertificateSelectionResult.Failure(it) }
 
         if (previous != null && previous.uri != uri) {
-            releaseQuietly(previous.uri)
+            documentAccess.releaseQuietly(previous.uri)
         }
-        return CertificateSelectionResult.Success(reference)
-    }
-
-    private fun releaseQuietly(uri: Uri) {
-        try {
-            documentAccess.releasePersistableReadPermission(uri)
-        } catch (_: Exception) {
-            // Best effort; persisted app state never points at this URI after rollback/replace.
-        }
-    }
-
-    private fun isValidContentUri(uri: Uri): Boolean =
-        uri.scheme.equals("content", ignoreCase = true) &&
-            !uri.authority.isNullOrBlank() &&
-            uri.fragment == null &&
-            uri.toString().length <= MAX_URI_LENGTH
-
-    private fun hasPkcs12Extension(displayName: String): Boolean {
-        val normalized = displayName.lowercase(Locale.ROOT)
-        return normalized.endsWith(".p12") || normalized.endsWith(".pfx")
+        return inspected
     }
 
     companion object {
@@ -204,6 +128,99 @@ class CertificateRepository(
         const val MIME_X_PKCS12 = "application/x-pkcs12"
         const val MIME_PKCS12 = "application/pkcs12"
         const val MIME_OCTET_STREAM = "application/octet-stream"
-        private const val MAX_URI_LENGTH = 4096
     }
 }
+
+/** SAF checks shared by selection and the catalogue; a successful result holds no grant yet. */
+internal fun CertificateDocumentAccess.inspectCertificate(uri: Uri): CertificateSelectionResult {
+    val metadata = try {
+        if (isValidContentUri(uri)) queryMetadata(uri) else null
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Exception) {
+        return CertificateSelectionResult.Failure(CertificateSelectionErrorCode.DOCUMENT_UNAVAILABLE)
+    }
+    val normalizedMime = metadata?.mimeType
+        ?.substringBefore(';')
+        ?.trim()
+        ?.lowercase(Locale.ROOT)
+    val rawDisplayName = metadata?.displayName?.trim()
+    val supported = when (normalizedMime) {
+        CertificateRepository.MIME_PKCS12, CertificateRepository.MIME_X_PKCS12 -> true
+        CertificateRepository.MIME_OCTET_STREAM -> rawDisplayName?.let(::hasPkcs12Extension) == true
+        else -> false
+    }
+    val failure = when {
+        metadata == null -> CertificateSelectionErrorCode.INVALID_URI
+        !supported -> CertificateSelectionErrorCode.UNSUPPORTED_FILE
+        metadata.size != null && metadata.size > Pkcs12Loader.MAX_INPUT_BYTES ->
+            CertificateSelectionErrorCode.FILE_TOO_LARGE
+        else -> null
+    }
+    return failure?.let(CertificateSelectionResult::Failure) ?: CertificateSelectionResult.Success(
+        StoredCertificateReference(
+            uri = uri,
+            displayName = CertificateDisplayNamePolicy.sanitize(rawDisplayName),
+            mimeType = checkNotNull(normalizedMime),
+            size = metadata?.size?.takeIf { it >= 0 },
+            summary = null,
+        ),
+    )
+}
+
+/** Takes [uri]'s read grant, then runs [persist]. A failed or cancelled [persist] releases the grant unless a
+ * reference saved in [owners] still needs it. Returns the failure, or null once persisted. */
+internal suspend fun CertificateDocumentAccess.grantAndPersist(
+    uri: Uri,
+    owners: CertificateReferenceStore,
+    persist: suspend () -> Unit,
+): CertificateSelectionErrorCode? {
+    try {
+        takePersistableReadPermission(uri)
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Exception) {
+        return CertificateSelectionErrorCode.PERMISSION_DENIED
+    }
+    return try {
+        persist()
+        null
+    } catch (cancellation: CancellationException) {
+        withContext(NonCancellable) { releaseUnlessReferenced(uri, owners) }
+        throw cancellation
+    } catch (_: Exception) {
+        releaseUnlessReferenced(uri, owners)
+        CertificateSelectionErrorCode.STORAGE_FAILURE
+    }
+}
+
+// Another saved entry, or a write that committed before cancellation, may still need this grant.
+internal suspend fun CertificateDocumentAccess.releaseUnlessReferenced(uri: Uri, owners: CertificateReferenceStore) {
+    val referenced = try {
+        owners.references(uri)
+    } catch (_: Exception) {
+        true // Unknown ownership keeps the grant; a stale grant is non-secret state.
+    }
+    if (!referenced) releaseQuietly(uri)
+}
+
+internal fun CertificateDocumentAccess.releaseQuietly(uri: Uri) {
+    try {
+        releasePersistableReadPermission(uri)
+    } catch (_: Exception) {
+        // Best effort; persisted app state never points at this URI after rollback/replace.
+    }
+}
+
+private fun isValidContentUri(uri: Uri): Boolean =
+    uri.scheme.equals("content", ignoreCase = true) &&
+        !uri.authority.isNullOrBlank() &&
+        uri.fragment == null &&
+        uri.toString().length <= MAX_URI_LENGTH
+
+private fun hasPkcs12Extension(displayName: String): Boolean {
+    val normalized = displayName.lowercase(Locale.ROOT)
+    return normalized.endsWith(".p12") || normalized.endsWith(".pfx")
+}
+
+private const val MAX_URI_LENGTH = 4096
