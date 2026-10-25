@@ -85,8 +85,11 @@ class CertificateRepository(
         }
 
         val result = try {
-            documentAccess.open(reference.uri).use { input ->
-                loader.load(input, reference.size, password)
+            val selected = reference.selectedCertificateSha256
+            if (selected == null) {
+                documentAccess.open(reference.uri).use { input -> loader.load(input, reference.size, password) }
+            } else {
+                loadBoundEntry(reference, password, selected)
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
@@ -139,6 +142,26 @@ class CertificateRepository(
                 catalogStore?.selectEntry(entry.id, entry.revision) == true
             if (selected) CertificateSelectionResult.Success(checkNotNull(reference)) else super.activate(entry)
         }
+
+    /** Reopens exactly the entry chosen earlier; a file without it fails instead of picking another key. */
+    private suspend fun loadBoundEntry(
+        reference: StoredCertificateReference,
+        password: CharArray,
+        certificateSha256: String,
+    ): CertificateLoadResult {
+        val inspected = documentAccess.open(reference.uri).use { loader.inspect(it, reference.size, password) }
+        if (inspected is Pkcs12InspectionResult.Failure) return CertificateLoadResult.Failure(inspected.code)
+        return (inspected as Pkcs12InspectionResult.Success).selection.use { selection ->
+            val candidate = selection.candidates.singleOrNull { it.certificateSha256 == certificateSha256 }
+            if (candidate == null) {
+                CertificateLoadResult.Failure(CertificateErrorCode.NO_CERTIFICATE_SELECTED)
+            } else {
+                documentAccess.open(reference.uri).use {
+                    loader.loadSelected(it, reference.size, password, selection, candidate)
+                }
+            }
+        }
+    }
 
     private suspend fun selectOnIo(uri: Uri): CertificateSelectionResult {
         val inspected = documentAccess.inspectCertificate(uri)
