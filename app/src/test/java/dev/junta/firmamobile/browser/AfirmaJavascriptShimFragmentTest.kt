@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true), "https://sede.example.test",
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true), "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
         .first { it.isDirectory }
@@ -93,6 +93,29 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledJccmRegistroOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(jccmRegistro = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.JCCM_REGISTRO)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.JCCM_REGISTRO, reads)
+        assertFalse(output.contains("https://registrounicociudadanos.jccm.es"))
+        assertFalse(output.contains("/registrounicociudadanos/accesoclvd.do"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const jccmRegistroCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_jccm_registro.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const jccmRegistroCompatibilityEnabled = true;", "const jccmRegistroCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
     fun missingDuplicateExtraOrReorderedManifestFailsBeforeReading() {
         val fragments = AfirmaJavascriptShimFragment.entries
         for (invalid in listOf(fragments.dropLast(1), fragments + fragments.first(), fragments.reversed())) {
@@ -147,7 +170,9 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val actual = restoreJccmExtraction(legacy, assembled, flags.jccm)
+    val actual = restoreJccmExtraction(
+        legacy, restoreJccmRegistroExtraction(legacy, assembled, flags.jccmRegistro), flags.jccm,
+    )
     val enabled = flags.cantabria
     val constants = legacy.substring(
         legacy.indexOf("  const cantabriaOrigin"), legacy.indexOf("  const ugrLiteral ="),
@@ -178,4 +203,27 @@ private fun restoreJccmExtraction(legacy: String, actual: String, enabled: Boole
     return actual.replace(module, "")
         .replace("  let matchesJccmSign = () => false;\n", constants)
         .replace("    const isExactJccmCall = matchesJccmSign(args);\n", branch)
+}
+
+private fun restoreJccmRegistroExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(
+        legacy.indexOf("  const jccmRegistroOrigin ="), legacy.indexOf("  const sevillaAtseOrigin ="),
+    )
+    val start = legacy.indexOf("    const isJccmRegistroOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isJccmRegistroOrigin && !isExactJccmRegistroCall)", start))
+    val module = "\n  matchesJccmRegistroSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isJccmRegistroOrigin ? isExactJccmRegistroCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesJccmRegistroSign = () => null;\n",
+            constants,
+        )
+        .replace(
+            "    const isExactJccmRegistroCall = matchesJccmRegistroSign(args, successCallback, errorCallback);\n",
+            branch,
+        )
+        .replace("if (isExactJccmRegistroCall === false)", "if (isJccmRegistroOrigin && !isExactJccmRegistroCall)")
 }

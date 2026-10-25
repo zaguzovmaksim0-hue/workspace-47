@@ -15,6 +15,7 @@ internal enum class AfirmaJavascriptShimFragment {
     BOOTSTRAP,
     CANTABRIA,
     JCCM,
+    JCCM_REGISTRO,
     HANDLERS,
     INSTALLATION,
 }
@@ -36,6 +37,7 @@ internal object AfirmaJavascriptShimAssembler {
             when (fragment) {
                 AfirmaJavascriptShimFragment.CANTABRIA -> configuration.flags.cantabria
                 AfirmaJavascriptShimFragment.JCCM -> configuration.flags.jccm
+                AfirmaJavascriptShimFragment.JCCM_REGISTRO -> configuration.flags.jccmRegistro
                 else -> true
             }
         }

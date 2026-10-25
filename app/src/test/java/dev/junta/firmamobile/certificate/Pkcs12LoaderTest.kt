@@ -103,10 +103,21 @@ class Pkcs12LoaderTest {
     }
 
     @Test
-    fun rejectsEcPrivateKey() = runTest {
+    fun acceptsP256AndP384EcIdentities() = runTest {
+        for (curve in listOf("secp256r1", "secp384r1")) {
+            val result = load(TestCertificateFactory.ecIdentity(curve))
+            assertTrue(curve, result is CertificateLoadResult.Success)
+            val identity = (result as CertificateLoadResult.Success).identity
+            assertEquals("EC", identity.certificate.publicKey.algorithm)
+            assertEquals("Identidad EC", identity.summary.ownerName)
+        }
+    }
+
+    @Test
+    fun rejectsEcPrivateKeyOutsideTheAllowedCurves() = runTest {
         assertFailure(
             CertificateErrorCode.UNSUPPORTED_KEY_TYPE,
-            load(TestCertificateFactory.ecIdentity()),
+            load(TestCertificateFactory.ecIdentity("secp521r1")),
         )
     }
 

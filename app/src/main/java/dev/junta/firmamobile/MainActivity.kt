@@ -72,6 +72,8 @@ import dev.junta.firmamobile.signing.SigningUiState
 import dev.junta.firmamobile.smoke.CatalogSmokeController
 import dev.junta.firmamobile.smoke.CatalogSmokeHook
 import dev.junta.firmamobile.ui.AppRoot
+import dev.junta.firmamobile.ui.CertificateEntryChoiceActions
+import dev.junta.firmamobile.ui.LocalCertificateEntryChoice
 import dev.junta.firmamobile.ui.LocalSavedCertificates
 import dev.junta.firmamobile.ui.SavedCertificatesActions
 import dev.junta.firmamobile.ui.BrowserScreen
@@ -408,7 +410,14 @@ class MainActivity : ComponentActivity() {
                 },
                 onRemove = certificateViewModel::removeSavedCertificate,
             )
-            CompositionLocalProvider(LocalSavedCertificates provides savedCertificateActions) { JuntaFirmaTheme {
+            val entryChoiceActions = CertificateEntryChoiceActions(
+                onChoose = certificateViewModel::chooseCertificate,
+                onCancel = certificateViewModel::cancelCertificateChoice,
+            )
+            CompositionLocalProvider(
+                LocalSavedCertificates provides savedCertificateActions,
+                LocalCertificateEntryChoice provides entryChoiceActions,
+            ) { JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
                 val browserDestination = destination as? AppDestination.Browser
                 if (browserDestination != null) {

@@ -166,7 +166,7 @@ class Pkcs12AliasSelectionTest {
             TestCertificateFactory.notYetValid() to CertificateErrorCode.CERTIFICATE_NOT_YET_VALID,
             TestCertificateFactory.withoutDigitalSignatureUsage() to CertificateErrorCode.KEY_USAGE_NOT_PERMITTED,
             TestCertificateFactory.mismatchedKeyAndCertificate() to CertificateErrorCode.KEY_CERTIFICATE_MISMATCH,
-            TestCertificateFactory.ecIdentity() to CertificateErrorCode.UNSUPPORTED_KEY_TYPE,
+            TestCertificateFactory.ecIdentity("secp521r1") to CertificateErrorCode.UNSUPPORTED_KEY_TYPE,
             TestCertificateFactory.oversizedChain() to CertificateErrorCode.CHAIN_TOO_LONG,
         )
         for ((invalid, expected) in cases) {
