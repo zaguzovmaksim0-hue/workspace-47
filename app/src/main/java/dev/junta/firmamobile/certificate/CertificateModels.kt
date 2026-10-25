@@ -11,6 +11,13 @@ data class CertificateSummary(
     val validUntil: Instant,
 )
 
+/** One private-key entry of a multi-key file, for display and choice only. */
+data class CertificateEntryChoice(
+    val number: Int,
+    val summary: CertificateSummary,
+    val certificateSha256: String,
+)
+
 class UnlockedIdentity internal constructor(
     private val privateKey: PrivateKey,
     val certificate: X509Certificate,

@@ -39,6 +39,8 @@
     <string name="error_file_too_large">The file exceeds the maximum allowed size.</string>
     <string name="error_private_key_missing">The file does not contain a private signing key.</string>
     <string name="error_multiple_private_keys">The file contains more than one private identity.</string>
+    <string name="certificate_entry_choose_title">Choose the certificate in %1$s</string>
+    <string name="certificate_entry_cancel">Cancel choice</string>
     <string name="error_certificate_not_x509">The certificate is not in a supported X.509 format.</string>
     <string name="error_unsupported_key_type">Only RSA certificates are supported.</string>
     <string name="error_certificate_expired">The certificate has expired.</string>
