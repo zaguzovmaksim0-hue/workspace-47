@@ -16,6 +16,8 @@ internal data class CadesDetachedContract(
     val contentLiteral: String? = null,
     val safeDescription: String? = null,
     val revalidatePayloadOnComplete: Boolean = false,
+    // Exact size by default; portal validators may accept shorter bounded challenges.
+    val contentValidator: (ByteArray) -> Boolean = { it.size == contentBytes },
 )
 
 /** Owns prepare/complete sequencing; the existing codec and state retain CMS and buffer ownership. */
@@ -40,7 +42,7 @@ internal class ParameterizedCadesDetachedAdapter(
                 MiniAppletPayloadCodec.withDecoded(payload) { challenge, extraProperties ->
                     require(matchesPayload(challenge, extraProperties))
                     CadesDetachedCodec.createPreSign(
-                        challenge, contract.contentBytes, certificateChain, clock, provider,
+                        challenge, challenge.size, certificateChain, clock, provider,
                         signingAlgorithm = contract.algorithm,
                     )
                 }
@@ -82,7 +84,7 @@ internal class ParameterizedCadesDetachedAdapter(
                     CadesDetachedCodec.complete(
                         placeholderCms = ownedState.placeholderCms(),
                         detachedContent = ownedState.detachedContent(),
-                        expectedContentBytes = contract.contentBytes,
+                        expectedContentBytes = ownedState.detachedContent().size,
                         signingCertificateFingerprint = ownedState.signingCertificateFingerprint(),
                         signatureValue = signature,
                         provider = provider,
@@ -106,7 +108,7 @@ internal class ParameterizedCadesDetachedAdapter(
             algorithm == contract.algorithm
 
     private fun matchesPayload(data: ByteArray, extraProperties: String): Boolean =
-        data.size == contract.contentBytes &&
+        data.size <= contract.contentBytes && contract.contentValidator(data) &&
             (contract.contentLiteral == null || data.contentEquals(contract.contentLiteral.encodeToByteArray())) &&
             extraProperties == contract.extraProperties
 

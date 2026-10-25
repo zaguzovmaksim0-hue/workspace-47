@@ -66,7 +66,7 @@ class AfirmaJavascriptShimAssemblerTest {
                     val assembled = AfirmaJavascriptShimAssembler.readAndAssemble(config) { StringReader(template) }
                     val facade = AfirmaJavascriptShim.load(context, mode, qa, selection, config.staBatchOrigin)
                     assertArrayEquals(expected.toByteArray(Charsets.UTF_8), assembled.toByteArray(Charsets.UTF_8))
-                    assertCantabriaExtraction(expected, facade, selection.cantabria)
+                    assertPortalExtractions(expected, facade, selection)
                     assertFalse(assembled.contains("__JFM_"))
                 }
             }
