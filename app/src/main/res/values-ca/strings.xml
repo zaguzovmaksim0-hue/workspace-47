@@ -39,6 +39,8 @@
     <string name="error_file_too_large">El fitxer supera la mida màxima permesa.</string>
     <string name="error_private_key_missing">El fitxer no conté cap clau privada de signatura.</string>
     <string name="error_multiple_private_keys">El fitxer conté més d’una identitat privada.</string>
+    <string name="certificate_entry_choose_title">Tria el certificat de %1$s</string>
+    <string name="certificate_entry_cancel">Cancel·la l’elecció</string>
     <string name="error_certificate_not_x509">El certificat no té un format X.509 compatible.</string>
     <string name="error_unsupported_key_type">Només s’admeten certificats RSA o de corba el·líptica P-256/P-384.</string>
     <string name="error_certificate_expired">El certificat ha caducat.</string>

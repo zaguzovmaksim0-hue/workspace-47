@@ -443,6 +443,30 @@ class CertificateRepositoryTest {
     }
 
     @Test
+    fun choicesListEveryKeyAndOnlyASuccessfulChosenUnlockSavesTheBinding() = runTest {
+        val access = validAccess().apply { content = TestCertificateFactory.multiplePrivateEntries() }
+        val plain = StoredCertificateReference(
+            Uri.parse("content://documents/several"), "several.p12", "application/x-pkcs12", null, null,
+        )
+        val store = FakeReferenceStore().apply { reference = plain }
+        val repository = repository(access, store)
+
+        val choices = repository.certificateChoices(TestCertificateFactory.password())
+        assertEquals(listOf(1, 2), choices.map { it.number })
+        assertTrue(repository.certificateChoices("wrong".toCharArray()).isEmpty())
+
+        assertFailure(
+            CertificateErrorCode.INVALID_PASSWORD_OR_FILE,
+            repository.unlockChosen("wrong".toCharArray(), choices[1].certificateSha256),
+        )
+        assertEquals(plain, store.reference)
+
+        val loaded = repository.unlockChosen(TestCertificateFactory.password(), choices[1].certificateSha256)
+        assertEquals(choices[1].summary.ownerName, (loaded as CertificateLoadResult.Success).identity.summary.ownerName)
+        assertEquals(choices[1].certificateSha256, store.reference?.selectedCertificateSha256)
+    }
+
+    @Test
     fun forgetClearsReferenceEvenWhenPermissionReleaseFails() = runTest {
         val uri = Uri.parse("content://documents/forget")
         val access = validAccess().apply { releaseFailure = true }

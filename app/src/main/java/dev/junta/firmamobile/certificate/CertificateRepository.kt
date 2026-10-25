@@ -25,7 +25,7 @@ sealed interface CertificateSelectionResult {
     data class Failure(val code: CertificateSelectionErrorCode) : CertificateSelectionResult
 }
 
-interface CertificateGateway {
+interface CertificateGateway : CertificateEntryChooser {
     suspend fun currentReference(): StoredCertificateReference?
 
     suspend fun select(uri: Uri): CertificateSelectionResult
@@ -54,7 +54,8 @@ class CertificateRepository(
     private val referenceStore: CertificateReferenceStore,
     private val loader: Pkcs12Loader,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) : CertificateGateway {
+) : CertificateGateway,
+    CertificateEntryChooser by FileCertificateEntryChooser(documentAccess, referenceStore, loader, ioDispatcher) {
     private val catalogStore = referenceStore as? CertificateReferenceCatalogStore
     private val fileCatalog = catalogStore?.let { CertificateFileCatalog(documentAccess, it, ioDispatcher) }
 
@@ -66,46 +67,9 @@ class CertificateRepository(
         selectOnIo(uri)
     }
 
-    override suspend fun unlock(password: CharArray): CertificateLoadResult = withContext(ioDispatcher) {
-        val reference = try {
-            referenceStore.read()
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (_: Exception) {
-            return@withContext CertificateLoadResult.Failure(
-                CertificateErrorCode.REFERENCE_STORAGE_FAILURE,
-            )
-        } ?: return@withContext CertificateLoadResult.Failure(
-            CertificateErrorCode.NO_CERTIFICATE_SELECTED,
-        )
-        if (!isValidContentUri(reference.uri)) {
-            return@withContext CertificateLoadResult.Failure(
-                CertificateErrorCode.DOCUMENT_UNAVAILABLE,
-            )
-        }
+    override suspend fun unlock(password: CharArray): CertificateLoadResult =
+        referenceStore.unlockSaved(ioDispatcher, documentAccess, loader, password) { it }
 
-        val result = try {
-            documentAccess.loadReferenced(loader, reference, password)
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (_: Exception) {
-            CertificateLoadResult.Failure(CertificateErrorCode.DOCUMENT_UNAVAILABLE)
-        }
-
-        currentCoroutineContext().ensureActive()
-        if (result is CertificateLoadResult.Success) {
-            try {
-                referenceStore.write(reference.copy(summary = result.identity.summary))
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (_: Exception) {
-                return@withContext CertificateLoadResult.Failure(
-                    CertificateErrorCode.REFERENCE_STORAGE_FAILURE,
-                )
-            }
-        }
-        result
-    }
 
     override suspend fun forget() = withContext(ioDispatcher) {
         val reference = referenceStore.read()
@@ -265,7 +229,7 @@ internal fun CertificateDocumentAccess.releaseQuietly(uri: Uri) {
     }
 }
 
-private fun isValidContentUri(uri: Uri): Boolean =
+internal fun isValidContentUri(uri: Uri): Boolean =
     uri.scheme.equals("content", ignoreCase = true) &&
         !uri.authority.isNullOrBlank() &&
         uri.fragment == null &&
