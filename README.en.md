@@ -87,11 +87,30 @@ Manual Termux build notes are retained in [`docs/building-on-termux.md`](docs/bu
 
 ## Historical publication candidate
 
-Historical publication acceptance, source SHAs and dated verification counts
-are preserved in [the publication record](docs/oss-publication-status.md). They
-are historical evidence, not current-branch test results or proof that current
-portals work. Use exact-head CI and the scoped compatibility records for new
-changes. No historical evidence files are removed by this README refresh.
+The candidate was the **2026-08-12 source-publication baseline**, commit
+`6b5a2ab13497c6c623a223b4a951338f822ccba6` on
+`oss/publication-readiness-20260811`. The [publication record](docs/oss-publication-status.md)
+documents its completed gates and the repository becoming public with `main`
+as its default branch. It is not a pending publication candidate or approval
+for APK/AAB redistribution.
+
+Repository work since that baseline includes:
+
+- Firma Mobile naming, Spanish user documentation, region recovery and
+  certificate/session fixes, summarized in the [changelog](CHANGELOG.md).
+- Restoration of the approved Apache-2.0 license and attribution, plus a
+  [dated public-distribution review](docs/public-distribution-review-2026-10-05.md)
+  that separates source publication from binary-release requirements.
+- [Bounded offline PDF signature verification](docs/adr/0007-offline-pdf-signature-verification.md),
+  which checks supported signature integrity without validating certificate
+  trust, revocation or timestamps.
+- [GitHub Actions verification on each exact PR-head SHA](docs/agents/github-actions-verification.md),
+  replacing the historical Termux publication gate as the current broad
+  verification policy; emulator instrumentation is nightly or explicit opt-in.
+
+The August gate counts remain historical evidence, not current-branch test
+results or proof that current portals work. New changes require their own CI
+evidence and [scoped compatibility records](docs/compatibility/).
 
 ## Test-only credentials
 

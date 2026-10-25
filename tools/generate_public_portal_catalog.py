@@ -102,7 +102,9 @@ def _site_profiles(source: Path) -> list[tuple[str, str]]:
         parsed = json.loads(source.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
         raise ValueError(f"invalid site profile catalog: {source}") from error
-    if not isinstance(parsed, dict) or set(parsed) != SITE_PROFILE_ROOT_KEYS:
+    if not isinstance(parsed, dict) or set(parsed) not in (
+        SITE_PROFILE_ROOT_KEYS, SITE_PROFILE_ROOT_KEYS | {"reviewedOriginShares"},
+    ):
         raise ValueError("invalid site profile catalog root")
     if parsed.get("schemaVersion") != 1:
         raise ValueError("unsupported site profile schemaVersion")

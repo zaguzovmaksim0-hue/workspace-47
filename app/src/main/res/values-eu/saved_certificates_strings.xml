@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="saved_certificates_title">Gordetako ziurtagiriak</string>
+    <string name="saved_certificate_add">Gehitu ziurtagiria</string>
+    <string name="saved_certificate_use">Erabili</string>
+    <string name="saved_certificate_remove">Kendu</string>
+    <string name="saved_certificate_use_named">Erabili %1$s ziurtagiria</string>
+    <string name="saved_certificate_remove_named">Kendu %1$s ziurtagiria</string>
+    <string name="saved_certificate_error">Ezin izan da ziurtagirien zerrenda eguneratu</string>
+</resources>

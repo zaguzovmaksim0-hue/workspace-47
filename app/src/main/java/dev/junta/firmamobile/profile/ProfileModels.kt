@@ -165,10 +165,23 @@ data class SiteProfile(
     val lastVerifiedOn: LocalDate? = null,
 )
 
+enum class RedirectOriginRoles(val first: Boolean, val later: Boolean) {
+    NEITHER(false, false), LATER(false, true), FIRST(true, false), BOTH(true, true),
+}
+
+data class ReviewedOriginShare(
+    val origin: ExactOrigin,
+    val firstOwner: ProfileId,
+    val laterOwners: Set<ProfileId>,
+    val redirectRoles: Set<RedirectOriginRoles>,
+    val evidence: EvidenceReference,
+)
+
 data class SiteProfileCatalog(
     val schemaVersion: Int,
     val catalogVersion: Int,
     val profiles: List<SiteProfile>,
+    val reviewedOriginShares: List<ReviewedOriginShare> = emptyList(),
 )
 
 enum class BuildTrustPolicy { RELEASE, QA }

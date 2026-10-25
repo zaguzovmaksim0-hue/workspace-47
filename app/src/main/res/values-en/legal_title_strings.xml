@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="legal_title_project_license">Firma Mobile — Apache-2.0</string>
+    <string name="legal_title_project_notice">Firma Mobile — Notices and attributions</string>
+    <string name="legal_title_components">Index of components and terms</string>
+    <string name="legal_title_apache">Apache License 2.0 — common library text</string>
+    <string name="legal_title_bebas_neue">Bebas Neue — SIL Open Font License</string>
+    <string name="legal_title_liberation">Liberation Sans — SIL Open Font License</string>
+    <string name="legal_title_pdfbox_license">PDFBox Android — license and additional components</string>
+    <string name="legal_title_pdfbox_notice">PDFBox Android — attribution notices</string>
+    <string name="legal_title_slf4j">SLF4J — MIT license</string>
+    <string name="legal_title_stax2">Stax2 API — BSD 2-Clause license</string>
+    <string name="legal_title_google_sdk">Google components — SDK terms</string>
+</resources>
