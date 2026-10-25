@@ -1,5 +1,7 @@
 package dev.junta.firmamobile.certificate
 
+import dev.junta.firmamobile.signing.SoftwareEcCurvePolicy
+import dev.junta.firmamobile.signing.SoftwareEcSignatureAlgorithm
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.EOFException
@@ -188,28 +190,25 @@ class Pkcs12Loader internal constructor(
     private fun certificateError(
         privateKey: java.security.PrivateKey,
         certificate: X509Certificate,
-    ): CertificateErrorCode? = when {
-        !privateKey.algorithm.equals("RSA", ignoreCase = true) ||
-            !certificate.publicKey.algorithm.equals("RSA", ignoreCase = true) ->
-            CertificateErrorCode.UNSUPPORTED_KEY_TYPE
-        else -> {
-            val validityError = try {
-                certificate.checkValidity(Date.from(clock.instant()))
-                null
-            } catch (_: CertificateExpiredException) {
-                CertificateErrorCode.CERTIFICATE_EXPIRED
-            } catch (_: CertificateNotYetValidException) {
-                CertificateErrorCode.CERTIFICATE_NOT_YET_VALID
-            }
-            validityError ?: run {
-                val keyUsage = certificate.keyUsage
-                when {
-                    keyUsage != null && !keyUsage.getOrElse(0) { false } &&
-                        !keyUsage.getOrElse(1) { false } -> CertificateErrorCode.KEY_USAGE_NOT_PERMITTED
-                    !privateKeyMatchesCertificate(privateKey, certificate) ->
-                        CertificateErrorCode.KEY_CERTIFICATE_MISMATCH
-                    else -> null
-                }
+    ): CertificateErrorCode? {
+        val matchAlgorithm = keyMatchAlgorithm(privateKey, certificate)
+            ?: return CertificateErrorCode.UNSUPPORTED_KEY_TYPE
+        val validityError = try {
+            certificate.checkValidity(Date.from(clock.instant()))
+            null
+        } catch (_: CertificateExpiredException) {
+            CertificateErrorCode.CERTIFICATE_EXPIRED
+        } catch (_: CertificateNotYetValidException) {
+            CertificateErrorCode.CERTIFICATE_NOT_YET_VALID
+        }
+        return validityError ?: run {
+            val keyUsage = certificate.keyUsage
+            when {
+                keyUsage != null && !keyUsage.getOrElse(0) { false } &&
+                    !keyUsage.getOrElse(1) { false } -> CertificateErrorCode.KEY_USAGE_NOT_PERMITTED
+                !privateKeyMatchesCertificate(privateKey, certificate, matchAlgorithm) ->
+                    CertificateErrorCode.KEY_CERTIFICATE_MISMATCH
+                else -> null
             }
         }
     }
@@ -217,17 +216,18 @@ class Pkcs12Loader internal constructor(
     private fun privateKeyMatchesCertificate(
         privateKey: java.security.PrivateKey,
         certificate: X509Certificate,
+        algorithm: String,
     ): Boolean {
         val challenge = ByteArray(CHALLENGE_BYTES)
         var signatureBytes: ByteArray? = null
         return try {
             secureRandom.nextBytes(challenge)
-            val signer = Signature.getInstance("SHA256withRSA")
+            val signer = Signature.getInstance(algorithm)
             signer.initSign(privateKey, secureRandom)
             signer.update(challenge)
             signatureBytes = signer.sign()
 
-            val verifier = Signature.getInstance("SHA256withRSA")
+            val verifier = Signature.getInstance(algorithm)
             verifier.initVerify(certificate.publicKey)
             verifier.update(challenge)
             verifier.verify(signatureBytes)
@@ -399,3 +399,21 @@ private const val ASN1_LONG_LENGTH_FLAG = 0x80
 private const val ASN1_LENGTH_MASK = 0x7f
 private const val UNSIGNED_BYTE_MASK = 0xff
 private const val BITS_PER_BYTE = 8
+
+/** RSA, or an in-memory EC key on exactly P-256/P-384 checked with that curve's own digest. */
+private fun keyMatchAlgorithm(
+    privateKey: java.security.PrivateKey,
+    certificate: X509Certificate,
+): String? {
+    val keyAlgorithm = privateKey.algorithm.uppercase(java.util.Locale.ROOT)
+    if (keyAlgorithm != certificate.publicKey.algorithm.uppercase(java.util.Locale.ROOT)) return null
+    return when (keyAlgorithm) {
+        "RSA" -> "SHA256withRSA"
+        "EC" -> SoftwareEcSignatureAlgorithm.entries.firstOrNull { algorithm ->
+            val parameters = SoftwareEcCurvePolicy.parameters(algorithm)
+            SoftwareEcCurvePolicy.privateSpec(privateKey, parameters) != null &&
+                SoftwareEcCurvePolicy.publicSpec(certificate, parameters) != null
+        }?.jcaName
+        else -> null
+    }
+}

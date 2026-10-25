@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dev.junta.firmamobile.certificate.CertificateEntryChoice
 import dev.junta.firmamobile.certificate.CertificateErrorCode
 import dev.junta.firmamobile.certificate.CertificateGateway
 import dev.junta.firmamobile.certificate.CertificateLoadResult
@@ -25,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,6 +52,10 @@ class CertificateViewModel(
     private var operationJob: Job? = null
     private var revocationJob: Job? = null
     private var restoreSuppressed = false
+    private var pendingChoice: PendingChoice? = null
+    private var choiceExpiryJob: Job? = null
+
+    private class PendingChoice(val password: CharArray, val duration: Duration)
 
     private suspend fun clearCache() {
         revocationJob?.join()
@@ -153,17 +159,63 @@ class CertificateViewModel(
     fun unlock(password: CharArray, retention: CertificateUnlockRetention) =
         unlockForDuration(password, retention.duration)
 
-    private fun unlockForDuration(password: CharArray, duration: Duration) {
+    /** Unlocks [choice] with the password typed before the list was shown; that copy is then cleared. */
+    fun chooseCertificate(choice: CertificateEntryChoice) {
+        val pending = pendingChoice
         val locked = mutableState.value as? CertificateUiState.Locked
-        if (locked == null || locked.revocationPending || revocationJob?.isActive == true) {
+        if (pending == null || locked == null || choice !in locked.choices) {
+            cancelCertificateChoice()
+            return
+        }
+        pendingChoice = null
+        choiceExpiryJob?.cancel()
+        unlockForDuration(pending.password, pending.duration) { gateway.unlockChosen(it, choice.certificateSha256) }
+    }
+
+    fun cancelCertificateChoice() = dropPendingChoice()
+
+    private fun dropPendingChoice() {
+        choiceExpiryJob?.cancel()
+        choiceExpiryJob = null
+        pendingChoice?.password?.fill('\u0000')
+        pendingChoice = null
+        val locked = mutableState.value as? CertificateUiState.Locked
+        if (locked != null && locked.choices.isNotEmpty()) mutableState.value = locked.copy(choices = emptyList())
+    }
+
+    private suspend fun offerChoices(
+        password: CharArray,
+        duration: Duration,
+        locked: CertificateUiState.Locked,
+    ): Boolean {
+        val choices = gateway.certificateChoices(password)
+        currentCoroutineContext().ensureActive()
+        if (choices.size < 2) return false
+        pendingChoice = PendingChoice(password.copyOf(), duration)
+        mutableState.value = locked.copy(error = null, choices = choices)
+        choiceExpiryJob = viewModelScope.launch {
+            delay(CHOICE_LIFETIME_MILLIS)
+            dropPendingChoice()
+        }
+        return true
+    }
+
+    private fun unlockForDuration(
+        password: CharArray,
+        duration: Duration,
+        load: suspend (CharArray) -> CertificateLoadResult = gateway::unlock,
+    ) {
+        val current = mutableState.value as? CertificateUiState.Locked
+        if (current == null || current.revocationPending || revocationJob?.isActive == true) {
             password.fill('\u0000')
             return
         }
+        val locked = current.copy(choices = emptyList())
         cancelCurrentOperation()
         mutableState.value = CertificateUiState.Unlocking(locked.reference, locked.summary)
         val unlockJob = viewModelScope.launch {
             try {
-                when (val result = gateway.unlock(password)) {
+                when (val result = load(password)) {
                     is CertificateLoadResult.Success -> {
                         ensureActive()
                         val issuedAt = clock.instant()
@@ -189,7 +241,9 @@ class CertificateViewModel(
                     is CertificateLoadResult.Failure -> {
                         clearCache()
                         session.lock()
-                        mutableState.value = locked.copy(error = result.code.toUiError())
+                        val chooser = result.code == CertificateErrorCode.MULTIPLE_PRIVATE_KEYS &&
+                            offerChoices(password, duration, locked)
+                        if (!chooser) mutableState.value = locked.copy(error = result.code.toUiError())
                     }
                 }
             } catch (cancellation: CancellationException) {
@@ -257,6 +311,7 @@ class CertificateViewModel(
     }
 
     fun onAppBackgrounded() {
+        dropPendingChoice()
         // Native credential UI may temporarily cover the host. The controller
         // resumes only the same live/resumed host, with a bounded timeout.
         if (unlockCache.isAwaitingAuthentication) {
@@ -273,6 +328,7 @@ class CertificateViewModel(
     }
 
     fun onMemoryPressure() {
+        dropPendingChoice()
         cancelUnlockOperation()
         session.onMemoryPressure()
         val current = mutableState.value
@@ -377,6 +433,7 @@ class CertificateViewModel(
     private fun cancelCurrentOperation() {
         operationJob?.cancel()
         operationJob = null
+        dropPendingChoice()
     }
 
     private fun cancelUnlockOperation() {
@@ -446,5 +503,6 @@ class CertificateViewModel(
 
     private companion object {
         val MAX_PERSISTED_UNLOCK_DURATION: Duration = Duration.ofHours(24)
+        const val CHOICE_LIFETIME_MILLIS = 120_000L
     }
 }
