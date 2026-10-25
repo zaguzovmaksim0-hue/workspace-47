@@ -13,6 +13,7 @@ import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.CertificateUnlockRetention
 import dev.junta.firmamobile.certificate.CertificateUnlockCache
 import dev.junta.firmamobile.certificate.NoOpCertificateUnlockCache
+import dev.junta.firmamobile.certificate.StoredCertificateEntry
 import dev.junta.firmamobile.certificate.StoredCertificateReference
 import java.time.Clock
 import java.time.Duration
@@ -43,6 +44,9 @@ class CertificateViewModel(
     )
     val state: StateFlow<CertificateUiState> = mutableState.asStateFlow()
 
+    private val mutableSaved = MutableStateFlow(SavedCertificatesUiState())
+    val savedCertificates: StateFlow<SavedCertificatesUiState> = mutableSaved.asStateFlow()
+
     private var operationJob: Job? = null
     private var revocationJob: Job? = null
     private var restoreSuppressed = false
@@ -64,6 +68,7 @@ class CertificateViewModel(
         require(unlockDuration <= MAX_PERSISTED_UNLOCK_DURATION)
         operationJob = viewModelScope.launch {
             mutableState.value = loadReferenceAndRestore()
+            refreshSavedCertificates()
         }
     }
 
@@ -71,7 +76,12 @@ class CertificateViewModel(
         lock()
     }
 
-    fun onCertificateSelected(uri: Uri) {
+    fun onCertificateSelected(uri: Uri) = changeSelection { gateway.select(uri) }
+
+    /** Switches to a saved entry through the same verified revocation as choosing a new file. */
+    fun switchToSavedCertificate(entry: StoredCertificateEntry) = changeSelection { gateway.activate(entry) }
+
+    private fun changeSelection(change: suspend () -> CertificateSelectionResult) {
         cancelCurrentOperation()
         restoreSuppressed = true
         unlockCache.invalidate()
@@ -82,7 +92,7 @@ class CertificateViewModel(
             mutableState.value = try {
                 if (!revokeCacheBeforeSelectionChange()) {
                     previous.keptAfterRefusedChange()
-                } else when (val result = gateway.select(uri)) {
+                } else when (val result = change()) {
                     is CertificateSelectionResult.Success -> result.reference.toLockedState()
                     is CertificateSelectionResult.Failure -> {
                         val error = result.code.toUiError()
@@ -96,7 +106,46 @@ class CertificateViewModel(
                 previous?.toLockedState(CertificateUiError.STORAGE_FAILURE)
                     ?: CertificateUiState.NoCertificate(CertificateUiError.STORAGE_FAILURE)
             }
+            refreshSavedCertificates()
         }
+    }
+
+    fun addSavedCertificate(uri: Uri) = changeSavedCertificates {
+        when (val result = gateway.saveInactive(uri)) {
+            is CertificateSelectionResult.Success -> null
+            is CertificateSelectionResult.Failure -> result.code.toUiError()
+        }
+    }
+
+    fun removeSavedCertificate(entry: StoredCertificateEntry) = changeSavedCertificates {
+        gateway.removeInactive(entry)
+        null
+    }
+
+    // Saved entries never hold the active selection, so these edits leave the current operation running.
+    private fun changeSavedCertificates(change: suspend () -> CertificateUiError?) {
+        viewModelScope.launch {
+            val error = try {
+                change()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                CertificateUiError.STORAGE_FAILURE
+            }
+            refreshSavedCertificates(error)
+        }
+    }
+
+    private suspend fun refreshSavedCertificates(error: CertificateUiError? = null) {
+        val entries = try {
+            gateway.savedEntries()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            mutableSaved.value = mutableSaved.value.copy(error = CertificateUiError.STORAGE_FAILURE)
+            return
+        }
+        mutableSaved.value = SavedCertificatesUiState(entries, error)
     }
 
     fun unlock(password: CharArray) = unlockForDuration(password, unlockDuration)
@@ -254,6 +303,7 @@ class CertificateViewModel(
                 previous?.toLockedState(CertificateUiError.STORAGE_FAILURE)
                     ?: CertificateUiState.NoCertificate(CertificateUiError.STORAGE_FAILURE)
             }
+            refreshSavedCertificates()
         }
     }
 
