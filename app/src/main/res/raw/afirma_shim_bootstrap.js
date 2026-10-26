@@ -126,21 +126,9 @@
   const euskadiClientAuthTarget =
     "https://eidas2.izenpe.com/cert-authn-external-validation/authenticate";
   const euskadiFormContentType = "application/x-www-form-urlencoded";
-  const xuntaOrigin = "https://sede.xunta.gal";
-  const xuntaPage = "https://sede.xunta.gal/presenta/novo/PR004A_2025_1";
-  const xuntaSelectProps = "filters=nonexpired";
-  const xuntaFixedProperties = Object.freeze({
-    format: "PAdES",
-    signatureSubFilter: "ETSI.CAdES.detached",
-    serverUrl: "https://sede.xunta.gal/presenta/sinatura/SignatureService",
-    referencesDigestMethod: "http://www.w3.org/2000/09/xmldsig#sha1",
-    mimeType: "hash/sha256",
-    headless: "true"
-  });
-  const xuntaAllowedDynamicProperties = new Set([
-    "filters", "locale", "nif", "id", "codigoSeguridad",
-    "marcaFirmaCustom", "dataUser", "idBorrador"
-  ]);
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesXuntaSign = () => null;
+  let matchesXuntaSelection = () => false;
   const maxUriChars = 1048576;
   const maxArgumentLength = 1048576;
   const maxArguments = 32;

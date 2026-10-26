@@ -23,6 +23,7 @@ internal enum class AfirmaJavascriptShimFragment {
     FUERTEVENTURA,
     MINECO,
     CANARIAS,
+    XUNTA,
     HANDLERS,
     INSTALLATION,
 }
@@ -52,6 +53,7 @@ internal object AfirmaJavascriptShimAssembler {
                 AfirmaJavascriptShimFragment.FUERTEVENTURA -> configuration.flags.fuerteventura
                 AfirmaJavascriptShimFragment.MINECO -> configuration.flags.mineco
                 AfirmaJavascriptShimFragment.CANARIAS -> configuration.flags.canarias
+                AfirmaJavascriptShimFragment.XUNTA -> configuration.flags.xuntaGalicia
                 else -> true
             }
         }

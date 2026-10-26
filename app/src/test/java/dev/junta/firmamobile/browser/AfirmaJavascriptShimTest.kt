@@ -863,7 +863,12 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("args[2] === \"PAdEStri\""))
         assertTrue(enabled.contains("filters=nonexpired"))
         assertTrue(enabled.contains("isExactXuntaProperties"))
-        assertTrue(enabled.contains("if (isXuntaOrigin && !isExactXuntaCall)"))
+        assertTrue(enabled.contains("return isXuntaOrigin ? isExactXuntaCall : null;"))
+        assertTrue(enabled.contains("const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);"))
+        assertTrue(enabled.contains("if (isExactXuntaCall === false) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }"))
+        assertTrue(enabled.contains("else if (matchesXuntaSelection(a))"))
+        assertFalse(disabled.contains("https://sede.xunta.gal"))
+        assertFalse(disabled.contains("function isExactXuntaProperties"))
     }
 
     @Test

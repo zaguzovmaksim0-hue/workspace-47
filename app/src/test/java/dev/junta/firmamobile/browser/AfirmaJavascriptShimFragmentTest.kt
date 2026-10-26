@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -186,6 +186,29 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledXuntaOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(xuntaGalicia = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.XUNTA)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.XUNTA, reads)
+        assertFalse(output.contains("https://sede.xunta.gal"))
+        assertFalse(output.contains("function isExactXuntaProperties"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const xSel = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_xunta.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const xSel = true;", "const xSel = false;",
+        ), output)
+    }
+
+    @Test
     fun disabledCanariasOmitsOnlyItsBodyAndDoesNotReadItsResource() {
         val reads = mutableListOf<AfirmaJavascriptShimFragment>()
         val disabled = configuration.copy(flags = configuration.flags.copy(canarias = false))
@@ -332,7 +355,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val canariasRestored = restoreCanariasExtraction(legacy, assembled, flags.canarias)
+    val xuntaRestored = restoreXuntaExtraction(legacy, assembled, flags.xuntaGalicia)
+    val canariasRestored = restoreCanariasExtraction(legacy, xuntaRestored, flags.canarias)
     val minecoRestored = restoreMinecoExtraction(legacy, canariasRestored, flags.mineco)
     val fuerteventuraRestored = restoreFuerteventuraExtraction(legacy, minecoRestored, flags.fuerteventura)
     val granCanariaRestored = restoreGranCanariaExtraction(legacy, fuerteventuraRestored, flags.granCanaria)
@@ -548,4 +572,33 @@ private fun restoreCanariasExtraction(legacy: String, actual: String, enabled: B
         .replace("    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);\n", branch)
         .replace("if (isExactCanariasCall === false)", "if (isCanariasOrigin && !isExactCanariasCall)")
         .replace("  function isExactXuntaProperties", helpers + "  function isExactXuntaProperties")
+}
+
+private fun restoreXuntaExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(legacy.indexOf("  const xuntaOrigin ="), legacy.indexOf("  const maxUriChars ="))
+    val helpers = legacy.substring(
+        legacy.indexOf("  function isExactXuntaProperties"), legacy.indexOf("  function interceptCertificateSelection"),
+    )
+    val selectionStart = legacy.indexOf("xSel && location.href === xuntaPage")
+    val selection = legacy.substring(selectionStart, legacy.indexOf(") {\n      valid = true;", selectionStart))
+    val start = legacy.indexOf("    const isXuntaOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isXuntaOrigin && !isExactXuntaCall)", start))
+    fun indent(source: String): String = source.split('\n').dropLast(1)
+        .joinToString("") { if (it.isBlank()) "\n" else "  $it\n" }
+    val module = "\n  {\n" + indent(constants) + "\n" + indent(helpers) +
+        "    matchesXuntaSelection = a =>\n      " + selection + ";\n\n" +
+        "    matchesXuntaSign = (args, successCallback, errorCallback) => {\n" + indent(branch) +
+        "      return isXuntaOrigin ? isExactXuntaCall : null;\n    };\n  }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n" +
+                "  let matchesXuntaSign = () => null;\n  let matchesXuntaSelection = () => false;\n",
+            constants,
+        )
+        .replace("matchesXuntaSelection(a)", selection)
+        .replace("    const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactXuntaCall === false)", "if (isXuntaOrigin && !isExactXuntaCall)")
+        .replace("  function interceptCertificateSelection", helpers + "  function interceptCertificateSelection")
 }

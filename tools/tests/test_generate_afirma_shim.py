@@ -76,6 +76,21 @@ def canarias_extraction(legacy):
     return constants, helpers, branch, module
 
 
+def xunta_extraction(legacy):
+    constants = legacy[legacy.index("  const xuntaOrigin ="):legacy.index("  const maxUriChars =")]
+    helpers = legacy[legacy.index("  function isExactXuntaProperties"):legacy.index("  function interceptCertificateSelection")]
+    start = legacy.index("xSel && location.href === xuntaPage")
+    selection = legacy[start:legacy.index(") {\n      valid = true;", start)]
+    start = legacy.index("    const isXuntaOrigin =")
+    branch = legacy[start:legacy.index("    if (isXuntaOrigin && !isExactXuntaCall)", start)]
+    indent = lambda source: "".join("  " + line if line.strip() else line for line in source.splitlines(keepends=True))
+    module = ("\n  {\n" + indent(constants) + "\n" + indent(helpers) +
+              "    matchesXuntaSelection = a =>\n      " + selection + ";\n\n" +
+              "    matchesXuntaSign = (args, successCallback, errorCallback) => {\n" + indent(branch) +
+              "      return isXuntaOrigin ? isExactXuntaCall : null;\n    };\n  }\n")
+    return constants, helpers, selection, branch, module
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -86,7 +101,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(22)]
+        self.names = [f"{i:02d}-section.js" for i in range(23)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -162,6 +177,10 @@ class AfirmaShimGenerationTest(unittest.TestCase):
             helpers, "").replace(branch,
             "    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);\n").replace(
             "if (isCanariasOrigin && !isExactCanariasCall)", "if (isExactCanariasCall === false)")
+        constants, helpers, selection, branch, _ = xunta_extraction(legacy)
+        expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesXuntaSign = () => null;\n  let matchesXuntaSelection = () => false;\n').replace(helpers, "").replace(
+            selection, "matchesXuntaSelection(a)").replace(branch, '    const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);\n').replace(
+            "if (isXuntaOrigin && !isExactXuntaCall)", "if (isExactXuntaCall === false)")
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -301,7 +320,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         dispatch = '    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);\n'
         self.assertIn(dispatch, core)
         self.assertLess(core.index('const isExactFuerteventuraCall = matchesFuerteventuraSign'), core.index(dispatch))
-        self.assertLess(core.index(dispatch), core.index('const isXuntaOrigin ='))
+        self.assertLess(core.index(dispatch), core.index('const isExactXuntaCall = matchesXuntaSign'))
         self.assertIn('    if (isExactMinecoCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
 
     def test_canarias_is_packaged_with_challenge_exact_tuple_and_rejection_dispatch(self):
@@ -322,6 +341,26 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertLess(core.index(dispatch), core.index("const isExactGranCanariaCall = matchesGranCanariaSign"))
         self.assertIn('    if (isExactCanariasCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
 
+    def test_xunta_is_packaged_with_sign_selection_and_exact_properties(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_xunta.js"
+        self.assertTrue(module.is_file(), "Xunta needs one optional sign-and-selection body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, selection, _, expected = xunta_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        self.assertIn(selection, expected)
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn("https://sede.xunta.gal", core)
+        self.assertNotIn("function isExactXuntaProperties", core)
+        self.assertNotIn("const xuntaFixedProperties", core)
+        self.assertIn("else if (matchesXuntaSelection(a))", core)
+        dispatch = "    const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);\n"
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index("const isExactMinecoCall = matchesMinecoSign"), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index("const isExactCdtiCall = matchesCdtiSign"))
+        self.assertIn('    if (isExactXuntaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -330,7 +369,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 
