@@ -93,6 +93,12 @@ fun PortalCatalogScreen(
     onOpenPublicWeb: ((java.net.URI) -> Unit)? = null,
     onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)? = null,
 ) {
+    val visibleSections = remember(state.sections, verifiedOnly) {
+        if (!verifiedOnly) state.sections else state.sections.mapNotNull { section ->
+            val verified = section.items.filter { it.supportStatus == PortalSupportStatus.VERIFIED_E2E }
+            if (verified.isEmpty()) null else section.copy(items = verified)
+        }
+    }
     var regionPickerVisible by rememberSaveable { mutableStateOf(false) }
     var portalOptions by remember { mutableStateOf<PortalCatalogItem?>(null) }
     // Hoisted outside lazy items, deliberately not saved to a state bundle.
@@ -214,7 +220,7 @@ fun PortalCatalogScreen(
                     Text(stringResource(R.string.catalog_loading), color = JuntaMutedInk,
                         modifier = Modifier.testTag("catalog-loading"))
                 }
-            } else if (state.sections.isEmpty()) {
+            } else if (visibleSections.isEmpty()) {
                 item(key = "catalog-empty", contentType = "catalog-empty") {
                     CatalogNotice(
                         title = stringResource(R.string.catalog_empty_title),
@@ -222,7 +228,7 @@ fun PortalCatalogScreen(
                     )
                 }
             } else {
-                state.sections.forEach { section ->
+                visibleSections.forEach { section ->
                     val sectionKey = section.stableKey
                     val collapsible = state.searchText.isBlank() && section.kind.isRegional
                     val expanded = !collapsible || expandedRegionalSectionKey == sectionKey
