@@ -1,20 +1,6 @@
 
   installSevillaAtseClickHook();
 
-  function interceptUgrSetupCall(call, args) {
-    if (!ugrCompatibilityEnabled || window.location.origin !== ugrOrigin) {
-      return false;
-    }
-    if (call === "UGR_SET_FORCE_WS_MODE") {
-      return args.length === 1 && args[0] === true;
-    }
-    if (call === "UGR_CARGAR_APP_AFIRMA") {
-      return args.length === 0;
-    }
-    return call === "UGR_SET_SERVLETS" && args.length === 2 &&
-      args[0] === ugrStorageUrl && args[1] === ugrRetrieveUrl;
-  }
-
   function receiveMelillaBatchResult(result) {
     postQaPortalDiagnostic("RESULT_RECEIVED", result.requestId);
     const pending = clearPendingBatch(result.requestId);

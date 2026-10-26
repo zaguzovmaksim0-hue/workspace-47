@@ -328,16 +328,10 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isExactUgrLiteralCall =
-      ugrCompatibilityEnabled &&
-      window.location.origin === ugrOrigin &&
-      args[0] === ugrLiteral &&
-      args[1] === "SHA1withRSA" &&
-      args[2] === "CAdES" &&
-      args[3] === "";
+    const isExactUgrLiteralCall = matchesUgrSign(args);
     const isExactCantabriaCall = matchesCantabriaSign(args);
     const isExactJccmCall = matchesJccmSign(args);
-    const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 :
+    const dataB64 = isExactUgrLiteralCall ? encodeUgrLiteral() :
       isExactCantabriaCall && typeof globalThis.btoa === "function" ?
         globalThis.btoa(args[0]) :
       isExactXuntaCall && typeof globalThis.btoa === "function" ?
@@ -727,20 +721,6 @@
   }
 
   installSevillaAtseClickHook();
-
-  function interceptUgrSetupCall(call, args) {
-    if (!ugrCompatibilityEnabled || window.location.origin !== ugrOrigin) {
-      return false;
-    }
-    if (call === "UGR_SET_FORCE_WS_MODE") {
-      return args.length === 1 && args[0] === true;
-    }
-    if (call === "UGR_CARGAR_APP_AFIRMA") {
-      return args.length === 0;
-    }
-    return call === "UGR_SET_SERVLETS" && args.length === 2 &&
-      args[0] === ugrStorageUrl && args[1] === ugrRetrieveUrl;
-  }
 
   function receiveMelillaBatchResult(result) {
     postQaPortalDiagnostic("RESULT_RECEIVED", result.requestId);

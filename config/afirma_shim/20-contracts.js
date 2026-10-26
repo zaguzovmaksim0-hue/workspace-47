@@ -1,10 +1,9 @@
 
-  const ugrOrigin = "https://sede.ugr.es";
+  let matchesUgrSign = () => false;
+  let interceptUgrSetupCall = () => false;
+  let installUgrMethodHooks = () => {};
+  let encodeUgrLiteral = () => null;
   let matchesCantabriaSign = () => false;
-  const ugrLiteral = "Universidad de Granada";
-  const ugrLiteralBase64 = "VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ==";
-  const ugrStorageUrl = "https://sede.ugr.es/afirma-signature-storage/StorageService";
-  const ugrRetrieveUrl = "https://sede.ugr.es/afirma-signature-retriever/RetrieveService";
   let matchesJccmSign = () => false;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesJccmRegistroSign = () => null;

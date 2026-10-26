@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -182,6 +182,30 @@ class AfirmaJavascriptShimFragmentTest {
         val body = File(raw, "afirma_shim_policia.js").readText(Charsets.UTF_8)
         assertEquals(enabled.replace(body, "").replace(
             "const policiaCompatibilityEnabled = true;", "const policiaCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledUgrOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(ugr = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.UGR)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.UGR, reads)
+        assertFalse(output.contains("https://sede.ugr.es"))
+        assertFalse(output.contains("Universidad de Granada"))
+        assertFalse(output.contains("VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ=="))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const ugrCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_ugr.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const ugrCompatibilityEnabled = true;", "const ugrCompatibilityEnabled = false;",
         ), output)
     }
 
@@ -401,7 +425,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val sevillaRestored = restoreSevillaAtseExtraction(legacy, assembled, flags.sevillaAtse)
+    val ugrRestored = restoreUgrExtraction(legacy, assembled, flags.ugr)
+    val sevillaRestored = restoreSevillaAtseExtraction(legacy, ugrRestored, flags.sevillaAtse)
     val accedaRestored = restoreAccedaExtraction(legacy, sevillaRestored, flags.acceda)
     val xuntaRestored = restoreXuntaExtraction(legacy, accedaRestored, flags.xuntaGalicia)
     val canariasRestored = restoreCanariasExtraction(legacy, xuntaRestored, flags.canarias)
@@ -707,4 +732,35 @@ private fun restoreSevillaAtseExtraction(legacy: String, actual: String, enabled
         .replace("  installSevillaAtseClickHook();\n\n", page + click + setup)
         .replace("      installSevillaAtseMethodHooks(value);\n", hooks)
         .replace("  function interceptCertificateSelection", challenge + "  function interceptCertificateSelection")
+}
+
+private fun restoreUgrExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    fun section(start: String, end: String): String {
+        val at = legacy.indexOf(start)
+        return legacy.substring(at, legacy.indexOf(end, at + start.length))
+    }
+    fun indent(source: String): String = source.split('\n').dropLast(1)
+        .joinToString("") { if (it.isBlank()) "\n" else "  $it\n" }
+    val origin = section("  const ugrOrigin =", "  const cantabriaOrigin =")
+    val constants = section("  const ugrLiteral =", "  const jccmOrigin =")
+    val setup = section("  function interceptUgrSetupCall", "  function receiveMelillaBatchResult")
+    val hooks = section("      if (includeUgrSetup)", "    } catch (_) {")
+    val branch = section("    const isExactUgrLiteralCall =", "    const isExactCantabriaCall =")
+    val assignedSetup = setup.replace(
+        "  function interceptUgrSetupCall(call, args) {", "  interceptUgrSetupCall = (call, args) => {",
+    ).removeSuffix("  }\n\n") + "  };\n\n"
+    val module = "\n  {\n" + indent(origin + constants) + "\n" + indent(assignedSetup) +
+        "    installUgrMethodHooks = (value, includeUgrSetup) => {\n" + hooks + "    };\n\n" +
+        "    encodeUgrLiteral = () => ugrLiteralBase64;\n" +
+        "    matchesUgrSign = args => {\n      return " + branch.substringAfter("=\n").trimStart() + "    };\n  }\n"
+    val stub = "  let matchesUgrSign = () => false;\n  let interceptUgrSetupCall = () => false;\n" +
+        "  let installUgrMethodHooks = () => {};\n  let encodeUgrLiteral = () => null;\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "").replace(stub, origin)
+        .replace("  let matchesJccmSign = () => false;\n", constants + "  let matchesJccmSign = () => false;\n")
+        .replace("  function receiveMelillaBatchResult", setup + "  function receiveMelillaBatchResult")
+        .replace("      installUgrMethodHooks(value, includeUgrSetup);\n", hooks)
+        .replace("    const isExactUgrLiteralCall = matchesUgrSign(args);\n", branch)
+        .replace("isExactUgrLiteralCall ? encodeUgrLiteral() :", "isExactUgrLiteralCall ? ugrLiteralBase64 :")
 }

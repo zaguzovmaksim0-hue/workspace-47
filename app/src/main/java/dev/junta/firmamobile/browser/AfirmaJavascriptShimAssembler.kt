@@ -26,6 +26,7 @@ internal enum class AfirmaJavascriptShimFragment {
     XUNTA,
     ACCEDA,
     SEVILLA_ATSE,
+    UGR,
     HANDLERS,
     INSTALLATION,
 }
@@ -134,6 +135,7 @@ internal object AfirmaJavascriptShimAssembler {
             AfirmaJavascriptShimFragment.XUNTA to { it.xuntaGalicia },
             AfirmaJavascriptShimFragment.ACCEDA to { it.acceda },
             AfirmaJavascriptShimFragment.SEVILLA_ATSE to { it.sevillaAtse },
+            AfirmaJavascriptShimFragment.UGR to { it.ugr },
         )
 
     private const val HTTPS_PORT = 443

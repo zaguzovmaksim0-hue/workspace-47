@@ -61,6 +61,7 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.XUNTA -> R.raw.afirma_shim_xunta
             AfirmaJavascriptShimFragment.ACCEDA -> R.raw.afirma_shim_acceda
             AfirmaJavascriptShimFragment.SEVILLA_ATSE -> R.raw.afirma_shim_sevilla_atse
+            AfirmaJavascriptShimFragment.UGR -> R.raw.afirma_shim_ugr
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }

@@ -266,11 +266,7 @@
         installMethodHook(value, "signBatch", "CAIB_BATCH_SIGN");
       }
       installSevillaAtseMethodHooks(value);
-      if (includeUgrSetup) {
-        installMethodHook(value, "setForceWSMode", "UGR_SET_FORCE_WS_MODE");
-        installMethodHook(value, "cargarAppAfirma", "UGR_CARGAR_APP_AFIRMA");
-        installMethodHook(value, "setServlets", "UGR_SET_SERVLETS");
-      }
+      installUgrMethodHooks(value, includeUgrSetup);
     } catch (_) {
       // A hostile/non-configurable object remains untouched and signing stays fail-closed.
     }

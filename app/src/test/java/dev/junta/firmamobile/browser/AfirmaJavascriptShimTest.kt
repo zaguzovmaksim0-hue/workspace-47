@@ -315,6 +315,10 @@ class AfirmaJavascriptShimTest {
 
         assertTrue(script.contains("const ugrCompatibilityEnabled = true"))
         assertTrue(script.contains("https://sede.ugr.es"))
+        assertTrue(script.contains("window.location.origin === ugrOrigin"))
+        assertTrue(script.contains("window.location.origin !== ugrOrigin"))
+        assertTrue(script.contains("isExactUgrLiteralCall ? encodeUgrLiteral() :"))
+        assertTrue(script.contains("args[0] === ugrStorageUrl && args[1] === ugrRetrieveUrl"))
         assertTrue(script.contains("Universidad de Granada"))
         assertTrue(script.contains("VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ=="))
         assertTrue(script.contains("SHA1withRSA"))
@@ -608,7 +612,10 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("const ugrCompatibilityEnabled = false"))
         assertTrue(script.contains("!base64Pattern.test(args[0])"))
         assertTrue(script.contains("args[3] === null"))
-        assertTrue(script.contains("window.location.origin === ugrOrigin"))
+        assertTrue(script.contains("let matchesUgrSign = () => false;"))
+        assertTrue(script.contains("const isExactUgrLiteralCall = matchesUgrSign(args);"))
+        assertFalse(script.contains("https://sede.ugr.es"))
+        assertFalse(script.contains("Universidad de Granada"))
     }
 
     @Test

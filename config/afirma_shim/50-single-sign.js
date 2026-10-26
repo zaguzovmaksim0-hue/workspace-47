@@ -129,16 +129,10 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isExactUgrLiteralCall =
-      ugrCompatibilityEnabled &&
-      window.location.origin === ugrOrigin &&
-      args[0] === ugrLiteral &&
-      args[1] === "SHA1withRSA" &&
-      args[2] === "CAdES" &&
-      args[3] === "";
+    const isExactUgrLiteralCall = matchesUgrSign(args);
     const isExactCantabriaCall = matchesCantabriaSign(args);
     const isExactJccmCall = matchesJccmSign(args);
-    const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 :
+    const dataB64 = isExactUgrLiteralCall ? encodeUgrLiteral() :
       isExactCantabriaCall && typeof globalThis.btoa === "function" ?
         globalThis.btoa(args[0]) :
       isExactXuntaCall && typeof globalThis.btoa === "function" ?

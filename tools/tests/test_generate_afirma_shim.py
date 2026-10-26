@@ -135,6 +135,29 @@ def sevilla_extraction(legacy):
                 sign=sign, module=module, stub=stub, dispatch=dispatch)
 
 
+def ugr_extraction(legacy):
+    def section(start, end):
+        at = legacy.index(start)
+        return legacy[at:legacy.index(end, at + len(start))]
+    indent = lambda source: "".join("  " + line if line.strip() else line for line in source.splitlines(keepends=True))
+    origin = section("  const ugrOrigin =", "  const cantabriaOrigin =")
+    constants = section("  const ugrLiteral =", "  const jccmOrigin =")
+    setup = section("  function interceptUgrSetupCall", "  function receiveMelillaBatchResult")
+    hooks = section("      if (includeUgrSetup)", "    } catch (_) {")
+    branch = section("    const isExactUgrLiteralCall =", "    const isExactCantabriaCall =")
+    assert setup.endswith("  }\n\n")
+    assigned_setup = setup.replace("  function interceptUgrSetupCall(call, args) {", "  interceptUgrSetupCall = (call, args) => {", 1)[:-5] + "  };\n\n"
+    expression = branch.split("=\n", 1)[1].lstrip()
+    module = ("\n  {\n" + indent(origin + constants) + "\n" + indent(assigned_setup) +
+        "    installUgrMethodHooks = (value, includeUgrSetup) => {\n" + hooks + "    };\n\n" +
+        "    encodeUgrLiteral = () => ugrLiteralBase64;\n" +
+        "    matchesUgrSign = args => {\n      return " + expression + "    };\n  }\n")
+    stub = ("  let matchesUgrSign = () => false;\n  let interceptUgrSetupCall = () => false;\n" +
+        "  let installUgrMethodHooks = () => {};\n  let encodeUgrLiteral = () => null;\n")
+    return dict(origin=origin, constants=constants, setup=setup, hooks=hooks, branch=branch,
+                module=module, stub=stub)
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -145,7 +168,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(25)]
+        self.names = [f"{i:02d}-section.js" for i in range(26)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -234,6 +257,12 @@ class AfirmaShimGenerationTest(unittest.TestCase):
             sevilla["challenge"], "").replace(sevilla["sign"], sevilla["dispatch"]).replace(
             sevilla["group"], "  installSevillaAtseClickHook();\n\n").replace(
             sevilla["hooks"], "      installSevillaAtseMethodHooks(value);\n")
+        ugr = ugr_extraction(legacy)
+        expected_core = expected_core.replace(ugr["origin"], ugr["stub"]).replace(
+            ugr["constants"], "").replace(ugr["setup"], "").replace(
+            ugr["hooks"], "      installUgrMethodHooks(value, includeUgrSetup);\n").replace(
+            ugr["branch"], "    const isExactUgrLiteralCall = matchesUgrSign(args);\n").replace(
+            "isExactUgrLiteralCall ? ugrLiteralBase64 :", "isExactUgrLiteralCall ? encodeUgrLiteral() :")
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -446,10 +475,34 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertNotIn("SEVILLA_SET_SERVLETS", core)
         self.assertIn(expected["dispatch"], core)
         self.assertLess(core.index(expected["dispatch"]), core.index("const isExactAccedaCall = matchesAccedaSign"))
-        self.assertLess(core.index("  installSevillaAtseClickHook();"), core.index("  function interceptUgrSetupCall"))
-        self.assertLess(core.index("      installSevillaAtseMethodHooks(value);"), core.index("      if (includeUgrSetup)"))
+        self.assertLess(core.index("  installSevillaAtseClickHook();"), core.index("  function receiveMelillaBatchResult"))
+        self.assertLess(core.index("      installSevillaAtseMethodHooks(value);"), core.index("      installUgrMethodHooks(value, includeUgrSetup);"))
         self.assertIn("sevillaAtseSetupState === 3", path.read_text())
         self.assertIn("return isSevillaAtseOrigin ? isExactSevillaAtseCall : null;", path.read_text())
+
+    def test_ugr_literal_encoding_setup_and_hooks_share_one_optional_fragment(self):
+        raw = ROOT / "app/src/main/res/raw"
+        path = raw / "afirma_shim_ugr.js"
+        self.assertTrue(path.is_file(), "UGR needs one optional literal-and-setup fragment")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        expected = ugr_extraction(legacy)
+        self.assertEqual(expected["module"], path.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn("https://sede.ugr.es", core)
+        self.assertNotIn("Universidad de Granada", core)
+        self.assertNotIn("VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ==", core)
+        self.assertNotIn("UGR_SET_SERVLETS", core)
+        dispatch = "    const isExactUgrLiteralCall = matchesUgrSign(args);\n"
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index("const isExactBadajozCall ="), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index("const isExactCantabriaCall = matchesCantabriaSign"))
+        self.assertIn("isExactUgrLiteralCall ? encodeUgrLiteral() :", core)
+        self.assertIn("const hasValidUgrDataEncoding = base64Pattern.test(dataB64)", core)
+        self.assertLess(core.index("      installSevillaAtseMethodHooks(value);"),
+                        core.index("      installUgrMethodHooks(value, includeUgrSetup);"))
+        self.assertIn("window.location.origin !== ugrOrigin", path.read_text())
+        self.assertIn("return ugrCompatibilityEnabled &&", path.read_text())
 
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
@@ -459,7 +512,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 
