@@ -34,7 +34,10 @@ internal fun certificateEntryChooser(state: CertificateUiState.Locked) {
     val actions = LocalCertificateEntryChoice.current
     Column(modifier = Modifier.fillMaxWidth().testTag("certificate-entry-chooser")) {
         Text(
-            stringResource(R.string.certificate_entry_choose_title, state.reference.displayName),
+            stringResource(
+                R.string.certificate_entry_choose_title,
+                certificateDisplayNameText(state.reference.displayName),
+            ),
             color = JuntaInk,
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.semantics { heading() },
@@ -48,8 +51,8 @@ internal fun certificateEntryChooser(state: CertificateUiState.Locked) {
                 modifier = Modifier.fillMaxWidth().testTag("certificate-entry-${choice.number}"),
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(summary.ownerName, style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.certificate_issuer, summary.issuerName))
+                    Text(certificateDisplayNameText(summary.ownerName), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.certificate_issuer, certificateDisplayNameText(summary.issuerName)))
                     Text(
                         stringResource(
                             R.string.certificate_validity,

@@ -40,7 +40,11 @@ internal fun InteractiveClientAuthDialog(
                 Text(stringResource(R.string.interactive_tls_page, prompt.pageOrigin))
                 Text(stringResource(R.string.interactive_tls_operation))
                 Text(stringResource(R.string.compatibility_operation_notice))
-                prompt.certificateOwner?.let { Text(stringResource(R.string.interactive_tls_certificate, it)) }
+                prompt.certificateOwner?.let {
+                    Text(stringResource(
+                        R.string.interactive_tls_certificate, certificateDisplayNameText(it),
+                    ))
+                }
                 when (prompt.problem) {
                     InteractiveClientAuthProblem.NO_CERTIFICATE -> Text(stringResource(R.string.interactive_tls_unlock_copy))
                     InteractiveClientAuthProblem.INCOMPATIBLE_CERTIFICATE -> Text(stringResource(R.string.interactive_tls_incompatible))

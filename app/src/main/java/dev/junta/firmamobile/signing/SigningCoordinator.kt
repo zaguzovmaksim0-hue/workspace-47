@@ -41,6 +41,7 @@ sealed interface SigningUiState {
         val requiresLegacySha1Warning: Boolean,
         val batchDocumentReview: BatchSigningDocumentReview? = null,
         val documentConsent: DocumentConsentEvidence = DocumentConsentEvidence.unavailable(),
+        val operationDescription: SigningOperationDescription = SigningOperationDescription.Literal(safeDescription),
     ) : SigningUiState
 
     data class Signing(val requestId: UUID) : SigningUiState

@@ -92,7 +92,8 @@ class NativeCadesCoSignOperationTest {
             AfirmaDeliveryResult.ACKNOWLEDGED
         },f.clock)
         try {
-            assertTrue(operation.details.format!!.contains("CAdES co-sign"))
+            assertEquals(NativeMultiPhaseFormat.LOCAL_CADES_COSIGN_BATCH, operation.details.multiPhaseFormat)
+            assertEquals("Batch", operation.details.format)
             assertFalse(operation.details.delegatedSigning)
             assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED,operation.execute(f.second.identity){permissions++})
             assertEquals(1,stores);assertEquals(3,operation.batchReceipt!!.entries.size)
