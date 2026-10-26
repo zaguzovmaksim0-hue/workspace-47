@@ -590,21 +590,7 @@ object SiteProfileCatalogParser {
             require((p.redirectOrigins intersect p.trustedBrowseOrigins).isEmpty())
             val clientAuthPolicy = p.clientAuthPolicy
             val clientAuthOrigins = clientAuthPolicy?.requestOrigins ?: emptySet()
-            val sameOriginDirectClientAuth =
-                p.profileId.value in setOf(
-                    SANIDAD_PROFILE_ID,
-                    NAVARRA_PROFILE_ID,
-                    MENORCA_PROFILE_ID,
-                    PATTEX_PROFILE_ID,
-                    SORIA_PROFILE_ID,
-                ) &&
-                    clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
-                    clientAuthPolicy.requestPort == HTTPS_PORT &&
-                    clientAuthOrigins.size == 1 &&
-                    clientAuthPolicy.sourceUrls.all { it.origin() in clientAuthOrigins } &&
-                    (clientAuthPolicy.fixedQueryParameters.isNotEmpty() ||
-                        clientAuthPolicy.requiredEphemeralQueryParameters.isNotEmpty() ||
-                        p.profileId.value == PATTEX_PROFILE_ID)
+            val sameOriginDirectClientAuth = SameOriginDirectClientAuthContract.allowsSameOriginDirect(p)
             val sameOriginRedirectClientAuth = LaRiojaClientAuthContract.allowsSameOriginRedirect(p)
             if (clientAuthPolicy?.requestPort == HTTPS_PORT) {
                 require(
