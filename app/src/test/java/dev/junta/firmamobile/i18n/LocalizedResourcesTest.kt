@@ -39,7 +39,10 @@ class LocalizedResourcesTest {
         for (language in translatedLanguages) {
             val context = localizedContext(language)
             assertEquals(language, context.resources.configuration.locales[0].language)
-            for (id in listOf(R.string.signing_document_metadata_unavailable, R.string.certificate_expiration_soon_title)) {
+            for (id in listOf(
+                R.string.signing_document_metadata_unavailable, R.string.certificate_expiration_soon_title,
+                R.string.error_catalog_full, R.string.error_already_saved,
+            )) {
                 val translated = context.getString(id)
                 assertTrue("Empty resource for $language", translated.isNotBlank())
                 assertNotEquals("Spanish fallback for $language", spanish.getString(id), translated)

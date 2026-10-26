@@ -470,6 +470,8 @@ private fun CertificateUiError.message(): String = stringResource(
         CertificateUiError.UNSUPPORTED_FILE -> R.string.error_unsupported_file
         CertificateUiError.DOCUMENT_UNAVAILABLE -> R.string.error_document_unavailable
         CertificateUiError.PERMISSION_DENIED -> R.string.error_permission_denied
+        CertificateUiError.CATALOG_FULL -> R.string.error_catalog_full
+        CertificateUiError.ALREADY_SAVED -> R.string.error_already_saved
         CertificateUiError.STORAGE_FAILURE -> R.string.error_storage
         CertificateUiError.CERTIFICATE_NOT_SELECTED -> R.string.error_not_selected
         CertificateUiError.CERTIFICATE_NOT_USABLE -> R.string.error_not_usable

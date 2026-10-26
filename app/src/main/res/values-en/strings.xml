@@ -346,4 +346,6 @@
     <string name="certificate_auth_help">Saving and restoring the unlock requires device confirmation. If you cancel when saving, only the in-memory session is kept.</string>
     <string name="certificate_auth_unsupported">On Android 8–10 the unlock is not saved across app restarts. Enter the certificate password.</string>
     <string name="certificate_restore_saved">Restore saved unlock</string>
+    <string name="error_catalog_full">The certificate catalogue is full. Remove a saved certificate to add another.</string>
+    <string name="error_already_saved">This document is already saved in the catalogue.</string>
 </resources>
