@@ -8,8 +8,7 @@
 
   function notifyNativeDocumentReady() {
     const isStaBatchDocument = isMelillaBatchDocument();
-    const isLugoBatchDocument = lugoBatchCompatibilityEnabled &&
-      window.location.origin === lugoOrigin;
+    const isLugoBatchDocument = matchesLugoBatchDocument();
     const isCaibBatchDocument = caibRequestToken() !== null;
     if (!functionalSigningEnabled || (!isStaBatchDocument && !isLugoBatchDocument && !isCaibBatchDocument) ||
         !bridge || typeof bridge.postMessage !== "function" ||
@@ -226,10 +225,7 @@
         installMethodHook(value, "selectCertificate", "SELECT_CERTIFICATE");
       }
       installMelillaBatchMethodHooks(value, includeMelillaBatch);
-      if (includeLugoBatch) {
-        installMethodHook(value, "cargarAppAfirma", "LUGO_CARGAR_APP_AFIRMA");
-        installMethodHook(value, "signBatch", "LUGO_BATCH_SIGN");
-      }
+      installLugoBatchMethodHooks(value, includeLugoBatch);
       if (includeCaibBatch) {
         installMethodHook(value, "setForceWSMode", "CAIB_SET_FORCE_WS_MODE");
         installMethodHook(value, "cargarAppAfirma", "CAIB_CARGAR_APP_AFIRMA");

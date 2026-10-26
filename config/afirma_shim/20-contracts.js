@@ -27,9 +27,10 @@
   // null: not applicable; false: reject; true: exact tuple.
   let matchesMinecoSign = () => null;
   const staBatchOrigin = __JFM_STA_BATCH_ORIGIN__;
-  const lugoOrigin = "https://sede.deputacionlugo.org";
-  const lugoClientBase = "https://sede.deputacionlugo.org/opencms";
-  const lugoExtraProperties = "mode=explicit\nprecalculatedHashAlgorithm=SHA-256\n";
+  let interceptLugoSetupCall = () => false;
+  let interceptLugoBatchSign = () => false;
+  let matchesLugoBatchDocument = () => false;
+  let installLugoBatchMethodHooks = () => {};
   const caibOrigin = "https://intranet.caib.es";
   const caibClientBase = "https://intranet.caib.es/portafibback";
   const caibSignerPathPattern = /^\/portafibback\/public\/signmodule\/requestPlugin\/([A-Za-z0-9_-]{28})\/-1\/index$/;

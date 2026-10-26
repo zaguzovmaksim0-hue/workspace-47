@@ -33,7 +33,8 @@ RESOURCE_RANGES = (
     ("afirma_shim_badajoz.js", 17, 18),
     ("afirma_shim_handlers.js", 18, 21),
     ("afirma_shim_melilla_batch.js", 21, 22),
-    ("afirma_shim_batch_results.js", 22, 25),
+    ("afirma_shim_lugo_batch.js", 22, 23),
+    ("afirma_shim_batch_results.js", 23, 25),
     ("afirma_shim_installation.js", 25, 28),
 )
 
