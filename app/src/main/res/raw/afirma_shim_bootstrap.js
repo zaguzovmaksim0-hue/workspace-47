@@ -90,11 +90,10 @@
   let interceptLugoBatchSign = () => false;
   let matchesLugoBatchDocument = () => false;
   let installLugoBatchMethodHooks = () => {};
-  const caibOrigin = "https://intranet.caib.es";
-  const caibClientBase = "https://intranet.caib.es/portafibback";
-  const caibSignerPathPattern = /^\/portafibback\/public\/signmodule\/requestPlugin\/([A-Za-z0-9_-]{28})\/-1\/index$/;
-  const caibSignatureIdPattern = /^[A-Za-z0-9_-]{40}$/;
-  const caibBatchBase64Pattern = /^[A-Za-z0-9_-]+={0,2}$/;
+  let caibRequestToken = () => null;
+  let interceptCaibSetupCall = () => false;
+  let interceptCaibBatchSign = () => false;
+  let installCaibBatchMethodHooks = () => {};
   const iPage = "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";

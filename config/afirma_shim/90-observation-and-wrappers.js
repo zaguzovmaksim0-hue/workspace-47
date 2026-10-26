@@ -226,12 +226,7 @@
       }
       installMelillaBatchMethodHooks(value, includeMelillaBatch);
       installLugoBatchMethodHooks(value, includeLugoBatch);
-      if (includeCaibBatch) {
-        installMethodHook(value, "setForceWSMode", "CAIB_SET_FORCE_WS_MODE");
-        installMethodHook(value, "cargarAppAfirma", "CAIB_CARGAR_APP_AFIRMA");
-        installMethodHook(value, "setServlets", "CAIB_SET_SERVLETS");
-        installMethodHook(value, "signBatch", "CAIB_BATCH_SIGN");
-      }
+      installCaibBatchMethodHooks(value, includeCaibBatch);
       installSevillaAtseMethodHooks(value);
       installUgrMethodHooks(value, includeUgrSetup);
     } catch (_) {

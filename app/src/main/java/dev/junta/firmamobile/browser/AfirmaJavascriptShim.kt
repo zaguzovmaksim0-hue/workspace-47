@@ -66,6 +66,7 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
             AfirmaJavascriptShimFragment.MELILLA_BATCH -> R.raw.afirma_shim_melilla_batch
             AfirmaJavascriptShimFragment.LUGO_BATCH -> R.raw.afirma_shim_lugo_batch
+            AfirmaJavascriptShimFragment.CAIB_BATCH -> R.raw.afirma_shim_caib_batch
             AfirmaJavascriptShimFragment.BATCH_RESULTS -> R.raw.afirma_shim_batch_results
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }

@@ -31,6 +31,7 @@ internal enum class AfirmaJavascriptShimFragment {
     HANDLERS,
     MELILLA_BATCH,
     LUGO_BATCH,
+    CAIB_BATCH,
     BATCH_RESULTS,
     INSTALLATION,
 }
@@ -143,6 +144,7 @@ internal object AfirmaJavascriptShimAssembler {
             AfirmaJavascriptShimFragment.BADAJOZ to { it.badajoz },
             AfirmaJavascriptShimFragment.MELILLA_BATCH to { it.melillaBatch },
             AfirmaJavascriptShimFragment.LUGO_BATCH to { it.lugoBatch },
+            AfirmaJavascriptShimFragment.CAIB_BATCH to { it.caibBatch },
         )
 
     private const val HTTPS_PORT = 443

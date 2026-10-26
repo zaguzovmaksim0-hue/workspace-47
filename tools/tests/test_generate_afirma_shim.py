@@ -274,6 +274,33 @@ def lugo_batch_extraction(legacy):
     return module, edits, body
 
 
+def caib_batch_extraction(legacy):
+    def section(start, end):
+        at = legacy.index("\n" + start) + 1
+        return legacy[at:legacy.index("\n" + end, at) + 1]
+    constants = section("  const caibOrigin =", "  const iPage =")
+    body = section("  function caibRequestToken", "  function isExactSevillaAtsePage").removesuffix("\n")
+    hooks = section("      if (includeCaibBatch)", "      if (sevillaAtseCompatibilityEnabled)")
+    assigned, count = re.subn(
+        r"(?ms)^  function (caibRequestToken|interceptCaibSetupCall|interceptCaibBatchSign)\(([^)]*)\) \{(.*?)^  \}",
+        lambda m: "  " + m[1] + " = (" + m[2] + ") => {" + m[3] + "  };", body)
+    assert count == 3
+    stub = ("  let caibRequestToken = () => null;\n"
+            "  let interceptCaibSetupCall = () => false;\n"
+            "  let interceptCaibBatchSign = () => false;\n"
+            "  let installCaibBatchMethodHooks = () => {};\n")
+    indent = lambda text: ''.join('  ' + line if line.strip() else line for line in text.splitlines(keepends=True))
+    module = ("\n  {\n" + indent(constants + "\n" + assigned) + "\n" +
+              "    installCaibBatchMethodHooks = (value, includeCaibBatch) => {\n" + hooks +
+              "    };\n  }\n")
+    edits = [
+        (constants, stub),
+        ("\n" + body + "\n  installSevillaAtseClickHook();", "\n  installSevillaAtseClickHook();"),
+        (hooks, "      installCaibBatchMethodHooks(value, includeCaibBatch);\n"),
+    ]
+    return module, edits, body
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -390,6 +417,11 @@ class AfirmaShimGenerationTest(unittest.TestCase):
             expected_core = expected_core.replace(old, new, 1)
         expected_module, edits, _ = lugo_batch_extraction(legacy)
         self.assertEqual(expected_module, (raw / "afirma_shim_lugo_batch.js").read_text())
+        for old, new in edits:
+            self.assertEqual(1, expected_core.count(old))
+            expected_core = expected_core.replace(old, new, 1)
+        expected_module, edits, _ = caib_batch_extraction(legacy)
+        self.assertEqual(expected_module, (raw / "afirma_shim_caib_batch.js").read_text())
         for old, new in edits:
             self.assertEqual(1, expected_core.count(old))
             expected_core = expected_core.replace(old, new, 1)
@@ -678,6 +710,26 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertLess(core.index('call === "LUGO_BATCH_SIGN" && interceptLugoBatchSign(args)'),
                         core.index('call === "CAIB_BATCH_SIGN" && interceptCaibBatchSign(args)'))
 
+    def test_caib_batch_has_its_own_resource(self):
+        raw = ROOT / "app/src/main/res/raw"
+        self.assertTrue((raw / "afirma_shim_caib_batch.js").is_file())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js",
+            "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
+        for token in ("https://intranet.caib.es", "caibClientBase", "caibSignerPathPattern",
+                      "caibSignatureIdPattern", "caibBatchBase64Pattern",
+                      "function decodeCaibUrlBase64", "CAIB_SET_FORCE_WS_MODE", "CAIB_SET_SERVLETS"):
+            self.assertNotIn(token, core)
+        self.assertIn("const isCaibBatchDocument = caibRequestToken() !== null;", core)
+        self.assertIn("pending.caibXml === true", core)
+        self.assertIn("CAIB_XML_BATCH_CANCEL", core)
+        self.assertLess(core.index('call === "LUGO_BATCH_SIGN" && interceptLugoBatchSign(args)'),
+                        core.index('call === "CAIB_BATCH_SIGN" && interceptCaibBatchSign(args)'))
+        self.assertLess(core.index("installLugoBatchMethodHooks(value, includeLugoBatch);"),
+                        core.index("installCaibBatchMethodHooks(value, includeCaibBatch);"))
+        self.assertLess(core.index("installCaibBatchMethodHooks(value, includeCaibBatch);"),
+                        core.index("installSevillaAtseMethodHooks(value);"))
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -686,7 +738,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_handlers.js", "afirma_shim_melilla_batch.js", "afirma_shim_lugo_batch.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_handlers.js", "afirma_shim_melilla_batch.js", "afirma_shim_lugo_batch.js", "afirma_shim_caib_batch.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 
