@@ -470,7 +470,10 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("args[1] === \"SHA1withRSA\""))
         assertTrue(enabled.contains("args[2] === \"XAdES\""))
         assertTrue(enabled.contains("args[3] === null"))
-        assertTrue(enabled.contains("if (isAirefOrigin && !isExactAirefCall)"))
+        assertTrue(enabled.contains("if (isExactAirefCall === false)"))
+        assertFalse(disabled.contains("https://sede.airef.es"))
+        assertFalse(disabled.contains("function isValidAirefPayload"))
+        assertFalse(disabled.contains("function isExactAirefSigningPage"))
     }
 
     @Test
