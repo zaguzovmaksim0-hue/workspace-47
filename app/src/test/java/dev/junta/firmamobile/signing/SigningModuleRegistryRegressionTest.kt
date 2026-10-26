@@ -2,9 +2,13 @@ package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.network.HttpsProfileHttpTransport
+import dev.junta.firmamobile.network.ProfileHttpTransport
+import dev.junta.firmamobile.network.SecureTunnelRuntime
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.network.TunnelRouteObserver
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
+import java.net.URI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -56,6 +60,36 @@ class SigningModuleRegistryRegressionTest {
         } finally {
             ordinary.close()
             batch.close()
+            job.cancel()
+        }
+    }
+
+    @Test
+    fun productionOrdinaryAsksTheTunnelRuntimeOnceForTheExactOfvirtualRoute() {
+        val job = SupervisorJob()
+        val observer = TunnelRouteObserver { _, _ -> }
+        val calls = mutableListOf<Triple<ProfileId, URI, TunnelRouteObserver>>()
+        val tunnel = object : SecureTunnelRuntime {
+            override fun transportFor(
+                profileId: ProfileId,
+                endpoint: URI,
+                observer: TunnelRouteObserver,
+            ): ProfileHttpTransport {
+                calls += Triple(profileId, endpoint, observer)
+                return HttpsProfileHttpTransport()
+            }
+        }
+        val ordinary = SigningModule(CertificateSession(), CoroutineScope(job + Dispatchers.Unconfined))
+            .ordinary(tunnel, observer, { null }, { 0L }, { null })
+        try {
+            assertEquals(
+                listOf(Triple(ProfileId("junta-ofvirtual"), URI(JuntaOfvirtualTriPhaseAdapter.ENDPOINT), observer)),
+                calls,
+            )
+            assertSame(observer, calls.single().third)
+            assertEquals(SigningUiState.Idle, ordinary.state.value)
+        } finally {
+            ordinary.close()
             job.cancel()
         }
     }

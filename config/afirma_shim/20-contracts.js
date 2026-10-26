@@ -16,11 +16,8 @@
   let sevillaAtseSetupState = 0;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesAirefSign = () => null;
-  const cdtiOrigin = "https://sede.cdti.gob.es";
-  const cdtiPage =
-    "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx";
-  const cdtiChallengePattern = /^CertExp[0-9a-f]{32}[0-9a-z]{24}$/;
-  const cdtiExtraProperties = "filters=nonexpired";
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesCdtiSign = () => null;
   const policiaOrigin = "https://sede.policia.gob.es";
   const granCanariaOrigin = "https://sede.grancanaria.com";
   const canariasOrigin = "https://sede.gobiernodecanarias.org";

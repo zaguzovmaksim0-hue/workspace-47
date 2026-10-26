@@ -38,7 +38,6 @@ import dev.junta.firmamobile.catalog.PortalCatalogScreen
 import dev.junta.firmamobile.catalog.PortalOpenTarget
 import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
 import dev.junta.firmamobile.certificate.CertificateRepository
-import dev.junta.firmamobile.network.HttpsProfileHttpTransport
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TunnelRouteEvent
 import dev.junta.firmamobile.network.TunnelRouteObserver
@@ -49,7 +48,6 @@ import dev.junta.firmamobile.profile.ProfileScopePreferences
 import dev.junta.firmamobile.profile.ProtocolOperation
 import dev.junta.firmamobile.signing.BatchSigningCoordinator
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
-import dev.junta.firmamobile.signing.JuntaOfvirtualTriPhaseAdapter
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningErrorCode
@@ -245,20 +243,13 @@ class MainActivity : ComponentActivity() {
 
     private fun initializeReadyContent(repository: PortalCatalogRepository) {
         val app = application as JuntaFirmaApplication
-        val routeObserver = TunnelRouteObserver(::onTunnelRouteEvent)
-        val directJuntaTransport = HttpsProfileHttpTransport()
-        val ofvirtualTransport = app.secureTunnelRuntime.transportFor(
-            profileId = ProfileId("junta-ofvirtual"),
-            endpoint = URI(JuntaOfvirtualTriPhaseAdapter.ENDPOINT),
-            observer = routeObserver,
-        )
         val signingModule = app.appContainer.createSigningModule(
             certificateSession = app.certificateSession,
             scope = lifecycleScope,
         )
         signingCoordinator = signingModule.ordinary(
-            directJuntaTransport = directJuntaTransport,
-            ofvirtualTransport = ofvirtualTransport,
+            tunnelRuntime = app.secureTunnelRuntime,
+            routeObserver = TunnelRouteObserver(::onTunnelRouteEvent),
             currentOrigin = originProvider@{
                 val selectedProfileId = (destination as? AppDestination.Browser)?.profileId
                     ?: return@originProvider null

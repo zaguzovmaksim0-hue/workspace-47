@@ -21,6 +21,16 @@ def airef_extraction(legacy):
     return constants, helpers, branch, module
 
 
+def cdti_extraction(legacy):
+    constants = legacy[legacy.index("  const cdtiOrigin ="):legacy.index("  const policiaOrigin =")]
+    start = legacy.index("    const isCdtiOrigin =")
+    branch = legacy[start:legacy.index("    if (isCdtiOrigin && !isExactCdtiCall)", start)]
+    module = ("\n  matchesCdtiSign = (args, successCallback, errorCallback) => {\n" +
+              constants.replace("  const", "    const").replace('\n    "', '\n      "') + branch +
+              "    return isCdtiOrigin ? isExactCdtiCall : null;\n  };\n")
+    return constants, branch, module
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -31,7 +41,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(16)]
+        self.names = [f"{i:02d}-section.js" for i in range(17)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -75,6 +85,11 @@ class AfirmaShimGenerationTest(unittest.TestCase):
             helpers, "").replace(branch,
             "    const isExactAirefCall = matchesAirefSign(args, successCallback, errorCallback);\n").replace(
             "if (isAirefOrigin && !isExactAirefCall)", "if (isExactAirefCall === false)")
+        constants, branch, _ = cdti_extraction(legacy)
+        expected_core = expected_core.replace(constants,
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesCdtiSign = () => null;\n").replace(
+            branch, "    const isExactCdtiCall = matchesCdtiSign(args, successCallback, errorCallback);\n").replace(
+            "if (isCdtiOrigin && !isExactCdtiCall)", "if (isExactCdtiCall === false)")
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -127,6 +142,22 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertIn("    const isExactAirefCall = matchesAirefSign(args, successCallback, errorCallback);\n", core)
         self.assertIn('    if (isExactAirefCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
 
+    def test_cdti_is_packaged_with_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_cdti.js"
+        self.assertTrue(module.is_file(), "CDTI needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, expected = cdti_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        for body in ("https://sede.cdti.gob.es", "const cdtiPage =", "const cdtiChallengePattern =",
+                     "const cdtiExtraProperties ="):
+            self.assertNotIn(body, core)
+        self.assertIn("    const isExactCdtiCall = matchesCdtiSign(args, successCallback, errorCallback);\n", core)
+        self.assertIn('    if (isExactCdtiCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+        self.assertIn('isExactCdtiCall ? args[0] + "=" : args[0]', core)
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -135,7 +166,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 
