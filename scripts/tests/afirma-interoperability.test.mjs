@@ -7,8 +7,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 const root = dirname(fileURLToPath(import.meta.url));
-const source = ['bootstrap', 'handlers', 'installation']
-  .map(part => readFileSync(join(root, `../../app/src/main/res/raw/afirma_shim_${part}.js`), 'utf8')).join('');
+// Every packaged fragment in generator order: the full assembly, as with all portal flags enabled.
+const parts = [...readFileSync(join(root, '../../tools/generate_afirma_shim.py'), 'utf8')
+  .matchAll(/\("(afirma_shim_[a-z_]+\.js)", \d+, \d+\)/g)].map(match => match[1]);
+assert.ok(parts.length > 3 && parts[0] === 'afirma_shim_bootstrap.js' && parts.at(-1) === 'afirma_shim_installation.js');
+const source = parts
+  .map(part => readFileSync(join(root, `../../app/src/main/res/raw/${part}`), 'utf8')).join('');
 import test from 'node:test';
 function fixture(options = {}) {
   const messages = [], errors = [], events = new Map(), docEvents = new Map(), timers = new Map(), intervals = new Map();
