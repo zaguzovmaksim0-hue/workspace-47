@@ -17,6 +17,7 @@ internal enum class AfirmaJavascriptShimFragment {
     JCCM,
     JCCM_REGISTRO,
     AIREF,
+    CDTI,
     HANDLERS,
     INSTALLATION,
 }
@@ -40,6 +41,7 @@ internal object AfirmaJavascriptShimAssembler {
                 AfirmaJavascriptShimFragment.JCCM -> configuration.flags.jccm
                 AfirmaJavascriptShimFragment.JCCM_REGISTRO -> configuration.flags.jccmRegistro
                 AfirmaJavascriptShimFragment.AIREF -> configuration.flags.airef
+                AfirmaJavascriptShimFragment.CDTI -> configuration.flags.cdti
                 else -> true
             }
         }
