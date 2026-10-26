@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -140,6 +140,29 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledCdtiOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(cdti = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.CDTI)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.CDTI, reads)
+        assertFalse(output.contains("https://sede.cdti.gob.es"))
+        assertFalse(output.contains("/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const cdtiCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_cdti.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const cdtiCompatibilityEnabled = true;", "const cdtiCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
     fun missingDuplicateExtraOrReorderedManifestFailsBeforeReading() {
         val fragments = AfirmaJavascriptShimFragment.entries
         for (invalid in listOf(fragments.dropLast(1), fragments + fragments.first(), fragments.reversed())) {
@@ -196,7 +219,9 @@ class AfirmaJavascriptShimFragmentTest {
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
     val actual = restoreJccmExtraction(
         legacy, restoreJccmRegistroExtraction(
-            legacy, restoreAirefExtraction(legacy, assembled, flags.airef), flags.jccmRegistro,
+            legacy, restoreAirefExtraction(
+                legacy, restoreCdtiExtraction(legacy, assembled, flags.cdti), flags.airef,
+            ), flags.jccmRegistro,
         ), flags.jccm,
     )
     val enabled = flags.cantabria
@@ -276,4 +301,22 @@ private fun restoreAirefExtraction(legacy: String, actual: String, enabled: Bool
         .replace("    const isExactAirefCall = matchesAirefSign(args, successCallback, errorCallback);\n", branch)
         .replace("if (isExactAirefCall === false)", "if (isAirefOrigin && !isExactAirefCall)")
         .replace("  function isExactCanariasChallenge", helpers + "  function isExactCanariasChallenge")
+}
+
+private fun restoreCdtiExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(legacy.indexOf("  const cdtiOrigin ="), legacy.indexOf("  const policiaOrigin ="))
+    val start = legacy.indexOf("    const isCdtiOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isCdtiOrigin && !isExactCdtiCall)", start))
+    val module = "\n  matchesCdtiSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isCdtiOrigin ? isExactCdtiCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesCdtiSign = () => null;\n",
+            constants,
+        )
+        .replace("    const isExactCdtiCall = matchesCdtiSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactCdtiCall === false)", "if (isCdtiOrigin && !isExactCdtiCall)")
 }

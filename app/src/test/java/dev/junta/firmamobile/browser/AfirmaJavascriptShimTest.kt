@@ -546,7 +546,10 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("args[2] === \"XAdES Enveloping\""))
         assertTrue(enabled.contains("args[3] === cdtiExtraProperties"))
         assertTrue(enabled.contains("isExactCdtiCall ? args[0] + \"=\" : args[0]"))
-        assertTrue(enabled.contains("if (isCdtiOrigin && !isExactCdtiCall)"))
+        assertTrue(enabled.contains("if (isExactCdtiCall === false)"))
+        assertFalse(disabled.contains("https://sede.cdti.gob.es"))
+        assertFalse(disabled.contains("const cdtiChallengePattern ="))
+        assertFalse(disabled.contains("const cdtiExtraProperties ="))
         assertFalse(enabled.contains("SHA256withRSA\" &&\n      args[2] === \"XAdES Enveloping"))
     }
 
