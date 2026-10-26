@@ -1,6 +1,9 @@
 package dev.junta.firmamobile
 
 import android.net.Uri
+import dev.junta.firmamobile.catalog.PortalCatalogRepository
+import dev.junta.firmamobile.catalog.PortalCatalogViewModel
+import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import dev.junta.firmamobile.certificate.CertificateErrorCode
 import dev.junta.firmamobile.certificate.CertificateGateway
 import dev.junta.firmamobile.certificate.CertificateLoadResult
@@ -12,7 +15,9 @@ import dev.junta.firmamobile.certificate.CertificateUnlockCache
 import dev.junta.firmamobile.certificate.NoOpCertificateUnlockCache
 import dev.junta.firmamobile.certificate.StoredCertificateReference
 import dev.junta.firmamobile.network.HttpsProfileHttpTransport
+import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.signing.SigningUiState
+import dev.junta.firmamobile.ui.CertificateViewModel
 import java.lang.reflect.Modifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -182,6 +187,55 @@ class AppContainerConstructionTest {
             app.certificateUnlockCache = module.unlockCache
             app.certificateGateway = module.gateway
         }
+    }
+
+    @Test
+    fun certificateViewModelFactoryUsesTheCurrentInjectedObjectsNotTheModuleDefaults() {
+        val app = RuntimeEnvironment.getApplication() as JuntaFirmaApplication
+        val module = app.appContainer.certificateModule
+        try {
+            app.certificateSession = CertificateSession()
+            app.certificateUnlockCache = TestUnlockCache()
+            app.certificateGateway = TestGateway()
+            val factory = app.appContainer.certificateViewModelFactory(
+                app.certificateGateway,
+                app.certificateSession,
+                app.certificateUnlockCache,
+            )
+            val viewModel = factory.create(CertificateViewModel::class.java)
+
+            val moduleFactory = app.appContainer.certificateViewModelFactory(
+                module.gateway,
+                module.session,
+                module.unlockCache,
+            )
+            assertNotSame(factory, moduleFactory)
+            assertSame(app.certificateGateway, field(viewModel, "gateway"))
+            assertSame(app.certificateSession, field(viewModel, "session"))
+            assertSame(app.certificateUnlockCache, field(viewModel, "unlockCache"))
+        } finally {
+            app.certificateSession = module.session
+            app.certificateUnlockCache = module.unlockCache
+            app.certificateGateway = module.gateway
+        }
+    }
+
+    @Test
+    fun catalogViewModelFactoryBuildsOnTheSuppliedLoadedRepository() {
+        val app = RuntimeEnvironment.getApplication() as JuntaFirmaApplication
+        val repository = PortalCatalogRepository(
+            BuiltInSiteProfiles.qaRegistry,
+            BuiltInSiteProfiles.catalog,
+            loadBundledPublicPortalCatalog(),
+        )
+        val first = app.appContainer.catalogViewModelFactory(app, repository)
+            .create(PortalCatalogViewModel::class.java)
+        val second = app.appContainer.catalogViewModelFactory(app, repository)
+            .create(PortalCatalogViewModel::class.java)
+
+        assertNotSame(first, second)
+        assertSame(repository, field(first, "repository"))
+        assertSame(repository, field(second, "repository"))
     }
 
     @Test
