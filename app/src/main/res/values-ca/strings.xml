@@ -348,4 +348,6 @@
     <string name="certificate_restore_saved">Recuperar el desbloqueig desat</string>
     <string name="error_catalog_full">El catàleg de certificats és ple. Elimina un certificat desat per afegir-ne un altre.</string>
     <string name="error_already_saved">Aquest document ja està desat al catàleg.</string>
+    <string name="saved_certificate_selected">Seleccionat</string>
+    <string name="saved_keystore_locked">La clau està seleccionada i bloquejada. Seleccionar-la no autoritza el seu ús per signar.</string>
 </resources>

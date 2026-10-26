@@ -27,7 +27,7 @@ sealed interface CertificateSelectionResult {
     data class Failure(val code: CertificateSelectionErrorCode) : CertificateSelectionResult
 }
 
-interface CertificateGateway : CertificateEntryChooser {
+interface CertificateGateway : CertificateEntryChooser, CertificateKeystoreGateway {
     suspend fun currentReference(): StoredCertificateReference?
 
     suspend fun select(uri: Uri): CertificateSelectionResult
@@ -56,12 +56,23 @@ class CertificateRepository(
     private val referenceStore: CertificateReferenceStore,
     private val loader: Pkcs12Loader,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val keyCatalog: CertificateKeystoreCatalog? = null,
 ) : CertificateGateway,
+    CertificateKeystoreGateway by RepositoryKeystoreCertificates(
+        referenceStore as? CertificateReferenceCatalogStore, keyCatalog, ioDispatcher,
+    ),
     CertificateEntryChooser by FileCertificateEntryChooser(documentAccess, referenceStore, loader, ioDispatcher) {
     private val catalogStore = referenceStore as? CertificateReferenceCatalogStore
     private val fileCatalog = catalogStore?.let { CertificateFileCatalog(documentAccess, it, ioDispatcher) }
 
     override suspend fun currentReference(): StoredCertificateReference? = withContext(ioDispatcher) {
+        try {
+            keyCatalog?.finishPendingDeletions()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (expected: Exception) {
+            // The durable tombstone is shown as pending; unrelated certificates remain usable.
+        }
         referenceStore.read()
     }
 
@@ -73,7 +84,14 @@ class CertificateRepository(
         referenceStore.unlockSaved(ioDispatcher, documentAccess, loader, password) { it }
 
 
-    override suspend fun forget() = withContext(ioDispatcher) {
+    override suspend fun forget(): Unit = withContext(ioDispatcher) {
+        if (catalogStore != null) {
+            val entry = catalogStore.readCatalog().active ?: return@withContext
+            check(entry.signingKey == null) { "Confirm the specific key entry before deletion" }
+            catalogStore.remove(entry)
+            entry.reference?.let { documentAccess.releaseUnlessReferenced(it.uri, referenceStore) }
+            return@withContext
+        }
         val reference = referenceStore.read()
         referenceStore.clear()
         if (reference != null) {
@@ -92,8 +110,13 @@ class CertificateRepository(
     override suspend fun saveInactive(uri: Uri): CertificateSelectionResult =
         fileCatalog?.add(uri) ?: super.saveInactive(uri)
 
-    override suspend fun removeInactive(entry: StoredCertificateEntry) =
-        checkNotNull(fileCatalog) { "No certificate catalogue" }.remove(entry)
+    override suspend fun removeInactive(entry: StoredCertificateEntry) {
+        if (entry.signingKey == null) {
+            checkNotNull(fileCatalog) { "No certificate catalogue" }.remove(entry)
+        } else withContext(ioDispatcher) {
+            checkNotNull(keyCatalog) { "No keystore catalogue" }.remove(entry, onlyIfInactive = true)
+        }
+    }
 
     override suspend fun activate(entry: StoredCertificateEntry): CertificateSelectionResult =
         withContext(ioDispatcher) {
@@ -108,6 +131,7 @@ class CertificateRepository(
         val inspected = documentAccess.inspectCertificate(uri)
         if (inspected !is CertificateSelectionResult.Success) return inspected
         val previous = try {
+            if (currentKeyEntry() != null) return selectBesideKey(inspected.reference)
             referenceStore.read()
         } catch (cancellation: CancellationException) {
             throw cancellation
@@ -121,6 +145,15 @@ class CertificateRepository(
             documentAccess.releaseQuietly(previous.uri)
         }
         return inspected
+    }
+
+    private suspend fun selectBesideKey(reference: StoredCertificateReference): CertificateSelectionResult {
+        val store = checkNotNull(catalogStore)
+        var added: StoredCertificateEntry? = null
+        val failure = documentAccess.grantAndPersist(reference.uri, referenceStore) {
+            added = store.add(reference)
+        }
+        return if (failure == null) activate(checkNotNull(added)) else CertificateSelectionResult.Failure(failure)
     }
 
     companion object {

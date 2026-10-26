@@ -315,6 +315,35 @@ class CertificateReferenceCatalogTest {
         assertEquals(full, store.readCatalog())
     }
 
+    @Test
+    fun keySelectionIsBoundToTheCompleteRecordAndSurvivesReopening() = runBlocking {
+        for (keyOnly in listOf(true, false)) {
+            val data = dataStore(file())
+            val store = PreferencesCertificateReferenceStore(data)
+            val fileEntry = store.add(reference("active"))
+            val source = store.add(reference("key"))
+            assertTrue(store.selectEntry(fileEntry.id, fileEntry.revision))
+            val key = source.copy(revision = source.revision + 1,
+                reference = source.reference.takeUnless { keyOnly }, signingKey = StoredSigningKeyReference(
+                    1, KeystoreSigningKeyImporter.ALIAS_PREFIX + "a".repeat(32),
+                    StoredKeystoreLevel.TEE, "b".repeat(64), "key.p12",
+                ))
+            store.replace(source, key)
+            assertEquals(false, store.selectKeyEntry(source))
+            assertTrue(store.selectKeyEntry(key))
+            assertNull(store.read())
+            assertEquals(key, PreferencesCertificateReferenceStore(data).readCatalog().active)
+            val changed = key.copy(revision = key.revision + 1)
+            store.replace(key, changed)
+            val snapshot = store.readCatalog()
+            assertEquals(false, store.selectKeyEntry(key))
+            assertEquals(snapshot, store.readCatalog())
+            assertTrue(store.selectEntry(fileEntry.id, fileEntry.revision))
+            assertEquals(fileEntry.reference, store.read())
+            assertEquals(changed, store.readCatalog().entries.single { it.id == changed.id })
+        }
+    }
+
     // Independent wire fixtures exercise rejection through the storage interface, not the codec.
     private fun payload(
         version: Int = 1,

@@ -36,4 +36,6 @@ sealed interface CertificateUiState {
 data class SavedCertificatesUiState(
     val entries: List<StoredCertificateEntry> = emptyList(),
     val error: CertificateUiError? = null,
+    val keyDeletionPending: Boolean = false,
+    val activeKey: StoredCertificateEntry? = null,
 )
