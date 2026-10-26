@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -119,6 +120,96 @@ class CertificateViewModelCatalogTest {
         assertTrue("revoke" !in gateway.calls)
     }
 
+    @Test
+    fun confirmedActiveKeyDeletionRevokesSavedUnlockBeforeRemovingTheBoundEntry() = runTest(dispatcher) {
+        val cache = RecordingCache()
+        val gateway = CatalogGateway(cache).apply {
+            activeKey = keyedEntry()
+            entries = listOf(checkNotNull(activeKey))
+            current = null
+        }
+        val viewModel = viewModel(gateway, cache)
+        advanceUntilIdle()
+        viewModel.removeSavedCertificate(checkNotNull(gateway.activeKey))
+        advanceUntilIdle()
+        assertEquals(listOf("revoke", "forget saved"), gateway.calls)
+        assertEquals(emptyList<StoredCertificateEntry>(), viewModel.savedCertificates.value.entries)
+        assertEquals(CertificateUiState.NoCertificate(), viewModel.state.value)
+    }
+
+    @Test
+    fun failedRevocationNeverDeletesTheActiveKey() = runTest(dispatcher) {
+        val cache = RecordingCache().apply { verified = false }
+        val key = keyedEntry()
+        val gateway = CatalogGateway(cache).apply { activeKey = key; entries = listOf(key); current = null }
+        val viewModel = viewModel(gateway, cache)
+        advanceUntilIdle()
+        viewModel.removeSavedCertificate(key)
+        advanceUntilIdle()
+        assertEquals(listOf("revoke"), gateway.calls)
+        assertEquals(listOf(key), viewModel.savedCertificates.value.entries)
+        assertEquals(CertificateUiState.NoCertificate(CertificateUiError.STORAGE_FAILURE), viewModel.state.value)
+    }
+
+    @Test
+    fun keySelectionRevokesTheFormerUnlockAndNeverUnlocksTheSession() = runTest(dispatcher) {
+        val cache = RecordingCache()
+        val key = keyedEntry()
+        val gateway = CatalogGateway(cache).apply { entries = listOf(active, key) }
+        val session = CertificateSession()
+        val model = CertificateViewModel(gateway, session, cache, ioDispatcher = dispatcher)
+        advanceUntilIdle()
+        model.switchToSavedCertificate(key)
+        advanceUntilIdle()
+        assertEquals(listOf("revoke", "activate key saved"), gateway.calls)
+        assertEquals(key, model.savedCertificates.value.activeKey)
+        assertEquals(CertificateUiState.NoCertificate(), model.state.value)
+        val password = charArrayOf('x')
+        model.unlock(password)
+        advanceUntilIdle()
+        assertTrue(password.all { it.code == 0 })
+        assertEquals(0, gateway.unlockCalls)
+        assertNull(session.identityForSigning())
+    }
+
+    @Test
+    fun failedRevocationRefusesKeySelectionAndRetainsTheFile() = runTest(dispatcher) {
+        val cache = RecordingCache().apply { verified = false }
+        val key = keyedEntry()
+        val gateway = CatalogGateway(cache).apply { entries = listOf(active, key) }
+        val model = viewModel(gateway, cache)
+        advanceUntilIdle()
+        model.switchToSavedCertificate(key)
+        advanceUntilIdle()
+        assertEquals(listOf("revoke"), gateway.calls)
+        assertEquals(active.reference, gateway.current)
+        assertNull(model.savedCertificates.value.activeKey)
+        assertEquals(CertificateUiState.Locked(checkNotNull(active.reference), null,
+            CertificateUiError.STORAGE_FAILURE), model.state.value)
+    }
+
+    @Test
+    fun storedKeySelectionIsRestoredAsLockedMetadataWithoutPasswordRestore() = runTest(dispatcher) {
+        val cache = RecordingCache()
+        val key = keyedEntry()
+        val gateway = CatalogGateway(cache).apply { activeKey = key; entries = listOf(key); current = null }
+        val model = viewModel(gateway, cache)
+        advanceUntilIdle()
+        model.restoreSavedUnlock()
+        model.onAppForegrounded()
+        advanceUntilIdle()
+        assertEquals(key, model.savedCertificates.value.activeKey)
+        assertEquals(CertificateUiState.NoCertificate(), model.state.value)
+        assertEquals(0, gateway.unlockCalls)
+        assertTrue(gateway.calls.isEmpty())
+    }
+
+    private fun keyedEntry() = saved.copy(reference = null, signingKey =
+        dev.junta.firmamobile.certificate.StoredSigningKeyReference(
+            1, dev.junta.firmamobile.certificate.KeystoreSigningKeyImporter.ALIAS_PREFIX + "a".repeat(32),
+            dev.junta.firmamobile.certificate.StoredKeystoreLevel.TEE, "b".repeat(64), "saved.p12",
+        ))
+
     private fun viewModel(gateway: CertificateGateway, cache: CertificateUnlockCache) = CertificateViewModel(
         gateway = gateway,
         session = CertificateSession(),
@@ -162,17 +253,38 @@ class CertificateViewModelCatalogTest {
         var entries = listOf(active, saved)
         var saveError = CertificateSelectionErrorCode.FILE_TOO_LARGE
         var current = active.reference
+        var activeKey: StoredCertificateEntry? = null
+        var unlockCalls = 0
 
         init {
             cache.onRevoke = { calls += "revoke" }
+        }
+
+        override suspend fun activateKey(entry: StoredCertificateEntry): Boolean {
+            calls += "activate key ${entry.id}"
+            if (entry.signingKey == null || entry !in entries) return false
+            activeKey = entry
+            current = null
+            return true
+        }
+
+        override suspend fun currentKeyEntry() = activeKey
+
+        override suspend fun forget(entry: StoredCertificateEntry) {
+            check(entry == activeKey)
+            calls += "forget ${entry.id}"
+            entries = entries - entry
+            activeKey = null
         }
 
         override suspend fun currentReference() = current
 
         override suspend fun select(uri: Uri): CertificateSelectionResult = error("Not used")
 
-        override suspend fun unlock(password: CharArray): CertificateLoadResult =
-            CertificateLoadResult.Failure(CertificateErrorCode.NO_CERTIFICATE_SELECTED)
+        override suspend fun unlock(password: CharArray): CertificateLoadResult {
+            unlockCalls++
+            return CertificateLoadResult.Failure(CertificateErrorCode.NO_CERTIFICATE_SELECTED)
+        }
 
         override suspend fun forget() = error("Not used")
 
@@ -188,6 +300,7 @@ class CertificateViewModelCatalogTest {
         override suspend fun activate(entry: StoredCertificateEntry): CertificateSelectionResult {
             calls += "activate ${entry.id}"
             current = entry.reference
+            activeKey = null
             return CertificateSelectionResult.Success(checkNotNull(entry.reference))
         }
     }

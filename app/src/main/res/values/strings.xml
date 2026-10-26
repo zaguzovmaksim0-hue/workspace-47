@@ -348,4 +348,6 @@
     <string name="certificate_restore_saved">Recuperar desbloqueo guardado</string>
     <string name="error_catalog_full">El catálogo de certificados está lleno. Elimina un certificado guardado para añadir otro.</string>
     <string name="error_already_saved">Este documento ya está guardado en el catálogo.</string>
+    <string name="saved_certificate_selected">Seleccionado</string>
+    <string name="saved_keystore_locked">La clave está seleccionada y bloqueada. Seleccionarla no autoriza su uso para firmar.</string>
 </resources>

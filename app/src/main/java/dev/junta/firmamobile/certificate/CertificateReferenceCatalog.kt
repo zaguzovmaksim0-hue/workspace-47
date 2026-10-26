@@ -26,8 +26,9 @@ data class StoredCertificateCatalog(
 
 /** Storage only: append does not select, unlock, acquire a grant or schedule reminders. */
 interface CertificateReferenceCatalogStore : CertificateReferenceStore {
-    /** Legacy file facade: key-only entries require the authenticated keystore flow. */
-    override suspend fun read(): StoredCertificateReference? = readCatalog().active?.reference
+    /** File facade: a key-backed entry never falls back to its backup file for unlocking. */
+    override suspend fun read(): StoredCertificateReference? =
+        readCatalog().active?.takeIf { it.signingKey == null }?.reference
 
     /** Inactive entries keep their grants too; catalogue URIs are unique. */
     override suspend fun references(uri: Uri): Boolean = readCatalog().entries.any { it.reference?.uri == uri }
@@ -39,6 +40,9 @@ interface CertificateReferenceCatalogStore : CertificateReferenceStore {
     /** Activates [id] only if it still has [revision] and a file reference; a stale list row never selects a
      * changed entry, and a key-only entry stays behind the authenticated keystore flow (see [read]). */
     suspend fun selectEntry(id: String, revision: Long): Boolean
+
+    /** Selects the exact key record without unlocking it or exposing its backup through the file facade. */
+    suspend fun selectKeyEntry(expected: StoredCertificateEntry): Boolean = false
 
     /** Compare the complete entry, including its revision, inside the atomic edit. */
     suspend fun replace(expected: StoredCertificateEntry, replacement: StoredCertificateEntry)

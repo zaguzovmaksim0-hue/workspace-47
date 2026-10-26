@@ -75,6 +75,16 @@ class PreferencesCertificateReferenceStore(
         return selected
     }
 
+    override suspend fun selectKeyEntry(expected: StoredCertificateEntry): Boolean {
+        var selected = false
+        dataStore.edit { preferences ->
+            val catalog = readSnapshot(preferences)
+            selected = expected.signingKey != null && catalog.entries.singleOrNull { it.id == expected.id } == expected
+            if (selected) persist(preferences, catalog.copy(activeId = expected.id))
+        }
+        return selected
+    }
+
     override suspend fun write(reference: StoredCertificateReference) {
         dataStore.edit { preferences ->
             val catalog = readSnapshot(preferences)
@@ -166,9 +176,11 @@ class PreferencesCertificateReferenceStore(
         }
     }
 
-    private fun persist(preferences: MutablePreferences, catalog: StoredCertificateCatalog) {
-        preferences[Keys.CATALOG] = CertificateReferenceCatalogCodec.encode(catalog)
-        Keys.LEGACY.forEach { preferences.remove(it) }
+    private companion object {
+        fun persist(preferences: MutablePreferences, catalog: StoredCertificateCatalog) {
+            preferences[Keys.CATALOG] = CertificateReferenceCatalogCodec.encode(catalog)
+            Keys.LEGACY.forEach { preferences.remove(it) }
+        }
     }
 
     private object Keys {

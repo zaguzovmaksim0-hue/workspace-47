@@ -27,15 +27,18 @@ internal class CertificateModule(
                     AndroidKeystoreCertificateUnlockCache(applicationContext, authentication = unlockAuthentication)
                 },
                 gatewayFactory = {
+                    val documents = ContentResolverCertificateDocumentAccess(applicationContext.contentResolver)
+                    val references = ReminderCertificateReferenceStore(
+                        applicationContext,
+                        PreferencesCertificateReferenceStore(applicationContext.certificateReferenceDataStore),
+                    )
                     CertificateRepository(
-                        documentAccess = ContentResolverCertificateDocumentAccess(
-                            applicationContext.contentResolver,
-                        ),
-                        referenceStore = ReminderCertificateReferenceStore(
-                            applicationContext,
-                            PreferencesCertificateReferenceStore(applicationContext.certificateReferenceDataStore),
-                        ),
+                        documentAccess = documents,
+                        referenceStore = references,
                         loader = Pkcs12Loader(),
+                        keyCatalog = KeystoreSigningKeyCatalog(
+                            references, AndroidSigningKeyStoreBackend(applicationContext), documents, enabled = true,
+                        ),
                     )
                 },
             )

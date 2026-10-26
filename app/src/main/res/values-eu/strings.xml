@@ -348,4 +348,6 @@
     <string name="certificate_restore_saved">Berreskuratu gordetako desblokeoa</string>
     <string name="error_catalog_full">Ziurtagirien katalogoa beteta dago. Kendu gordetako ziurtagiri bat beste bat gordetzeko.</string>
     <string name="error_already_saved">Dokumentu hau dagoeneko katalogoan gordeta dago.</string>
+    <string name="saved_certificate_selected">Hautatuta</string>
+    <string name="saved_keystore_locked">Gakoa hautatuta eta blokeatuta dago. Hautatzeak ez du sinatzeko baimenik ematen.</string>
 </resources>

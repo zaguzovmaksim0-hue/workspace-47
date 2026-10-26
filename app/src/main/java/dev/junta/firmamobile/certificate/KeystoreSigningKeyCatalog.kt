@@ -33,14 +33,14 @@ data class StoredSigningKeyReference(
     }
 }
 
-/** Storage slice only. Runtime/UI and TLS stay disconnected until physical acceptance (ADR 0005). */
+/** Import and unlock remain gated; the repository exposes catalogue management only. */
 internal class KeystoreSigningKeyCatalog(
     private val store: CertificateReferenceCatalogStore,
     private val backend: SigningKeyStoreBackend,
     private val documentAccess: CertificateDocumentAccess,
     private val loader: Pkcs12Loader = Pkcs12Loader(),
     private val enabled: Boolean = false,
-) {
+) : CertificateKeystoreCatalog {
     suspend fun migrate(
         expected: StoredCertificateEntry,
         password: CharArray,
@@ -103,11 +103,25 @@ internal class KeystoreSigningKeyCatalog(
         store.replace(expected, expected.copy(revision = Math.addExact(expected.revision, 1), reference = null))
     }
 
-    suspend fun remove(expected: StoredCertificateEntry) = mutex.withLock {
+    override suspend fun remove(
+        expected: StoredCertificateEntry,
+        onlyIfInactive: Boolean,
+    ): Unit = mutex.withLock {
         check(enabled)
         withContext(NonCancellable) {
-            store.remove(expected) // Tombstone is durable before touching AndroidKeyStore.
-            expected.signingKey?.let { deleteTombstone(it.alias) }
+            store.remove(expected, onlyIfInactive) // Durable tombstone before touching AndroidKeyStore.
+            try {
+                expected.signingKey?.let { deleteTombstone(it.alias) }
+            } finally {
+                expected.reference?.let { documentAccess.releaseUnlessReferenced(it.uri, store) }
+            }
+        }
+    }
+
+    override suspend fun finishPendingDeletions() = mutex.withLock {
+        check(enabled)
+        withContext(NonCancellable) {
+            for (alias in store.readCatalog().tombstones) deleteTombstone(alias)
         }
     }
 
