@@ -4,15 +4,39 @@ import dev.junta.firmamobile.browser.BatchBridgeSigningRoutes
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.network.HttpsProfileHttpTransport
 import dev.junta.firmamobile.network.ProfileHttpTransport
+import dev.junta.firmamobile.network.SecureTunnelRuntime
 import dev.junta.firmamobile.network.TrustedOrigin
+import dev.junta.firmamobile.network.TunnelRouteObserver
 import dev.junta.firmamobile.profile.CompatibilityStatus
+import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfileRegistry
+import java.net.URI
 import kotlinx.coroutines.CoroutineScope
 
 internal class SigningModule(
     private val certificateSession: CertificateSession,
     private val scope: CoroutineScope,
 ) {
+    /** Production transports: direct HTTPS for Junta and [tunnelRuntime]'s route to the exact ofvirtual
+     * endpoint, reported to [routeObserver]. */
+    fun ordinary(
+        tunnelRuntime: SecureTunnelRuntime,
+        routeObserver: TunnelRouteObserver,
+        currentOrigin: () -> TrustedOrigin?,
+        currentNavigationEpoch: () -> Long,
+        currentPageUrl: () -> String?,
+    ): SigningCoordinator = ordinary(
+        directJuntaTransport = HttpsProfileHttpTransport(),
+        ofvirtualTransport = tunnelRuntime.transportFor(
+            profileId = ProfileId("junta-ofvirtual"),
+            endpoint = URI(JuntaOfvirtualTriPhaseAdapter.ENDPOINT),
+            observer = routeObserver,
+        ),
+        currentOrigin = currentOrigin,
+        currentNavigationEpoch = currentNavigationEpoch,
+        currentPageUrl = currentPageUrl,
+    )
+
     fun ordinary(
         directJuntaTransport: HttpsProfileHttpTransport,
         ofvirtualTransport: ProfileHttpTransport,
