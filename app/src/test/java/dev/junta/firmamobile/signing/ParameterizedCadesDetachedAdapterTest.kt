@@ -153,6 +153,107 @@ class ParameterizedCadesDetachedAdapterTest {
         }
     }
 
+    @Test
+    fun completionPayloadRevalidationDefaultErrorPreservesState() = runBlocking {
+        assertRevalidationPolicy(
+            contract.copy(revalidatePayloadOnComplete = true), SigningErrorCode.PROTOCOL_FAILED,
+        )
+    }
+
+    @Test
+    fun completionPayloadRevalidationConfiguredErrorPreservesState() = runBlocking {
+        assertRevalidationPolicy(
+            contract.copy(
+                revalidatePayloadOnComplete = true,
+                payloadRevalidationError = SigningErrorCode.UNSUPPORTED_PROTOCOL,
+            ),
+            SigningErrorCode.UNSUPPORTED_PROTOCOL,
+        )
+    }
+
+    @Test
+    fun completionPayloadErrorDoesNotChangeSignatureFailures() = runBlocking {
+        val adapter = ParameterizedCadesDetachedAdapter(
+            contract.copy(
+                revalidatePayloadOnComplete = true,
+                payloadRevalidationError = SigningErrorCode.UNSUPPORTED_PROTOCOL,
+            ),
+            clock, BundledBouncyCastle.provider,
+        )
+        request(null).use { owner ->
+            (adapter.prepare(owner, identity.chain) as ProtocolPrepareResult.Success).preSign.use { prepared ->
+                val borrowed = prepared.withBytesToSign { it }
+                LocalSignature(byteArrayOf(1, 2, 3)).use { invalid ->
+                    assertEquals(
+                        SigningErrorCode.PROTOCOL_FAILED,
+                        (adapter.complete(owner, prepared, invalid) as ProtocolCompletionResult.Failure).code,
+                    )
+                    assertTrue(borrowed.all { it == 0.toByte() })
+                    assertEquals(
+                        SigningErrorCode.PROTOCOL_FAILED,
+                        (adapter.complete(owner, prepared, invalid) as ProtocolCompletionResult.Failure).code,
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun completionPayloadErrorIsUnusedWhenRevalidationIsDisabled() = runBlocking {
+        val adapter = ParameterizedCadesDetachedAdapter(
+            contract.copy(payloadRevalidationError = SigningErrorCode.UNSUPPORTED_PROTOCOL),
+            clock, BundledBouncyCastle.provider,
+        )
+        request(null).use { owner ->
+            (adapter.prepare(owner, identity.chain) as ProtocolPrepareResult.Success).preSign.use { prepared ->
+                sign(prepared).use { local ->
+                    owner.withPayload { it.fill(0) }
+                    (adapter.complete(owner, prepared, local) as ProtocolCompletionResult.Success).signature.close()
+                }
+            }
+        }
+    }
+
+    private suspend fun assertRevalidationPolicy(policy: CadesDetachedContract, expected: SigningErrorCode) {
+        val adapter = ParameterizedCadesDetachedAdapter(policy.copy(pageUrl = page), clock, BundledBouncyCastle.provider)
+        request(page).use { owner ->
+            (adapter.prepare(owner, identity.chain) as ProtocolPrepareResult.Success).preSign.use { prepared ->
+                val borrowed = prepared.withBytesToSign { it }
+                val original = owner.payloadCopy()
+                val mutations = listOf(ByteArray(original.size), MiniAppletPayloadCodec.encode(ByteArray(19), "?"))
+                sign(prepared).use { local ->
+                    try {
+                        request(null).use { wrong ->
+                            wrong.close()
+                            assertEquals(
+                                SigningErrorCode.UNSUPPORTED_PROTOCOL,
+                                (adapter.complete(wrong, prepared, local) as ProtocolCompletionResult.Failure).code,
+                            )
+                        }
+                        for (mutation in mutations) {
+                            assertEquals(original.size, mutation.size)
+                            owner.withPayload { mutation.copyInto(it) }
+                            assertEquals(expected, (adapter.complete(owner, prepared, local) as ProtocolCompletionResult.Failure).code)
+                            assertTrue(borrowed.any { it != 0.toByte() })
+                        }
+                        owner.withPayload { original.copyInto(it) }
+                        (adapter.complete(owner, prepared, local) as ProtocolCompletionResult.Success).signature.close()
+                        assertTrue(borrowed.all { it == 0.toByte() })
+                        assertEquals(
+                            SigningErrorCode.PROTOCOL_FAILED,
+                            (adapter.complete(owner, prepared, local) as ProtocolCompletionResult.Failure).code,
+                        )
+                        owner.close()
+                        assertEquals(expected, (adapter.complete(owner, prepared, local) as ProtocolCompletionResult.Failure).code)
+                    } finally {
+                        original.fill(0)
+                        mutations.forEach { it.fill(0) }
+                    }
+                }
+            }
+        }
+    }
+
     private fun sign(prepared: PreSignResult): LocalSignature =
         (prepared.withBytesToSign {
             JcaLocalSignatureEngine().sign(it, identity, SigningAlgorithm.SHA1_WITH_RSA)
