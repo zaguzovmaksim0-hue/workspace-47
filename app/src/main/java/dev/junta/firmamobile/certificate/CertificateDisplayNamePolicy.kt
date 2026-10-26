@@ -1,7 +1,7 @@
 package dev.junta.firmamobile.certificate
 
 internal object CertificateDisplayNamePolicy {
-    const val DEFAULT_DISPLAY_NAME = "Certificado seleccionado"
+    const val DEFAULT_DISPLAY_NAME = STORED_DEFAULT_CERTIFICATE_NAME
 
     fun sanitize(displayName: String?): String {
         val sanitized = displayName
@@ -14,6 +14,10 @@ internal object CertificateDisplayNamePolicy {
             ?.trim()
         return sanitized.orEmpty().ifBlank { DEFAULT_DISPLAY_NAME }
     }
+
+    fun presentation(displayName: String): CertificateDisplayName =
+        if (displayName == DEFAULT_DISPLAY_NAME) CertificateDisplayName.Default
+        else CertificateDisplayName.Named(displayName)
 
     private fun isUnicodeBidiControl(character: Char): Boolean =
         character == '\u061c' ||

@@ -142,7 +142,7 @@ internal fun CertificateSelectionConfirmationDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.certificate_selection_domain, host))
                 Text(stringResource(R.string.signing_operation, safeDescription))
-                Text(stringResource(R.string.signing_certificate, certificateOwner))
+                Text(stringResource(R.string.signing_certificate, certificateDisplayNameText(certificateOwner)))
                 Text(stringResource(R.string.certificate_selection_public_only))
             }
         },
@@ -180,7 +180,7 @@ internal fun ClientAuthConfirmationDialog(
                         stringResource(R.string.client_auth_tls_operation),
                     ),
                 )
-                Text(stringResource(R.string.signing_certificate, certificateOwner))
+                Text(stringResource(R.string.signing_certificate, certificateDisplayNameText(certificateOwner)))
                 Text(stringResource(R.string.client_auth_certificate_only_domain))
             }
         },
@@ -211,7 +211,7 @@ internal fun AfirmaObservationDialog(
             FilterObscuredTouches()
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.afirma_request_site, request.origin.host))
-                Text(stringResource(R.string.afirma_request_certificate, certificateOwner))
+                Text(stringResource(R.string.afirma_request_certificate, certificateDisplayNameText(certificateOwner)))
                 Text(stringResource(R.string.afirma_request_format, format))
                 Text(stringResource(R.string.afirma_request_algorithm, algorithm))
                 Text(stringResource(R.string.afirma_request_observed_copy))

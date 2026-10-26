@@ -119,7 +119,8 @@ internal class BatchSigningCoordinator(
             siteHost = request.context.origin.host,
             profileName = profile?.displayName ?: profileDisplayName,
             compatibilityStatus = profile?.compatibilityStatus ?: compatibilityStatus,
-            safeDescription = batchDescription(request.documents.size),
+            safeDescription = "",
+            operationDescription = SigningOperationDescription.Batch(request.documents.size),
             format = request.format.displayName(),
             algorithm = request.algorithm.displayName(),
             certificateOwner = certificateSnapshot.summary.ownerName,
@@ -410,13 +411,6 @@ internal class BatchSigningCoordinator(
     } catch (_: Exception) {
         Long.MIN_VALUE
     }
-
-    private fun batchDescription(documentCount: Int): String =
-        if (documentCount == 1) {
-            "Firma por lotes (1 documento)"
-        } else {
-            "Firma por lotes ($documentCount documentos)"
-        }
 
     private fun BatchSigningFormat.displayName(): String = when (this) {
         BatchSigningFormat.CADES -> "CAdES"

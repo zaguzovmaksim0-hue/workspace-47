@@ -69,7 +69,7 @@ class BatchSigningCoordinatorTest {
         assertEquals("sede.melilla.es", state.siteHost)
         assertEquals("Sede Electrónica de Melilla", state.profileName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, state.compatibilityStatus)
-        assertEquals("Firma por lotes (2 documentos)", state.safeDescription)
+        assertEquals(SigningOperationDescription.Batch(2), state.operationDescription)
         assertEquals(listOf("doc-a", "doc-b"), state.batchDocumentReview?.documentLabels)
         assertEquals("CAdES", state.format)
         assertEquals("SHA256withRSA", state.algorithm)
@@ -114,7 +114,7 @@ class BatchSigningCoordinatorTest {
             listOf("z-last", "report-A", "\uD83D\uDE00".repeat(255) + "\u2026", ""),
             review.documentLabels,
         )
-        assertEquals("Firma por lotes (4 documentos)", state.safeDescription)
+        assertEquals(SigningOperationDescription.Batch(4), state.operationDescription)
         assertEquals("BatchSigningDocumentReview(count=4)", review.toString())
         documents.forEach { document ->
             assertFalse(review.documentLabels.any { it.contains(document.dataReference) })
@@ -140,7 +140,7 @@ class BatchSigningCoordinatorTest {
 
         val state = coordinator.state.value as SigningUiState.AwaitingConfirmation
         assertEquals(listOf("only-doc"), state.batchDocumentReview?.documentLabels)
-        assertEquals("Firma por lotes (1 documento)", state.safeDescription)
+        assertEquals(SigningOperationDescription.Batch(1), state.operationDescription)
         assertTrue(timeline.isEmpty())
     }
 
@@ -160,7 +160,7 @@ class BatchSigningCoordinatorTest {
         assertEquals(128, labels.size)
         assertEquals("doc-1", labels.first())
         assertEquals("doc-128", labels.last())
-        assertEquals("Firma por lotes (128 documentos)", state.safeDescription)
+        assertEquals(SigningOperationDescription.Batch(128), state.operationDescription)
         org.junit.Assert.assertThrows(UnsupportedOperationException::class.java) {
             (labels as MutableList<String>).clear()
         }

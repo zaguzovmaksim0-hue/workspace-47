@@ -381,7 +381,7 @@ internal fun BrowserCertificateStrip(
                     maxLines = 1,
                 )
                 Text(
-                    text = certificateOwner,
+                    text = certificateDisplayNameText(certificateOwner),
                     color = JuntaMutedInk,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,

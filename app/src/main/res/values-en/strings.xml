@@ -350,4 +350,13 @@
     <string name="error_already_saved">This document is already saved in the catalogue.</string>
     <string name="saved_certificate_selected">Selected</string>
     <string name="saved_keystore_locked">The key is selected and locked. Selecting it does not authorize signing.</string>
+    <string name="certificate_default_name">Unnamed certificate</string>
+    <string name="native_format_batch_local">Batch · local</string>
+    <string name="native_format_batch_remote">Batch · three-phase</string>
+    <string name="native_format_batch_local_cades_cosign">Local batch · CAdES co-sign</string>
+    <string name="native_format_triphase">%1$s · three-phase</string>
+    <plurals name="signing_batch_operation_description">
+        <item quantity="one">Batch signing (%1$d document)</item>
+        <item quantity="other">Batch signing (%1$d documents)</item>
+    </plurals>
 </resources>
