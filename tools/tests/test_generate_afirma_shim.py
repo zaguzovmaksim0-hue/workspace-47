@@ -31,6 +31,17 @@ def cdti_extraction(legacy):
     return constants, branch, module
 
 
+def gran_canaria_extraction(legacy):
+    origin = legacy[legacy.index('  const granCanariaOrigin ='):legacy.index('  const canariasOrigin =')]
+    constants = legacy[legacy.index("  const granCanariaExtraProperties ="):legacy.index('  const fuerteventuraOrigin =')]
+    start = legacy.index('    const isGranCanariaOrigin =')
+    branch = legacy[start:legacy.index('    if (isGranCanariaOrigin && !isExactGranCanariaCall)', start)]
+    module = ('\n  matchesGranCanariaSign = (args, successCallback, errorCallback) => {\n' +
+              (origin + constants).replace("  const", "    const").replace('\n    "', '\n      "') + branch +
+              '    return isGranCanariaOrigin ? isExactGranCanariaCall : null;\n  };\n')
+    return origin, constants, branch, module
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -41,7 +52,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(18)]
+        self.names = [f"{i:02d}-section.js" for i in range(19)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -99,6 +110,10 @@ class AfirmaShimGenerationTest(unittest.TestCase):
             constants, "").replace(branch,
             "    const isExactPoliciaCall = matchesPoliciaSign(args, successCallback, errorCallback);\n").replace(
             "if (isPoliciaOrigin && !isExactPoliciaCall)", "if (isExactPoliciaCall === false)")
+        origin, constants, branch, _ = gran_canaria_extraction(legacy)
+        expected_core = expected_core.replace(origin, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesGranCanariaSign = () => null;\n').replace(constants, "").replace(
+            branch, '    const isExactGranCanariaCall = matchesGranCanariaSign(args, successCallback, errorCallback);\n').replace(
+            'if (isGranCanariaOrigin && !isExactGranCanariaCall)', 'if (isExactGranCanariaCall === false)')
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -190,6 +205,23 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertLess(core.index(dispatch), core.index("const isExactJccmRegistroCall = matchesJccmRegistroSign"))
         self.assertIn('    if (isExactPoliciaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
 
+    def test_gran_canaria_is_packaged_with_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_gran_canaria.js"
+        self.assertTrue(module.is_file(), "GranCanaria needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, _, expected = gran_canaria_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://sede.grancanaria.com', core)
+        self.assertNotIn("const granCanariaExtraProperties =", core)
+        dispatch = '    const isExactGranCanariaCall = matchesGranCanariaSign(args, successCallback, errorCallback);\n'
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index('const isCanariasOrigin ='), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index('const isFuerteventuraOrigin ='))
+        self.assertIn('    if (isExactGranCanariaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -198,7 +230,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 

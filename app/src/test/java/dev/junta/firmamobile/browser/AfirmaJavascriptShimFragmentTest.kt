@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -186,6 +186,29 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledGranCanariaOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(granCanaria = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.GRAN_CANARIA)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.GRAN_CANARIA, reads)
+        assertFalse(output.contains("https://sede.grancanaria.com"))
+        assertFalse(output.contains("const granCanariaExtraProperties ="))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const granCanariaCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_gran_canaria.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const granCanariaCompatibilityEnabled = true;", "const granCanariaCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
     fun missingDuplicateExtraOrReorderedManifestFailsBeforeReading() {
         val fragments = AfirmaJavascriptShimFragment.entries
         for (invalid in listOf(fragments.dropLast(1), fragments + fragments.first(), fragments.reversed())) {
@@ -240,11 +263,12 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
+    val granCanariaRestored = restoreGranCanariaExtraction(legacy, assembled, flags.granCanaria)
     val actual = restoreJccmExtraction(
         legacy, restoreJccmRegistroExtraction(
             legacy, restoreAirefExtraction(
                 legacy, restoreCdtiExtraction(
-                    legacy, restorePoliciaExtraction(legacy, assembled, flags.policia), flags.cdti,
+                    legacy, restorePoliciaExtraction(legacy, granCanariaRestored, flags.policia), flags.cdti,
                 ), flags.airef,
             ), flags.jccmRegistro,
         ), flags.jccm,
@@ -368,4 +392,26 @@ private fun restorePoliciaExtraction(legacy: String, actual: String, enabled: Bo
         .replace("  const staBatchOrigin =", constants + "  const staBatchOrigin =")
         .replace("    const isExactPoliciaCall = matchesPoliciaSign(args, successCallback, errorCallback);\n", branch)
         .replace("if (isExactPoliciaCall === false)", "if (isPoliciaOrigin && !isExactPoliciaCall)")
+}
+
+private fun restoreGranCanariaExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val origin = legacy.substring(legacy.indexOf("  const granCanariaOrigin ="), legacy.indexOf("  const canariasOrigin ="))
+    val constants = legacy.substring(
+        legacy.indexOf("  const granCanariaExtraProperties ="), legacy.indexOf("  const fuerteventuraOrigin ="),
+    )
+    val start = legacy.indexOf("    const isGranCanariaOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isGranCanariaOrigin && !isExactGranCanariaCall)", start))
+    val module = "\n  matchesGranCanariaSign = (args, successCallback, errorCallback) => {\n" +
+        (origin + constants).replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isGranCanariaOrigin ? isExactGranCanariaCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesGranCanariaSign = () => null;\n",
+            origin,
+        )
+        .replace("  const fuerteventuraOrigin =", constants + "  const fuerteventuraOrigin =")
+        .replace("    const isExactGranCanariaCall = matchesGranCanariaSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactGranCanariaCall === false)", "if (isGranCanariaOrigin && !isExactGranCanariaCall)")
 }

@@ -94,7 +94,8 @@
   let matchesCdtiSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesPoliciaSign = () => null;
-  const granCanariaOrigin = "https://sede.grancanaria.com";
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesGranCanariaSign = () => null;
   const canariasOrigin = "https://sede.gobiernodecanarias.org";
   const canariasPage = "https://sede.gobiernodecanarias.org/sede/identificacion";
   const canariasChallengePattern =
@@ -104,7 +105,6 @@
     "serverUrl=https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService\n" +
     "referencesDigestMethod=http://www.w3.org/2001/04/xmlenc#sha512\n" +
     "filters=nonexpired:true;signingCert:true;issuer.rfc2254:(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))(!(O=PKI))(!(O=DO_NOT_TRUST*)))";
-  const granCanariaExtraProperties = "headless=true\nfilters=nonexpired:";
   const fuerteventuraOrigin = "https://sede.cabildofuer.es";
   const fuerteventuraSigningPage =
     "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert";
