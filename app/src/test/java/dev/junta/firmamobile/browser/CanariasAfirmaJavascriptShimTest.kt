@@ -68,7 +68,11 @@ class CanariasAfirmaJavascriptShimTest {
         assertTrue(enabled.contains("SignatureService\\n"))
         assertTrue(enabled.contains("referencesDigestMethod=http://www.w3.org/2001/04/xmlenc#sha512\\n"))
         assertTrue(enabled.contains("signingCert:true;issuer.rfc2254"))
-        assertTrue(enabled.contains("if (isCanariasOrigin && !isExactCanariasCall)"))
+        assertTrue(enabled.contains("return isCanariasOrigin ? isExactCanariasCall : null;"))
+        assertTrue(enabled.contains("const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);"))
+        assertTrue(enabled.contains("if (isExactCanariasCall === false) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }"))
+        assertFalse(disabled.contains("https://sede.gobiernodecanarias.org"))
+        assertFalse(disabled.contains("function isExactCanariasChallenge"))
         assertTrue(enabled.contains("!canariasCompatibilityEnabled"))
     }
 }

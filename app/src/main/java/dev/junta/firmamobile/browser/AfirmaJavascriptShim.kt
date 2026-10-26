@@ -54,6 +54,15 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.AIREF -> R.raw.afirma_shim_airef
             AfirmaJavascriptShimFragment.CDTI -> R.raw.afirma_shim_cdti
             AfirmaJavascriptShimFragment.POLICIA -> R.raw.afirma_shim_policia
+            AfirmaJavascriptShimFragment.GRAN_CANARIA -> R.raw.afirma_shim_gran_canaria
+            AfirmaJavascriptShimFragment.FUERTEVENTURA -> R.raw.afirma_shim_fuerteventura
+            AfirmaJavascriptShimFragment.MINECO -> R.raw.afirma_shim_mineco
+            AfirmaJavascriptShimFragment.CANARIAS -> R.raw.afirma_shim_canarias
+            AfirmaJavascriptShimFragment.XUNTA -> R.raw.afirma_shim_xunta
+            AfirmaJavascriptShimFragment.ACCEDA -> R.raw.afirma_shim_acceda
+            AfirmaJavascriptShimFragment.SEVILLA_ATSE -> R.raw.afirma_shim_sevilla_atse
+            AfirmaJavascriptShimFragment.UGR -> R.raw.afirma_shim_ugr
+            AfirmaJavascriptShimFragment.BADAJOZ -> R.raw.afirma_shim_badajoz
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }
