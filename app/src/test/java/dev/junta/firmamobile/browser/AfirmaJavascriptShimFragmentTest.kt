@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -186,6 +186,29 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledMinecoOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(mineco = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.MINECO)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.MINECO, reads)
+        assertFalse(output.contains("https://serviciosede.mineco.gob.es"))
+        assertFalse(output.contains("const minecoExtraProperties ="))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const minecoCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_mineco.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const minecoCompatibilityEnabled = true;", "const minecoCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
     fun disabledFuerteventuraOmitsOnlyItsBodyAndDoesNotReadItsResource() {
         val reads = mutableListOf<AfirmaJavascriptShimFragment>()
         val disabled = configuration.copy(flags = configuration.flags.copy(fuerteventura = false))
@@ -286,7 +309,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val fuerteventuraRestored = restoreFuerteventuraExtraction(legacy, assembled, flags.fuerteventura)
+    val minecoRestored = restoreMinecoExtraction(legacy, assembled, flags.mineco)
+    val fuerteventuraRestored = restoreFuerteventuraExtraction(legacy, minecoRestored, flags.fuerteventura)
     val granCanariaRestored = restoreGranCanariaExtraction(legacy, fuerteventuraRestored, flags.granCanaria)
     val actual = restoreJccmExtraction(
         legacy, restoreJccmRegistroExtraction(
@@ -456,4 +480,22 @@ private fun restoreFuerteventuraExtraction(legacy: String, actual: String, enabl
         )
         .replace("    const isExactFuerteventuraCall = matchesFuerteventuraSign(args, successCallback, errorCallback);\n", branch)
         .replace("if (isExactFuerteventuraCall === false)", "if (isFuerteventuraOrigin && !isExactFuerteventuraCall)")
+}
+
+private fun restoreMinecoExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(legacy.indexOf("  const minecoOrigin ="), legacy.indexOf("  const policiaProcedurePage ="))
+    val start = legacy.indexOf("    const isMinecoOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isMinecoOrigin && !isExactMinecoCall)", start))
+    val module = "\n  matchesMinecoSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isMinecoOrigin ? isExactMinecoCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesMinecoSign = () => null;\n",
+            constants,
+        )
+        .replace("    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactMinecoCall === false)", "if (isMinecoOrigin && !isExactMinecoCall)")
 }

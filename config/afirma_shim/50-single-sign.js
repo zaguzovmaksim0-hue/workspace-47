@@ -183,19 +183,8 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isMinecoOrigin =
-      minecoCompatibilityEnabled && window.location.origin === minecoOrigin;
-    const isMinecoSigningPage =
-      isMinecoOrigin && window.location.href === minecoSigningPage &&
-      window.location.search === "" && window.location.hash === "";
-    const isExactMinecoCall =
-      isMinecoSigningPage && args.length === 6 &&
-      typeof args[0] === "string" && args[0].length > 0 &&
-      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&
-      args[1] === "SHA512withRSA" && args[2] === "PAdES" &&
-      args[3] === minecoExtraProperties &&
-      typeof successCallback === "function" && typeof errorCallback === "function";
-    if (isMinecoOrigin && !isExactMinecoCall) {
+    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);
+    if (isExactMinecoCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

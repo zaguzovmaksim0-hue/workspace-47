@@ -24,8 +24,9 @@ RESOURCE_RANGES = (
     ("afirma_shim_policia.js", 8, 9),
     ("afirma_shim_gran_canaria.js", 9, 10),
     ("afirma_shim_fuerteventura.js", 10, 11),
-    ("afirma_shim_handlers.js", 11, 17),
-    ("afirma_shim_installation.js", 17, 20),
+    ("afirma_shim_mineco.js", 11, 12),
+    ("afirma_shim_handlers.js", 12, 18),
+    ("afirma_shim_installation.js", 18, 21),
 )
 
 

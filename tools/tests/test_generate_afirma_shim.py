@@ -53,6 +53,17 @@ def fuerteventura_extraction(legacy):
     return origin, constants, branch, module
 
 
+def mineco_extraction(legacy):
+    origin = ""
+    constants = legacy[legacy.index('  const minecoOrigin ='):legacy.index('  const policiaProcedurePage =')]
+    start = legacy.index('    const isMinecoOrigin =')
+    branch = legacy[start:legacy.index('    if (isMinecoOrigin && !isExactMinecoCall)', start)]
+    module = ('\n  matchesMinecoSign = (args, successCallback, errorCallback) => {\n' +
+              (origin + constants).replace("  const", "    const").replace('\n    "', '\n      "') + branch +
+              '    return isMinecoOrigin ? isExactMinecoCall : null;\n  };\n')
+    return origin, constants, branch, module
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -63,7 +74,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(20)]
+        self.names = [f"{i:02d}-section.js" for i in range(21)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -129,6 +140,10 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesFuerteventuraSign = () => null;\n').replace(
             branch, '    const isExactFuerteventuraCall = matchesFuerteventuraSign(args, successCallback, errorCallback);\n').replace(
             'if (isFuerteventuraOrigin && !isExactFuerteventuraCall)', 'if (isExactFuerteventuraCall === false)')
+        origin, constants, branch, _ = mineco_extraction(legacy)
+        expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesMinecoSign = () => null;\n').replace(
+            branch, '    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);\n').replace(
+            'if (isMinecoOrigin && !isExactMinecoCall)', 'if (isExactMinecoCall === false)')
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -254,6 +269,23 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertLess(core.index(dispatch), core.index('const isExactMinecoCall ='))
         self.assertIn('    if (isExactFuerteventuraCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
 
+    def test_mineco_is_packaged_with_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_mineco.js"
+        self.assertTrue(module.is_file(), "Mineco needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, _, expected = mineco_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://serviciosede.mineco.gob.es', core)
+        self.assertNotIn("const minecoExtraProperties =", core)
+        dispatch = '    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);\n'
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index('const isExactFuerteventuraCall = matchesFuerteventuraSign'), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index('const isXuntaOrigin ='))
+        self.assertIn('    if (isExactMinecoCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -262,7 +294,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 

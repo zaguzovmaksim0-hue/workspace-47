@@ -33,10 +33,8 @@
     "filters=nonexpired:true;signingCert:true;issuer.rfc2254:(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))(!(O=PKI))(!(O=DO_NOT_TRUST*)))";
   // null: not applicable; false: reject; true: exact tuple.
   let matchesFuerteventuraSign = () => null;
-  const minecoOrigin = "https://serviciosede.mineco.gob.es";
-  const minecoSigningPage = "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx";
-  const minecoExtraProperties =
-    "filters=signingCert:;nonexpired:\nexpPolicy=FirmaAGE\nsignatureSubFilter=ETSI.CAdES.detached";
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesMinecoSign = () => null;
   const staBatchOrigin = __JFM_STA_BATCH_ORIGIN__;
   const lugoOrigin = "https://sede.deputacionlugo.org";
   const lugoClientBase = "https://sede.deputacionlugo.org/opencms";
