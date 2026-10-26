@@ -9,6 +9,18 @@ from tools.generate_afirma_shim import compose, synchronize
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
+def airef_extraction(legacy):
+    constants = legacy[legacy.index("  const airefOrigin ="):legacy.index("  const cdtiOrigin =")]
+    helpers = legacy[legacy.index("  function isValidAirefPayload"):legacy.index("  function isExactCanariasChallenge")]
+    start = legacy.index("    const isAirefOrigin =")
+    branch = legacy[start:legacy.index("    if (isAirefOrigin && !isExactAirefCall)", start)]
+    module = ("\n  matchesAirefSign = (args, successCallback, errorCallback) => {\n" +
+              constants.replace("  const", "    const") +
+              "\n" + "".join("  " + line if line.strip() else line for line in helpers.splitlines(keepends=True)) +
+              branch + "    return isAirefOrigin ? isExactAirefCall : null;\n  };\n")
+    return constants, helpers, branch, module
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -19,7 +31,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(15)]
+        self.names = [f"{i:02d}-section.js" for i in range(16)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -57,6 +69,12 @@ class AfirmaShimGenerationTest(unittest.TestCase):
             "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesJccmRegistroSign = () => null;\n").replace(
             registro_branch, "    const isExactJccmRegistroCall = matchesJccmRegistroSign(args, successCallback, errorCallback);\n").replace(
             "if (isJccmRegistroOrigin && !isExactJccmRegistroCall)", "if (isExactJccmRegistroCall === false)")
+        constants, helpers, branch, _ = airef_extraction(legacy)
+        expected_core = expected_core.replace(constants,
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesAirefSign = () => null;\n").replace(
+            helpers, "").replace(branch,
+            "    const isExactAirefCall = matchesAirefSign(args, successCallback, errorCallback);\n").replace(
+            "if (isAirefOrigin && !isExactAirefCall)", "if (isExactAirefCall === false)")
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -94,6 +112,21 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         rejection = '    if (isExactJccmRegistroCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n'
         self.assertIn(rejection, core)
 
+    def test_airef_is_packaged_with_helpers_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_airef.js"
+        self.assertTrue(module.is_file(), "AIReF needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, _, expected = airef_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        for body in ("https://sede.airef.es", "/invesiteRE/action/solicitud/view",
+                     "function isValidAirefPayload", "function isExactAirefSigningPage"):
+            self.assertNotIn(body, core)
+        self.assertIn("    const isExactAirefCall = matchesAirefSign(args, successCallback, errorCallback);\n", core)
+        self.assertIn('    if (isExactAirefCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -102,7 +135,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 
