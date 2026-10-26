@@ -705,19 +705,24 @@ class BrowserSecurityRegressionTest {
         val adaptersSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/signing/RuntimeSigningAdapters.kt",
         )
+        val orchestratorSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/SigningOrchestrator.kt",
+        )
         val browserBlock = source
             .substringAfter("BrowserScreen(", missingDelimiterValue = "")
             .substringBefore("\n                        )")
-        val ordinaryPrepareBlock = source
-            .substringAfter("private fun prepareMiniAppletSigning(", missingDelimiterValue = "")
-            .substringBefore("\n    private fun confirmSigning")
-        val batchPrepareBlock = source
-            .substringAfter("private fun prepareMelillaBatchSigning(", missingDelimiterValue = "")
-            .substringBefore("\n    private fun confirmSigning")
+        val ordinaryPrepareBlock = orchestratorSource
+            .substringAfter("    fun prepareMiniAppletSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    fun confirmSigning")
+        val batchPrepareBlock = orchestratorSource
+            .substringAfter("    fun prepareMelillaBatchSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    fun confirmSigning")
 
         assertTrue(
-            "MainActivity must own a dedicated Melilla batch coordinator",
-            "private lateinit var batchSigningCoordinator: BatchSigningCoordinator" in source,
+            "The Activity-owned signing orchestrator must own a dedicated Melilla batch coordinator",
+            "private val batchSigningCoordinator: BatchSigningCoordinator" in orchestratorSource &&
+                "batchSigningCoordinator = batchSigningCoordinator" in source &&
+                "scope = lifecycleScope" in source,
         )
         assertTrue(
             "Melilla batch protocol must use the existing direct HTTPS transport stack",
@@ -749,13 +754,13 @@ class BrowserSecurityRegressionTest {
         )
         assertTrue(
             "Confirm, cancel, and terminal dismissal must route through the current owner",
-            "signingFlowOwnership.current()" in source &&
-                "when (owner.kind)" in source &&
+            "signingFlowOwnership.current()" in orchestratorSource &&
+                "when (owner.kind)" in orchestratorSource &&
                 "onDismissSigningState = ::dismissSigningState" in browserBlock,
         )
-        val cancelBlock = source
-            .substringAfter("private fun cancelSigning(", missingDelimiterValue = "")
-            .substringBefore("\n    private fun dismissSigningState")
+        val cancelBlock = orchestratorSource
+            .substringAfter("    fun cancelSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    fun dismissSigningState")
         assertTrue(
             "Active signing cancellation must retain ownership until the signing job actually completes",
             cancelBlock.isNotEmpty() &&
@@ -771,15 +776,13 @@ class BrowserSecurityRegressionTest {
         val source = projectSource(
             "app/src/main/java/dev/junta/firmamobile/MainActivity.kt",
         )
-        val preparationBlock = source
-            .substringAfter("private fun prepareMiniAppletSigning(", missingDelimiterValue = "")
-            .substringBefore("\n    private fun recordMiniAppletPreparationDiagnostic")
-        val preparationDiagnosticBlock = source
-            .substringAfter(
-                "private fun recordMiniAppletPreparationDiagnostic(",
-                missingDelimiterValue = "",
-            )
-            .substringBefore("\n    private fun recordMiniAppletBridgeDiagnostic")
+        val orchestratorSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/SigningOrchestrator.kt",
+        )
+        val preparationBlock = orchestratorSource
+            .substringAfter("    fun prepareMiniAppletSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    fun prepareMelillaBatchSigning")
+        val preparationDiagnosticBlock = preparationBlock
         val diagnosticBlock = source
             .substringAfter("private fun recordMiniAppletBridgeDiagnostic(", missingDelimiterValue = "")
             .substringBefore("\n    private fun prepareMelillaBatchSigning")
@@ -835,9 +838,12 @@ class BrowserSecurityRegressionTest {
         val routesSource = projectSource(
             "app/src/main/java/dev/junta/firmamobile/browser/BatchBridgeSigningRoutes.kt",
         )
-        val batchPrepareBlock = source
-            .substringAfter("private fun prepareMelillaBatchSigning(", missingDelimiterValue = "")
-            .substringBefore("\n    private fun confirmSigning")
+        val orchestratorSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/SigningOrchestrator.kt",
+        )
+        val batchPrepareBlock = orchestratorSource
+            .substringAfter("    fun prepareMelillaBatchSigning(", missingDelimiterValue = "")
+            .substringBefore("\n    fun confirmSigning")
 
         assertTrue(
             "The batch routes must own a distinct Extremadura normalizer and reply sink",
@@ -911,10 +917,14 @@ class BrowserSecurityRegressionTest {
             )
             .substringBefore("\n    private fun activeWebViewMatches")
 
+        val orchestratorSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/SigningOrchestrator.kt",
+        )
         assertTrue(
             "Tunnel route diagnostics must be emitted only after active request ownership is accepted",
             callbackBlock.isNotEmpty() &&
-                "if (signingCoordinator.onTunnelRouteEvent(requestId, event)) {" in callbackBlock &&
+                "if (signing?.onTunnelRouteEvent(requestId, event) == true) {" in callbackBlock &&
+                "signingCoordinator.onTunnelRouteEvent(requestId, event)" in orchestratorSource &&
                 "sanitizedLogger.recordTunnelRouteEvent(event)" in callbackBlock,
         )
     }
