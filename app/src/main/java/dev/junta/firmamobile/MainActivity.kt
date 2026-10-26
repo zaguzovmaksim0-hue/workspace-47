@@ -27,7 +27,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
-import dev.junta.firmamobile.browser.BatchBridgeSigningRoutes
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
@@ -46,14 +45,10 @@ import dev.junta.firmamobile.profile.Capability
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.ProfileScopePreferences
 import dev.junta.firmamobile.profile.ProtocolOperation
-import dev.junta.firmamobile.signing.BatchSigningCoordinator
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.SigningCancelReason
-import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningErrorCode
-import dev.junta.firmamobile.signing.SigningPreparationResult
 import dev.junta.firmamobile.signing.SigningReplySink
-import dev.junta.firmamobile.signing.SigningUiState
 import dev.junta.firmamobile.smoke.CatalogSmokeController
 import dev.junta.firmamobile.smoke.CatalogSmokeHook
 import dev.junta.firmamobile.ui.AppRoot
@@ -70,7 +65,6 @@ import dev.junta.firmamobile.ui.WindowSecureFlagPolicy
 import dev.junta.firmamobile.ui.theme.JuntaFirmaTheme
 import java.util.UUID
 import java.net.URI
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -135,15 +129,12 @@ class MainActivity : ComponentActivity() {
     private val navigation = AppNavigationState()
     private val destination get() = navigation.destination
     private val certificatePanelVisible get() = navigation.certificatePanelVisible
-    private lateinit var signingCoordinator: SigningCoordinator
-    private lateinit var batchBridgeRoutes: BatchBridgeSigningRoutes
-    private lateinit var batchSigningCoordinator: BatchSigningCoordinator
-    private val signingFlowOwnership = SigningFlowOwnershipGate()
+    private var signing: SigningOrchestrator? = null
     private var externalAfirma: dev.junta.firmamobile.afirma.servlet.ExternalAfirmaController? = null
     private var externalAfirmaPrompt by mutableStateOf<dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt?>(null)
     /** Activity-owned operations that survive onStop; an external afirma delivery is refused while any holds. */
     private val activityPortalBusy: () -> Boolean = {
-        signingFlowOwnership.current() != null || pendingExternalApp != null || pendingExternalHandoff != null ||
+        signing?.hasOwner() == true || pendingExternalApp != null || pendingExternalHandoff != null ||
             certificatePanelVisible || certificateReturnToken != null || documentDownloadReturnToken != null ||
             browserFileReturnToken != null
     }
@@ -152,7 +143,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var catalogViewModel: PortalCatalogViewModel
     private lateinit var catalogSmokeHook: CatalogSmokeHook
     private var currentNavigationEpoch: Long = 0L
-    private val signingJobs = SigningJobRegistry()
 
     private val certificateViewModel: CertificateViewModel by viewModels {
         val app = application as JuntaFirmaApplication
@@ -247,7 +237,7 @@ class MainActivity : ComponentActivity() {
             certificateSession = app.certificateSession,
             scope = lifecycleScope,
         )
-        signingCoordinator = signingModule.ordinary(
+        val signingCoordinator = signingModule.ordinary(
             tunnelRuntime = app.secureTunnelRuntime,
             routeObserver = TunnelRouteObserver(::onTunnelRouteEvent),
             currentOrigin = originProvider@{
@@ -270,14 +260,23 @@ class MainActivity : ComponentActivity() {
                 it.profileId == ProfileId("melilla-sede")
             },
         )
-        batchBridgeRoutes = signingModule.batchBridgeRoutes(BuiltInSiteProfiles.runtimeRegistry)
-        batchSigningCoordinator = signingModule.batch(
+        val batchBridgeRoutes = signingModule.batchBridgeRoutes(BuiltInSiteProfiles.runtimeRegistry)
+        val batchSigningCoordinator = signingModule.batch(
             currentOrigin = { currentSigningOrigin() },
             currentNavigationEpoch = { currentNavigationEpoch },
             profileDisplayName = melillaProfile.displayName,
             compatibilityStatus = melillaProfile.compatibilityStatus,
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
         )
+        val signing = SigningOrchestrator(
+            signingCoordinator = signingCoordinator,
+            batchSigningCoordinator = batchSigningCoordinator,
+            batchBridgeRoutes = batchBridgeRoutes,
+            scope = lifecycleScope,
+            externalAfirmaActive = ::externalAfirmaActive,
+            recordMiniAppletStage = ::recordMiniAppletBridgeDiagnostic,
+        )
+        this.signing = signing
         catalogRepository = repository
         catalogViewModel = ViewModelProvider(
             this,
@@ -323,18 +322,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             val certificateState = certificateViewModel.state.collectAsStateWithLifecycle()
             val catalogState = catalogViewModel.state.collectAsStateWithLifecycle()
-            val ordinarySigningState = signingCoordinator.state.collectAsStateWithLifecycle()
-            val batchSigningState = batchSigningCoordinator.state.collectAsStateWithLifecycle()
+            val ordinarySigningState = signing.ordinaryState.collectAsStateWithLifecycle()
+            val batchSigningState = signing.batchState.collectAsStateWithLifecycle()
             // Read both observable states unconditionally. Ownership is an imperative gate rather than
             // Compose state; conditional reads would leave the initial Idle composition unsubscribed
             // from the coordinator that later acquires ownership and enters AwaitingConfirmation.
             val ordinarySigningStateValue = ordinarySigningState.value
             val batchSigningStateValue = batchSigningState.value
-            val signingState = when (signingFlowOwnership.current()?.kind) {
-                SigningFlowKind.BATCH -> batchSigningStateValue
-                SigningFlowKind.ORDINARY -> ordinarySigningStateValue
-                null -> SigningUiState.Idle
-            }
+            val signingState = signing.visibleState(ordinarySigningStateValue, batchSigningStateValue)
             val updateSecureWindow = remember(window) {
                 { sensitive: Boolean ->
                     WindowSecureFlagPolicy.apply(window, sensitive)
@@ -791,9 +786,7 @@ class MainActivity : ComponentActivity() {
         }
         browserFileChooser.cancel()
         if (::catalogSmokeHook.isInitialized) catalogSmokeHook.stop()
-        cancelSigning(SigningCancelReason.BACKGROUND)
-        if (::signingCoordinator.isInitialized) signingCoordinator.close()
-        if (::batchSigningCoordinator.isInitialized) batchSigningCoordinator.close()
+        signing?.close()
         super.onDestroy()
     }
 
@@ -803,33 +796,10 @@ class MainActivity : ComponentActivity() {
         request: MiniAppletBridgeRequest,
         reply: SigningReplySink,
     ) {
-        val requestId = request.normalized.requestId
-        if (externalAfirmaActive() || !signingFlowOwnership.acquire(SigningFlowKind.ORDINARY, requestId)) {
-            recordMiniAppletBridgeDiagnostic(
-                request = request,
-                stage = "OWNERSHIP_REJECTED",
-                errorCode = SigningErrorCode.PROTOCOL_FAILED,
-            )
+        signing?.prepareMiniAppletSigning(request, reply) ?: run {
             request.normalized.close()
             runCatching { reply.failure(SigningErrorCode.PROTOCOL_FAILED) }
-            return
         }
-        val result = signingCoordinator.prepare(request.normalized, reply)
-        recordMiniAppletPreparationDiagnostic(request, result)
-        if (result is SigningPreparationResult.Rejected && signingCoordinator.state.value is SigningUiState.Idle) {
-            signingFlowOwnership.release(SigningFlowKind.ORDINARY, requestId)
-        }
-    }
-
-    private fun recordMiniAppletPreparationDiagnostic(
-        request: MiniAppletBridgeRequest,
-        result: SigningPreparationResult,
-    ) {
-        val (stage, errorCode) = when (result) {
-            is SigningPreparationResult.Ready -> "PREPARE_READY" to null
-            is SigningPreparationResult.Rejected -> "PREPARE_REJECTED" to result.code
-        }
-        recordMiniAppletBridgeDiagnostic(request, stage, errorCode)
     }
 
     private fun recordMiniAppletBridgeDiagnostic(
@@ -851,82 +821,23 @@ class MainActivity : ComponentActivity() {
         request: MelillaBatchBridgeRequest,
         reply: MelillaBatchReplyChannel,
     ) {
-        val routed = batchBridgeRoutes.dispatch(request, reply) ?: run {
-            runCatching { reply.failure(SigningErrorCode.INVALID_REQUEST) }
-            return
-        }
-        val replySink = routed.replySink
-        val normalized = routed.normalized ?: run {
-            runCatching { replySink.failure(SigningErrorCode.INVALID_REQUEST) }
-            return
-        }
-        val requestId = normalized.requestId
-        if (externalAfirmaActive() || !signingFlowOwnership.acquire(SigningFlowKind.BATCH, requestId)) {
-            normalized.close()
-            runCatching { replySink.failure(SigningErrorCode.PROTOCOL_FAILED) }
-            return
-        }
-        val result = batchSigningCoordinator.prepare(normalized, replySink)
-        if (result is SigningPreparationResult.Rejected && batchSigningCoordinator.state.value is SigningUiState.Idle) {
-            signingFlowOwnership.release(SigningFlowKind.BATCH, requestId)
-        }
+        signing?.prepareMelillaBatchSigning(request, reply)
+            ?: runCatching { reply.failure(SigningErrorCode.INVALID_REQUEST) }
     }
 
     private fun confirmSigning(requestId: UUID) {
-        val owner = signingFlowOwnership.current() ?: return
-        if (owner.requestId != requestId) return
-        val awaiting = when (owner.kind) {
-            SigningFlowKind.ORDINARY -> signingCoordinator.state.value
-            SigningFlowKind.BATCH -> batchSigningCoordinator.state.value
-        } as? SigningUiState.AwaitingConfirmation
-        if (awaiting?.requestId != requestId) return
-        val job = lifecycleScope.launch(start = CoroutineStart.LAZY) {
-            when (owner.kind) {
-                SigningFlowKind.ORDINARY -> signingCoordinator.confirm(requestId)
-                SigningFlowKind.BATCH -> batchSigningCoordinator.confirm(requestId)
-            }
-        }
-        if (signingJobs.register(requestId, job)) {
-            job.start()
-        } else {
-            job.cancel()
-        }
+        signing?.confirmSigning(requestId)
     }
 
     private fun cancelSigning(
         reason: SigningCancelReason,
         requestId: UUID? = null,
     ) {
-        val owner = signingFlowOwnership.current() ?: return
-        if (requestId != null && owner.requestId != requestId) return
-        val accepted = when (owner.kind) {
-            SigningFlowKind.ORDINARY -> signingCoordinator.cancel(reason, requestId)
-            SigningFlowKind.BATCH -> batchSigningCoordinator.cancel(reason, requestId)
-        }
-        val cancellationJob = signingJobs.takeForCancellation(requestId, accepted)
-        if (accepted && cancellationJob != null) {
-            cancellationJob.invokeOnCompletion {
-                signingFlowOwnership.release(owner.kind, owner.requestId)
-            }
-            cancellationJob.cancel()
-        } else if (accepted) {
-            signingFlowOwnership.release(owner.kind, owner.requestId)
-        }
+        signing?.cancelSigning(reason, requestId)
     }
 
     private fun dismissSigningState() {
-        val owner = signingFlowOwnership.current() ?: return
-        when (owner.kind) {
-            SigningFlowKind.ORDINARY -> signingCoordinator.dismissTerminalState()
-            SigningFlowKind.BATCH -> batchSigningCoordinator.dismissTerminalState()
-        }
-        val state = when (owner.kind) {
-            SigningFlowKind.ORDINARY -> signingCoordinator.state.value
-            SigningFlowKind.BATCH -> batchSigningCoordinator.state.value
-        }
-        if (state is SigningUiState.Idle) {
-            signingFlowOwnership.release(owner.kind, owner.requestId)
-        }
+        signing?.dismissSigningState()
     }
 
     private fun currentSigningOrigin() =
@@ -940,10 +851,8 @@ class MainActivity : ComponentActivity() {
 
     private fun onTunnelRouteEvent(requestId: UUID, event: TunnelRouteEvent) {
         lifecycleScope.launch(Dispatchers.Main.immediate) {
-            if (::signingCoordinator.isInitialized) {
-                if (signingCoordinator.onTunnelRouteEvent(requestId, event)) {
-                    (application as JuntaFirmaApplication).sanitizedLogger.recordTunnelRouteEvent(event)
-                }
+            if (signing?.onTunnelRouteEvent(requestId, event) == true) {
+                (application as JuntaFirmaApplication).sanitizedLogger.recordTunnelRouteEvent(event)
             }
         }
     }

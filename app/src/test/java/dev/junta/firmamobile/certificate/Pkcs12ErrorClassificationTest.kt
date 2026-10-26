@@ -56,6 +56,29 @@ class Pkcs12ErrorClassificationTest {
     }
 
     @Test
+    fun authenticatedKeyRecoveryRecognizesWrongPasswordWhenProviderLosesPaddingCause() {
+        listOf(
+            UnrecoverableKeyException(),
+            UnrecoverableKeyException().apply { initCause(EOFException()) },
+            IOException(UnrecoverableKeyException()),
+        ).forEach { error ->
+            assertEquals(
+                CertificateErrorCode.INVALID_PASSWORD,
+                classifyPkcs12Failure(error, null, authenticatedKeyRecovery = true),
+            )
+        }
+    }
+
+    @Test
+    fun authenticatedKeyRecoveryStillPreservesUnsupportedEncryption() {
+        val error = UnrecoverableKeyException().apply { initCause(NoSuchAlgorithmException()) }
+        assertEquals(
+            CertificateErrorCode.UNSUPPORTED_PKCS12_ENCRYPTION,
+            classifyPkcs12Failure(error, null, authenticatedKeyRecovery = true),
+        )
+    }
+
+    @Test
     fun cyclicCauseChainTerminatesWithoutInspectingMessages() {
         val first = IOException()
         val second = IOException(first)
