@@ -265,11 +265,7 @@
         installMethodHook(value, "setServlets", "CAIB_SET_SERVLETS");
         installMethodHook(value, "signBatch", "CAIB_BATCH_SIGN");
       }
-      if (sevillaAtseCompatibilityEnabled) {
-        installMethodHook(value, "setForceWSMode", "SEVILLA_SET_FORCE_WS_MODE");
-        installMethodHook(value, "setServlets", "SEVILLA_SET_SERVLETS");
-        installMethodHook(value, "cargarAppAfirma", "SEVILLA_CARGAR_APP_AFIRMA");
-      }
+      installSevillaAtseMethodHooks(value);
       if (includeUgrSetup) {
         installMethodHook(value, "setForceWSMode", "UGR_SET_FORCE_WS_MODE");
         installMethodHook(value, "cargarAppAfirma", "UGR_CARGAR_APP_AFIRMA");

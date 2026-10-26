@@ -25,6 +25,7 @@ internal enum class AfirmaJavascriptShimFragment {
     CANARIAS,
     XUNTA,
     ACCEDA,
+    SEVILLA_ATSE,
     HANDLERS,
     INSTALLATION,
 }
@@ -43,21 +44,7 @@ internal object AfirmaJavascriptShimAssembler {
     ): String {
         check(fragments == AfirmaJavascriptShimFragment.entries) { "Invalid shim fragment manifest" }
         val selected = fragments.filter { fragment ->
-            when (fragment) {
-                AfirmaJavascriptShimFragment.CANTABRIA -> configuration.flags.cantabria
-                AfirmaJavascriptShimFragment.JCCM -> configuration.flags.jccm
-                AfirmaJavascriptShimFragment.JCCM_REGISTRO -> configuration.flags.jccmRegistro
-                AfirmaJavascriptShimFragment.AIREF -> configuration.flags.airef
-                AfirmaJavascriptShimFragment.CDTI -> configuration.flags.cdti
-                AfirmaJavascriptShimFragment.POLICIA -> configuration.flags.policia
-                AfirmaJavascriptShimFragment.GRAN_CANARIA -> configuration.flags.granCanaria
-                AfirmaJavascriptShimFragment.FUERTEVENTURA -> configuration.flags.fuerteventura
-                AfirmaJavascriptShimFragment.MINECO -> configuration.flags.mineco
-                AfirmaJavascriptShimFragment.CANARIAS -> configuration.flags.canarias
-                AfirmaJavascriptShimFragment.XUNTA -> configuration.flags.xuntaGalicia
-                AfirmaJavascriptShimFragment.ACCEDA -> configuration.flags.acceda
-                else -> true
-            }
+            OPTIONAL_FRAGMENT_FLAGS[fragment]?.invoke(configuration.flags) ?: true
         }
         return readTemplates(configuration, selected.map { fragment -> { readResource(fragment) } })
     }
@@ -130,6 +117,24 @@ internal object AfirmaJavascriptShimAssembler {
         require(uri.rawPath.isNullOrEmpty() || uri.rawPath == "/")
         require(uri.rawQuery == null && uri.rawFragment == null)
     }
+
+    private val OPTIONAL_FRAGMENT_FLAGS:
+        Map<AfirmaJavascriptShimFragment, (AfirmaShimCompatibilityFlags) -> Boolean> =
+        mapOf(
+            AfirmaJavascriptShimFragment.CANTABRIA to { it.cantabria },
+            AfirmaJavascriptShimFragment.JCCM to { it.jccm },
+            AfirmaJavascriptShimFragment.JCCM_REGISTRO to { it.jccmRegistro },
+            AfirmaJavascriptShimFragment.AIREF to { it.airef },
+            AfirmaJavascriptShimFragment.CDTI to { it.cdti },
+            AfirmaJavascriptShimFragment.POLICIA to { it.policia },
+            AfirmaJavascriptShimFragment.GRAN_CANARIA to { it.granCanaria },
+            AfirmaJavascriptShimFragment.FUERTEVENTURA to { it.fuerteventura },
+            AfirmaJavascriptShimFragment.MINECO to { it.mineco },
+            AfirmaJavascriptShimFragment.CANARIAS to { it.canarias },
+            AfirmaJavascriptShimFragment.XUNTA to { it.xuntaGalicia },
+            AfirmaJavascriptShimFragment.ACCEDA to { it.acceda },
+            AfirmaJavascriptShimFragment.SEVILLA_ATSE to { it.sevillaAtse },
+        )
 
     private const val HTTPS_PORT = 443
 

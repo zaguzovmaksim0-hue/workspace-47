@@ -1,39 +1,5 @@
 
-  function isExactSevillaAtsePage() {
-    return sevillaAtseCompatibilityEnabled && location.origin === sevillaAtseOrigin &&
-      location.pathname === sevillaAtsePage && location.search === "?modo=Contribuyente" &&
-      location.hash === "";
-  }
-
-  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled) {
-    document.addEventListener("click", event => {
-      if (!isExactSevillaAtsePage()) return;
-      const target = event.target?.closest?.("a");
-      if (target?.getAttribute("href") === "#" &&
-          target.getAttribute("onclick") === "doSign();" &&
-          document.querySelectorAll('a[href="#"][onclick="doSign();"]').length === 1) {
-        event.preventDefault();
-      }
-    }, true);
-  }
-
-  function interceptSevillaAtseSetupCall(call, args) {
-    if (!isExactSevillaAtsePage()) return false;
-    if (call === "SEVILLA_SET_FORCE_WS_MODE") {
-      sevillaAtseSetupState = args.length === 1 && args[0] === true ? 1 : -1;
-      return true;
-    }
-    if (call === "SEVILLA_SET_SERVLETS") {
-      sevillaAtseSetupState = sevillaAtseSetupState === 1 && args.length === 2 &&
-        args[0] === sevillaAtseStorageUrl && args[1] === sevillaAtseRetrieveUrl ? 2 : -1;
-      return true;
-    }
-    if (call === "SEVILLA_CARGAR_APP_AFIRMA") {
-      sevillaAtseSetupState = sevillaAtseSetupState === 2 && args.length === 0 ? 3 : -1;
-      return true;
-    }
-    return false;
-  }
+  installSevillaAtseClickHook();
 
   function interceptUgrSetupCall(call, args) {
     if (!ugrCompatibilityEnabled || window.location.origin !== ugrOrigin) {

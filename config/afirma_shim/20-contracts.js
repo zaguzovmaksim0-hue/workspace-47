@@ -8,12 +8,11 @@
   let matchesJccmSign = () => false;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesJccmRegistroSign = () => null;
-  const sevillaAtseOrigin = "https://www.sevilla.org";
-  const sevillaAtsePage = "/ovweb/ov-web-certificado/index.xhtml";
-  const sevillaAtseStorageUrl = "https://www.sevilla.org/ovweb/sign/StorageService";
-  const sevillaAtseRetrieveUrl = "https://www.sevilla.org/ovweb/sign/RetrieveService";
-  const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
-  let sevillaAtseSetupState = 0;
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesSevillaAtseSign = () => null;
+  let interceptSevillaAtseSetupCall = () => false;
+  let installSevillaAtseClickHook = () => {};
+  let installSevillaAtseMethodHooks = () => {};
   // null: not applicable; false: reject; true: exact tuple.
   let matchesAirefSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.

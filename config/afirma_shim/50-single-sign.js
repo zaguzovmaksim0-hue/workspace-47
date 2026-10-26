@@ -1,16 +1,4 @@
 
-  function isValidSevillaAtseChallenge(value) {
-    if (typeof value !== "string") {
-      return false;
-    }
-    try {
-      const decoded = atob(value);
-      return decoded.length === 40 && sevillaAtseChallengePattern.test(decoded);
-    } catch (_) {
-      return false;
-    }
-  }
-
   function interceptCertificateSelection(a) {
     if (!iSel && !vSel && !xSel) return false;
     let valid = false;
@@ -73,23 +61,11 @@
     postShimDiagnostic("SIGN_INTERCEPT_ENTRY");
     const successCallback = args[4];
     const errorCallback = args[5];
-    const isSevillaAtseOrigin =
-      sevillaAtseCompatibilityEnabled && window.location.origin === sevillaAtseOrigin;
-    const isExactSevillaAtseCall =
-      isSevillaAtseOrigin && isExactSevillaAtsePage() && sevillaAtseSetupState === 3 &&
-      args.length === 6 &&
-      isValidSevillaAtseChallenge(args[0]) &&
-      args[1] === "SHA1withRSA" &&
-      args[2] === "XAdES" &&
-      args[3] == null &&
-      typeof successCallback === "function" &&
-      typeof errorCallback === "function";
-    if (isSevillaAtseOrigin && !isExactSevillaAtseCall) {
-      sevillaAtseSetupState = 0;
+    const isExactSevillaAtseCall = matchesSevillaAtseSign(args, successCallback, errorCallback);
+    if (isExactSevillaAtseCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    if (isExactSevillaAtseCall) sevillaAtseSetupState = 0;
     const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);
     if (isExactAccedaCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");

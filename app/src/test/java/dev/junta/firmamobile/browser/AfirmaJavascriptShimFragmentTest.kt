@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -182,6 +182,29 @@ class AfirmaJavascriptShimFragmentTest {
         val body = File(raw, "afirma_shim_policia.js").readText(Charsets.UTF_8)
         assertEquals(enabled.replace(body, "").replace(
             "const policiaCompatibilityEnabled = true;", "const policiaCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledSevillaAtseOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(sevillaAtse = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.SEVILLA_ATSE)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.SEVILLA_ATSE, reads)
+        assertFalse(output.contains("https://www.sevilla.org"))
+        assertFalse(output.contains("sevillaAtseSetupState"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const sevillaAtseCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_sevilla_atse.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const sevillaAtseCompatibilityEnabled = true;", "const sevillaAtseCompatibilityEnabled = false;",
         ), output)
     }
 
@@ -378,7 +401,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val accedaRestored = restoreAccedaExtraction(legacy, assembled, flags.acceda)
+    val sevillaRestored = restoreSevillaAtseExtraction(legacy, assembled, flags.sevillaAtse)
+    val accedaRestored = restoreAccedaExtraction(legacy, sevillaRestored, flags.acceda)
     val xuntaRestored = restoreXuntaExtraction(legacy, accedaRestored, flags.xuntaGalicia)
     val canariasRestored = restoreCanariasExtraction(legacy, xuntaRestored, flags.canarias)
     val minecoRestored = restoreMinecoExtraction(legacy, canariasRestored, flags.mineco)
@@ -643,4 +667,44 @@ private fun restoreAccedaExtraction(legacy: String, actual: String, enabled: Boo
         )
         .replace("    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);\n", branch)
         .replace("if (isExactAccedaCall === false)", "if (isAccedaOrigin && !isExactAccedaCall)")
+}
+
+private fun restoreSevillaAtseExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    fun section(start: String, end: String): String {
+        val at = legacy.indexOf(start)
+        return legacy.substring(at, legacy.indexOf(end, at + start.length))
+    }
+    fun indent(source: String, spaces: Int = 2): String = source.split('\n').dropLast(1)
+        .joinToString("") { if (it.isBlank()) "\n" else " ".repeat(spaces) + it + "\n" }
+    val constants = section("  const sevillaAtseOrigin =", "  const airefOrigin =")
+    val challenge = section("  function isValidSevillaAtseChallenge", "  function isValidAirefPayload")
+    val page = section("  function isExactSevillaAtsePage", "  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled)")
+    val click = section("  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled)", "  function interceptSevillaAtseSetupCall")
+    val setup = section("  function interceptSevillaAtseSetupCall", "  function interceptUgrSetupCall")
+    val hooks = section("      if (sevillaAtseCompatibilityEnabled)", "      if (includeUgrSetup)")
+    val sign = section("    const isSevillaAtseOrigin =", "    const isAccedaOrigin =")
+    val branch = sign.substringBefore("    if (isSevillaAtseOrigin && !isExactSevillaAtseCall)")
+    val assignedSetup = setup.replace(
+        "  function interceptSevillaAtseSetupCall(call, args) {", "  interceptSevillaAtseSetupCall = (call, args) => {",
+    ).removeSuffix("  }\n\n") + "  };\n\n"
+    val module = "\n  {\n" + indent(constants) + "\n" + indent(challenge) + indent(page) + indent(assignedSetup) +
+        "    installSevillaAtseClickHook = () => {\n" + indent(click, 4) + "    };\n\n" +
+        "    installSevillaAtseMethodHooks = value => {\n" + hooks + "    };\n\n" +
+        "    matchesSevillaAtseSign = (args, successCallback, errorCallback) => {\n" + indent(branch) +
+        "      if (isSevillaAtseOrigin && !isExactSevillaAtseCall) sevillaAtseSetupState = 0;\n" +
+        "      if (isExactSevillaAtseCall) sevillaAtseSetupState = 0;\n" +
+        "      return isSevillaAtseOrigin ? isExactSevillaAtseCall : null;\n    };\n  }\n"
+    val stub = "  // null: not applicable; false: reject; true: exact tuple.\n" +
+        "  let matchesSevillaAtseSign = () => null;\n" +
+        "  let interceptSevillaAtseSetupCall = () => false;\n" +
+        "  let installSevillaAtseClickHook = () => {};\n" +
+        "  let installSevillaAtseMethodHooks = () => {};\n"
+    val dispatch = "    const isExactSevillaAtseCall = matchesSevillaAtseSign(args, successCallback, errorCallback);\n" +
+        "    if (isExactSevillaAtseCall === false) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "").replace(stub, constants).replace(dispatch, sign)
+        .replace("  installSevillaAtseClickHook();\n\n", page + click + setup)
+        .replace("      installSevillaAtseMethodHooks(value);\n", hooks)
+        .replace("  function interceptCertificateSelection", challenge + "  function interceptCertificateSelection")
 }

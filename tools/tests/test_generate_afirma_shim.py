@@ -102,6 +102,39 @@ def acceda_extraction(legacy):
     return origin, constants, branch, module
 
 
+def sevilla_extraction(legacy):
+    def section(start, end):
+        at = legacy.index(start)
+        return legacy[at:legacy.index(end, at + len(start))]
+    indent = lambda source, n=2: "".join(" " * n + line if line.strip() else line for line in source.splitlines(keepends=True))
+    constants = section("  const sevillaAtseOrigin =", "  const airefOrigin =")
+    challenge = section("  function isValidSevillaAtseChallenge", "  function isValidAirefPayload")
+    page = section("  function isExactSevillaAtsePage", "  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled)")
+    click = section("  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled)", "  function interceptSevillaAtseSetupCall")
+    setup = section("  function interceptSevillaAtseSetupCall", "  function interceptUgrSetupCall")
+    hooks = section("      if (sevillaAtseCompatibilityEnabled)", "      if (includeUgrSetup)")
+    sign = section("    const isSevillaAtseOrigin =", "    const isAccedaOrigin =")
+    branch = sign[:sign.index("    if (isSevillaAtseOrigin && !isExactSevillaAtseCall)")]
+    assert setup.endswith("  }\n\n")
+    assigned_setup = setup.replace("  function interceptSevillaAtseSetupCall(call, args) {", "  interceptSevillaAtseSetupCall = (call, args) => {", 1)[:-5] + "  };\n\n"
+    module = ("\n  {\n" + indent(constants) + "\n" + indent(challenge) + indent(page) + indent(assigned_setup) +
+        "    installSevillaAtseClickHook = () => {\n" + indent(click, 4) + "    };\n\n" +
+        "    installSevillaAtseMethodHooks = value => {\n" + hooks + "    };\n\n" +
+        "    matchesSevillaAtseSign = (args, successCallback, errorCallback) => {\n" + indent(branch) +
+        "      if (isSevillaAtseOrigin && !isExactSevillaAtseCall) sevillaAtseSetupState = 0;\n" +
+        "      if (isExactSevillaAtseCall) sevillaAtseSetupState = 0;\n" +
+        "      return isSevillaAtseOrigin ? isExactSevillaAtseCall : null;\n    };\n  }\n")
+    stub = ("  // null: not applicable; false: reject; true: exact tuple.\n" +
+        "  let matchesSevillaAtseSign = () => null;\n" +
+        "  let interceptSevillaAtseSetupCall = () => false;\n" +
+        "  let installSevillaAtseClickHook = () => {};\n" +
+        "  let installSevillaAtseMethodHooks = () => {};\n")
+    dispatch = ("    const isExactSevillaAtseCall = matchesSevillaAtseSign(args, successCallback, errorCallback);\n" +
+        "    if (isExactSevillaAtseCall === false) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n")
+    return dict(constants=constants, challenge=challenge, group=page + click + setup, hooks=hooks,
+                sign=sign, module=module, stub=stub, dispatch=dispatch)
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -112,7 +145,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(24)]
+        self.names = [f"{i:02d}-section.js" for i in range(25)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -196,6 +229,11 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesAccedaSign = () => null;\n').replace(
             branch, '    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);\n').replace(
             'if (isAccedaOrigin && !isExactAccedaCall)', 'if (isExactAccedaCall === false)')
+        sevilla = sevilla_extraction(legacy)
+        expected_core = expected_core.replace(sevilla["constants"], sevilla["stub"]).replace(
+            sevilla["challenge"], "").replace(sevilla["sign"], sevilla["dispatch"]).replace(
+            sevilla["group"], "  installSevillaAtseClickHook();\n\n").replace(
+            sevilla["hooks"], "      installSevillaAtseMethodHooks(value);\n")
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -393,6 +431,26 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertLess(core.index(dispatch), core.index('const isExactAirefCall = matchesAirefSign'))
         self.assertIn('    if (isExactAccedaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
 
+    def test_sevilla_state_setup_sign_and_hooks_share_one_optional_fragment(self):
+        raw = ROOT / "app/src/main/res/raw"
+        path = raw / "afirma_shim_sevilla_atse.js"
+        self.assertTrue(path.is_file(), "Sevilla needs one optional stateful fragment")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        expected = sevilla_extraction(legacy)
+        self.assertEqual(expected["module"], path.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn("https://www.sevilla.org", core)
+        self.assertNotIn("sevillaAtseSetupState", core)
+        self.assertNotIn("function isValidSevillaAtseChallenge", core)
+        self.assertNotIn("SEVILLA_SET_SERVLETS", core)
+        self.assertIn(expected["dispatch"], core)
+        self.assertLess(core.index(expected["dispatch"]), core.index("const isExactAccedaCall = matchesAccedaSign"))
+        self.assertLess(core.index("  installSevillaAtseClickHook();"), core.index("  function interceptUgrSetupCall"))
+        self.assertLess(core.index("      installSevillaAtseMethodHooks(value);"), core.index("      if (includeUgrSetup)"))
+        self.assertIn("sevillaAtseSetupState === 3", path.read_text())
+        self.assertIn("return isSevillaAtseOrigin ? isExactSevillaAtseCall : null;", path.read_text())
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -401,7 +459,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 
