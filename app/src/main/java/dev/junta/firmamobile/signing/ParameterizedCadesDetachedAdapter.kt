@@ -18,6 +18,7 @@ internal data class CadesDetachedContract(
     val revalidatePayloadOnComplete: Boolean = false,
     // Exact size by default; portal validators may accept shorter bounded challenges.
     val contentValidator: (ByteArray) -> Boolean = { it.size == contentBytes },
+    val extraPropertiesMatcher: (String) -> Boolean = { it == extraProperties },
 )
 
 /** Owns prepare/complete sequencing; the existing codec and state retain CMS and buffer ownership. */
@@ -110,7 +111,7 @@ internal class ParameterizedCadesDetachedAdapter(
     private fun matchesPayload(data: ByteArray, extraProperties: String): Boolean =
         data.size <= contract.contentBytes && contract.contentValidator(data) &&
             (contract.contentLiteral == null || data.contentEquals(contract.contentLiteral.encodeToByteArray())) &&
-            extraProperties == contract.extraProperties
+            contract.extraPropertiesMatcher(extraProperties)
 
     private fun NormalizedSignRequest.matchesPayloadContract(): Boolean = runCatching {
         withPayload { payload ->

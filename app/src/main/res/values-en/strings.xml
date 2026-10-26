@@ -42,7 +42,7 @@
     <string name="certificate_entry_choose_title">Choose the certificate in %1$s</string>
     <string name="certificate_entry_cancel">Cancel choice</string>
     <string name="error_certificate_not_x509">The certificate is not in a supported X.509 format.</string>
-    <string name="error_unsupported_key_type">Only RSA certificates are supported.</string>
+    <string name="error_unsupported_key_type">Only RSA or P-256/P-384 elliptic-curve certificates are supported.</string>
     <string name="error_certificate_expired">The certificate has expired.</string>
     <string name="error_certificate_not_yet_valid">The certificate is not yet valid.</string>
     <string name="error_key_usage">The certificate does not permit digital signing.</string>
