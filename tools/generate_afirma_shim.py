@@ -21,8 +21,9 @@ RESOURCE_RANGES = (
     ("afirma_shim_jccm_registro.js", 5, 6),
     ("afirma_shim_airef.js", 6, 7),
     ("afirma_shim_cdti.js", 7, 8),
-    ("afirma_shim_handlers.js", 8, 14),
-    ("afirma_shim_installation.js", 14, 17),
+    ("afirma_shim_policia.js", 8, 9),
+    ("afirma_shim_handlers.js", 9, 15),
+    ("afirma_shim_installation.js", 15, 18),
 )
 
 
