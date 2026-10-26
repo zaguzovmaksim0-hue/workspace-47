@@ -318,6 +318,23 @@ def euskadi_post_extraction(legacy):
     return module, edits, ids, body
 
 
+def certificate_selection_extraction(legacy, portal):
+    specs = {
+        'isciii': ('iPage', 'vPage', 'iSel', 'matchesIsciiiSelection'),
+        'valencia': ('vPage', 'accedaOrigin', 'vSel', 'matchesValenciaSelection'),
+    }
+    page, end, flag, matcher = specs[portal]
+    at = legacy.index('  const ' + page + ' =')
+    constants = legacy[at:legacy.index('  const ' + end + ' =', at)]
+    at = legacy.index(flag + ' && location.href === ' + page)
+    expression = legacy[at:legacy.index(') {' + chr(10) + '      valid = true;', at)]
+    module = (chr(10) + '  ' + matcher + ' = a => {' + chr(10) +
+              constants.replace('  const', '    const') +
+              '    return ' + expression + ';' + chr(10) + '  };' + chr(10))
+    stub = '  let ' + matcher + ' = () => false;' + chr(10)
+    return module, constants, expression, stub, matcher
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -328,7 +345,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(29)]
+        self.names = [f"{i:02d}-section.js" for i in range(30)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -448,6 +465,11 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         for old, new in edits:
             self.assertEqual(1, expected_core.count(old))
             expected_core = expected_core.replace(old, new, 1)
+        expected_module, constants, expression, stub, matcher = certificate_selection_extraction(legacy, 'isciii')
+        self.assertEqual(expected_module, (raw / 'afirma_shim_isciii_selection.js').read_text())
+        self.assertEqual(1, expected_core.count(constants))
+        self.assertEqual(1, expected_core.count(expression))
+        expected_core = expected_core.replace(constants, stub, 1).replace(expression, matcher + "(a)", 1)
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -777,6 +799,27 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertIn("MINIAPPLET_SIGN", core)
         self.assertEqual(1, core.count("function secureRequestId"))
 
+    def test_isciii_selection_is_optional_and_ordered(self):
+        raw = ROOT / "app/src/main/res/raw"
+        path = raw / 'afirma_shim_isciii_selection.js'
+        self.assertTrue(path.is_file())
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        expected, _, _, _, _ = certificate_selection_extraction(legacy, 'isciii')
+        self.assertEqual(expected, path.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js",
+            "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://sede.isciii.gob.es', core)
+        self.assertNotIn('const iPage =', core)
+        self.assertNotIn('const iProps =', core)
+        selection = core[core.index("  function interceptCertificateSelection"):core.index("  function equivalentLiteralProperties")]
+        self.assertIn("if (!iSel && !vSel && !xSel) return false;", selection)
+        self.assertIn('rejectDirectCall(a[2], "INVALID_REQUEST")', selection)
+        self.assertIn("pendingCallbacks.set(id, { selection: true", selection)
+        self.assertIn("successCallback(certificateB64)", core)
+        self.assertLess(selection.index("if (matchesIsciiiSelection(a))"), selection.index("} else if ("))
+        self.assertLess(selection.index("} else if ("), selection.index("matchesXuntaSelection(a)"))
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -785,7 +828,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_request_ids.js", "afirma_shim_euskadi_post.js", "afirma_shim_handlers.js", "afirma_shim_melilla_batch.js", "afirma_shim_lugo_batch.js", "afirma_shim_caib_batch.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_isciii_selection.js", "afirma_shim_request_ids.js", "afirma_shim_euskadi_post.js", "afirma_shim_handlers.js", "afirma_shim_melilla_batch.js", "afirma_shim_lugo_batch.js", "afirma_shim_caib_batch.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 

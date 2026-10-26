@@ -63,6 +63,7 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.SEVILLA_ATSE -> R.raw.afirma_shim_sevilla_atse
             AfirmaJavascriptShimFragment.UGR -> R.raw.afirma_shim_ugr
             AfirmaJavascriptShimFragment.BADAJOZ -> R.raw.afirma_shim_badajoz
+            AfirmaJavascriptShimFragment.ISCIII_SELECTION -> R.raw.afirma_shim_isciii_selection
             AfirmaJavascriptShimFragment.REQUEST_IDS -> R.raw.afirma_shim_request_ids
             AfirmaJavascriptShimFragment.EUSKADI_POST -> R.raw.afirma_shim_euskadi_post
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers

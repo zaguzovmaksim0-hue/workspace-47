@@ -24,11 +24,55 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true, melillaBatch = true, lugoBatch = true, caibBatch = true, euskadiClientAuthPost = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true, melillaBatch = true, lugoBatch = true, caibBatch = true, euskadiClientAuthPost = true, isciiiCertificateSelection = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
         .first { it.isDirectory }
+
+    @Test
+    fun disabledIsciiiSelectionOmitsOnlyItsOwnResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(isciiiCertificateSelection = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.ISCIII_SELECTION)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.ISCIII_SELECTION, reads)
+        assertFalse(output.contains("https://sede.isciii.gob.es"))
+        assertFalse(output.contains("const iPage ="))
+        assertFalse(output.contains("const iProps ="))
+        assertTrue(output.contains("MINIAPPLET_SELECT_CERTIFICATE_RESULT"))
+        assertTrue(output.contains("successCallback(certificateB64)"))
+        assertTrue(output.contains("if (!iSel && !vSel && !xSel) return false;"))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_isciii_selection.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace("const iSel = true;", "const iSel = false;"), output)
+    }
+
+    @Test
+    fun isciiiSelectionRetainsNativeProfileGateAndDispatchOrder() {
+        for (active in listOf(false, true)) {
+            val flags = WebMessageBridge.shimCompatibilityFlags(
+                dev.junta.firmamobile.profile.ProfileId(IsciiiCertificateSelectionBridgeAdapter.PROFILE_ID), active, false,
+            )
+            assertEquals(active, flags.isciiiCertificateSelection)
+            val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+            val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration.copy(flags = flags)) {
+                reads += it
+                File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+            }
+            assertEquals(active, reads.contains(AfirmaJavascriptShimFragment.ISCIII_SELECTION))
+            assertEquals(active, output.contains("https://sede.isciii.gob.es"))
+            val selection = output.substringAfter("  function interceptCertificateSelection(a) {").substringBefore("  function equivalentLiteralProperties")
+            assertTrue(selection.indexOf("matchesIsciiiSelection(a)") < selection.indexOf("} else if ("))
+            assertTrue(selection.indexOf("} else if (") < selection.indexOf("matchesXuntaSelection(a)"))
+        }
+    }
 
     @Test
     fun disabledEuskadiOmitsPostHooksAndStateButKeepsSharedSecureIds() {
@@ -669,7 +713,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val euskadiRestored = restoreEuskadiPostExtraction(assembled, flags.euskadiClientAuthPost)
+    val isciiiRestored = restoreIsciiiSelectionExtraction(assembled, flags.isciiiCertificateSelection)
+    val euskadiRestored = restoreEuskadiPostExtraction(isciiiRestored, flags.euskadiClientAuthPost)
     val caibRestored = restoreCaibBatchExtraction(euskadiRestored, flags.caibBatch)
     val lugoRestored = restoreLugoBatchExtraction(caibRestored, flags.lugoBatch)
     val melillaRestored = restoreMelillaBatchExtraction(lugoRestored, flags.melillaBatch)
@@ -1073,4 +1118,13 @@ private fun restoreEuskadiPostExtraction(actual: String, enabled: Boolean): Stri
     return actual.replace(module, "")
         .replace("\n  const closedErrorMessages =", "  let euskadiClientAuthPostSent = false;\n\n  function isSafeEuskadiOpaqueRequest(value) {\n    if (typeof value !== \"string\" || value.length < 1 || value.length > 4096) {\n      return false;\n    }\n    for (let index = 0; index < value.length; index += 1) {\n      const code = value.charCodeAt(index);\n      if (code < 0x21 || code > 0x7e) return false;\n    }\n    return true;\n  }\n\n  function interceptEuskadiClientAuthPost(form) {\n    if (!euskadiClientAuthPostEnabled || window.top !== window ||\n        location.href !== euskadiAuthPage) {\n      return false;\n    }\n    if (!(form instanceof HTMLFormElement)) return false;\n\n    let action;\n    try {\n      action = new URL(form.action, location.href).href;\n    } catch (_) {\n      return true;\n    }\n    // Unrelated forms on the reviewed page remain untouched. Only the exact client-auth target is mediated.\n    if (action !== euskadiClientAuthTarget) return false;\n    if (form.method.toUpperCase() !== \"POST\" ||\n        form.enctype.toLowerCase() !== euskadiFormContentType) {\n      return true;\n    }\n\n    const namedControls = Array.from(form.elements).filter(control => control && control.name);\n    if (namedControls.length !== 2 || namedControls.some(control => control.type !== \"hidden\")) {\n      return true;\n    }\n    const names = namedControls.map(control => control.name).sort();\n    if (names[0] !== \"request\" || names[1] !== \"x_correlation_id\") return true;\n\n    const requestControl = form.elements.namedItem(\"request\");\n    const correlationControl = form.elements.namedItem(\"x_correlation_id\");\n    const requestValue = requestControl && requestControl.value;\n    const correlationValue = correlationControl && correlationControl.value;\n    if (!isSafeEuskadiOpaqueRequest(requestValue) ||\n        typeof correlationValue !== \"string\" ||\n        !canonicalUuidPattern.test(correlationValue) ||\n        euskadiClientAuthPostSent || !bridge || typeof bridge.postMessage !== \"function\") {\n      return true;\n    }\n\n    const requestId = secureRequestId();\n    if (!requestId || !canonicalUuidPattern.test(requestId)) return true;\n    euskadiClientAuthPostSent = true;\n    try {\n      bridge.postMessage(JSON.stringify({\n        type: \"EUSKADI_CLIENT_AUTH_POST\",\n        profileId: euskadiProfileId,\n        requestId,\n        method: \"POST\",\n        contentType: euskadiFormContentType,\n        targetUrl: euskadiClientAuthTarget,\n        request: requestValue,\n        x_correlation_id: correlationValue\n      }));\n    } catch (_) {\n      euskadiClientAuthPostSent = false;\n    }\n    // The normal WebView never sends this POST; native replays the exact form body only in the isolated TLS WebView.\n    return true;\n  }\n\n  if (euskadiClientAuthPostEnabled && typeof HTMLFormElement === \"function\") {\n    const nativeSubmit = HTMLFormElement.prototype.submit;\n    const nativeRequestSubmit = HTMLFormElement.prototype.requestSubmit;\n    try {\n      HTMLFormElement.prototype.submit = function() {\n        if (interceptEuskadiClientAuthPost(this)) return undefined;\n        return Reflect.apply(nativeSubmit, this, []);\n      };\n      if (typeof nativeRequestSubmit === \"function\") {\n        HTMLFormElement.prototype.requestSubmit = function(submitter) {\n          if (interceptEuskadiClientAuthPost(this)) return undefined;\n          const args = submitter === undefined ? [] : [submitter];\n          return Reflect.apply(nativeRequestSubmit, this, args);\n        };\n      }\n      document.addEventListener(\"submit\", event => {\n        if (interceptEuskadiClientAuthPost(event.target)) {\n          event.preventDefault();\n          event.stopImmediatePropagation();\n        }\n      }, true);\n    } catch (_) {\n      // If the exact hook cannot be installed, do not add any broader fallback interception.\n    }\n  }\n\n  const closedErrorMessages =")
         .replace("  // null: not applicable; false: reject; true: exact tuple.\n  let matchesXuntaSign = () => null;", "  const euskadiProfileId = \"euskadi-sede-electronica\";\n  const euskadiAuthPage =\n    \"https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication\";\n  const euskadiClientAuthTarget =\n    \"https://eidas2.izenpe.com/cert-authn-external-validation/authenticate\";\n  const euskadiFormContentType = \"application/x-www-form-urlencoded\";\n  // null: not applicable; false: reject; true: exact tuple.\n  let matchesXuntaSign = () => null;")
+}
+
+private fun restoreIsciiiSelectionExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  matchesIsciiiSelection = a => {\n    const iPage = \"https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null\";\n    const iProps = \"serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService\";\n    return iSel && location.href === iPage && a.length === 3 && a[0] === iProps &&\n        typeof a[1] === \"function\" && typeof a[2] === \"function\";\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("  let matchesIsciiiSelection = () => false;\n", "  const iPage = \"https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null\";\n  const iProps = \"serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService\";\n")
+        .replace("matchesIsciiiSelection(a)", "iSel && location.href === iPage && a.length === 3 && a[0] === iProps &&\n        typeof a[1] === \"function\" && typeof a[2] === \"function\"")
 }

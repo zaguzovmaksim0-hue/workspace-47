@@ -35,8 +35,7 @@
   let interceptCaibSetupCall = () => false;
   let interceptCaibBatchSign = () => false;
   let installCaibBatchMethodHooks = () => {};
-  const iPage = "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
-  const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
+  let matchesIsciiiSelection = () => false;
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
   // null: not applicable; false: reject; true: exact tuple.

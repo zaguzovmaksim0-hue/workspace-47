@@ -88,8 +88,7 @@
   function interceptCertificateSelection(a) {
     if (!iSel && !vSel && !xSel) return false;
     let valid = false;
-    if (iSel && location.href === iPage && a.length === 3 && a[0] === iProps &&
-        typeof a[1] === "function" && typeof a[2] === "function") {
+    if (matchesIsciiiSelection(a)) {
       valid = true;
     } else if (vSel && location.href === vPage && a.length === 3 && a[0] === vProps &&
         typeof a[1] === "function" && typeof a[2] === "function") {

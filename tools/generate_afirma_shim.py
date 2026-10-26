@@ -31,14 +31,15 @@ RESOURCE_RANGES = (
     ("afirma_shim_sevilla_atse.js", 15, 16),
     ("afirma_shim_ugr.js", 16, 17),
     ("afirma_shim_badajoz.js", 17, 18),
-    ("afirma_shim_request_ids.js", 18, 19),
-    ("afirma_shim_euskadi_post.js", 19, 20),
-    ("afirma_shim_handlers.js", 20, 22),
-    ("afirma_shim_melilla_batch.js", 22, 23),
-    ("afirma_shim_lugo_batch.js", 23, 24),
-    ("afirma_shim_caib_batch.js", 24, 25),
-    ("afirma_shim_batch_results.js", 25, 26),
-    ("afirma_shim_installation.js", 26, 29),
+    ("afirma_shim_isciii_selection.js", 18, 19),
+    ("afirma_shim_request_ids.js", 19, 20),
+    ("afirma_shim_euskadi_post.js", 20, 21),
+    ("afirma_shim_handlers.js", 21, 23),
+    ("afirma_shim_melilla_batch.js", 23, 24),
+    ("afirma_shim_lugo_batch.js", 24, 25),
+    ("afirma_shim_caib_batch.js", 25, 26),
+    ("afirma_shim_batch_results.js", 26, 27),
+    ("afirma_shim_installation.js", 27, 30),
 )
 
 
