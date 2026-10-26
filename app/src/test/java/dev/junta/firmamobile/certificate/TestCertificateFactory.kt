@@ -8,6 +8,7 @@ import java.security.KeyStore
 import java.security.Provider
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
+import java.security.spec.ECGenParameterSpec
 import java.time.Instant
 import java.util.Date
 import java.util.concurrent.atomic.AtomicLong
@@ -126,13 +127,14 @@ internal object TestCertificateFactory {
         setCertificateEntry("certificado", validIdentity.certificate)
     }
 
-    fun ecIdentity(): ByteArray {
+    fun ecIdentity(curve: String = "secp256r1"): ByteArray {
         val identity = identity(
             commonName = "Identidad EC",
             algorithm = "EC",
             notBefore = defaultNotBefore,
             notAfter = defaultNotAfter,
             keyUsage = KeyUsage.digitalSignature,
+            ecCurve = curve,
         )
         return store {
             setKeyEntry(
@@ -292,8 +294,9 @@ internal object TestCertificateFactory {
         notBefore: Instant,
         notAfter: Instant,
         keyUsage: Int,
+        ecCurve: String = "secp256r1",
     ): TestIdentity {
-        val keyPair = generateKeyPair(algorithm)
+        val keyPair = generateKeyPair(algorithm, ecCurve = ecCurve)
         val subject = X500Name("CN=$commonName,O=Junta Firma Mobile Tests,C=ES")
         val certificate = certificate(
             subject = subject,
@@ -347,10 +350,10 @@ internal object TestCertificateFactory {
         return certificate
     }
 
-    private fun generateKeyPair(algorithm: String, rsaBits: Int = 2048): KeyPair {
+    private fun generateKeyPair(algorithm: String, rsaBits: Int = 2048, ecCurve: String = "secp256r1"): KeyPair {
         val generator = KeyPairGenerator.getInstance(algorithm)
         if (algorithm == "EC") {
-            generator.initialize(256, random)
+            generator.initialize(ECGenParameterSpec(ecCurve), random)
         } else {
             generator.initialize(rsaBits, random)
         }

@@ -45,14 +45,11 @@ import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
 import dev.junta.firmamobile.browser.MelillaBatchSigningAdapter
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
-import dev.junta.firmamobile.catalog.AndroidRegionDetector
 import dev.junta.firmamobile.catalog.PortalCatalogViewModel
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalCatalogScreen
 import dev.junta.firmamobile.catalog.PortalOpenTarget
-import dev.junta.firmamobile.catalog.PreferencesCatalogPreferencesStore
 import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
-import dev.junta.firmamobile.catalog.catalogPreferencesDataStore
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.network.HttpsProfileHttpTransport
 import dev.junta.firmamobile.network.JuntaOriginPolicy
@@ -75,6 +72,8 @@ import dev.junta.firmamobile.signing.SigningUiState
 import dev.junta.firmamobile.smoke.CatalogSmokeController
 import dev.junta.firmamobile.smoke.CatalogSmokeHook
 import dev.junta.firmamobile.ui.AppRoot
+import dev.junta.firmamobile.ui.CertificateEntryChoiceActions
+import dev.junta.firmamobile.ui.LocalCertificateEntryChoice
 import dev.junta.firmamobile.ui.LocalSavedCertificates
 import dev.junta.firmamobile.ui.SavedCertificatesActions
 import dev.junta.firmamobile.ui.BrowserScreen
@@ -178,7 +177,7 @@ class MainActivity : ComponentActivity() {
 
     private val certificateViewModel: CertificateViewModel by viewModels {
         val app = application as JuntaFirmaApplication
-        CertificateViewModel.Factory(
+        app.appContainer.certificateViewModelFactory(
             app.certificateGateway,
             app.certificateSession,
             app.certificateUnlockCache,
@@ -330,13 +329,7 @@ class MainActivity : ComponentActivity() {
         catalogRepository = repository
         catalogViewModel = ViewModelProvider(
             this,
-            PortalCatalogViewModel.Factory(
-                repository = catalogRepository,
-                preferencesStore = PreferencesCatalogPreferencesStore(
-                    applicationContext.catalogPreferencesDataStore,
-                ),
-                regionDetector = AndroidRegionDetector(applicationContext),
-            ),
+            app.appContainer.catalogViewModelFactory(applicationContext, catalogRepository),
         )[PortalCatalogViewModel::class.java]
         catalogSmokeHook = CatalogSmokeHook(
             activity = this,
@@ -417,7 +410,14 @@ class MainActivity : ComponentActivity() {
                 },
                 onRemove = certificateViewModel::removeSavedCertificate,
             )
-            CompositionLocalProvider(LocalSavedCertificates provides savedCertificateActions) { JuntaFirmaTheme {
+            val entryChoiceActions = CertificateEntryChoiceActions(
+                onChoose = certificateViewModel::chooseCertificate,
+                onCancel = certificateViewModel::cancelCertificateChoice,
+            )
+            CompositionLocalProvider(
+                LocalSavedCertificates provides savedCertificateActions,
+                LocalCertificateEntryChoice provides entryChoiceActions,
+            ) { JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
                 val browserDestination = destination as? AppDestination.Browser
                 if (browserDestination != null) {
