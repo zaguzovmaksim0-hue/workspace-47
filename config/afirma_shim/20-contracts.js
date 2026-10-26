@@ -41,12 +41,6 @@
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
   // null: not applicable; false: reject; true: exact tuple.
   let matchesAccedaSign = () => null;
-  const euskadiProfileId = "euskadi-sede-electronica";
-  const euskadiAuthPage =
-    "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication";
-  const euskadiClientAuthTarget =
-    "https://eidas2.izenpe.com/cert-authn-external-validation/authenticate";
-  const euskadiFormContentType = "application/x-www-form-urlencoded";
   // null: not applicable; false: reject; true: exact tuple.
   let matchesXuntaSign = () => null;
   let matchesXuntaSelection = () => false;
