@@ -117,5 +117,5 @@
     }
     pendingCallbacks.clear();
     pendingBatchCallbacks.clear();
-    activeMelillaBatch = null;
+    resetMelillaBatch();
   });

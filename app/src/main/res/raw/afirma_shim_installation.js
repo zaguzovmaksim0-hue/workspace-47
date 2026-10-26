@@ -7,8 +7,7 @@
   });
 
   function notifyNativeDocumentReady() {
-    const isStaBatchDocument = melillaBatchCompatibilityEnabled &&
-      window.location.origin === staBatchOrigin;
+    const isStaBatchDocument = isMelillaBatchDocument();
     const isLugoBatchDocument = lugoBatchCompatibilityEnabled &&
       window.location.origin === lugoOrigin;
     const isCaibBatchDocument = caibRequestToken() !== null;
@@ -226,11 +225,7 @@
       if (includeIsciiiCertificateSelection) {
         installMethodHook(value, "selectCertificate", "SELECT_CERTIFICATE");
       }
-      if (includeMelillaBatch) {
-        installMethodHook(value, "createBatch", "BATCH_CREATE");
-        installMethodHook(value, "addDocumentToBatch", "BATCH_ADD_DOCUMENT");
-        installMethodHook(value, "signBatchProcess", "BATCH_SIGN");
-      }
+      installMelillaBatchMethodHooks(value, includeMelillaBatch);
       if (includeLugoBatch) {
         installMethodHook(value, "cargarAppAfirma", "LUGO_CARGAR_APP_AFIRMA");
         installMethodHook(value, "signBatch", "LUGO_BATCH_SIGN");

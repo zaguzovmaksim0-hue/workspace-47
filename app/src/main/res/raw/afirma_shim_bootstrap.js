@@ -127,5 +127,10 @@
   const installedMethodGetters = new WeakSet();
   const pendingCallbacks = new Map();
   const pendingBatchCallbacks = new Map();
-  let activeMelillaBatch = null;
+  let rememberMelillaBatchCreate = () => {};
+  let rememberMelillaBatchDocument = () => {};
+  let interceptMelillaBatchSign = () => false;
+  let resetMelillaBatch = () => {};
+  let installMelillaBatchMethodHooks = () => {};
+  let isMelillaBatchDocument = () => false;
   let activeProbeRequestId = null;

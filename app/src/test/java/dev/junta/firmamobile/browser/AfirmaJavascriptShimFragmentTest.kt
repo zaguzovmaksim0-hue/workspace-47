@@ -24,11 +24,87 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true, melillaBatch = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
         .first { it.isDirectory }
+
+    @Test
+    fun disabledStaBatchOmitsItsStateHooksAndResourceOnly() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(melillaBatch = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.MELILLA_BATCH)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.MELILLA_BATCH, reads)
+        for (body in listOf("activeMelillaBatch", "function isMelillaBatchPage", "signBatchProcess", "createBatch")) {
+            assertFalse(body, output.contains(body))
+        }
+        assertTrue(output.contains("pendingBatchCallbacks"))
+        assertTrue(output.contains("receiveMelillaBatchResult"))
+        assertTrue(output.contains("LUGO_XML_BATCH_CANCEL"))
+        assertTrue(output.contains("CAIB_XML_BATCH_CANCEL"))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_melilla_batch.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const melillaBatchCompatibilityEnabled = true;", "const melillaBatchCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun staFallbackProfilesKeepTheirNativeGateAndExactSourceOrigin() {
+        val profiles = listOf(
+            MelillaBatchBridgeAdapter.PROFILE_ID to MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
+            ExtremaduraBatchBridgeAdapter.PROFILE_ID to ExtremaduraBatchBridgeAdapter.SOURCE_ORIGIN,
+            LaPalmaBatchBridgeAdapter.PROFILE_ID to LaPalmaBatchBridgeAdapter.SOURCE_ORIGIN,
+            HuescaBatchBridgeAdapter.PROFILE_ID to HuescaBatchBridgeAdapter.SOURCE_ORIGIN,
+            BurgosBatchBridgeAdapter.PROFILE_ID to BurgosBatchBridgeAdapter.SOURCE_ORIGIN,
+        )
+        for ((profile, origin) in profiles) for (active in listOf(false, true)) for (gate in listOf(false, true)) {
+            val flags = WebMessageBridge.shimCompatibilityFlags(
+                dev.junta.firmamobile.profile.ProfileId(profile), active, gate,
+            )
+            assertEquals(gate, flags.melillaBatch)
+            assertFalse(flags.lugoBatch)
+            assertFalse(flags.caibBatch)
+            val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+            val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(
+                configuration.copy(flags = flags, staBatchOrigin = origin),
+            ) {
+                reads += it
+                File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+            }
+            assertEquals(gate, reads.contains(AfirmaJavascriptShimFragment.MELILLA_BATCH))
+            assertEquals(gate, output.contains("function isMelillaBatchPage"))
+            assertTrue(output.contains("const staBatchOrigin = ${org.json.JSONObject.quote(origin)};"))
+            if (gate) assertTrue(output.contains("window.location.origin === staBatchOrigin"))
+        }
+    }
+
+    @Test
+    fun lugoAndCaibNeverSelectTheStaFallbackResource() {
+        for (profile in listOf(LugoBatchBridgeAdapter.PROFILE_ID, CaibBatchBridgeAdapter.PROFILE_ID)) {
+            for (active in listOf(false, true)) for (gate in listOf(false, true)) {
+                val flags = WebMessageBridge.shimCompatibilityFlags(
+                    dev.junta.firmamobile.profile.ProfileId(profile), active, gate,
+                )
+                assertFalse(flags.melillaBatch)
+                assertEquals(gate && profile == LugoBatchBridgeAdapter.PROFILE_ID, flags.lugoBatch)
+                assertEquals(gate && profile == CaibBatchBridgeAdapter.PROFILE_ID, flags.caibBatch)
+                val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration.copy(flags = flags)) {
+                    check(it != AfirmaJavascriptShimFragment.MELILLA_BATCH)
+                    File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+                }
+                assertFalse(output.contains("activeMelillaBatch"))
+            }
+        }
+    }
 
     @Test
     fun disabledBadajozOmitsItsContractStateAndDiagnostics() {
@@ -443,7 +519,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val badajozRestored = restoreBadajozExtraction(assembled, flags.badajoz)
+    val melillaRestored = restoreMelillaBatchExtraction(assembled, flags.melillaBatch)
+    val badajozRestored = restoreBadajozExtraction(melillaRestored, flags.badajoz)
     val ugrRestored = restoreUgrExtraction(legacy, badajozRestored, flags.ugr)
     val sevillaRestored = restoreSevillaAtseExtraction(legacy, ugrRestored, flags.sevillaAtse)
     val accedaRestored = restoreAccedaExtraction(legacy, sevillaRestored, flags.acceda)
@@ -801,4 +878,16 @@ private fun restoreBadajozExtraction(actual: String, enabled: Boolean): String {
         .replace("  postShimDiagnostic(\"SCRIPT_INSTALLED\");", "  function postBadajozDiagnosticOnce(stage) {\n    if (badajozDiagnosticPostedStages.has(stage)) {\n      return;\n    }\n    badajozDiagnosticPostedStages.add(stage);\n    postShimDiagnostic(stage);\n  }\n\n  postShimDiagnostic(\"SCRIPT_INSTALLED\");")
         .replace("  function postShimDiagnostic", "  function markBadajozSignHookReady() {\n    try {\n      window.__jfmBadajozSignHookReady = true;\n    } catch (_) {}\n    if (!badajozSignHookReadyDiagnosticPosted) {\n      badajozSignHookReadyDiagnosticPosted = true;\n      postShimDiagnostic(\"BADAJOZ_SIGN_HOOK_READY\");\n    }\n  }\n\n  function postShimDiagnostic")
         .replace("  // null: not applicable; false: reject; true: exact tuple.\n  let matchesBadajozSign = () => null;\n  let getBadajozExtraProperties = () => null;\n  let notifyBadajozSignHook = () => {};\n  let repairBadajozDiagnostics = () => {};\n  let installBadajozLateHooks = () => {};\n", "  let badajozSignHookReadyDiagnosticPosted = false;\n  const badajozDiagnosticWrappedFunctions = new WeakSet();\n  const badajozDiagnosticPostedStages = new Set();\n")
+}
+
+private fun restoreMelillaBatchExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  {\n    let activeMelillaBatch = null;\n    function isMelillaBatchPage() {\n      return functionalSigningEnabled && melillaBatchCompatibilityEnabled &&\n        window.location.origin === staBatchOrigin;\n    }\n\n    function isSafeBatchIdentifier(value) {\n      return typeof value === \"string\" && value.length > 0 &&\n        value.length <= maxBatchIdentifierChars &&\n        !Array.from(value).some(character => /\\s/.test(character) ||\n          character.charCodeAt(0) < 0x20 || character.charCodeAt(0) === 0x7f);\n    }\n\n    function batchExtraParams(format) {\n      if (format === \"PAdES\") {\n        return \"signatureSubFilter=ETSI.CAdES.detached\";\n      }\n      if (format === \"XAdES\") {\n        return \"mode=implicit\";\n      }\n      return null;\n    }\n\n    function isSupportedBatchFormat(value) {\n      return value === \"CAdES\" || value === \"PAdES\" || value === \"XAdES\";\n    }\n\n    rememberMelillaBatchCreate = (args) => {\n      if (!isMelillaBatchPage()) {\n        activeMelillaBatch = null;\n        return;\n      }\n      if (args.length !== 4 || args[0] !== \"SHA256withRSA\" ||\n          !isSupportedBatchFormat(args[1]) || args[2] !== \"sign\" || args[3] !== null) {\n        activeMelillaBatch = null;\n        return;\n      }\n      activeMelillaBatch = {\n        algorithm: args[0],\n        format: args[1],\n        suboperation: args[2],\n        documents: [],\n        invalid: false\n      };\n    };\n\n    rememberMelillaBatchDocument = (args) => {\n      const batch = activeMelillaBatch;\n      if (!isMelillaBatchPage() || !batch) {\n        return;\n      }\n      const documentFormat = args[2];\n      const documentSuboperation = args[3];\n      const effectiveFormat = documentFormat === null ? batch.format : documentFormat;\n      const valid = args.length === 5 && isSafeBatchIdentifier(args[0]) &&\n        typeof args[1] === \"string\" && args[1].length > 0 &&\n        args[1].length <= maxBatchUrlChars && !args[1].includes(\"\\u0000\") &&\n        (documentFormat === null || isSupportedBatchFormat(documentFormat)) &&\n        (documentSuboperation === null || documentSuboperation === \"sign\") &&\n        args[4] === batchExtraParams(effectiveFormat) &&\n        !batch.documents.some(document => document.id === args[0]) &&\n        batch.documents.length < maxBatchDocuments;\n      if (!valid) {\n        batch.invalid = true;\n        return;\n      }\n      const document = {\n        id: args[0],\n        datareference: args[1]\n      };\n      if (documentFormat !== null) {\n        document.format = documentFormat;\n      }\n      if (documentSuboperation !== null) {\n        document.suboperation = documentSuboperation;\n      }\n      batch.documents.push(document);\n    };\n\n    interceptMelillaBatchSign = (args) => {\n      if (!isMelillaBatchPage()) {\n        return false;\n      }\n      const errorCallback = args[5];\n      const batch = activeMelillaBatch;\n      if (args.length !== 6 || args[0] !== false || typeof args[1] !== \"string\" ||\n          args[1].length === 0 || args[1].length > maxBatchUrlChars ||\n          typeof args[2] !== \"string\" || args[2].length === 0 ||\n          args[2].length > maxBatchUrlChars || args[3] !== null ||\n          typeof args[4] !== \"function\" || typeof errorCallback !== \"function\" ||\n          !batch || batch.invalid || batch.documents.length === 0 || !probeDocumentId) {\n        rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n        return true;\n      }\n      if (!bridge || typeof bridge.postMessage !== \"function\") {\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n        return true;\n      }\n      if (pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n        return true;\n      }\n      const batchRequestId = secureRequestId();\n      if (!batchRequestId) {\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n        return true;\n      }\n      const timeoutId = setTimeout(() => {\n        const expired = clearPendingBatch(batchRequestId);\n        if (expired) {\n          notifyNativeCancel(batchRequestId, \"MINIAPPLET_BATCH_CANCEL\");\n          rejectDirectCall(expired.errorCallback, \"REQUEST_EXPIRED\");\n        }\n      }, signTimeoutMillis);\n      pendingBatchCallbacks.set(batchRequestId, {\n        successCallback: args[4],\n        errorCallback,\n        timeoutId\n      });\n      const message = {\n        type: \"MINIAPPLET_BATCH\",\n        documentId: probeDocumentId,\n        requestId: batchRequestId,\n        batchPreSignerUrl: args[1],\n        batchPostSignerUrl: args[2],\n        algorithm: batch.algorithm,\n        format: batch.format,\n        suboperation: batch.suboperation,\n        stopOnError: false,\n        documentos: batch.documents.map(document => ({ ...document }))\n      };\n      activeMelillaBatch = null;\n      try {\n        bridge.postMessage(JSON.stringify(message));\n      } catch (_) {\n        clearPendingBatch(batchRequestId);\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      }\n      return true;\n    };\n\n    resetMelillaBatch = () => { activeMelillaBatch = null; };\n\n    isMelillaBatchDocument = () =>\n      melillaBatchCompatibilityEnabled &&\n      window.location.origin === staBatchOrigin;\n\n    installMelillaBatchMethodHooks = (value, includeMelillaBatch) => {\n      if (includeMelillaBatch) {\n        installMethodHook(value, \"createBatch\", \"BATCH_CREATE\");\n        installMethodHook(value, \"addDocumentToBatch\", \"BATCH_ADD_DOCUMENT\");\n        installMethodHook(value, \"signBatchProcess\", \"BATCH_SIGN\");\n      }\n    };\n  }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("    pendingBatchCallbacks.clear();\n    resetMelillaBatch();", "    pendingBatchCallbacks.clear();\n    activeMelillaBatch = null;")
+        .replace("    const isStaBatchDocument = isMelillaBatchDocument();\n", "    const isStaBatchDocument = melillaBatchCompatibilityEnabled &&\n      window.location.origin === staBatchOrigin;\n")
+        .replace("      installMelillaBatchMethodHooks(value, includeMelillaBatch);\n", "      if (includeMelillaBatch) {\n        installMethodHook(value, \"createBatch\", \"BATCH_CREATE\");\n        installMethodHook(value, \"addDocumentToBatch\", \"BATCH_ADD_DOCUMENT\");\n        installMethodHook(value, \"signBatchProcess\", \"BATCH_SIGN\");\n      }\n")
+        .replace("  function interceptLugoSetupCall", "  function isMelillaBatchPage() {\n    return functionalSigningEnabled && melillaBatchCompatibilityEnabled &&\n      window.location.origin === staBatchOrigin;\n  }\n\n  function isSafeBatchIdentifier(value) {\n    return typeof value === \"string\" && value.length > 0 &&\n      value.length <= maxBatchIdentifierChars &&\n      !Array.from(value).some(character => /\\s/.test(character) ||\n        character.charCodeAt(0) < 0x20 || character.charCodeAt(0) === 0x7f);\n  }\n\n  function batchExtraParams(format) {\n    if (format === \"PAdES\") {\n      return \"signatureSubFilter=ETSI.CAdES.detached\";\n    }\n    if (format === \"XAdES\") {\n      return \"mode=implicit\";\n    }\n    return null;\n  }\n\n  function isSupportedBatchFormat(value) {\n    return value === \"CAdES\" || value === \"PAdES\" || value === \"XAdES\";\n  }\n\n  function rememberMelillaBatchCreate(args) {\n    if (!isMelillaBatchPage()) {\n      activeMelillaBatch = null;\n      return;\n    }\n    if (args.length !== 4 || args[0] !== \"SHA256withRSA\" ||\n        !isSupportedBatchFormat(args[1]) || args[2] !== \"sign\" || args[3] !== null) {\n      activeMelillaBatch = null;\n      return;\n    }\n    activeMelillaBatch = {\n      algorithm: args[0],\n      format: args[1],\n      suboperation: args[2],\n      documents: [],\n      invalid: false\n    };\n  }\n\n  function rememberMelillaBatchDocument(args) {\n    const batch = activeMelillaBatch;\n    if (!isMelillaBatchPage() || !batch) {\n      return;\n    }\n    const documentFormat = args[2];\n    const documentSuboperation = args[3];\n    const effectiveFormat = documentFormat === null ? batch.format : documentFormat;\n    const valid = args.length === 5 && isSafeBatchIdentifier(args[0]) &&\n      typeof args[1] === \"string\" && args[1].length > 0 &&\n      args[1].length <= maxBatchUrlChars && !args[1].includes(\"\\u0000\") &&\n      (documentFormat === null || isSupportedBatchFormat(documentFormat)) &&\n      (documentSuboperation === null || documentSuboperation === \"sign\") &&\n      args[4] === batchExtraParams(effectiveFormat) &&\n      !batch.documents.some(document => document.id === args[0]) &&\n      batch.documents.length < maxBatchDocuments;\n    if (!valid) {\n      batch.invalid = true;\n      return;\n    }\n    const document = {\n      id: args[0],\n      datareference: args[1]\n    };\n    if (documentFormat !== null) {\n      document.format = documentFormat;\n    }\n    if (documentSuboperation !== null) {\n      document.suboperation = documentSuboperation;\n    }\n    batch.documents.push(document);\n  }\n\n  function interceptMelillaBatchSign(args) {\n    if (!isMelillaBatchPage()) {\n      return false;\n    }\n    const errorCallback = args[5];\n    const batch = activeMelillaBatch;\n    if (args.length !== 6 || args[0] !== false || typeof args[1] !== \"string\" ||\n        args[1].length === 0 || args[1].length > maxBatchUrlChars ||\n        typeof args[2] !== \"string\" || args[2].length === 0 ||\n        args[2].length > maxBatchUrlChars || args[3] !== null ||\n        typeof args[4] !== \"function\" || typeof errorCallback !== \"function\" ||\n        !batch || batch.invalid || batch.documents.length === 0 || !probeDocumentId) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n    if (!bridge || typeof bridge.postMessage !== \"function\") {\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      return true;\n    }\n    if (pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      return true;\n    }\n    const batchRequestId = secureRequestId();\n    if (!batchRequestId) {\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      return true;\n    }\n    const timeoutId = setTimeout(() => {\n      const expired = clearPendingBatch(batchRequestId);\n      if (expired) {\n        notifyNativeCancel(batchRequestId, \"MINIAPPLET_BATCH_CANCEL\");\n        rejectDirectCall(expired.errorCallback, \"REQUEST_EXPIRED\");\n      }\n    }, signTimeoutMillis);\n    pendingBatchCallbacks.set(batchRequestId, {\n      successCallback: args[4],\n      errorCallback,\n      timeoutId\n    });\n    const message = {\n      type: \"MINIAPPLET_BATCH\",\n      documentId: probeDocumentId,\n      requestId: batchRequestId,\n      batchPreSignerUrl: args[1],\n      batchPostSignerUrl: args[2],\n      algorithm: batch.algorithm,\n      format: batch.format,\n      suboperation: batch.suboperation,\n      stopOnError: false,\n      documentos: batch.documents.map(document => ({ ...document }))\n    };\n    activeMelillaBatch = null;\n    try {\n      bridge.postMessage(JSON.stringify(message));\n    } catch (_) {\n      clearPendingBatch(batchRequestId);\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n    }\n    return true;\n  }\n\n  function interceptLugoSetupCall")
+        .replace("  let rememberMelillaBatchCreate = () => {};\n  let rememberMelillaBatchDocument = () => {};\n  let interceptMelillaBatchSign = () => false;\n  let resetMelillaBatch = () => {};\n  let installMelillaBatchMethodHooks = () => {};\n  let isMelillaBatchDocument = () => false;\n", "  let activeMelillaBatch = null;\n")
 }
