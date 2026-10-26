@@ -63,7 +63,15 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.SEVILLA_ATSE -> R.raw.afirma_shim_sevilla_atse
             AfirmaJavascriptShimFragment.UGR -> R.raw.afirma_shim_ugr
             AfirmaJavascriptShimFragment.BADAJOZ -> R.raw.afirma_shim_badajoz
+            AfirmaJavascriptShimFragment.ISCIII_SELECTION -> R.raw.afirma_shim_isciii_selection
+            AfirmaJavascriptShimFragment.VALENCIA_SELECTION -> R.raw.afirma_shim_valencia_selection
+            AfirmaJavascriptShimFragment.REQUEST_IDS -> R.raw.afirma_shim_request_ids
+            AfirmaJavascriptShimFragment.EUSKADI_POST -> R.raw.afirma_shim_euskadi_post
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
+            AfirmaJavascriptShimFragment.MELILLA_BATCH -> R.raw.afirma_shim_melilla_batch
+            AfirmaJavascriptShimFragment.LUGO_BATCH -> R.raw.afirma_shim_lugo_batch
+            AfirmaJavascriptShimFragment.CAIB_BATCH -> R.raw.afirma_shim_caib_batch
+            AfirmaJavascriptShimFragment.BATCH_RESULTS -> R.raw.afirma_shim_batch_results
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }
         context.resources.openRawResource(resourceId).bufferedReader(Charsets.UTF_8)

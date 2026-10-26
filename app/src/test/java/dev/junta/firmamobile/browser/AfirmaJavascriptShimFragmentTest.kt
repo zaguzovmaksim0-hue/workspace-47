@@ -24,11 +24,325 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true, melillaBatch = true, lugoBatch = true, caibBatch = true, euskadiClientAuthPost = true, isciiiCertificateSelection = true, valenciaCertificateSelection = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
         .first { it.isDirectory }
+
+    @Test
+    fun disabledValenciaSelectionOmitsOnlyItsOwnResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(valenciaCertificateSelection = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.VALENCIA_SELECTION)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.VALENCIA_SELECTION, reads)
+        assertFalse(output.contains("https://portafirmas.dival.es"))
+        assertFalse(output.contains("const vPage ="))
+        assertFalse(output.contains("const vProps ="))
+        assertTrue(output.contains("MINIAPPLET_SELECT_CERTIFICATE_RESULT"))
+        assertTrue(output.contains("successCallback(certificateB64)"))
+        assertTrue(output.contains("if (!iSel && !vSel && !xSel) return false;"))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_valencia_selection.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace("const vSel = true;", "const vSel = false;"), output)
+    }
+
+    @Test
+    fun valenciaSelectionRetainsNativeProfileGateAndDispatchOrder() {
+        for (active in listOf(false, true)) {
+            val flags = WebMessageBridge.shimCompatibilityFlags(
+                dev.junta.firmamobile.profile.ProfileId(ValenciaCertificateSelectionBridgeAdapter.PROFILE_ID), active, false,
+            )
+            assertEquals(active, flags.valenciaCertificateSelection)
+            val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+            val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration.copy(flags = flags)) {
+                reads += it
+                File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+            }
+            assertEquals(active, reads.contains(AfirmaJavascriptShimFragment.VALENCIA_SELECTION))
+            assertEquals(active, output.contains("https://portafirmas.dival.es"))
+            val selection = output.substringAfter("  function interceptCertificateSelection(a) {").substringBefore("  function equivalentLiteralProperties")
+            assertTrue(selection.indexOf("matchesIsciiiSelection(a)") < selection.indexOf("} else if ("))
+            assertTrue(selection.indexOf("} else if (") < selection.indexOf("matchesXuntaSelection(a)"))
+        }
+    }
+
+    @Test
+    fun disabledIsciiiSelectionOmitsOnlyItsOwnResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(isciiiCertificateSelection = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.ISCIII_SELECTION)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.ISCIII_SELECTION, reads)
+        assertFalse(output.contains("https://sede.isciii.gob.es"))
+        assertFalse(output.contains("const iPage ="))
+        assertFalse(output.contains("const iProps ="))
+        assertTrue(output.contains("MINIAPPLET_SELECT_CERTIFICATE_RESULT"))
+        assertTrue(output.contains("successCallback(certificateB64)"))
+        assertTrue(output.contains("if (!iSel && !vSel && !xSel) return false;"))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_isciii_selection.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace("const iSel = true;", "const iSel = false;"), output)
+    }
+
+    @Test
+    fun isciiiSelectionRetainsNativeProfileGateAndDispatchOrder() {
+        for (active in listOf(false, true)) {
+            val flags = WebMessageBridge.shimCompatibilityFlags(
+                dev.junta.firmamobile.profile.ProfileId(IsciiiCertificateSelectionBridgeAdapter.PROFILE_ID), active, false,
+            )
+            assertEquals(active, flags.isciiiCertificateSelection)
+            val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+            val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration.copy(flags = flags)) {
+                reads += it
+                File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+            }
+            assertEquals(active, reads.contains(AfirmaJavascriptShimFragment.ISCIII_SELECTION))
+            assertEquals(active, output.contains("https://sede.isciii.gob.es"))
+            val selection = output.substringAfter("  function interceptCertificateSelection(a) {").substringBefore("  function equivalentLiteralProperties")
+            assertTrue(selection.indexOf("matchesIsciiiSelection(a)") < selection.indexOf("} else if ("))
+            assertTrue(selection.indexOf("} else if (") < selection.indexOf("matchesXuntaSelection(a)"))
+        }
+    }
+
+    @Test
+    fun disabledEuskadiOmitsPostHooksAndStateButKeepsSharedSecureIds() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(euskadiClientAuthPost = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.EUSKADI_POST)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.EUSKADI_POST, reads)
+        assertEquals(1, reads.count { it == AfirmaJavascriptShimFragment.REQUEST_IDS })
+        for (token in listOf("EUSKADI_CLIENT_AUTH_POST", "euskadiClientAuthPostSent",
+            "eidas.izenpe.com", "eidas2.izenpe.com", "isSafeEuskadiOpaqueRequest",
+            "HTMLFormElement.prototype.submit", "HTMLFormElement.prototype.requestSubmit")) {
+            assertFalse(token, output.contains(token))
+        }
+        assertTrue(output.contains("function secureRequestId"))
+        assertTrue(output.contains("crypto.randomUUID"))
+        assertTrue(output.contains("crypto.getRandomValues"))
+        assertTrue(output.contains("QA_PORTAL_DIAGNOSTIC"))
+        assertTrue(output.contains("MINIAPPLET_SIGN"))
+        assertFalse(output.contains("Math.random"))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_euskadi_post.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const euskadiClientAuthPostEnabled = true;", "const euskadiClientAuthPostEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun euskadiSelectionKeepsActiveProfileGateWithoutSigningModeCoupling() {
+        for (active in listOf(false, true)) for (mode in MiniAppletBridgeMode.entries) {
+            val flags = WebMessageBridge.shimCompatibilityFlags(
+                dev.junta.firmamobile.profile.ProfileId(EuskadiClientAuthPostBridgeAdapter.PROFILE_ID), active, false,
+            )
+            assertEquals(active, flags.euskadiClientAuthPost)
+            assertFalse(flags.melillaBatch)
+            assertFalse(flags.lugoBatch)
+            assertFalse(flags.caibBatch)
+            val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+            val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration.copy(flags = flags, mode = mode)) {
+                reads += it
+                File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+            }
+            assertEquals(active, reads.contains(AfirmaJavascriptShimFragment.EUSKADI_POST))
+            assertEquals(active, output.contains(EuskadiClientAuthPostBridgeAdapter.TARGET_URL))
+            assertTrue(reads.contains(AfirmaJavascriptShimFragment.REQUEST_IDS))
+            assertTrue(output.contains("function secureRequestId"))
+        }
+    }
+
+    @Test
+    fun disabledCaibOmitsOnlyItsTokenContractHooksAndResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(caibBatch = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.CAIB_BATCH)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.CAIB_BATCH, reads)
+        for (token in listOf("https://intranet.caib.es", "caibSignerPathPattern", "caibSignatureIdPattern",
+            "caibClientBase", "caibBatchBase64Pattern", "function decodeCaibUrlBase64",
+            "CAIB_SET_FORCE_WS_MODE", "CAIB_SET_SERVLETS", "CAIB_CARGAR_APP_AFIRMA")) {
+            assertFalse(token, output.contains(token))
+        }
+        assertTrue(output.contains("const isCaibBatchDocument = caibRequestToken() !== null;"))
+        assertTrue(output.contains("pending.caibXml === true"))
+        assertTrue(output.contains("CAIB_XML_BATCH_CANCEL"))
+        assertTrue(output.contains("LUGO_XML_BATCH_CANCEL"))
+        assertTrue(output.contains("MINIAPPLET_BATCH_RESULT"))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_caib_batch.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const caibBatchCompatibilityEnabled = true;", "const caibBatchCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun caibResourceSelectionIsIndependentOfStaAndLugo() {
+        for (flags in listOf(
+            AfirmaShimCompatibilityFlags(),
+            AfirmaShimCompatibilityFlags(caibBatch = true),
+            AfirmaShimCompatibilityFlags(melillaBatch = true),
+            AfirmaShimCompatibilityFlags(lugoBatch = true),
+        )) {
+            val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+            val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration.copy(flags = flags)) {
+                reads += it
+                File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+            }
+            assertEquals(flags.caibBatch, reads.contains(AfirmaJavascriptShimFragment.CAIB_BATCH))
+            assertEquals(flags.caibBatch, output.contains("const caibOrigin ="))
+            assertEquals(flags.melillaBatch, reads.contains(AfirmaJavascriptShimFragment.MELILLA_BATCH))
+            assertEquals(flags.lugoBatch, reads.contains(AfirmaJavascriptShimFragment.LUGO_BATCH))
+        }
+    }
+
+    @Test
+    fun disabledLugoOmitsOnlyItsContractHooksAndResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(lugoBatch = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.LUGO_BATCH)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.LUGO_BATCH, reads)
+        for (token in listOf("https://sede.deputacionlugo.org", "lugoClientBase", "lugoExtraProperties", "LUGO_CARGAR_APP_AFIRMA")) {
+            assertFalse(token, output.contains(token))
+        }
+        assertTrue(output.contains("pending.lugoXml === true"))
+        assertTrue(output.contains("LUGO_XML_BATCH_CANCEL"))
+        assertTrue(output.contains("CAIB_XML_BATCH_CANCEL"))
+        assertTrue(output.contains("MINIAPPLET_BATCH_RESULT"))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_lugo_batch.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const lugoBatchCompatibilityEnabled = true;", "const lugoBatchCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun lugoResourceSelectionIsIndependentOfMelillaAndCaib() {
+        for (flags in listOf(
+            AfirmaShimCompatibilityFlags(),
+            AfirmaShimCompatibilityFlags(lugoBatch = true),
+            AfirmaShimCompatibilityFlags(melillaBatch = true),
+            AfirmaShimCompatibilityFlags(caibBatch = true),
+        )) {
+            val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+            val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration.copy(flags = flags)) {
+                reads += it
+                File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+            }
+            assertEquals(flags.lugoBatch, reads.contains(AfirmaJavascriptShimFragment.LUGO_BATCH))
+            assertEquals(flags.lugoBatch, output.contains("https://sede.deputacionlugo.org"))
+            assertEquals(flags.melillaBatch, reads.contains(AfirmaJavascriptShimFragment.MELILLA_BATCH))
+        }
+    }
+
+    @Test
+    fun disabledStaBatchOmitsItsStateHooksAndResourceOnly() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(melillaBatch = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.MELILLA_BATCH)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.MELILLA_BATCH, reads)
+        for (body in listOf("activeMelillaBatch", "function isMelillaBatchPage", "signBatchProcess", "createBatch")) {
+            assertFalse(body, output.contains(body))
+        }
+        assertTrue(output.contains("pendingBatchCallbacks"))
+        assertTrue(output.contains("receiveMelillaBatchResult"))
+        assertTrue(output.contains("LUGO_XML_BATCH_CANCEL"))
+        assertTrue(output.contains("CAIB_XML_BATCH_CANCEL"))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_melilla_batch.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const melillaBatchCompatibilityEnabled = true;", "const melillaBatchCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun staFallbackProfilesKeepTheirNativeGateAndExactSourceOrigin() {
+        val profiles = listOf(
+            MelillaBatchBridgeAdapter.PROFILE_ID to MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
+            ExtremaduraBatchBridgeAdapter.PROFILE_ID to ExtremaduraBatchBridgeAdapter.SOURCE_ORIGIN,
+            LaPalmaBatchBridgeAdapter.PROFILE_ID to LaPalmaBatchBridgeAdapter.SOURCE_ORIGIN,
+            HuescaBatchBridgeAdapter.PROFILE_ID to HuescaBatchBridgeAdapter.SOURCE_ORIGIN,
+            BurgosBatchBridgeAdapter.PROFILE_ID to BurgosBatchBridgeAdapter.SOURCE_ORIGIN,
+        )
+        for ((profile, origin) in profiles) for (active in listOf(false, true)) for (gate in listOf(false, true)) {
+            val flags = WebMessageBridge.shimCompatibilityFlags(
+                dev.junta.firmamobile.profile.ProfileId(profile), active, gate,
+            )
+            assertEquals(gate, flags.melillaBatch)
+            assertFalse(flags.lugoBatch)
+            assertFalse(flags.caibBatch)
+            val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+            val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(
+                configuration.copy(flags = flags, staBatchOrigin = origin),
+            ) {
+                reads += it
+                File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+            }
+            assertEquals(gate, reads.contains(AfirmaJavascriptShimFragment.MELILLA_BATCH))
+            assertEquals(gate, output.contains("function isMelillaBatchPage"))
+            assertTrue(output.contains("const staBatchOrigin = ${org.json.JSONObject.quote(origin)};"))
+            if (gate) assertTrue(output.contains("window.location.origin === staBatchOrigin"))
+        }
+    }
+
+    @Test
+    fun lugoAndCaibNeverSelectTheStaFallbackResource() {
+        for (profile in listOf(LugoBatchBridgeAdapter.PROFILE_ID, CaibBatchBridgeAdapter.PROFILE_ID)) {
+            for (active in listOf(false, true)) for (gate in listOf(false, true)) {
+                val flags = WebMessageBridge.shimCompatibilityFlags(
+                    dev.junta.firmamobile.profile.ProfileId(profile), active, gate,
+                )
+                assertFalse(flags.melillaBatch)
+                assertEquals(gate && profile == LugoBatchBridgeAdapter.PROFILE_ID, flags.lugoBatch)
+                assertEquals(gate && profile == CaibBatchBridgeAdapter.PROFILE_ID, flags.caibBatch)
+                val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration.copy(flags = flags)) {
+                    check(it != AfirmaJavascriptShimFragment.MELILLA_BATCH)
+                    File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+                }
+                assertFalse(output.contains("activeMelillaBatch"))
+            }
+        }
+    }
 
     @Test
     fun disabledBadajozOmitsItsContractStateAndDiagnostics() {
@@ -443,7 +757,13 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val badajozRestored = restoreBadajozExtraction(assembled, flags.badajoz)
+    val valenciaRestored = restoreValenciaSelectionExtraction(assembled, flags.valenciaCertificateSelection)
+    val isciiiRestored = restoreIsciiiSelectionExtraction(valenciaRestored, flags.isciiiCertificateSelection)
+    val euskadiRestored = restoreEuskadiPostExtraction(isciiiRestored, flags.euskadiClientAuthPost)
+    val caibRestored = restoreCaibBatchExtraction(euskadiRestored, flags.caibBatch)
+    val lugoRestored = restoreLugoBatchExtraction(caibRestored, flags.lugoBatch)
+    val melillaRestored = restoreMelillaBatchExtraction(lugoRestored, flags.melillaBatch)
+    val badajozRestored = restoreBadajozExtraction(melillaRestored, flags.badajoz)
     val ugrRestored = restoreUgrExtraction(legacy, badajozRestored, flags.ugr)
     val sevillaRestored = restoreSevillaAtseExtraction(legacy, ugrRestored, flags.sevillaAtse)
     val accedaRestored = restoreAccedaExtraction(legacy, sevillaRestored, flags.acceda)
@@ -801,4 +1121,64 @@ private fun restoreBadajozExtraction(actual: String, enabled: Boolean): String {
         .replace("  postShimDiagnostic(\"SCRIPT_INSTALLED\");", "  function postBadajozDiagnosticOnce(stage) {\n    if (badajozDiagnosticPostedStages.has(stage)) {\n      return;\n    }\n    badajozDiagnosticPostedStages.add(stage);\n    postShimDiagnostic(stage);\n  }\n\n  postShimDiagnostic(\"SCRIPT_INSTALLED\");")
         .replace("  function postShimDiagnostic", "  function markBadajozSignHookReady() {\n    try {\n      window.__jfmBadajozSignHookReady = true;\n    } catch (_) {}\n    if (!badajozSignHookReadyDiagnosticPosted) {\n      badajozSignHookReadyDiagnosticPosted = true;\n      postShimDiagnostic(\"BADAJOZ_SIGN_HOOK_READY\");\n    }\n  }\n\n  function postShimDiagnostic")
         .replace("  // null: not applicable; false: reject; true: exact tuple.\n  let matchesBadajozSign = () => null;\n  let getBadajozExtraProperties = () => null;\n  let notifyBadajozSignHook = () => {};\n  let repairBadajozDiagnostics = () => {};\n  let installBadajozLateHooks = () => {};\n", "  let badajozSignHookReadyDiagnosticPosted = false;\n  const badajozDiagnosticWrappedFunctions = new WeakSet();\n  const badajozDiagnosticPostedStages = new Set();\n")
+}
+
+private fun restoreMelillaBatchExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  {\n    let activeMelillaBatch = null;\n    function isMelillaBatchPage() {\n      return functionalSigningEnabled && melillaBatchCompatibilityEnabled &&\n        window.location.origin === staBatchOrigin;\n    }\n\n    function isSafeBatchIdentifier(value) {\n      return typeof value === \"string\" && value.length > 0 &&\n        value.length <= maxBatchIdentifierChars &&\n        !Array.from(value).some(character => /\\s/.test(character) ||\n          character.charCodeAt(0) < 0x20 || character.charCodeAt(0) === 0x7f);\n    }\n\n    function batchExtraParams(format) {\n      if (format === \"PAdES\") {\n        return \"signatureSubFilter=ETSI.CAdES.detached\";\n      }\n      if (format === \"XAdES\") {\n        return \"mode=implicit\";\n      }\n      return null;\n    }\n\n    function isSupportedBatchFormat(value) {\n      return value === \"CAdES\" || value === \"PAdES\" || value === \"XAdES\";\n    }\n\n    rememberMelillaBatchCreate = (args) => {\n      if (!isMelillaBatchPage()) {\n        activeMelillaBatch = null;\n        return;\n      }\n      if (args.length !== 4 || args[0] !== \"SHA256withRSA\" ||\n          !isSupportedBatchFormat(args[1]) || args[2] !== \"sign\" || args[3] !== null) {\n        activeMelillaBatch = null;\n        return;\n      }\n      activeMelillaBatch = {\n        algorithm: args[0],\n        format: args[1],\n        suboperation: args[2],\n        documents: [],\n        invalid: false\n      };\n    };\n\n    rememberMelillaBatchDocument = (args) => {\n      const batch = activeMelillaBatch;\n      if (!isMelillaBatchPage() || !batch) {\n        return;\n      }\n      const documentFormat = args[2];\n      const documentSuboperation = args[3];\n      const effectiveFormat = documentFormat === null ? batch.format : documentFormat;\n      const valid = args.length === 5 && isSafeBatchIdentifier(args[0]) &&\n        typeof args[1] === \"string\" && args[1].length > 0 &&\n        args[1].length <= maxBatchUrlChars && !args[1].includes(\"\\u0000\") &&\n        (documentFormat === null || isSupportedBatchFormat(documentFormat)) &&\n        (documentSuboperation === null || documentSuboperation === \"sign\") &&\n        args[4] === batchExtraParams(effectiveFormat) &&\n        !batch.documents.some(document => document.id === args[0]) &&\n        batch.documents.length < maxBatchDocuments;\n      if (!valid) {\n        batch.invalid = true;\n        return;\n      }\n      const document = {\n        id: args[0],\n        datareference: args[1]\n      };\n      if (documentFormat !== null) {\n        document.format = documentFormat;\n      }\n      if (documentSuboperation !== null) {\n        document.suboperation = documentSuboperation;\n      }\n      batch.documents.push(document);\n    };\n\n    interceptMelillaBatchSign = (args) => {\n      if (!isMelillaBatchPage()) {\n        return false;\n      }\n      const errorCallback = args[5];\n      const batch = activeMelillaBatch;\n      if (args.length !== 6 || args[0] !== false || typeof args[1] !== \"string\" ||\n          args[1].length === 0 || args[1].length > maxBatchUrlChars ||\n          typeof args[2] !== \"string\" || args[2].length === 0 ||\n          args[2].length > maxBatchUrlChars || args[3] !== null ||\n          typeof args[4] !== \"function\" || typeof errorCallback !== \"function\" ||\n          !batch || batch.invalid || batch.documents.length === 0 || !probeDocumentId) {\n        rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n        return true;\n      }\n      if (!bridge || typeof bridge.postMessage !== \"function\") {\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n        return true;\n      }\n      if (pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n        return true;\n      }\n      const batchRequestId = secureRequestId();\n      if (!batchRequestId) {\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n        return true;\n      }\n      const timeoutId = setTimeout(() => {\n        const expired = clearPendingBatch(batchRequestId);\n        if (expired) {\n          notifyNativeCancel(batchRequestId, \"MINIAPPLET_BATCH_CANCEL\");\n          rejectDirectCall(expired.errorCallback, \"REQUEST_EXPIRED\");\n        }\n      }, signTimeoutMillis);\n      pendingBatchCallbacks.set(batchRequestId, {\n        successCallback: args[4],\n        errorCallback,\n        timeoutId\n      });\n      const message = {\n        type: \"MINIAPPLET_BATCH\",\n        documentId: probeDocumentId,\n        requestId: batchRequestId,\n        batchPreSignerUrl: args[1],\n        batchPostSignerUrl: args[2],\n        algorithm: batch.algorithm,\n        format: batch.format,\n        suboperation: batch.suboperation,\n        stopOnError: false,\n        documentos: batch.documents.map(document => ({ ...document }))\n      };\n      activeMelillaBatch = null;\n      try {\n        bridge.postMessage(JSON.stringify(message));\n      } catch (_) {\n        clearPendingBatch(batchRequestId);\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      }\n      return true;\n    };\n\n    resetMelillaBatch = () => { activeMelillaBatch = null; };\n\n    isMelillaBatchDocument = () =>\n      melillaBatchCompatibilityEnabled &&\n      window.location.origin === staBatchOrigin;\n\n    installMelillaBatchMethodHooks = (value, includeMelillaBatch) => {\n      if (includeMelillaBatch) {\n        installMethodHook(value, \"createBatch\", \"BATCH_CREATE\");\n        installMethodHook(value, \"addDocumentToBatch\", \"BATCH_ADD_DOCUMENT\");\n        installMethodHook(value, \"signBatchProcess\", \"BATCH_SIGN\");\n      }\n    };\n  }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("    pendingBatchCallbacks.clear();\n    resetMelillaBatch();", "    pendingBatchCallbacks.clear();\n    activeMelillaBatch = null;")
+        .replace("    const isStaBatchDocument = isMelillaBatchDocument();\n", "    const isStaBatchDocument = melillaBatchCompatibilityEnabled &&\n      window.location.origin === staBatchOrigin;\n")
+        .replace("      installMelillaBatchMethodHooks(value, includeMelillaBatch);\n", "      if (includeMelillaBatch) {\n        installMethodHook(value, \"createBatch\", \"BATCH_CREATE\");\n        installMethodHook(value, \"addDocumentToBatch\", \"BATCH_ADD_DOCUMENT\");\n        installMethodHook(value, \"signBatchProcess\", \"BATCH_SIGN\");\n      }\n")
+        .replace("  function interceptLugoSetupCall", "  function isMelillaBatchPage() {\n    return functionalSigningEnabled && melillaBatchCompatibilityEnabled &&\n      window.location.origin === staBatchOrigin;\n  }\n\n  function isSafeBatchIdentifier(value) {\n    return typeof value === \"string\" && value.length > 0 &&\n      value.length <= maxBatchIdentifierChars &&\n      !Array.from(value).some(character => /\\s/.test(character) ||\n        character.charCodeAt(0) < 0x20 || character.charCodeAt(0) === 0x7f);\n  }\n\n  function batchExtraParams(format) {\n    if (format === \"PAdES\") {\n      return \"signatureSubFilter=ETSI.CAdES.detached\";\n    }\n    if (format === \"XAdES\") {\n      return \"mode=implicit\";\n    }\n    return null;\n  }\n\n  function isSupportedBatchFormat(value) {\n    return value === \"CAdES\" || value === \"PAdES\" || value === \"XAdES\";\n  }\n\n  function rememberMelillaBatchCreate(args) {\n    if (!isMelillaBatchPage()) {\n      activeMelillaBatch = null;\n      return;\n    }\n    if (args.length !== 4 || args[0] !== \"SHA256withRSA\" ||\n        !isSupportedBatchFormat(args[1]) || args[2] !== \"sign\" || args[3] !== null) {\n      activeMelillaBatch = null;\n      return;\n    }\n    activeMelillaBatch = {\n      algorithm: args[0],\n      format: args[1],\n      suboperation: args[2],\n      documents: [],\n      invalid: false\n    };\n  }\n\n  function rememberMelillaBatchDocument(args) {\n    const batch = activeMelillaBatch;\n    if (!isMelillaBatchPage() || !batch) {\n      return;\n    }\n    const documentFormat = args[2];\n    const documentSuboperation = args[3];\n    const effectiveFormat = documentFormat === null ? batch.format : documentFormat;\n    const valid = args.length === 5 && isSafeBatchIdentifier(args[0]) &&\n      typeof args[1] === \"string\" && args[1].length > 0 &&\n      args[1].length <= maxBatchUrlChars && !args[1].includes(\"\\u0000\") &&\n      (documentFormat === null || isSupportedBatchFormat(documentFormat)) &&\n      (documentSuboperation === null || documentSuboperation === \"sign\") &&\n      args[4] === batchExtraParams(effectiveFormat) &&\n      !batch.documents.some(document => document.id === args[0]) &&\n      batch.documents.length < maxBatchDocuments;\n    if (!valid) {\n      batch.invalid = true;\n      return;\n    }\n    const document = {\n      id: args[0],\n      datareference: args[1]\n    };\n    if (documentFormat !== null) {\n      document.format = documentFormat;\n    }\n    if (documentSuboperation !== null) {\n      document.suboperation = documentSuboperation;\n    }\n    batch.documents.push(document);\n  }\n\n  function interceptMelillaBatchSign(args) {\n    if (!isMelillaBatchPage()) {\n      return false;\n    }\n    const errorCallback = args[5];\n    const batch = activeMelillaBatch;\n    if (args.length !== 6 || args[0] !== false || typeof args[1] !== \"string\" ||\n        args[1].length === 0 || args[1].length > maxBatchUrlChars ||\n        typeof args[2] !== \"string\" || args[2].length === 0 ||\n        args[2].length > maxBatchUrlChars || args[3] !== null ||\n        typeof args[4] !== \"function\" || typeof errorCallback !== \"function\" ||\n        !batch || batch.invalid || batch.documents.length === 0 || !probeDocumentId) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n    if (!bridge || typeof bridge.postMessage !== \"function\") {\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      return true;\n    }\n    if (pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      return true;\n    }\n    const batchRequestId = secureRequestId();\n    if (!batchRequestId) {\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      return true;\n    }\n    const timeoutId = setTimeout(() => {\n      const expired = clearPendingBatch(batchRequestId);\n      if (expired) {\n        notifyNativeCancel(batchRequestId, \"MINIAPPLET_BATCH_CANCEL\");\n        rejectDirectCall(expired.errorCallback, \"REQUEST_EXPIRED\");\n      }\n    }, signTimeoutMillis);\n    pendingBatchCallbacks.set(batchRequestId, {\n      successCallback: args[4],\n      errorCallback,\n      timeoutId\n    });\n    const message = {\n      type: \"MINIAPPLET_BATCH\",\n      documentId: probeDocumentId,\n      requestId: batchRequestId,\n      batchPreSignerUrl: args[1],\n      batchPostSignerUrl: args[2],\n      algorithm: batch.algorithm,\n      format: batch.format,\n      suboperation: batch.suboperation,\n      stopOnError: false,\n      documentos: batch.documents.map(document => ({ ...document }))\n    };\n    activeMelillaBatch = null;\n    try {\n      bridge.postMessage(JSON.stringify(message));\n    } catch (_) {\n      clearPendingBatch(batchRequestId);\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n    }\n    return true;\n  }\n\n  function interceptLugoSetupCall")
+        .replace("  let rememberMelillaBatchCreate = () => {};\n  let rememberMelillaBatchDocument = () => {};\n  let interceptMelillaBatchSign = () => false;\n  let resetMelillaBatch = () => {};\n  let installMelillaBatchMethodHooks = () => {};\n  let isMelillaBatchDocument = () => false;\n", "  let activeMelillaBatch = null;\n")
+}
+
+private fun restoreLugoBatchExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  {\n    const lugoOrigin = \"https://sede.deputacionlugo.org\";\n    const lugoClientBase = \"https://sede.deputacionlugo.org/opencms\";\n    const lugoExtraProperties = \"mode=explicit\\nprecalculatedHashAlgorithm=SHA-256\\n\";\n\n    interceptLugoSetupCall = (call, args) => {\n      if (!lugoBatchCompatibilityEnabled || window.location.origin !== lugoOrigin) {\n        return false;\n      }\n      return call === \"LUGO_CARGAR_APP_AFIRMA\" &&\n        args.length === 1 && args[0] === lugoClientBase;\n    };\n\n    interceptLugoBatchSign = (args) => {\n      if (!lugoBatchCompatibilityEnabled || window.location.origin !== lugoOrigin) {\n        return false;\n      }\n      const errorCallback = args[5];\n      if (args.length !== 6 || typeof args[0] !== \"string\" || args[0].length === 0 ||\n          args[0].length > maxBatchResultChars || typeof args[1] !== \"string\" ||\n          args[1].length === 0 || args[1].length > maxBatchUrlChars ||\n          typeof args[2] !== \"string\" || args[2].length === 0 || args[2].length > maxBatchUrlChars ||\n          args[3] !== lugoExtraProperties || typeof args[4] !== \"function\" ||\n          typeof errorCallback !== \"function\") {\n        rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n        return true;\n      }\n      if (!bridge || typeof bridge.postMessage !== \"function\" || !probeDocumentId ||\n          pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n        return true;\n      }\n      const batchRequestId = secureRequestId();\n      if (!batchRequestId) { rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\"); return true; }\n      const timeoutId = setTimeout(() => {\n        const expired = clearPendingBatch(batchRequestId);\n        if (expired) {\n          notifyNativeCancel(batchRequestId, \"LUGO_XML_BATCH_CANCEL\");\n          rejectDirectCall(expired.errorCallback, \"REQUEST_EXPIRED\");\n        }\n      }, signTimeoutMillis);\n      pendingBatchCallbacks.set(batchRequestId, {\n        successCallback: args[4], errorCallback, timeoutId, lugoXml: true\n      });\n      try {\n        bridge.postMessage(JSON.stringify({\n          type: \"LUGO_XML_BATCH\",\n          documentId: probeDocumentId,\n          requestId: batchRequestId,\n          batchXml: args[0],\n          batchPreSignerUrl: args[1],\n          batchPostSignerUrl: args[2],\n          extraProperties: args[3]\n        }));\n      } catch (_) {\n        clearPendingBatch(batchRequestId);\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      }\n      return true;\n    };\n\n    matchesLugoBatchDocument = () => {\n      const isLugoBatchDocument = lugoBatchCompatibilityEnabled &&\n        window.location.origin === lugoOrigin;\n      return isLugoBatchDocument;\n    };\n\n    installLugoBatchMethodHooks = (value, includeLugoBatch) => {\n      if (includeLugoBatch) {\n        installMethodHook(value, \"cargarAppAfirma\", \"LUGO_CARGAR_APP_AFIRMA\");\n        installMethodHook(value, \"signBatch\", \"LUGO_BATCH_SIGN\");\n      }\n    };\n  }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("    const isLugoBatchDocument = matchesLugoBatchDocument();\n", "    const isLugoBatchDocument = lugoBatchCompatibilityEnabled &&\n      window.location.origin === lugoOrigin;\n")
+        .replace("      installLugoBatchMethodHooks(value, includeLugoBatch);\n", "      if (includeLugoBatch) {\n        installMethodHook(value, \"cargarAppAfirma\", \"LUGO_CARGAR_APP_AFIRMA\");\n        installMethodHook(value, \"signBatch\", \"LUGO_BATCH_SIGN\");\n      }\n")
+        .replace("\n  function caibRequestToken", "\n  function interceptLugoSetupCall(call, args) {\n    if (!lugoBatchCompatibilityEnabled || window.location.origin !== lugoOrigin) {\n      return false;\n    }\n    return call === \"LUGO_CARGAR_APP_AFIRMA\" &&\n      args.length === 1 && args[0] === lugoClientBase;\n  }\n\n  function interceptLugoBatchSign(args) {\n    if (!lugoBatchCompatibilityEnabled || window.location.origin !== lugoOrigin) {\n      return false;\n    }\n    const errorCallback = args[5];\n    if (args.length !== 6 || typeof args[0] !== \"string\" || args[0].length === 0 ||\n        args[0].length > maxBatchResultChars || typeof args[1] !== \"string\" ||\n        args[1].length === 0 || args[1].length > maxBatchUrlChars ||\n        typeof args[2] !== \"string\" || args[2].length === 0 || args[2].length > maxBatchUrlChars ||\n        args[3] !== lugoExtraProperties || typeof args[4] !== \"function\" ||\n        typeof errorCallback !== \"function\") {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n    if (!bridge || typeof bridge.postMessage !== \"function\" || !probeDocumentId ||\n        pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      return true;\n    }\n    const batchRequestId = secureRequestId();\n    if (!batchRequestId) { rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\"); return true; }\n    const timeoutId = setTimeout(() => {\n      const expired = clearPendingBatch(batchRequestId);\n      if (expired) {\n        notifyNativeCancel(batchRequestId, \"LUGO_XML_BATCH_CANCEL\");\n        rejectDirectCall(expired.errorCallback, \"REQUEST_EXPIRED\");\n      }\n    }, signTimeoutMillis);\n    pendingBatchCallbacks.set(batchRequestId, {\n      successCallback: args[4], errorCallback, timeoutId, lugoXml: true\n    });\n    try {\n      bridge.postMessage(JSON.stringify({\n        type: \"LUGO_XML_BATCH\",\n        documentId: probeDocumentId,\n        requestId: batchRequestId,\n        batchXml: args[0],\n        batchPreSignerUrl: args[1],\n        batchPostSignerUrl: args[2],\n        extraProperties: args[3]\n      }));\n    } catch (_) {\n      clearPendingBatch(batchRequestId);\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n    }\n    return true;\n  }\n\n  function caibRequestToken")
+        .replace("  let interceptLugoSetupCall = () => false;\n  let interceptLugoBatchSign = () => false;\n  let matchesLugoBatchDocument = () => false;\n  let installLugoBatchMethodHooks = () => {};\n", "  const lugoOrigin = \"https://sede.deputacionlugo.org\";\n  const lugoClientBase = \"https://sede.deputacionlugo.org/opencms\";\n  const lugoExtraProperties = \"mode=explicit\\nprecalculatedHashAlgorithm=SHA-256\\n\";\n")
+}
+
+private fun restoreCaibBatchExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  {\n    const caibOrigin = \"https://intranet.caib.es\";\n    const caibClientBase = \"https://intranet.caib.es/portafibback\";\n    const caibSignerPathPattern = /^\\/portafibback\\/public\\/signmodule\\/requestPlugin\\/([A-Za-z0-9_-]{28})\\/-1\\/index\$/;\n    const caibSignatureIdPattern = /^[A-Za-z0-9_-]{40}\$/;\n    const caibBatchBase64Pattern = /^[A-Za-z0-9_-]+={0,2}\$/;\n\n    caibRequestToken = () => {\n      if (!caibBatchCompatibilityEnabled || window.location.origin !== caibOrigin) return null;\n      const match = window.location.pathname.match(caibSignerPathPattern);\n      return match ? match[1] : null;\n    };\n\n    function decodeCaibUrlBase64(value) {\n      if (typeof value !== \"string\" || !caibBatchBase64Pattern.test(value)) return null;\n      try {\n        const normalized = value.replace(/-/g, \"+\").replace(/_/g, \"/\") + \"=\".repeat((4 - value.length % 4) % 4);\n        return atob(normalized);\n      } catch (_) { return null; }\n    }\n\n    function caibSignatureId(batchXml, token) {\n      if (typeof batchXml !== \"string\" || batchXml.length === 0 || batchXml.length > 8192) return null;\n      const xml = decodeCaibUrlBase64(batchXml);\n      if (xml === null || xml.length > 6144) return null;\n      const ids = Array.from(xml.matchAll(/<singlesign\\s+Id=\"([A-Za-z0-9_-]{40})\">/g));\n      if (ids.length !== 1 || !caibSignatureIdPattern.test(ids[0][1])) return null;\n      return decodeCaibUrlBase64(ids[0][1]) === `\${token}|0` ? ids[0][1] : null;\n    }\n\n    function caibExtraProperties(signatureId) {\n      return \"mode=implicit\\n\" +\n        \"signatureSubFilter=ETSI.CAdES.detached\\n\" +\n        `SignatureId=\${signatureId}\\n` +\n        \"signReason=FORM-1.pdf\\n\" +\n        \"formatmobile=PAdEStri\\n\" +\n        \"formatbatch=PAdES\\n\" +\n        \"format=PAdES\\n\" +\n        \"filters.1=nonexpired:\\n\" +\n        \"allowSigningCertifiedPdfs=true\\n\" +\n        \"algorithm=SHA256withRSA\\n\";\n    }\n\n    function caibEndpoint(token, name) {\n      return `\${caibOrigin}/portafibback/public/signmodule/requestPlugin/\${token}/-1/\${name}`;\n    }\n\n    interceptCaibSetupCall = (call, args) => {\n      const token = caibRequestToken();\n      if (!token) return false;\n      if (call === \"CAIB_SET_FORCE_WS_MODE\") return args.length === 1 && args[0] === true;\n      if (call === \"CAIB_CARGAR_APP_AFIRMA\") return args.length === 1 && args[0] === caibClientBase;\n      if (call === \"CAIB_SET_SERVLETS\") {\n        return args.length === 2 && args[0] === caibEndpoint(token, \"StorageService\") &&\n          args[1] === caibEndpoint(token, \"RetrieveService\");\n      }\n      return false;\n    };\n\n    interceptCaibBatchSign = (args) => {\n      const token = caibRequestToken();\n      if (!token) return false;\n      const errorCallback = args[5];\n      const signatureId = caibSignatureId(args[0], token);\n      if (args.length !== 6 || signatureId === null ||\n          args[1] !== caibEndpoint(token, \"BatchPresigner\") ||\n          args[2] !== caibEndpoint(token, \"BatchPostsigner\") ||\n          args[3] !== caibExtraProperties(signatureId) || typeof args[4] !== \"function\" ||\n          typeof errorCallback !== \"function\") {\n        rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n        return true;\n      }\n      if (!bridge || typeof bridge.postMessage !== \"function\" || !probeDocumentId ||\n          pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n        return true;\n      }\n      const batchRequestId = secureRequestId();\n      if (!batchRequestId) { rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\"); return true; }\n      const timeoutId = setTimeout(() => {\n        const expired = clearPendingBatch(batchRequestId);\n        if (expired) {\n          notifyNativeCancel(batchRequestId, \"CAIB_XML_BATCH_CANCEL\");\n          rejectDirectCall(expired.errorCallback, \"REQUEST_EXPIRED\");\n        }\n      }, signTimeoutMillis);\n      pendingBatchCallbacks.set(batchRequestId, {\n        successCallback: args[4], errorCallback, timeoutId, caibXml: true\n      });\n      try {\n        bridge.postMessage(JSON.stringify({\n          type: \"CAIB_XML_BATCH\",\n          documentId: probeDocumentId,\n          requestId: batchRequestId,\n          batchXml: args[0],\n          batchPreSignerUrl: args[1],\n          batchPostSignerUrl: args[2],\n          extraProperties: args[3]\n        }));\n      } catch (_) {\n        clearPendingBatch(batchRequestId);\n        rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      }\n      return true;\n    };\n\n    installCaibBatchMethodHooks = (value, includeCaibBatch) => {\n      if (includeCaibBatch) {\n        installMethodHook(value, \"setForceWSMode\", \"CAIB_SET_FORCE_WS_MODE\");\n        installMethodHook(value, \"cargarAppAfirma\", \"CAIB_CARGAR_APP_AFIRMA\");\n        installMethodHook(value, \"setServlets\", \"CAIB_SET_SERVLETS\");\n        installMethodHook(value, \"signBatch\", \"CAIB_BATCH_SIGN\");\n      }\n    };\n  }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("      installCaibBatchMethodHooks(value, includeCaibBatch);\n", "      if (includeCaibBatch) {\n        installMethodHook(value, \"setForceWSMode\", \"CAIB_SET_FORCE_WS_MODE\");\n        installMethodHook(value, \"cargarAppAfirma\", \"CAIB_CARGAR_APP_AFIRMA\");\n        installMethodHook(value, \"setServlets\", \"CAIB_SET_SERVLETS\");\n        installMethodHook(value, \"signBatch\", \"CAIB_BATCH_SIGN\");\n      }\n")
+        .replace("\n  installSevillaAtseClickHook();", "\n  function caibRequestToken() {\n    if (!caibBatchCompatibilityEnabled || window.location.origin !== caibOrigin) return null;\n    const match = window.location.pathname.match(caibSignerPathPattern);\n    return match ? match[1] : null;\n  }\n\n  function decodeCaibUrlBase64(value) {\n    if (typeof value !== \"string\" || !caibBatchBase64Pattern.test(value)) return null;\n    try {\n      const normalized = value.replace(/-/g, \"+\").replace(/_/g, \"/\") + \"=\".repeat((4 - value.length % 4) % 4);\n      return atob(normalized);\n    } catch (_) { return null; }\n  }\n\n  function caibSignatureId(batchXml, token) {\n    if (typeof batchXml !== \"string\" || batchXml.length === 0 || batchXml.length > 8192) return null;\n    const xml = decodeCaibUrlBase64(batchXml);\n    if (xml === null || xml.length > 6144) return null;\n    const ids = Array.from(xml.matchAll(/<singlesign\\s+Id=\"([A-Za-z0-9_-]{40})\">/g));\n    if (ids.length !== 1 || !caibSignatureIdPattern.test(ids[0][1])) return null;\n    return decodeCaibUrlBase64(ids[0][1]) === `\${token}|0` ? ids[0][1] : null;\n  }\n\n  function caibExtraProperties(signatureId) {\n    return \"mode=implicit\\n\" +\n      \"signatureSubFilter=ETSI.CAdES.detached\\n\" +\n      `SignatureId=\${signatureId}\\n` +\n      \"signReason=FORM-1.pdf\\n\" +\n      \"formatmobile=PAdEStri\\n\" +\n      \"formatbatch=PAdES\\n\" +\n      \"format=PAdES\\n\" +\n      \"filters.1=nonexpired:\\n\" +\n      \"allowSigningCertifiedPdfs=true\\n\" +\n      \"algorithm=SHA256withRSA\\n\";\n  }\n\n  function caibEndpoint(token, name) {\n    return `\${caibOrigin}/portafibback/public/signmodule/requestPlugin/\${token}/-1/\${name}`;\n  }\n\n  function interceptCaibSetupCall(call, args) {\n    const token = caibRequestToken();\n    if (!token) return false;\n    if (call === \"CAIB_SET_FORCE_WS_MODE\") return args.length === 1 && args[0] === true;\n    if (call === \"CAIB_CARGAR_APP_AFIRMA\") return args.length === 1 && args[0] === caibClientBase;\n    if (call === \"CAIB_SET_SERVLETS\") {\n      return args.length === 2 && args[0] === caibEndpoint(token, \"StorageService\") &&\n        args[1] === caibEndpoint(token, \"RetrieveService\");\n    }\n    return false;\n  }\n\n  function interceptCaibBatchSign(args) {\n    const token = caibRequestToken();\n    if (!token) return false;\n    const errorCallback = args[5];\n    const signatureId = caibSignatureId(args[0], token);\n    if (args.length !== 6 || signatureId === null ||\n        args[1] !== caibEndpoint(token, \"BatchPresigner\") ||\n        args[2] !== caibEndpoint(token, \"BatchPostsigner\") ||\n        args[3] !== caibExtraProperties(signatureId) || typeof args[4] !== \"function\" ||\n        typeof errorCallback !== \"function\") {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n    if (!bridge || typeof bridge.postMessage !== \"function\" || !probeDocumentId ||\n        pendingCallbacks.size !== 0 || pendingBatchCallbacks.size !== 0) {\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n      return true;\n    }\n    const batchRequestId = secureRequestId();\n    if (!batchRequestId) { rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\"); return true; }\n    const timeoutId = setTimeout(() => {\n      const expired = clearPendingBatch(batchRequestId);\n      if (expired) {\n        notifyNativeCancel(batchRequestId, \"CAIB_XML_BATCH_CANCEL\");\n        rejectDirectCall(expired.errorCallback, \"REQUEST_EXPIRED\");\n      }\n    }, signTimeoutMillis);\n    pendingBatchCallbacks.set(batchRequestId, {\n      successCallback: args[4], errorCallback, timeoutId, caibXml: true\n    });\n    try {\n      bridge.postMessage(JSON.stringify({\n        type: \"CAIB_XML_BATCH\",\n        documentId: probeDocumentId,\n        requestId: batchRequestId,\n        batchXml: args[0],\n        batchPreSignerUrl: args[1],\n        batchPostSignerUrl: args[2],\n        extraProperties: args[3]\n      }));\n    } catch (_) {\n      clearPendingBatch(batchRequestId);\n      rejectDirectCall(errorCallback, \"PROTOCOL_FAILED\");\n    }\n    return true;\n  }\n\n  installSevillaAtseClickHook();")
+        .replace("  let caibRequestToken = () => null;\n  let interceptCaibSetupCall = () => false;\n  let interceptCaibBatchSign = () => false;\n  let installCaibBatchMethodHooks = () => {};\n", "  const caibOrigin = \"https://intranet.caib.es\";\n  const caibClientBase = \"https://intranet.caib.es/portafibback\";\n  const caibSignerPathPattern = /^\\/portafibback\\/public\\/signmodule\\/requestPlugin\\/([A-Za-z0-9_-]{28})\\/-1\\/index\$/;\n  const caibSignatureIdPattern = /^[A-Za-z0-9_-]{40}\$/;\n  const caibBatchBase64Pattern = /^[A-Za-z0-9_-]+={0,2}\$/;\n")
+}
+
+private fun restoreEuskadiPostExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  {\n    const euskadiProfileId = \"euskadi-sede-electronica\";\n    const euskadiAuthPage =\n      \"https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication\";\n    const euskadiClientAuthTarget =\n      \"https://eidas2.izenpe.com/cert-authn-external-validation/authenticate\";\n    const euskadiFormContentType = \"application/x-www-form-urlencoded\";\n\n    let euskadiClientAuthPostSent = false;\n\n    function isSafeEuskadiOpaqueRequest(value) {\n      if (typeof value !== \"string\" || value.length < 1 || value.length > 4096) {\n        return false;\n      }\n      for (let index = 0; index < value.length; index += 1) {\n        const code = value.charCodeAt(index);\n        if (code < 0x21 || code > 0x7e) return false;\n      }\n      return true;\n    }\n\n    function interceptEuskadiClientAuthPost(form) {\n      if (!euskadiClientAuthPostEnabled || window.top !== window ||\n          location.href !== euskadiAuthPage) {\n        return false;\n      }\n      if (!(form instanceof HTMLFormElement)) return false;\n\n      let action;\n      try {\n        action = new URL(form.action, location.href).href;\n      } catch (_) {\n        return true;\n      }\n      // Unrelated forms on the reviewed page remain untouched. Only the exact client-auth target is mediated.\n      if (action !== euskadiClientAuthTarget) return false;\n      if (form.method.toUpperCase() !== \"POST\" ||\n          form.enctype.toLowerCase() !== euskadiFormContentType) {\n        return true;\n      }\n\n      const namedControls = Array.from(form.elements).filter(control => control && control.name);\n      if (namedControls.length !== 2 || namedControls.some(control => control.type !== \"hidden\")) {\n        return true;\n      }\n      const names = namedControls.map(control => control.name).sort();\n      if (names[0] !== \"request\" || names[1] !== \"x_correlation_id\") return true;\n\n      const requestControl = form.elements.namedItem(\"request\");\n      const correlationControl = form.elements.namedItem(\"x_correlation_id\");\n      const requestValue = requestControl && requestControl.value;\n      const correlationValue = correlationControl && correlationControl.value;\n      if (!isSafeEuskadiOpaqueRequest(requestValue) ||\n          typeof correlationValue !== \"string\" ||\n          !canonicalUuidPattern.test(correlationValue) ||\n          euskadiClientAuthPostSent || !bridge || typeof bridge.postMessage !== \"function\") {\n        return true;\n      }\n\n      const requestId = secureRequestId();\n      if (!requestId || !canonicalUuidPattern.test(requestId)) return true;\n      euskadiClientAuthPostSent = true;\n      try {\n        bridge.postMessage(JSON.stringify({\n          type: \"EUSKADI_CLIENT_AUTH_POST\",\n          profileId: euskadiProfileId,\n          requestId,\n          method: \"POST\",\n          contentType: euskadiFormContentType,\n          targetUrl: euskadiClientAuthTarget,\n          request: requestValue,\n          x_correlation_id: correlationValue\n        }));\n      } catch (_) {\n        euskadiClientAuthPostSent = false;\n      }\n      // The normal WebView never sends this POST; native replays the exact form body only in the isolated TLS WebView.\n      return true;\n    }\n\n    if (euskadiClientAuthPostEnabled && typeof HTMLFormElement === \"function\") {\n      const nativeSubmit = HTMLFormElement.prototype.submit;\n      const nativeRequestSubmit = HTMLFormElement.prototype.requestSubmit;\n      try {\n        HTMLFormElement.prototype.submit = function() {\n          if (interceptEuskadiClientAuthPost(this)) return undefined;\n          return Reflect.apply(nativeSubmit, this, []);\n        };\n        if (typeof nativeRequestSubmit === \"function\") {\n          HTMLFormElement.prototype.requestSubmit = function(submitter) {\n            if (interceptEuskadiClientAuthPost(this)) return undefined;\n            const args = submitter === undefined ? [] : [submitter];\n            return Reflect.apply(nativeRequestSubmit, this, args);\n          };\n        }\n        document.addEventListener(\"submit\", event => {\n          if (interceptEuskadiClientAuthPost(event.target)) {\n            event.preventDefault();\n            event.stopImmediatePropagation();\n          }\n        }, true);\n      } catch (_) {\n        // If the exact hook cannot be installed, do not add any broader fallback interception.\n      }\n    }\n  }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("\n  const closedErrorMessages =", "  let euskadiClientAuthPostSent = false;\n\n  function isSafeEuskadiOpaqueRequest(value) {\n    if (typeof value !== \"string\" || value.length < 1 || value.length > 4096) {\n      return false;\n    }\n    for (let index = 0; index < value.length; index += 1) {\n      const code = value.charCodeAt(index);\n      if (code < 0x21 || code > 0x7e) return false;\n    }\n    return true;\n  }\n\n  function interceptEuskadiClientAuthPost(form) {\n    if (!euskadiClientAuthPostEnabled || window.top !== window ||\n        location.href !== euskadiAuthPage) {\n      return false;\n    }\n    if (!(form instanceof HTMLFormElement)) return false;\n\n    let action;\n    try {\n      action = new URL(form.action, location.href).href;\n    } catch (_) {\n      return true;\n    }\n    // Unrelated forms on the reviewed page remain untouched. Only the exact client-auth target is mediated.\n    if (action !== euskadiClientAuthTarget) return false;\n    if (form.method.toUpperCase() !== \"POST\" ||\n        form.enctype.toLowerCase() !== euskadiFormContentType) {\n      return true;\n    }\n\n    const namedControls = Array.from(form.elements).filter(control => control && control.name);\n    if (namedControls.length !== 2 || namedControls.some(control => control.type !== \"hidden\")) {\n      return true;\n    }\n    const names = namedControls.map(control => control.name).sort();\n    if (names[0] !== \"request\" || names[1] !== \"x_correlation_id\") return true;\n\n    const requestControl = form.elements.namedItem(\"request\");\n    const correlationControl = form.elements.namedItem(\"x_correlation_id\");\n    const requestValue = requestControl && requestControl.value;\n    const correlationValue = correlationControl && correlationControl.value;\n    if (!isSafeEuskadiOpaqueRequest(requestValue) ||\n        typeof correlationValue !== \"string\" ||\n        !canonicalUuidPattern.test(correlationValue) ||\n        euskadiClientAuthPostSent || !bridge || typeof bridge.postMessage !== \"function\") {\n      return true;\n    }\n\n    const requestId = secureRequestId();\n    if (!requestId || !canonicalUuidPattern.test(requestId)) return true;\n    euskadiClientAuthPostSent = true;\n    try {\n      bridge.postMessage(JSON.stringify({\n        type: \"EUSKADI_CLIENT_AUTH_POST\",\n        profileId: euskadiProfileId,\n        requestId,\n        method: \"POST\",\n        contentType: euskadiFormContentType,\n        targetUrl: euskadiClientAuthTarget,\n        request: requestValue,\n        x_correlation_id: correlationValue\n      }));\n    } catch (_) {\n      euskadiClientAuthPostSent = false;\n    }\n    // The normal WebView never sends this POST; native replays the exact form body only in the isolated TLS WebView.\n    return true;\n  }\n\n  if (euskadiClientAuthPostEnabled && typeof HTMLFormElement === \"function\") {\n    const nativeSubmit = HTMLFormElement.prototype.submit;\n    const nativeRequestSubmit = HTMLFormElement.prototype.requestSubmit;\n    try {\n      HTMLFormElement.prototype.submit = function() {\n        if (interceptEuskadiClientAuthPost(this)) return undefined;\n        return Reflect.apply(nativeSubmit, this, []);\n      };\n      if (typeof nativeRequestSubmit === \"function\") {\n        HTMLFormElement.prototype.requestSubmit = function(submitter) {\n          if (interceptEuskadiClientAuthPost(this)) return undefined;\n          const args = submitter === undefined ? [] : [submitter];\n          return Reflect.apply(nativeRequestSubmit, this, args);\n        };\n      }\n      document.addEventListener(\"submit\", event => {\n        if (interceptEuskadiClientAuthPost(event.target)) {\n          event.preventDefault();\n          event.stopImmediatePropagation();\n        }\n      }, true);\n    } catch (_) {\n      // If the exact hook cannot be installed, do not add any broader fallback interception.\n    }\n  }\n\n  const closedErrorMessages =")
+        .replace("  // null: not applicable; false: reject; true: exact tuple.\n  let matchesXuntaSign = () => null;", "  const euskadiProfileId = \"euskadi-sede-electronica\";\n  const euskadiAuthPage =\n    \"https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication\";\n  const euskadiClientAuthTarget =\n    \"https://eidas2.izenpe.com/cert-authn-external-validation/authenticate\";\n  const euskadiFormContentType = \"application/x-www-form-urlencoded\";\n  // null: not applicable; false: reject; true: exact tuple.\n  let matchesXuntaSign = () => null;")
+}
+
+private fun restoreIsciiiSelectionExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  matchesIsciiiSelection = a => {\n    const iPage = \"https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null\";\n    const iProps = \"serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService\";\n    return iSel && location.href === iPage && a.length === 3 && a[0] === iProps &&\n        typeof a[1] === \"function\" && typeof a[2] === \"function\";\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("  let matchesIsciiiSelection = () => false;\n", "  const iPage = \"https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null\";\n  const iProps = \"serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService\";\n")
+        .replace("matchesIsciiiSelection(a)", "iSel && location.href === iPage && a.length === 3 && a[0] === iProps &&\n        typeof a[1] === \"function\" && typeof a[2] === \"function\"")
+}
+
+private fun restoreValenciaSelectionExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  matchesValenciaSelection = a => {\n    const vPage = \"https://portafirmas.dival.es/signingpad/xhtml/login.xhtml\";\n    const vProps = \"filters=keyusage.nonrepudiation:true;nonexpired:true\\nheadless=true\";\n    return vSel && location.href === vPage && a.length === 3 && a[0] === vProps &&\n        typeof a[1] === \"function\" && typeof a[2] === \"function\";\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("  let matchesValenciaSelection = () => false;\n", "  const vPage = \"https://portafirmas.dival.es/signingpad/xhtml/login.xhtml\";\n  const vProps = \"filters=keyusage.nonrepudiation:true;nonexpired:true\\nheadless=true\";\n")
+        .replace("matchesValenciaSelection(a)", "vSel && location.href === vPage && a.length === 3 && a[0] === vProps &&\n        typeof a[1] === \"function\" && typeof a[2] === \"function\"")
 }
