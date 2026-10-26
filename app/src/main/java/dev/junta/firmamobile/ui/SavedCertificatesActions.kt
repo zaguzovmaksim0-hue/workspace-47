@@ -69,8 +69,10 @@ internal fun savedCertificatesSection(state: CertificateUiState) {
 
 @Composable
 private fun savedCertificateRow(entry: StoredCertificateEntry, actions: SavedCertificatesActions) {
-    val name = entry.reference?.summary?.ownerName ?: entry.signingKey?.displayName
-        ?: entry.reference?.displayName.orEmpty()
+    val name = certificateDisplayNameText(
+        entry.reference?.summary?.ownerName ?: entry.signingKey?.displayName
+            ?: entry.reference?.displayName.orEmpty(),
+    )
     var confirmDeletion by remember(entry) { mutableStateOf(false) }
     if (confirmDeletion) {
         savedCertificateKeyDeletionDialog(

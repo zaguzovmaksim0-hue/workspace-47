@@ -324,7 +324,7 @@ private fun LockedCertificateHeading(state: CertificateUiState.Locked) {
     Text(
         text = stringResource(
             R.string.certificate_selected,
-            state.reference.displayName,
+            certificateDisplayNameText(state.reference.displayName),
         ),
         color = JuntaInk,
         style = MaterialTheme.typography.titleMedium,
@@ -343,7 +343,7 @@ private fun LockedCertificateHeading(state: CertificateUiState.Locked) {
 @Composable
 private fun UnlockingCertificate(state: CertificateUiState.Unlocking) {
     Text(
-        text = stringResource(R.string.certificate_selected, state.reference.displayName),
+        text = stringResource(R.string.certificate_selected, certificateDisplayNameText(state.reference.displayName)),
         color = JuntaInk,
         style = MaterialTheme.typography.titleMedium,
     )
@@ -396,12 +396,12 @@ private fun UnlockedCertificate(
 private fun CertificateSummaryDetails(summary: CertificateSummary) {
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text(
-            text = stringResource(R.string.certificate_owner, summary.ownerName),
+            text = stringResource(R.string.certificate_owner, certificateDisplayNameText(summary.ownerName)),
             color = JuntaInk,
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            text = stringResource(R.string.certificate_issuer, summary.issuerName),
+            text = stringResource(R.string.certificate_issuer, certificateDisplayNameText(summary.issuerName)),
             color = JuntaInk,
             style = MaterialTheme.typography.bodyMedium,
         )
