@@ -247,6 +247,16 @@ private fun NoCertificate(
     onSelectCertificate: () -> Unit,
 ) {
     state.error?.let { CertificateError(it) }
+    LocalSavedCertificates.current?.state?.activeKey?.signingKey?.let { selected ->
+        Text(
+            stringResource(R.string.certificate_selected, selected.displayName),
+            color = JuntaInk,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.testTag("selected-keystore-certificate"),
+        )
+        Text(stringResource(R.string.saved_keystore_locked), color = JuntaMutedInk)
+        Spacer(modifier = Modifier.height(8.dp))
+    }
     JuntaPrimaryButton(
         text = stringResource(R.string.select_certificate),
         onClick = onSelectCertificate,
@@ -410,6 +420,7 @@ private fun CertificateSummaryDetails(summary: CertificateSummary) {
 
 @Composable
 private fun CertificateStateBanner(state: CertificateUiState) {
+    val selectedKey = LocalSavedCertificates.current?.state?.activeKey != null
     val titleRes: Int
     val copyRes: Int
     when (state) {
@@ -418,8 +429,9 @@ private fun CertificateStateBanner(state: CertificateUiState) {
             copyRes = R.string.certificate_status_loading_copy
         }
         is CertificateUiState.NoCertificate -> {
-            titleRes = R.string.certificate_status_ready_title
-            copyRes = R.string.certificate_status_ready_copy
+            titleRes = if (selectedKey) R.string.certificate_status_locked_title
+                else R.string.certificate_status_ready_title
+            copyRes = if (selectedKey) R.string.saved_keystore_locked else R.string.certificate_status_ready_copy
         }
         is CertificateUiState.Locked -> {
             titleRes = R.string.certificate_status_locked_title

@@ -32,7 +32,7 @@ class SavedCertificatesSectionTest {
     private val saved = entry("saved")
 
     @Test
-    fun listsOnlyOtherFileEntriesAndForwardsTheirActions() {
+    fun listsOtherFileAndKeystoreEntriesAndForwardsTheirActions() {
         val calls = mutableListOf<String>()
         val keyed = entry("keyed").copy(signingKey = dev.junta.firmamobile.certificate.StoredSigningKeyReference(
             1, dev.junta.firmamobile.certificate.KeystoreSigningKeyImporter.ALIAS_PREFIX + "a".repeat(32),
@@ -53,12 +53,13 @@ class SavedCertificatesSectionTest {
         }
 
         rule.onNodeWithTag("saved-certificate-active").assertDoesNotExist()
-        rule.onNodeWithTag("saved-certificate-keyed").assertDoesNotExist()
+        rule.onNodeWithTag("saved-certificate-keyed").assertExists()
+        rule.onNodeWithContentDescription("Usar el certificado keyed.p12").performScrollTo().performClick()
         rule.onNodeWithContentDescription("Usar el certificado saved.p12").performScrollTo().performClick()
         rule.onNodeWithContentDescription("Quitar el certificado saved.p12").performScrollTo().performClick()
         rule.onNodeWithTag("add-saved-certificate").performScrollTo().performClick()
 
-        rule.runOnIdle { assertEquals(listOf("switch saved", "remove saved", "add"), calls) }
+        rule.runOnIdle { assertEquals(listOf("switch keyed", "switch saved", "remove saved", "add"), calls) }
     }
 
     @Test

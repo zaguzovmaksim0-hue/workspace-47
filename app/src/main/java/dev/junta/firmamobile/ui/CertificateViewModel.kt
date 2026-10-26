@@ -85,9 +85,13 @@ class CertificateViewModel(
     fun onCertificateSelected(uri: Uri) = changeSelection { gateway.select(uri) }
 
     /** Switches to a saved entry through the same verified revocation as choosing a new file. */
-    fun switchToSavedCertificate(entry: StoredCertificateEntry) = changeSelection { gateway.activate(entry) }
+    fun switchToSavedCertificate(entry: StoredCertificateEntry) =
+        changeSelection(entry.takeIf { it.signingKey != null }) { gateway.activate(entry) }
 
-    private fun changeSelection(change: suspend () -> CertificateSelectionResult) {
+    private fun changeSelection(
+        key: StoredCertificateEntry? = null,
+        change: suspend () -> CertificateSelectionResult,
+    ) {
         cancelCurrentOperation()
         restoreSuppressed = true
         unlockCache.invalidate()
@@ -98,6 +102,9 @@ class CertificateViewModel(
             mutableState.value = try {
                 if (!revokeCacheBeforeSelectionChange()) {
                     previous.keptAfterRefusedChange()
+                } else if (key != null) {
+                    if (gateway.activateKey(key)) CertificateUiState.NoCertificate()
+                    else previous.keptAfterRefusedChange()
                 } else when (val result = change()) {
                     is CertificateSelectionResult.Success -> result.reference.toLockedState()
                     is CertificateSelectionResult.Failure -> {
@@ -124,11 +131,15 @@ class CertificateViewModel(
     }
 
     fun removeSavedCertificate(entry: StoredCertificateEntry) = changeSavedCertificates {
-        gateway.removeInactive(entry)
+        if (entry.signingKey != null && gateway.currentKeyEntry() == entry) {
+            forgetSelection { gateway.forget(entry) }
+        } else {
+            gateway.removeInactive(entry)
+        }
         null
     }
 
-    // Saved entries never hold the active selection, so these edits leave the current operation running.
+    // Inactive edits leave signing alone; removing the selected key uses forgetSelection and revokes its unlock.
     private fun changeSavedCertificates(change: suspend () -> CertificateUiError?) {
         viewModelScope.launch {
             val error = try {
@@ -143,15 +154,17 @@ class CertificateViewModel(
     }
 
     private suspend fun refreshSavedCertificates(error: CertificateUiError? = null) {
-        val entries = try {
-            gateway.savedEntries()
+        val saved = try {
+            SavedCertificatesUiState(
+                gateway.savedEntries(), error, gateway.hasPendingKeyDeletion(), gateway.currentKeyEntry(),
+            )
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {
             mutableSaved.value = mutableSaved.value.copy(error = CertificateUiError.STORAGE_FAILURE)
             return
         }
-        mutableSaved.value = SavedCertificatesUiState(entries, error)
+        mutableSaved.value = saved
     }
 
     fun unlock(password: CharArray) = unlockForDuration(password, unlockDuration)
@@ -338,7 +351,9 @@ class CertificateViewModel(
         restoreFromCache(reference)
     }
 
-    fun forget() {
+    fun forget() = forgetSelection { gateway.forget() }
+
+    private fun forgetSelection(remove: suspend () -> Unit) {
         cancelCurrentOperation()
         restoreSuppressed = true
         unlockCache.invalidate()
@@ -348,7 +363,7 @@ class CertificateViewModel(
         operationJob = viewModelScope.launch {
             mutableState.value = try {
                 if (revokeCacheBeforeSelectionChange()) {
-                    gateway.forget()
+                    remove()
                     CertificateUiState.NoCertificate()
                 } else {
                     previous.keptAfterRefusedChange()

@@ -348,4 +348,6 @@
     <string name="certificate_restore_saved">Recuperar o desbloqueo gardado</string>
     <string name="error_catalog_full">O catálogo de certificados está cheo. Elimina un certificado gardado para engadir outro.</string>
     <string name="error_already_saved">Este documento xa está gardado no catálogo.</string>
+    <string name="saved_certificate_selected">Seleccionado</string>
+    <string name="saved_keystore_locked">A clave está seleccionada e bloqueada. A selección non autoriza o seu uso para asinar.</string>
 </resources>

@@ -1,6 +1,6 @@
 # ADR 0005: Non-exportable signing key in AndroidKeyStore / StrongBox
 
-Status: accepted by the owner on 2026-10-24. The importer and the storage lifecycle are implemented; the lifecycle remains disabled and disconnected from runtime UI/TLS. Slice 2 commit/recovery decisions are in [ADR 0009](0009-keystore-key-catalog-commit.md).
+Status: accepted by the owner on 2026-10-24. The importer and the storage lifecycle are implemented. On 2026-10-26 the owner enabled catalogue management of key entries in the runtime UI (list, select as locked, confirmed deletion); importing a key and keystore-backed signing/TLS remain gated (step 3). Slice 2 commit/recovery decisions are in [ADR 0009](0009-keystore-key-catalog-commit.md).
 
 Design background: PR #427 (`docs/handoffs/2026-10-24-keystore-signing-key-import.md`).
 
@@ -47,5 +47,5 @@ Key authorizations are fixed at import. Changing any of them later requires re-i
 ## Next slices (separate PRs)
 
 1. Done: `UnlockedIdentity.keystorePlacement` routes `LocalSignatureEngine`, `CadesSigner`, `NativeCadesEngine` (and PAdES through it) via `KeystoreRsaSigning`. The TLS paths (`ClientAuthWebViewClient`, `InteractiveClientAuthController`, `ClientTlsIdentity`) hand the key to the platform and belong to slice 3.
-2. Done (storage API only, disabled): versioned alias/placement/fingerprint records, explicit source loading and verified publication, optional source-reference forgetting, tombstone deletion and owned-prefix recovery, with warning strings in all five locales. See ADR 0009 for the runtime boundary.
+2. Done (storage API; catalogue management enabled in the UI on 2026-10-26, import still not wired): versioned alias/placement/fingerprint records, explicit source loading and verified publication, optional source-reference forgetting, tombstone deletion and owned-prefix recovery, with warning strings in all five locales. See ADR 0009 for the runtime boundary.
 3. Enable keystore-backed signing and TLS. This needs a physical acceptance check that the owner authorizes separately.

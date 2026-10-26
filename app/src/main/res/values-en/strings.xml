@@ -348,4 +348,6 @@
     <string name="certificate_restore_saved">Restore saved unlock</string>
     <string name="error_catalog_full">The certificate catalogue is full. Remove a saved certificate to add another.</string>
     <string name="error_already_saved">This document is already saved in the catalogue.</string>
+    <string name="saved_certificate_selected">Selected</string>
+    <string name="saved_keystore_locked">The key is selected and locked. Selecting it does not authorize signing.</string>
 </resources>
