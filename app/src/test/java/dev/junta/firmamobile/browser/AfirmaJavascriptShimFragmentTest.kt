@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -186,6 +186,29 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledCanariasOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(canarias = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.CANARIAS)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.CANARIAS, reads)
+        assertFalse(output.contains("https://sede.gobiernodecanarias.org"))
+        assertFalse(output.contains("function isExactCanariasChallenge"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const canariasCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_canarias.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const canariasCompatibilityEnabled = true;", "const canariasCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
     fun disabledMinecoOmitsOnlyItsBodyAndDoesNotReadItsResource() {
         val reads = mutableListOf<AfirmaJavascriptShimFragment>()
         val disabled = configuration.copy(flags = configuration.flags.copy(mineco = false))
@@ -309,7 +332,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val minecoRestored = restoreMinecoExtraction(legacy, assembled, flags.mineco)
+    val canariasRestored = restoreCanariasExtraction(legacy, assembled, flags.canarias)
+    val minecoRestored = restoreMinecoExtraction(legacy, canariasRestored, flags.mineco)
     val fuerteventuraRestored = restoreFuerteventuraExtraction(legacy, minecoRestored, flags.fuerteventura)
     val granCanariaRestored = restoreGranCanariaExtraction(legacy, fuerteventuraRestored, flags.granCanaria)
     val actual = restoreJccmExtraction(
@@ -498,4 +522,30 @@ private fun restoreMinecoExtraction(legacy: String, actual: String, enabled: Boo
         )
         .replace("    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);\n", branch)
         .replace("if (isExactMinecoCall === false)", "if (isMinecoOrigin && !isExactMinecoCall)")
+}
+
+private fun restoreCanariasExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(
+        legacy.indexOf("  const canariasOrigin ="), legacy.indexOf("  const granCanariaExtraProperties ="),
+    )
+    val helpers = legacy.substring(
+        legacy.indexOf("  function isExactCanariasChallenge"), legacy.indexOf("  function isExactXuntaProperties"),
+    )
+    val start = legacy.indexOf("    const isCanariasOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isCanariasOrigin && !isExactCanariasCall)", start))
+    val module = "\n  matchesCanariasSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const").replace("\n    \"", "\n      \"") + "\n" +
+        helpers.split('\n').dropLast(1)
+            .joinToString("") { if (it.isBlank()) "\n" else "  $it\n" } +
+        branch + "    return isCanariasOrigin ? isExactCanariasCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesCanariasSign = () => null;\n",
+            constants,
+        )
+        .replace("    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactCanariasCall === false)", "if (isCanariasOrigin && !isExactCanariasCall)")
+        .replace("  function isExactXuntaProperties", helpers + "  function isExactXuntaProperties")
 }

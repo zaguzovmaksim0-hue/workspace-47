@@ -96,15 +96,8 @@
   let matchesPoliciaSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesGranCanariaSign = () => null;
-  const canariasOrigin = "https://sede.gobiernodecanarias.org";
-  const canariasPage = "https://sede.gobiernodecanarias.org/sede/identificacion";
-  const canariasChallengePattern =
-    /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$/;
-  const canariasExtraProperties =
-    "format=CAdES Detached\n" +
-    "serverUrl=https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService\n" +
-    "referencesDigestMethod=http://www.w3.org/2001/04/xmlenc#sha512\n" +
-    "filters=nonexpired:true;signingCert:true;issuer.rfc2254:(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))(!(O=PKI))(!(O=DO_NOT_TRUST*)))";
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesCanariasSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesFuerteventuraSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.

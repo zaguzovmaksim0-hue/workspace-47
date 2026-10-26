@@ -57,6 +57,7 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.GRAN_CANARIA -> R.raw.afirma_shim_gran_canaria
             AfirmaJavascriptShimFragment.FUERTEVENTURA -> R.raw.afirma_shim_fuerteventura
             AfirmaJavascriptShimFragment.MINECO -> R.raw.afirma_shim_mineco
+            AfirmaJavascriptShimFragment.CANARIAS -> R.raw.afirma_shim_canarias
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }

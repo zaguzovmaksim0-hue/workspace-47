@@ -11,18 +11,6 @@
     }
   }
 
-  function isExactCanariasChallenge(value) {
-    if (typeof value !== "string" || !base64Pattern.test(value)) {
-      return false;
-    }
-    try {
-      const decoded = globalThis.atob(value);
-      return canariasChallengePattern.test(decoded) && globalThis.btoa(decoded) === value;
-    } catch (_) {
-      return false;
-    }
-  }
-
   function isExactXuntaProperties(value) {
     if (typeof value !== "string" || value.length === 0 || value.length > maxExtraPropertiesChars) {
       return false;
@@ -159,17 +147,8 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isCanariasOrigin =
-      canariasCompatibilityEnabled && window.location.origin === canariasOrigin;
-    const isCanariasPage =
-      isCanariasOrigin && window.location.href === canariasPage &&
-      window.location.search === "" && window.location.hash === "";
-    const isExactCanariasCall =
-      isCanariasPage && args.length === 6 && isExactCanariasChallenge(args[0]) &&
-      args[1] === "SHA1withRSA" && args[2] === "CAdES" &&
-      args[3] === canariasExtraProperties &&
-      typeof successCallback === "function" && typeof errorCallback === "function";
-    if (isCanariasOrigin && !isExactCanariasCall) {
+    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);
+    if (isExactCanariasCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
