@@ -439,19 +439,8 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isCdtiOrigin =
-      cdtiCompatibilityEnabled && window.location.origin === cdtiOrigin;
-    const isCdtiPage =
-      isCdtiOrigin && window.location.href === cdtiPage &&
-      window.location.search === "" && window.location.hash === "";
-    const isExactCdtiCall =
-      isCdtiPage && args.length === 6 &&
-      typeof args[0] === "string" && cdtiChallengePattern.test(args[0]) &&
-      args[1] === "SHA512withRSA" &&
-      args[2] === "XAdES Enveloping" &&
-      args[3] === cdtiExtraProperties &&
-      typeof successCallback === "function" && typeof errorCallback === "function";
-    if (isCdtiOrigin && !isExactCdtiCall) {
+    const isExactCdtiCall = matchesCdtiSign(args, successCallback, errorCallback);
+    if (isExactCdtiCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
