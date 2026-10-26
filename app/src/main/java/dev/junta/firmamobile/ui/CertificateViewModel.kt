@@ -484,6 +484,8 @@ class CertificateViewModel(
         CertificateSelectionErrorCode.UNSUPPORTED_FILE -> CertificateUiError.UNSUPPORTED_FILE
         CertificateSelectionErrorCode.FILE_TOO_LARGE -> CertificateUiError.FILE_TOO_LARGE
         CertificateSelectionErrorCode.PERMISSION_DENIED -> CertificateUiError.PERMISSION_DENIED
+        CertificateSelectionErrorCode.CATALOG_FULL -> CertificateUiError.CATALOG_FULL
+        CertificateSelectionErrorCode.ALREADY_SAVED -> CertificateUiError.ALREADY_SAVED
         CertificateSelectionErrorCode.STORAGE_FAILURE -> CertificateUiError.STORAGE_FAILURE
     }
 

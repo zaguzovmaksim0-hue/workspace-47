@@ -346,4 +346,6 @@
     <string name="certificate_auth_help">Guardar y recuperar el desbloqueo requiere confirmación del dispositivo. Si cancelas al guardarlo, solo se conserva la sesión en memoria.</string>
     <string name="certificate_auth_unsupported">En Android 8–10 el desbloqueo no se guarda entre reinicios de la aplicación. Introduce la contraseña del certificado.</string>
     <string name="certificate_restore_saved">Recuperar desbloqueo guardado</string>
+    <string name="error_catalog_full">El catálogo de certificados está lleno. Elimina un certificado guardado para añadir otro.</string>
+    <string name="error_already_saved">Este documento ya está guardado en el catálogo.</string>
 </resources>

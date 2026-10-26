@@ -346,4 +346,6 @@
     <string name="certificate_auth_help">Desar i recuperar el desbloqueig requereix la confirmació del dispositiu. Si cancel·les en desar-lo, només es conserva la sessió en memòria.</string>
     <string name="certificate_auth_unsupported">A Android 8–10 el desbloqueig no es desa entre reinicis de l\'aplicació. Introdueix la contrasenya del certificat.</string>
     <string name="certificate_restore_saved">Recuperar el desbloqueig desat</string>
+    <string name="error_catalog_full">El catàleg de certificats és ple. Elimina un certificat desat per afegir-ne un altre.</string>
+    <string name="error_already_saved">Aquest document ja està desat al catàleg.</string>
 </resources>

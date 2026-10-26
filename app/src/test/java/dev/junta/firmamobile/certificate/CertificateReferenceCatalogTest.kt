@@ -294,6 +294,27 @@ class CertificateReferenceCatalogTest {
         assertTrue(store.readCatalog().entries.isEmpty())
     }
 
+    @Test
+    fun concurrentCapacityRefusalsHavePreciseErrorsAndKeepTheActiveEntry() = runBlocking {
+        val data = dataStore(file())
+        val store = PreferencesCertificateReferenceStore(data)
+        store.write(reference("active"))
+        repeat(CertificateReferenceCatalogCodec.MAX_ENTRIES - 2) { store.add(reference("saved-$it")) }
+        val active = store.readCatalog().active
+        val outcomes = List(8) { index ->
+            async { runCatching { PreferencesCertificateReferenceStore(data).add(reference("racing-$index")) } }
+        }.awaitAll()
+
+        assertEquals(1, outcomes.count { it.isSuccess })
+        assertEquals(List(7) { "CATALOG_FULL" }, outcomes.mapNotNull { it.exceptionOrNull()?.message })
+        assertEquals(CertificateReferenceCatalogCodec.MAX_ENTRIES, store.readCatalog().entries.size)
+        assertEquals(active, store.readCatalog().active)
+        val full = store.readCatalog()
+        val duplicate = runCatching { store.add(reference("active")) }.exceptionOrNull()
+        assertEquals("ALREADY_SAVED", duplicate?.message)
+        assertEquals(full, store.readCatalog())
+    }
+
     // Independent wire fixtures exercise rejection through the storage interface, not the codec.
     private fun payload(
         version: Int = 1,
