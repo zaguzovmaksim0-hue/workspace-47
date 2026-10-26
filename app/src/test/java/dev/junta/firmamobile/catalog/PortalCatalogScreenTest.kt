@@ -426,6 +426,55 @@ class PortalCatalogScreenTest {
         rule.onNodeWithTag("catalog-option-favorite").assertIsDisplayed()
     }
 
+    @Test
+    @Config(qualifiers = "es-rES-w600dp-h2000dp")
+    fun auditVerifiedOnlyHidesUnverifiedCardsAndEmptySections() {
+        val verified = repository.portals().first { it.supportStatus == PortalSupportStatus.VERIFIED_E2E }
+        val unverified = repository.portals().first { it.supportStatus != PortalSupportStatus.VERIFIED_E2E }
+        val state = PortalCatalogUiState(
+            searchText = "audit",
+            sections = listOf(
+                PortalCatalogSection(PortalCatalogSectionKind.FAVORITES, listOf(unverified, verified)),
+                PortalCatalogSection(PortalCatalogSectionKind.RECENT, listOf(unverified)),
+            ),
+        )
+        setCatalogContent(state = state, verifiedOnly = true)
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(verified.displayName))
+        rule.onNodeWithText(verified.displayName).assertIsDisplayed()
+        rule.onNodeWithText(unverified.displayName).assertDoesNotExist()
+        rule.onNodeWithText("Recientes").assertDoesNotExist()
+        rule.onNodeWithText("2 servicios").assertDoesNotExist()
+    }
+
+    @Test
+    @Config(qualifiers = "es-rES-w600dp-h2000dp")
+    fun auditUnfilteredCatalogKeepsVerifiedAndUnverifiedCards() {
+        val verified = repository.portals().first { it.supportStatus == PortalSupportStatus.VERIFIED_E2E }
+        val unverified = repository.portals().first { it.supportStatus != PortalSupportStatus.VERIFIED_E2E }
+        setCatalogContent(state = PortalCatalogUiState(
+            searchText = "audit",
+            sections = listOf(PortalCatalogSection(
+                PortalCatalogSectionKind.FAVORITES, listOf(unverified, verified),
+            )),
+        ), verifiedOnly = false)
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(unverified.displayName))
+        rule.onNodeWithText(unverified.displayName).assertIsDisplayed()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(verified.displayName))
+        rule.onNodeWithText(verified.displayName).assertIsDisplayed()
+    }
+
+    @Test
+    fun auditVerifiedOnlyShowsEmptyStateForUnverifiedSearchResults() {
+        val emptyTitle = org.robolectric.RuntimeEnvironment.getApplication()
+            .getString(dev.junta.firmamobile.R.string.catalog_empty_title)
+        val state = stateFor(searchText = "UNED")
+        assertTrue(state.sections.flatMap { it.items }.isNotEmpty())
+        assertTrue(state.sections.flatMap { it.items }.none { it.supportStatus == PortalSupportStatus.VERIFIED_E2E })
+        setCatalogContent(state = state, verifiedOnly = true)
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(emptyTitle))
+        rule.onNodeWithText(emptyTitle).assertIsDisplayed()
+    }
+
     private fun stateFor(
         searchText: String = "",
         selectedRegion: PortalRegionCode = PortalRegionCode.SPAIN,
