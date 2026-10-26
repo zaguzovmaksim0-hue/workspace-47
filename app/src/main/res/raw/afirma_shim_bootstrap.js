@@ -86,26 +86,18 @@
   // null: not applicable; false: reject; true: exact tuple.
   let matchesMinecoSign = () => null;
   const staBatchOrigin = __JFM_STA_BATCH_ORIGIN__;
-  const lugoOrigin = "https://sede.deputacionlugo.org";
-  const lugoClientBase = "https://sede.deputacionlugo.org/opencms";
-  const lugoExtraProperties = "mode=explicit\nprecalculatedHashAlgorithm=SHA-256\n";
-  const caibOrigin = "https://intranet.caib.es";
-  const caibClientBase = "https://intranet.caib.es/portafibback";
-  const caibSignerPathPattern = /^\/portafibback\/public\/signmodule\/requestPlugin\/([A-Za-z0-9_-]{28})\/-1\/index$/;
-  const caibSignatureIdPattern = /^[A-Za-z0-9_-]{40}$/;
-  const caibBatchBase64Pattern = /^[A-Za-z0-9_-]+={0,2}$/;
-  const iPage = "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null";
-  const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
-  const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
-  const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
+  let interceptLugoSetupCall = () => false;
+  let interceptLugoBatchSign = () => false;
+  let matchesLugoBatchDocument = () => false;
+  let installLugoBatchMethodHooks = () => {};
+  let caibRequestToken = () => null;
+  let interceptCaibSetupCall = () => false;
+  let interceptCaibBatchSign = () => false;
+  let installCaibBatchMethodHooks = () => {};
+  let matchesIsciiiSelection = () => false;
+  let matchesValenciaSelection = () => false;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesAccedaSign = () => null;
-  const euskadiProfileId = "euskadi-sede-electronica";
-  const euskadiAuthPage =
-    "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication";
-  const euskadiClientAuthTarget =
-    "https://eidas2.izenpe.com/cert-authn-external-validation/authenticate";
-  const euskadiFormContentType = "application/x-www-form-urlencoded";
   // null: not applicable; false: reject; true: exact tuple.
   let matchesXuntaSign = () => null;
   let matchesXuntaSelection = () => false;
@@ -127,5 +119,10 @@
   const installedMethodGetters = new WeakSet();
   const pendingCallbacks = new Map();
   const pendingBatchCallbacks = new Map();
-  let activeMelillaBatch = null;
+  let rememberMelillaBatchCreate = () => {};
+  let rememberMelillaBatchDocument = () => {};
+  let interceptMelillaBatchSign = () => false;
+  let resetMelillaBatch = () => {};
+  let installMelillaBatchMethodHooks = () => {};
+  let isMelillaBatchDocument = () => false;
   let activeProbeRequestId = null;

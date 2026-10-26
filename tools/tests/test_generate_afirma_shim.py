@@ -1,5 +1,6 @@
 """Deterministic source composition without changing the packaged shim."""
 import json
+import re
 import pathlib
 import tempfile
 import unittest
@@ -207,6 +208,133 @@ def badajoz_extraction(legacy):
     return module, edits
 
 
+def melilla_batch_extraction(legacy):
+    def section(start, end):
+        at = legacy.index("\n" + start) + 1
+        return legacy[at:legacy.index("\n" + end, at) + 1]
+    state = "  let activeMelillaBatch = null;\n"
+    body = section("  function isMelillaBatchPage", "  function interceptLugoSetupCall")
+    hooks = section("      if (includeMelillaBatch)", "      if (includeLugoBatch)")
+    ready = section("    const isStaBatchDocument =", "    const isLugoBatchDocument =")
+    assigned, count = re.subn(
+        r"(?ms)^  function (rememberMelillaBatchCreate|rememberMelillaBatchDocument|interceptMelillaBatchSign)\(args\) \{(.*?)^  \}",
+        lambda m: "  " + m[1] + " = (args) => {" + m[2] + "  };", body)
+    assert count == 3
+    stub = ("  let rememberMelillaBatchCreate = () => {};\n"
+            "  let rememberMelillaBatchDocument = () => {};\n"
+            "  let interceptMelillaBatchSign = () => false;\n"
+            "  let resetMelillaBatch = () => {};\n"
+            "  let installMelillaBatchMethodHooks = () => {};\n"
+            "  let isMelillaBatchDocument = () => false;\n")
+    indent = lambda text: ''.join('  ' + line if line.strip() else line for line in text.splitlines(keepends=True))
+    module = ("\n  {\n" + indent(state + assigned) +
+              "    resetMelillaBatch = () => { activeMelillaBatch = null; };\n\n" +
+              "    isMelillaBatchDocument = () =>\n      melillaBatchCompatibilityEnabled &&\n      window.location.origin === staBatchOrigin;\n\n" +
+              "    installMelillaBatchMethodHooks = (value, includeMelillaBatch) => {\n" + hooks +
+              "    };\n  }\n")
+    edits = [
+        (state, stub),
+        (body + "  function interceptLugoSetupCall", "  function interceptLugoSetupCall"),
+        (hooks, "      installMelillaBatchMethodHooks(value, includeMelillaBatch);\n"),
+        (ready, "    const isStaBatchDocument = isMelillaBatchDocument();\n"),
+        ("    pendingBatchCallbacks.clear();\n    activeMelillaBatch = null;",
+         "    pendingBatchCallbacks.clear();\n    resetMelillaBatch();"),
+    ]
+    return module, edits
+
+
+def lugo_batch_extraction(legacy):
+    def section(start, end):
+        at = legacy.index("\n" + start) + 1
+        return legacy[at:legacy.index("\n" + end, at) + 1]
+    constants = section("  const lugoOrigin =", "  const caibOrigin =")
+    body = section("  function interceptLugoSetupCall", "  function caibRequestToken").removesuffix("\n")
+    hooks = section("      if (includeLugoBatch)", "      if (includeCaibBatch)")
+    ready = section("    const isLugoBatchDocument =", "    const isCaibBatchDocument =")
+    assigned, count = re.subn(
+        r"(?ms)^  function (interceptLugoSetupCall|interceptLugoBatchSign)\(([^)]*)\) \{(.*?)^  \}",
+        lambda m: "  " + m[1] + " = (" + m[2] + ") => {" + m[3] + "  };", body)
+    assert count == 2
+    stub = ("  let interceptLugoSetupCall = () => false;\n"
+            "  let interceptLugoBatchSign = () => false;\n"
+            "  let matchesLugoBatchDocument = () => false;\n"
+            "  let installLugoBatchMethodHooks = () => {};\n")
+    indent = lambda text: ''.join('  ' + line if line.strip() else line for line in text.splitlines(keepends=True))
+    module = ("\n  {\n" + indent(constants + "\n" + assigned) + "\n" +
+              "    matchesLugoBatchDocument = () => {\n" + indent(ready) +
+              "      return isLugoBatchDocument;\n    };\n\n" +
+              "    installLugoBatchMethodHooks = (value, includeLugoBatch) => {\n" + hooks +
+              "    };\n  }\n")
+    edits = [
+        (constants, stub),
+        ("\n" + body + "\n  function caibRequestToken", "\n  function caibRequestToken"),
+        (hooks, "      installLugoBatchMethodHooks(value, includeLugoBatch);\n"),
+        (ready, "    const isLugoBatchDocument = matchesLugoBatchDocument();\n"),
+    ]
+    return module, edits, body
+
+
+def caib_batch_extraction(legacy):
+    def section(start, end):
+        at = legacy.index("\n" + start) + 1
+        return legacy[at:legacy.index("\n" + end, at) + 1]
+    constants = section("  const caibOrigin =", "  const iPage =")
+    body = section("  function caibRequestToken", "  function isExactSevillaAtsePage").removesuffix("\n")
+    hooks = section("      if (includeCaibBatch)", "      if (sevillaAtseCompatibilityEnabled)")
+    assigned, count = re.subn(
+        r"(?ms)^  function (caibRequestToken|interceptCaibSetupCall|interceptCaibBatchSign)\(([^)]*)\) \{(.*?)^  \}",
+        lambda m: "  " + m[1] + " = (" + m[2] + ") => {" + m[3] + "  };", body)
+    assert count == 3
+    stub = ("  let caibRequestToken = () => null;\n"
+            "  let interceptCaibSetupCall = () => false;\n"
+            "  let interceptCaibBatchSign = () => false;\n"
+            "  let installCaibBatchMethodHooks = () => {};\n")
+    indent = lambda text: ''.join('  ' + line if line.strip() else line for line in text.splitlines(keepends=True))
+    module = ("\n  {\n" + indent(constants + "\n" + assigned) + "\n" +
+              "    installCaibBatchMethodHooks = (value, includeCaibBatch) => {\n" + hooks +
+              "    };\n  }\n")
+    edits = [
+        (constants, stub),
+        ("\n" + body + "\n  installSevillaAtseClickHook();", "\n  installSevillaAtseClickHook();"),
+        (hooks, "      installCaibBatchMethodHooks(value, includeCaibBatch);\n"),
+    ]
+    return module, edits, body
+
+
+def euskadi_post_extraction(legacy):
+    def section(start, end):
+        at = legacy.index("\n" + start) + 1
+        return legacy[at:legacy.index("\n" + end, at) + 1]
+    constants = section("  const euskadiProfileId =", "  const xuntaOrigin =")
+    ids = "\n" + section("  function secureRequestId", "  let euskadiClientAuthPostSent")
+    body = section("  let euskadiClientAuthPostSent", "  const closedErrorMessages =").removesuffix("\n")
+    indent = lambda text: ''.join('  ' + line if line.strip() else line for line in text.splitlines(keepends=True))
+    module = "\n  {\n" + indent(constants + "\n" + body) + "  }\n"
+    anchor = "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesXuntaSign = () => null;"
+    edits = [
+        (constants + anchor, anchor),
+        (body + "\n  const closedErrorMessages =", "\n  const closedErrorMessages ="),
+    ]
+    return module, edits, ids, body
+
+
+def certificate_selection_extraction(legacy, portal):
+    specs = {
+        'isciii': ('iPage', 'vPage', 'iSel', 'matchesIsciiiSelection'),
+        'valencia': ('vPage', 'accedaOrigin', 'vSel', 'matchesValenciaSelection'),
+    }
+    page, end, flag, matcher = specs[portal]
+    at = legacy.index('  const ' + page + ' =')
+    constants = legacy[at:legacy.index('  const ' + end + ' =', at)]
+    at = legacy.index(flag + ' && location.href === ' + page)
+    expression = legacy[at:legacy.index(') {' + chr(10) + '      valid = true;', at)]
+    module = (chr(10) + '  ' + matcher + ' = a => {' + chr(10) +
+              constants.replace('  const', '    const') +
+              '    return ' + expression + ';' + chr(10) + '  };' + chr(10))
+    stub = '  let ' + matcher + ' = () => false;' + chr(10)
+    return module, constants, expression, stub, matcher
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -217,7 +345,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(27)]
+        self.names = [f"{i:02d}-section.js" for i in range(31)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -240,7 +368,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         expected_module = "\n  matchesCantabriaSign = args => {\n" + constants.replace("  const", "    const") + "    return " + expression.lstrip() + "  };\n"
         self.assertEqual(expected_module, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         expected_core = legacy.replace(constants, "  let matchesCantabriaSign = () => false;\n").replace(
             branch, "    const isExactCantabriaCall = matchesCantabriaSign(args);\n")
         jccm_constants = legacy[legacy.index("  const jccmOrigin ="):legacy.index("  const jccmRegistroOrigin =")]
@@ -316,6 +444,37 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         for old, new in edits:
             self.assertEqual(1, expected_core.count(old))
             expected_core = expected_core.replace(old, new, 1)
+        expected_module, edits = melilla_batch_extraction(legacy)
+        self.assertEqual(expected_module, (raw / "afirma_shim_melilla_batch.js").read_text())
+        for old, new in edits:
+            self.assertEqual(1, expected_core.count(old))
+            expected_core = expected_core.replace(old, new, 1)
+        expected_module, edits, _ = lugo_batch_extraction(legacy)
+        self.assertEqual(expected_module, (raw / "afirma_shim_lugo_batch.js").read_text())
+        for old, new in edits:
+            self.assertEqual(1, expected_core.count(old))
+            expected_core = expected_core.replace(old, new, 1)
+        expected_module, edits, _ = caib_batch_extraction(legacy)
+        self.assertEqual(expected_module, (raw / "afirma_shim_caib_batch.js").read_text())
+        for old, new in edits:
+            self.assertEqual(1, expected_core.count(old))
+            expected_core = expected_core.replace(old, new, 1)
+        expected_module, edits, expected_ids, _ = euskadi_post_extraction(legacy)
+        self.assertEqual(expected_module, (raw / "afirma_shim_euskadi_post.js").read_text())
+        self.assertEqual(expected_ids, (raw / "afirma_shim_request_ids.js").read_text())
+        for old, new in edits:
+            self.assertEqual(1, expected_core.count(old))
+            expected_core = expected_core.replace(old, new, 1)
+        expected_module, constants, expression, stub, matcher = certificate_selection_extraction(legacy, 'isciii')
+        self.assertEqual(expected_module, (raw / 'afirma_shim_isciii_selection.js').read_text())
+        self.assertEqual(1, expected_core.count(constants))
+        self.assertEqual(1, expected_core.count(expression))
+        expected_core = expected_core.replace(constants, stub, 1).replace(expression, matcher + "(a)", 1)
+        expected_module, constants, expression, stub, matcher = certificate_selection_extraction(legacy, 'valencia')
+        self.assertEqual(expected_module, (raw / 'afirma_shim_valencia_selection.js').read_text())
+        self.assertEqual(1, expected_core.count(constants))
+        self.assertEqual(1, expected_core.count(expression))
+        expected_core = expected_core.replace(constants, stub, 1).replace(expression, matcher + "(a)", 1)
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -329,7 +488,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         expected = "\n  matchesJccmSign = args => {\n" + constants.replace("  const", "    const") + branch + "    return isExactJccmCall;\n  };\n"
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn("https://ventanillaelectronica.jccm.es", core)
         self.assertNotIn("QUJDREU=", core)
         self.assertIn("    const isExactJccmCall = matchesJccmSign(args);\n", core)
@@ -346,7 +505,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         expected = "\n  matchesJccmRegistroSign = (args, successCallback, errorCallback) => {\n" + constants.replace("  const", "    const").replace('\n    "', '\n      "') + branch + "    return isJccmRegistroOrigin ? isExactJccmRegistroCall : null;\n  };\n"
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn("https://registrounicociudadanos.jccm.es", core)
         self.assertNotIn("format=XAdES Detached\\nmode=implicit", core)
         self.assertIn("    const isExactJccmRegistroCall = matchesJccmRegistroSign(args, successCallback, errorCallback);\n", core)
@@ -361,7 +520,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         _, _, _, expected = airef_extraction(legacy)
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         for body in ("https://sede.airef.es", "/invesiteRE/action/solicitud/view",
                      "function isValidAirefPayload", "function isExactAirefSigningPage"):
             self.assertNotIn(body, core)
@@ -376,7 +535,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         _, _, expected = cdti_extraction(legacy)
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         for body in ("https://sede.cdti.gob.es", "const cdtiPage =", "const cdtiChallengePattern =",
                      "const cdtiExtraProperties ="):
             self.assertNotIn(body, core)
@@ -398,7 +557,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
                     "    return isPoliciaOrigin ? isExactPoliciaCall : null;\n  };\n")
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn("https://sede.policia.gob.es", core)
         self.assertNotIn("const policiaExtraProperties =", core)
         dispatch = "    const isExactPoliciaCall = matchesPoliciaSign(args, successCallback, errorCallback);\n"
@@ -415,7 +574,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         _, _, _, expected = gran_canaria_extraction(legacy)
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn('https://sede.grancanaria.com', core)
         self.assertNotIn("const granCanariaExtraProperties =", core)
         dispatch = '    const isExactGranCanariaCall = matchesGranCanariaSign(args, successCallback, errorCallback);\n'
@@ -432,7 +591,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         _, _, _, expected = fuerteventura_extraction(legacy)
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn('https://sede.cabildofuer.es', core)
         self.assertNotIn("const fuerteventuraExtraProperties =", core)
         dispatch = '    const isExactFuerteventuraCall = matchesFuerteventuraSign(args, successCallback, errorCallback);\n'
@@ -449,7 +608,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         _, _, _, expected = mineco_extraction(legacy)
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn('https://serviciosede.mineco.gob.es', core)
         self.assertNotIn("const minecoExtraProperties =", core)
         dispatch = '    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);\n'
@@ -466,7 +625,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         _, _, _, expected = canarias_extraction(legacy)
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn("https://sede.gobiernodecanarias.org", core)
         self.assertNotIn("function isExactCanariasChallenge", core)
         self.assertNotIn("const canariasExtraProperties =", core)
@@ -485,7 +644,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertEqual(expected, module.read_text())
         self.assertIn(selection, expected)
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn("https://sede.xunta.gal", core)
         self.assertNotIn("function isExactXuntaProperties", core)
         self.assertNotIn("const xuntaFixedProperties", core)
@@ -504,7 +663,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         _, _, _, expected = acceda_extraction(legacy)
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn('https://sede.administracionespublicas.gob.es', core)
         self.assertNotIn("const accedaExtraProperties =", core)
         dispatch = '    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);\n'
@@ -521,7 +680,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         expected = sevilla_extraction(legacy)
         self.assertEqual(expected["module"], path.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn("https://www.sevilla.org", core)
         self.assertNotIn("sevillaAtseSetupState", core)
         self.assertNotIn("function isValidSevillaAtseChallenge", core)
@@ -541,7 +700,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         expected = ugr_extraction(legacy)
         self.assertEqual(expected["module"], path.read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         self.assertNotIn("https://sede.ugr.es", core)
         self.assertNotIn("Universidad de Granada", core)
         self.assertNotIn("VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ==", core)
@@ -563,7 +722,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         expected, _ = badajoz_extraction(legacy)
         self.assertEqual(expected, (raw / "afirma_shim_badajoz.js").read_text())
         core = "".join((raw / name).read_text() for name in (
-            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
         for token in ("https://sede.dip-badajoz.es", "badajozSignHookReadyDiagnosticPosted",
                       "badajozDiagnosticWrappedFunctions", "badajozDiagnosticPostedStages"):
             self.assertNotIn(token, core)
@@ -571,6 +730,121 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertLess(core.index("const isExactJccmRegistroCall ="), core.index("const isExactBadajozCall ="))
         self.assertLess(core.index("const isExactBadajozCall ="), core.index("const isExactUgrLiteralCall ="))
         self.assertIn("window.setInterval(repairCurrentSigningLibraries, 500)", core)
+
+    def test_sta_batch_family_has_its_own_resource(self):
+        raw = ROOT / "app/src/main/res/raw"
+        path = raw / "afirma_shim_melilla_batch.js"
+        self.assertTrue(path.is_file(), "STA/Melilla needs its own optional resource")
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js",
+            "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
+        self.assertNotIn("activeMelillaBatch", core)
+        self.assertNotIn("function isMelillaBatchPage", core)
+        self.assertNotIn("signBatchProcess", core)
+        self.assertIn("pendingBatchCallbacks", core)
+        self.assertIn("receiveMelillaBatchResult", core)
+        self.assertIn("MINIAPPLET_BATCH_CANCEL", core)
+
+    def test_lugo_batch_has_its_own_resource(self):
+        raw = ROOT / "app/src/main/res/raw"
+        self.assertTrue((raw / "afirma_shim_lugo_batch.js").is_file())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js",
+            "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
+        for token in ("https://sede.deputacionlugo.org", "lugoClientBase", "lugoExtraProperties", "LUGO_CARGAR_APP_AFIRMA"):
+            self.assertNotIn(token, core)
+        self.assertIn("pending.lugoXml === true", core)
+        self.assertIn("LUGO_XML_BATCH_CANCEL", core)
+        self.assertLess(core.index('call === "BATCH_SIGN" && interceptMelillaBatchSign(args)'),
+                        core.index('call === "LUGO_BATCH_SIGN" && interceptLugoBatchSign(args)'))
+        self.assertLess(core.index('call === "LUGO_BATCH_SIGN" && interceptLugoBatchSign(args)'),
+                        core.index('call === "CAIB_BATCH_SIGN" && interceptCaibBatchSign(args)'))
+
+    def test_caib_batch_has_its_own_resource(self):
+        raw = ROOT / "app/src/main/res/raw"
+        self.assertTrue((raw / "afirma_shim_caib_batch.js").is_file())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js",
+            "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
+        for token in ("https://intranet.caib.es", "caibClientBase", "caibSignerPathPattern",
+                      "caibSignatureIdPattern", "caibBatchBase64Pattern",
+                      "function decodeCaibUrlBase64", "CAIB_SET_FORCE_WS_MODE", "CAIB_SET_SERVLETS"):
+            self.assertNotIn(token, core)
+        self.assertIn("const isCaibBatchDocument = caibRequestToken() !== null;", core)
+        self.assertIn("pending.caibXml === true", core)
+        self.assertIn("CAIB_XML_BATCH_CANCEL", core)
+        self.assertLess(core.index('call === "LUGO_BATCH_SIGN" && interceptLugoBatchSign(args)'),
+                        core.index('call === "CAIB_BATCH_SIGN" && interceptCaibBatchSign(args)'))
+        self.assertLess(core.index("installLugoBatchMethodHooks(value, includeLugoBatch);"),
+                        core.index("installCaibBatchMethodHooks(value, includeCaibBatch);"))
+        self.assertLess(core.index("installCaibBatchMethodHooks(value, includeCaibBatch);"),
+                        core.index("installSevillaAtseMethodHooks(value);"))
+
+    def test_euskadi_post_has_its_own_resource_without_owning_shared_ids(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_euskadi_post.js"
+        self.assertTrue(module.is_file())
+        ids = (raw / "afirma_shim_request_ids.js").read_text()
+        self.assertIn("function secureRequestId", ids)
+        self.assertIn("crypto.randomUUID", ids)
+        self.assertIn("crypto.getRandomValues", ids)
+        self.assertNotIn("Math.random", ids)
+        self.assertNotIn("EUSKADI_CLIENT_AUTH_POST", ids)
+        self.assertNotIn("secureRequestId() {", module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js",
+            "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
+        self.assertEqual(1, core.count("__JFM_EUSKADI_CLIENT_AUTH_POST_ENABLED__"))
+        self.assertIn('type: "EUSKADI_CLIENT_AUTH_POST"', module.read_text())
+        for token in ('type: "EUSKADI_CLIENT_AUTH_POST"', "euskadiClientAuthPostSent",
+                      "eidas.izenpe.com", "eidas2.izenpe.com", "isSafeEuskadiOpaqueRequest",
+                      "HTMLFormElement.prototype.submit", "HTMLFormElement.prototype.requestSubmit"):
+            self.assertNotIn(token, core)
+        self.assertIn("QA_PORTAL_DIAGNOSTIC", core)
+        self.assertIn("MINIAPPLET_SIGN", core)
+        self.assertEqual(1, core.count("function secureRequestId"))
+
+    def test_isciii_selection_is_optional_and_ordered(self):
+        raw = ROOT / "app/src/main/res/raw"
+        path = raw / 'afirma_shim_isciii_selection.js'
+        self.assertTrue(path.is_file())
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        expected, _, _, _, _ = certificate_selection_extraction(legacy, 'isciii')
+        self.assertEqual(expected, path.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js",
+            "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://sede.isciii.gob.es', core)
+        self.assertNotIn('const iPage =', core)
+        self.assertNotIn('const iProps =', core)
+        selection = core[core.index("  function interceptCertificateSelection"):core.index("  function equivalentLiteralProperties")]
+        self.assertIn("if (!iSel && !vSel && !xSel) return false;", selection)
+        self.assertIn('rejectDirectCall(a[2], "INVALID_REQUEST")', selection)
+        self.assertIn("pendingCallbacks.set(id, { selection: true", selection)
+        self.assertIn("successCallback(certificateB64)", core)
+        self.assertLess(selection.index("if (matchesIsciiiSelection(a))"), selection.index("} else if ("))
+        self.assertLess(selection.index("} else if ("), selection.index("matchesXuntaSelection(a)"))
+
+    def test_valencia_selection_is_optional_and_ordered(self):
+        raw = ROOT / "app/src/main/res/raw"
+        path = raw / 'afirma_shim_valencia_selection.js'
+        self.assertTrue(path.is_file())
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        expected, _, _, _, _ = certificate_selection_extraction(legacy, 'valencia')
+        self.assertEqual(expected, path.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js",
+            "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://portafirmas.dival.es', core)
+        self.assertNotIn('const vPage =', core)
+        self.assertNotIn('const vProps =', core)
+        selection = core[core.index("  function interceptCertificateSelection"):core.index("  function equivalentLiteralProperties")]
+        self.assertIn("if (!iSel && !vSel && !xSel) return false;", selection)
+        self.assertIn('rejectDirectCall(a[2], "INVALID_REQUEST")', selection)
+        self.assertIn("pendingCallbacks.set(id, { selection: true", selection)
+        self.assertIn("successCallback(certificateB64)", core)
+        self.assertLess(selection.index("matchesIsciiiSelection(a)"), selection.index("matchesValenciaSelection(a)"))
+        self.assertLess(selection.index("matchesValenciaSelection(a)"), selection.index("matchesXuntaSelection(a)"))
 
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
@@ -580,7 +854,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_isciii_selection.js", "afirma_shim_valencia_selection.js", "afirma_shim_request_ids.js", "afirma_shim_euskadi_post.js", "afirma_shim_handlers.js", "afirma_shim_melilla_batch.js", "afirma_shim_lugo_batch.js", "afirma_shim_caib_batch.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 

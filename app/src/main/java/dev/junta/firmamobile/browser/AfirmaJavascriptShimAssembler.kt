@@ -28,7 +28,15 @@ internal enum class AfirmaJavascriptShimFragment {
     SEVILLA_ATSE,
     UGR,
     BADAJOZ,
+    ISCIII_SELECTION,
+    VALENCIA_SELECTION,
+    REQUEST_IDS,
+    EUSKADI_POST,
     HANDLERS,
+    MELILLA_BATCH,
+    LUGO_BATCH,
+    CAIB_BATCH,
+    BATCH_RESULTS,
     INSTALLATION,
 }
 
@@ -138,6 +146,12 @@ internal object AfirmaJavascriptShimAssembler {
             AfirmaJavascriptShimFragment.SEVILLA_ATSE to { it.sevillaAtse },
             AfirmaJavascriptShimFragment.UGR to { it.ugr },
             AfirmaJavascriptShimFragment.BADAJOZ to { it.badajoz },
+            AfirmaJavascriptShimFragment.ISCIII_SELECTION to { it.isciiiCertificateSelection },
+            AfirmaJavascriptShimFragment.VALENCIA_SELECTION to { it.valenciaCertificateSelection },
+            AfirmaJavascriptShimFragment.MELILLA_BATCH to { it.melillaBatch },
+            AfirmaJavascriptShimFragment.LUGO_BATCH to { it.lugoBatch },
+            AfirmaJavascriptShimFragment.CAIB_BATCH to { it.caibBatch },
+            AfirmaJavascriptShimFragment.EUSKADI_POST to { it.euskadiClientAuthPost },
         )
 
     private const val HTTPS_PORT = 443

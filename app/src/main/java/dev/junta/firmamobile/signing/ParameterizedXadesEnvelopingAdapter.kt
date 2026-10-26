@@ -3,7 +3,7 @@ package dev.junta.firmamobile.signing
 import java.security.cert.X509Certificate
 import java.time.Clock
 
-/** Only the two observed portal contracts; context and payload policy retain their original order. */
+/** Observed portal contracts; context and payload policy retain their original order. */
 internal data class XadesEnvelopingContract(
     val id: SigningProtocolId,
     val profileId: String,

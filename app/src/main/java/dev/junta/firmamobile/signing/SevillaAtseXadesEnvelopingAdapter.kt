@@ -25,77 +25,23 @@ import org.w3c.dom.Node
 
 /** Local XAdES Enveloping adapter for the exact public Sevilla ATSE certificate-login contract. */
 class SevillaAtseXadesEnvelopingAdapter internal constructor(
-    private val clock: Clock = Clock.systemUTC(),
-) : SigningProtocolAdapter {
-    override val id: SigningProtocolId = ID
-
-    override suspend fun prepare(
-        request: NormalizedSignRequest,
-        certificateChain: List<X509Certificate>,
-    ): ProtocolPrepareResult {
-        if (!request.isExactSevillaAtseRequest() || certificateChain.isEmpty()) {
-            return ProtocolPrepareResult.Failure(SigningErrorCode.UNSUPPORTED_PROTOCOL)
-        }
-        return try {
-            val material = request.withPayload { payload ->
-                MiniAppletPayloadCodec.withDecoded(payload) { data, extraProperties ->
-                    require(extraProperties.isEmpty())
-                    require(data.isExactSevillaAtseChallenge())
-                    SevillaAtseXadesEnvelopingCodec.createPreSign(data, certificateChain, clock)
-                }
-            }
-            ProtocolPrepareResult.Success(
-                PreSignResult(
-                    requestOwner = request,
-                    bytesToSign = material.signedInfo,
-                    state = SevillaAtseXadesPreSignState(
-                        material.unsignedDocument,
-                        material.signingCertificateFingerprint,
-                    ),
-                ),
-            )
-        } catch (_: Exception) {
-            ProtocolPrepareResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
-        }
-    }
-
-    override suspend fun complete(
-        request: NormalizedSignRequest,
-        preSign: PreSignResult,
-        localSignature: LocalSignature,
-    ): ProtocolCompletionResult {
-        if (!request.isExactSevillaAtseRequest()) {
-            return ProtocolCompletionResult.Failure(SigningErrorCode.UNSUPPORTED_PROTOCOL)
-        }
-        val state = preSign.consumeState(request) as? SevillaAtseXadesPreSignState
-            ?: return ProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
-        return state.use { ownedState ->
-            try {
-                val result = localSignature.withBytes { signature ->
-                    SevillaAtseXadesEnvelopingCodec.complete(
-                        unsignedDocument = ownedState.unsignedDocument(),
-                        signingCertificateFingerprint = ownedState.signingCertificateFingerprint(),
-                        signatureValue = signature,
-                    )
-                }
-                ProtocolCompletionResult.Success(LocalSignature(result))
-            } catch (_: Exception) {
-                ProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
-            }
-        }
-    }
-
-    private fun NormalizedSignRequest.isExactSevillaAtseRequest(): Boolean =
-        protocolId == ID &&
-            context.profileId == PROFILE_ID &&
-            context.profileVersion == PROFILE_VERSION &&
-            context.origin.scheme == HTTPS &&
-            context.origin.host == HOST &&
-            context.origin.port == HTTPS_PORT &&
-            algorithm == SigningAlgorithm.SHA1_WITH_RSA &&
-            format == SigningFormat.XADES &&
-            safeDescription == SAFE_DESCRIPTION
-
+    clock: Clock = Clock.systemUTC(),
+) : SigningProtocolAdapter by ParameterizedXadesEnvelopingAdapter(
+    contract = XadesEnvelopingContract(
+        id = ID,
+        profileId = PROFILE_ID,
+        profileVersion = PROFILE_VERSION,
+        algorithm = SigningAlgorithm.SHA1_WITH_RSA,
+        safeDescription = SAFE_DESCRIPTION,
+        contextMatches = {
+            it.origin.scheme == HTTPS && it.origin.host == HOST && it.origin.port == HTTPS_PORT
+        },
+        extraProperties = "",
+        payloadValidator = ByteArray::isExactSevillaAtseChallenge,
+        validatePayloadOnMatch = false,
+    ),
+    clock = clock,
+) {
     companion object {
         val ID = SigningProtocolId("sevilla-atse-xades-enveloping-v1")
         const val PROFILE_ID = "sevilla-atse-certificate-login"
@@ -104,31 +50,6 @@ class SevillaAtseXadesEnvelopingAdapter internal constructor(
         private const val HTTPS = "https"
         private const val HOST = "www.sevilla.org"
         private const val HTTPS_PORT = 443
-    }
-}
-
-private class SevillaAtseXadesPreSignState(
-    unsignedDocument: ByteArray,
-    signingCertificateFingerprint: ByteArray,
-) : PreSignState {
-    private var document = unsignedDocument
-    private var fingerprint = signingCertificateFingerprint
-    private var closed = false
-
-    @Synchronized
-    fun unsignedDocument(): ByteArray = check(!closed).let { document }
-
-    @Synchronized
-    fun signingCertificateFingerprint(): ByteArray = check(!closed).let { fingerprint }
-
-    @Synchronized
-    override fun close() {
-        if (closed) return
-        closed = true
-        document.fill(0)
-        fingerprint.fill(0)
-        document = ByteArray(0)
-        fingerprint = ByteArray(0)
     }
 }
 
