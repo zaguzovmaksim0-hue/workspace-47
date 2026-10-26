@@ -51,6 +51,7 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.CANTABRIA -> R.raw.afirma_shim_cantabria
             AfirmaJavascriptShimFragment.JCCM -> R.raw.afirma_shim_jccm
             AfirmaJavascriptShimFragment.JCCM_REGISTRO -> R.raw.afirma_shim_jccm_registro
+            AfirmaJavascriptShimFragment.AIREF -> R.raw.afirma_shim_airef
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }

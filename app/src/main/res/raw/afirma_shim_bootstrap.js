@@ -88,9 +88,8 @@
   const sevillaAtseRetrieveUrl = "https://www.sevilla.org/ovweb/sign/RetrieveService";
   const sevillaAtseChallengePattern = /^[A-Za-z0-9_-]{40}$/;
   let sevillaAtseSetupState = 0;
-  const airefOrigin = "https://sede.airef.es";
-  const airefSigningPath = "/invesiteRE/action/solicitud/view";
-  const airefSigningQueryPattern = /^\?id=[0-9]{1,20}$/;
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesAirefSign = () => null;
   const cdtiOrigin = "https://sede.cdti.gob.es";
   const cdtiPage =
     "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx";

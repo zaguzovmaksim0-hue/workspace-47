@@ -24,7 +24,8 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true), "https://sede.example.test",
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true),
+        "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
         .first { it.isDirectory }
@@ -116,6 +117,29 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledAirefOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(airef = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.AIREF)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.AIREF, reads)
+        assertFalse(output.contains("https://sede.airef.es"))
+        assertFalse(output.contains("/invesiteRE/action/solicitud/view"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const airefCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_airef.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const airefCompatibilityEnabled = true;", "const airefCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
     fun missingDuplicateExtraOrReorderedManifestFailsBeforeReading() {
         val fragments = AfirmaJavascriptShimFragment.entries
         for (invalid in listOf(fragments.dropLast(1), fragments + fragments.first(), fragments.reversed())) {
@@ -171,7 +195,9 @@ class AfirmaJavascriptShimFragmentTest {
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
     val actual = restoreJccmExtraction(
-        legacy, restoreJccmRegistroExtraction(legacy, assembled, flags.jccmRegistro), flags.jccm,
+        legacy, restoreJccmRegistroExtraction(
+            legacy, restoreAirefExtraction(legacy, assembled, flags.airef), flags.jccmRegistro,
+        ), flags.jccm,
     )
     val enabled = flags.cantabria
     val constants = legacy.substring(
@@ -226,4 +252,28 @@ private fun restoreJccmRegistroExtraction(legacy: String, actual: String, enable
             branch,
         )
         .replace("if (isExactJccmRegistroCall === false)", "if (isJccmRegistroOrigin && !isExactJccmRegistroCall)")
+}
+
+private fun restoreAirefExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(legacy.indexOf("  const airefOrigin ="), legacy.indexOf("  const cdtiOrigin ="))
+    val helpers = legacy.substring(
+        legacy.indexOf("  function isValidAirefPayload"), legacy.indexOf("  function isExactCanariasChallenge"),
+    )
+    val start = legacy.indexOf("    const isAirefOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isAirefOrigin && !isExactAirefCall)", start))
+    val module = "\n  matchesAirefSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const") + "\n" +
+        helpers.split('\n').dropLast(1)
+            .joinToString("") { if (it.isBlank()) "\n" else "  $it\n" } +
+        branch + "    return isAirefOrigin ? isExactAirefCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesAirefSign = () => null;\n",
+            constants,
+        )
+        .replace("    const isExactAirefCall = matchesAirefSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactAirefCall === false)", "if (isAirefOrigin && !isExactAirefCall)")
+        .replace("  function isExactCanariasChallenge", helpers + "  function isExactCanariasChallenge")
 }
