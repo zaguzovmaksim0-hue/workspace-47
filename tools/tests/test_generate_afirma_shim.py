@@ -91,6 +91,17 @@ def xunta_extraction(legacy):
     return constants, helpers, selection, branch, module
 
 
+def acceda_extraction(legacy):
+    origin = ""
+    constants = legacy[legacy.index('  const accedaOrigin ='):legacy.index('  const badajozOrigin =')]
+    start = legacy.index('    const isAccedaOrigin =')
+    branch = legacy[start:legacy.index('    if (isAccedaOrigin && !isExactAccedaCall)', start)]
+    module = ('\n  matchesAccedaSign = (args, successCallback, errorCallback) => {\n' +
+              (origin + constants).replace("  const", "    const").replace('\n    "', '\n      "') + branch +
+              '    return isAccedaOrigin ? isExactAccedaCall : null;\n  };\n')
+    return origin, constants, branch, module
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -101,7 +112,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(23)]
+        self.names = [f"{i:02d}-section.js" for i in range(24)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -181,6 +192,10 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesXuntaSign = () => null;\n  let matchesXuntaSelection = () => false;\n').replace(helpers, "").replace(
             selection, "matchesXuntaSelection(a)").replace(branch, '    const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);\n').replace(
             "if (isXuntaOrigin && !isExactXuntaCall)", "if (isExactXuntaCall === false)")
+        origin, constants, branch, _ = acceda_extraction(legacy)
+        expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesAccedaSign = () => null;\n').replace(
+            branch, '    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);\n').replace(
+            'if (isAccedaOrigin && !isExactAccedaCall)', 'if (isExactAccedaCall === false)')
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -361,6 +376,23 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertLess(core.index(dispatch), core.index("const isExactCdtiCall = matchesCdtiSign"))
         self.assertIn('    if (isExactXuntaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
 
+    def test_acceda_is_packaged_with_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_acceda.js"
+        self.assertTrue(module.is_file(), "Acceda needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, _, expected = acceda_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://sede.administracionespublicas.gob.es', core)
+        self.assertNotIn("const accedaExtraProperties =", core)
+        dispatch = '    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);\n'
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index('const isExactSevillaAtseCall ='), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index('const isExactAirefCall = matchesAirefSign'))
+        self.assertIn('    if (isExactAccedaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -369,7 +401,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 

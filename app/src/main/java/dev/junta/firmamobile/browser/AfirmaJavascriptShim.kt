@@ -59,6 +59,7 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.MINECO -> R.raw.afirma_shim_mineco
             AfirmaJavascriptShimFragment.CANARIAS -> R.raw.afirma_shim_canarias
             AfirmaJavascriptShimFragment.XUNTA -> R.raw.afirma_shim_xunta
+            AfirmaJavascriptShimFragment.ACCEDA -> R.raw.afirma_shim_acceda
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }

@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -182,6 +182,29 @@ class AfirmaJavascriptShimFragmentTest {
         val body = File(raw, "afirma_shim_policia.js").readText(Charsets.UTF_8)
         assertEquals(enabled.replace(body, "").replace(
             "const policiaCompatibilityEnabled = true;", "const policiaCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledAccedaOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(acceda = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.ACCEDA)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.ACCEDA, reads)
+        assertFalse(output.contains("https://sede.administracionespublicas.gob.es"))
+        assertFalse(output.contains("const accedaExtraProperties ="))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const accedaCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_acceda.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const accedaCompatibilityEnabled = true;", "const accedaCompatibilityEnabled = false;",
         ), output)
     }
 
@@ -355,7 +378,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val xuntaRestored = restoreXuntaExtraction(legacy, assembled, flags.xuntaGalicia)
+    val accedaRestored = restoreAccedaExtraction(legacy, assembled, flags.acceda)
+    val xuntaRestored = restoreXuntaExtraction(legacy, accedaRestored, flags.xuntaGalicia)
     val canariasRestored = restoreCanariasExtraction(legacy, xuntaRestored, flags.canarias)
     val minecoRestored = restoreMinecoExtraction(legacy, canariasRestored, flags.mineco)
     val fuerteventuraRestored = restoreFuerteventuraExtraction(legacy, minecoRestored, flags.fuerteventura)
@@ -601,4 +625,22 @@ private fun restoreXuntaExtraction(legacy: String, actual: String, enabled: Bool
         .replace("    const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);\n", branch)
         .replace("if (isExactXuntaCall === false)", "if (isXuntaOrigin && !isExactXuntaCall)")
         .replace("  function interceptCertificateSelection", helpers + "  function interceptCertificateSelection")
+}
+
+private fun restoreAccedaExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(legacy.indexOf("  const accedaOrigin ="), legacy.indexOf("  const badajozOrigin ="))
+    val start = legacy.indexOf("    const isAccedaOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isAccedaOrigin && !isExactAccedaCall)", start))
+    val module = "\n  matchesAccedaSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isAccedaOrigin ? isExactAccedaCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesAccedaSign = () => null;\n",
+            constants,
+        )
+        .replace("    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactAccedaCall === false)", "if (isAccedaOrigin && !isExactAccedaCall)")
 }

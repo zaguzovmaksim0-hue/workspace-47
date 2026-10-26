@@ -41,8 +41,8 @@
   const iProps = "serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService";
   const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
-  const accedaOrigin = "https://sede.administracionespublicas.gob.es";
-  const accedaExtraProperties = "format=PAdES Detached\nexpPolicy=FirmaAGE\nnonexpired:true";
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesAccedaSign = () => null;
   const badajozOrigin = "https://sede.dip-badajoz.es";
   const badajozExtraProperties =
     "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true";
