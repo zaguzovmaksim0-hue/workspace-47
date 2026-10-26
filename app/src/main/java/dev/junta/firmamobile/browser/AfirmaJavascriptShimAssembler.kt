@@ -20,6 +20,7 @@ internal enum class AfirmaJavascriptShimFragment {
     CDTI,
     POLICIA,
     GRAN_CANARIA,
+    FUERTEVENTURA,
     HANDLERS,
     INSTALLATION,
 }
@@ -46,6 +47,7 @@ internal object AfirmaJavascriptShimAssembler {
                 AfirmaJavascriptShimFragment.CDTI -> configuration.flags.cdti
                 AfirmaJavascriptShimFragment.POLICIA -> configuration.flags.policia
                 AfirmaJavascriptShimFragment.GRAN_CANARIA -> configuration.flags.granCanaria
+                AfirmaJavascriptShimFragment.FUERTEVENTURA -> configuration.flags.fuerteventura
                 else -> true
             }
         }

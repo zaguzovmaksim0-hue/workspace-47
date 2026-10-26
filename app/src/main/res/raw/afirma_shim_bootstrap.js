@@ -105,22 +105,8 @@
     "serverUrl=https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService\n" +
     "referencesDigestMethod=http://www.w3.org/2001/04/xmlenc#sha512\n" +
     "filters=nonexpired:true;signingCert:true;issuer.rfc2254:(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))(!(O=PKI))(!(O=DO_NOT_TRUST*)))";
-  const fuerteventuraOrigin = "https://sede.cabildofuer.es";
-  const fuerteventuraSigningPage =
-    "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert";
-  const fuerteventuraExtraProperties =
-    "signaturePositionOnPageLowerLeftX = 50\n" +
-    "signaturePositionOnPageLowerLeftY = 15\n" +
-    "signaturePositionOnPageUpperRightX = 150\n" +
-    "signaturePositionOnPageUpperRightY = 50\n" +
-    "signaturePages = all\n" +
-    "layer2Text= Firmado por $$SUBJECTCN$$ el día $$SIGNDATE=dd/MM/yyyy$$ $$ORGANIZATION$$\n" +
-    "layer2FontSize= 6\n" +
-    "layer2FontFamily= 0\n" +
-    "layer2FontStyle= 0\n" +
-    "signatureRotation= 0\n" +
-    "includeQuestionMark= false\n" +
-    "obfuscateCertText= true\n";
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesFuerteventuraSign = () => null;
   const minecoOrigin = "https://serviciosede.mineco.gob.es";
   const minecoSigningPage = "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx";
   const minecoExtraProperties =

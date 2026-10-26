@@ -55,6 +55,7 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.CDTI -> R.raw.afirma_shim_cdti
             AfirmaJavascriptShimFragment.POLICIA -> R.raw.afirma_shim_policia
             AfirmaJavascriptShimFragment.GRAN_CANARIA -> R.raw.afirma_shim_gran_canaria
+            AfirmaJavascriptShimFragment.FUERTEVENTURA -> R.raw.afirma_shim_fuerteventura
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }

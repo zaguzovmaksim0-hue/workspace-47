@@ -377,24 +377,8 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isFuerteventuraOrigin =
-      fuerteventuraCompatibilityEnabled && window.location.origin === fuerteventuraOrigin;
-    const isFuerteventuraSigningPage =
-      isFuerteventuraOrigin && window.location.href === fuerteventuraSigningPage &&
-      window.location.hash === "";
-    const isExactFuerteventuraCall =
-      isFuerteventuraSigningPage &&
-      args.length === 6 &&
-      typeof args[0] === "string" &&
-      args[0].length > 0 &&
-      args[0].length <= maxDirectDataChars &&
-      base64Pattern.test(args[0]) &&
-      args[1] === "SHA256withRSA" &&
-      args[2] === "PAdES" &&
-      args[3] === fuerteventuraExtraProperties &&
-      typeof successCallback === "function" &&
-      typeof errorCallback === "function";
-    if (isFuerteventuraOrigin && !isExactFuerteventuraCall) {
+    const isExactFuerteventuraCall = matchesFuerteventuraSign(args, successCallback, errorCallback);
+    if (isExactFuerteventuraCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
