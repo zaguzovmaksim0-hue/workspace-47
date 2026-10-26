@@ -629,7 +629,11 @@ class MainActivity : ComponentActivity() {
                 }
                 if (certificatePanelVisible) {
                     androidx.compose.ui.window.Dialog(
-                        onDismissRequest = { navigation.hideCertificatePanel() },
+                        onDismissRequest = {
+                            // A dismissed panel must not keep the typed password for a later entry choice.
+                            certificateViewModel.cancelCertificateChoice()
+                            navigation.hideCertificatePanel()
+                        },
                         properties = androidx.compose.ui.window.DialogProperties(
                             usePlatformDefaultWidth = false,
                             securePolicy = androidx.compose.ui.window.SecureFlagPolicy.SecureOn,
