@@ -24,7 +24,7 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -163,6 +163,29 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledPoliciaOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(policia = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.POLICIA)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.POLICIA, reads)
+        assertFalse(output.contains("https://sede.policia.gob.es"))
+        assertFalse(output.contains("/portalCiudadano/_es/solicitudGenerica.xhtml"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const policiaCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_policia.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const policiaCompatibilityEnabled = true;", "const policiaCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
     fun missingDuplicateExtraOrReorderedManifestFailsBeforeReading() {
         val fragments = AfirmaJavascriptShimFragment.entries
         for (invalid in listOf(fragments.dropLast(1), fragments + fragments.first(), fragments.reversed())) {
@@ -220,7 +243,9 @@ internal fun assertPortalExtractions(legacy: String, assembled: String, flags: A
     val actual = restoreJccmExtraction(
         legacy, restoreJccmRegistroExtraction(
             legacy, restoreAirefExtraction(
-                legacy, restoreCdtiExtraction(legacy, assembled, flags.cdti), flags.airef,
+                legacy, restoreCdtiExtraction(
+                    legacy, restorePoliciaExtraction(legacy, assembled, flags.policia), flags.cdti,
+                ), flags.airef,
             ), flags.jccmRegistro,
         ), flags.jccm,
     )
@@ -319,4 +344,28 @@ private fun restoreCdtiExtraction(legacy: String, actual: String, enabled: Boole
         )
         .replace("    const isExactCdtiCall = matchesCdtiSign(args, successCallback, errorCallback);\n", branch)
         .replace("if (isExactCdtiCall === false)", "if (isCdtiOrigin && !isExactCdtiCall)")
+}
+
+private fun restorePoliciaExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val origin = legacy.substring(
+        legacy.indexOf("  const policiaOrigin ="), legacy.indexOf("  const granCanariaOrigin ="),
+    )
+    val constants = legacy.substring(
+        legacy.indexOf("  const policiaProcedurePage ="), legacy.indexOf("  const staBatchOrigin ="),
+    )
+    val start = legacy.indexOf("    const isPoliciaOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isPoliciaOrigin && !isExactPoliciaCall)", start))
+    val module = "\n  matchesPoliciaSign = (args, successCallback, errorCallback) => {\n" +
+        (origin + constants).replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isPoliciaOrigin ? isExactPoliciaCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesPoliciaSign = () => null;\n",
+            origin,
+        )
+        .replace("  const staBatchOrigin =", constants + "  const staBatchOrigin =")
+        .replace("    const isExactPoliciaCall = matchesPoliciaSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactPoliciaCall === false)", "if (isPoliciaOrigin && !isExactPoliciaCall)")
 }

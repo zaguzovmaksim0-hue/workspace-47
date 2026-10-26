@@ -100,6 +100,25 @@ class CertificateViewModelCatalogTest {
         assertTrue("revoke" !in gateway.calls)
     }
 
+    @Test
+    fun catalogErrorsReachSavedEntriesWithoutChangingTheSelection() = runTest(dispatcher) {
+        val cache = RecordingCache()
+        val gateway = CatalogGateway(cache)
+        val viewModel = viewModel(gateway, cache)
+        advanceUntilIdle()
+        val selected = viewModel.state.value
+
+        for (name in listOf("CATALOG_FULL", "ALREADY_SAVED", "STORAGE_FAILURE")) {
+            gateway.saveError = CertificateSelectionErrorCode.valueOf(name)
+            viewModel.addSavedCertificate(uri("refused"))
+            advanceUntilIdle()
+            assertEquals(name, viewModel.savedCertificates.value.error?.name)
+            assertEquals(listOf(active, saved), viewModel.savedCertificates.value.entries)
+            assertEquals(selected, viewModel.state.value)
+        }
+        assertTrue("revoke" !in gateway.calls)
+    }
+
     private fun viewModel(gateway: CertificateGateway, cache: CertificateUnlockCache) = CertificateViewModel(
         gateway = gateway,
         session = CertificateSession(),
@@ -141,6 +160,7 @@ class CertificateViewModelCatalogTest {
     private inner class CatalogGateway(cache: RecordingCache) : CertificateGateway {
         val calls = mutableListOf<String>()
         var entries = listOf(active, saved)
+        var saveError = CertificateSelectionErrorCode.FILE_TOO_LARGE
         var current = active.reference
 
         init {
@@ -159,7 +179,7 @@ class CertificateViewModelCatalogTest {
         override suspend fun savedEntries() = entries
 
         override suspend fun saveInactive(uri: Uri): CertificateSelectionResult =
-            CertificateSelectionResult.Failure(CertificateSelectionErrorCode.FILE_TOO_LARGE)
+            CertificateSelectionResult.Failure(saveError)
 
         override suspend fun removeInactive(entry: StoredCertificateEntry) {
             entries = entries - entry

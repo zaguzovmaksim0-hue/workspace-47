@@ -54,6 +54,12 @@ class PreferencesCertificateReferenceStore(
         val entry = CertificateReferenceCatalogCodec.entry(reference)
         dataStore.edit { preferences ->
             val catalog = readSnapshot(preferences)
+            if (catalog.entries.any { it.reference?.uri == reference.uri }) {
+                throw CertificateCatalogException(CertificateSelectionErrorCode.ALREADY_SAVED)
+            }
+            if (catalog.entries.size >= CertificateReferenceCatalogCodec.MAX_ENTRIES) {
+                throw CertificateCatalogException(CertificateSelectionErrorCode.CATALOG_FULL)
+            }
             persist(preferences, catalog.copy(entries = catalog.entries + entry))
         }
         return entry

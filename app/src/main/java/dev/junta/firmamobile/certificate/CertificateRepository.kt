@@ -16,6 +16,8 @@ enum class CertificateSelectionErrorCode {
     UNSUPPORTED_FILE,
     FILE_TOO_LARGE,
     PERMISSION_DENIED,
+    CATALOG_FULL,
+    ALREADY_SAVED,
     STORAGE_FAILURE,
 }
 
@@ -205,6 +207,9 @@ internal suspend fun CertificateDocumentAccess.grantAndPersist(
     } catch (cancellation: CancellationException) {
         withContext(NonCancellable) { releaseUnlessReferenced(uri, owners) }
         throw cancellation
+    } catch (failure: CertificateCatalogException) {
+        releaseUnlessReferenced(uri, owners)
+        failure.code
     } catch (_: Exception) {
         releaseUnlessReferenced(uri, owners)
         CertificateSelectionErrorCode.STORAGE_FAILURE

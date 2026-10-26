@@ -346,4 +346,6 @@
     <string name="certificate_auth_help">Desblokeoa gordetzeko eta berreskuratzeko gailuaren berrespena behar da. Gordetzean bertan behera uzten baduzu, memoriako saioa soilik gordeko da.</string>
     <string name="certificate_auth_unsupported">Android 8–10 bertsioetan desblokeoa ez da gordetzen aplikazioa berrabiaraztean. Idatzi ziurtagiriaren pasahitza.</string>
     <string name="certificate_restore_saved">Berreskuratu gordetako desblokeoa</string>
+    <string name="error_catalog_full">Ziurtagirien katalogoa beteta dago. Kendu gordetako ziurtagiri bat beste bat gordetzeko.</string>
+    <string name="error_already_saved">Dokumentu hau dagoeneko katalogoan gordeta dago.</string>
 </resources>
