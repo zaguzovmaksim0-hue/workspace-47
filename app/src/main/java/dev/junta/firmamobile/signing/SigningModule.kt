@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.signing
 
+import dev.junta.firmamobile.browser.BatchBridgeSigningRoutes
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.network.HttpsProfileHttpTransport
 import dev.junta.firmamobile.network.ProfileHttpTransport
@@ -56,4 +57,7 @@ internal class SigningModule(
             profileRegistry = profileRegistry,
         )
     }
+
+    /** Fresh per signing host, like the coordinators; [profileRegistry] binds every batch bridge profile. */
+    fun batchBridgeRoutes(profileRegistry: SiteProfileRegistry) = BatchBridgeSigningRoutes(profileRegistry)
 }
