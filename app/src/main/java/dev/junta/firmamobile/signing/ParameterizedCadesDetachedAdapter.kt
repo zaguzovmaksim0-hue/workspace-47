@@ -20,7 +20,15 @@ internal data class CadesDetachedContract(
     // Exact size by default; portal validators may accept shorter bounded challenges.
     val contentValidator: (ByteArray) -> Boolean = { it.size == contentBytes },
     val extraPropertiesMatcher: (String) -> Boolean = { it == extraProperties },
-)
+    // Optional prepare-only policy bound to the first (signing) certificate.
+    val certificatePropertiesMatcher: ((String, X509Certificate) -> Boolean)? = null,
+) {
+    init {
+        require(!revalidatePayloadOnComplete || certificatePropertiesMatcher == null) {
+            "Certificate-bound properties cannot be revalidated without the signing certificate"
+        }
+    }
+}
 
 /** Owns prepare/complete sequencing; the existing codec and state retain CMS and buffer ownership. */
 internal class ParameterizedCadesDetachedAdapter(
@@ -43,6 +51,8 @@ internal class ParameterizedCadesDetachedAdapter(
             val material = request.withPayload { payload ->
                 MiniAppletPayloadCodec.withDecoded(payload) { challenge, extraProperties ->
                     require(matchesPayload(challenge, extraProperties))
+                    val certificateMatcher = contract.certificatePropertiesMatcher
+                    require(certificateMatcher == null || certificateMatcher(extraProperties, certificateChain.first()))
                     CadesDetachedCodec.createPreSign(
                         challenge, challenge.size, certificateChain, clock, provider,
                         signingAlgorithm = contract.algorithm,

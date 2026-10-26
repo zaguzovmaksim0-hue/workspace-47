@@ -154,7 +154,7 @@ class Pkcs12Loader internal constructor(
         } else {
             val protection = KeyStore.PasswordProtection(password)
             try {
-                val entry = pkcs12Operation(null) {
+                val entry = pkcs12Operation(null, authenticatedKeyRecovery = true) {
                     keyStore.getEntry(checkNotNull(alias), protection)
                 } as? KeyStore.PrivateKeyEntry
                 if (entry == null) CertificateLoadResult.Failure(CertificateErrorCode.PRIVATE_KEY_MISSING)
@@ -344,7 +344,11 @@ private class ClearingByteArrayOutputStream : ByteArrayOutputStream() {
 }
 
 /** Provider messages are neither stable diagnostics nor safe display text. */
-internal fun classifyPkcs12Failure(error: Exception, bytes: ByteArray?): CertificateErrorCode {
+internal fun classifyPkcs12Failure(
+    error: Exception,
+    bytes: ByteArray?,
+    authenticatedKeyRecovery: Boolean = false,
+): CertificateErrorCode {
     val causes = Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
     var cause: Throwable? = error
     while (cause != null && causes.add(cause)) cause = cause.cause
@@ -352,6 +356,9 @@ internal fun classifyPkcs12Failure(error: Exception, bytes: ByteArray?): Certifi
         bytes != null && invalidPkcs12Envelope(bytes) -> CertificateErrorCode.INVALID_PKCS12_FILE
         causes.any { it is NoSuchAlgorithmException || it is NoSuchPaddingException } ->
             CertificateErrorCode.UNSUPPORTED_PKCS12_ENCRYPTION
+        // Once the container opens, key recovery may lose the BadPaddingException cause.
+        authenticatedKeyRecovery && causes.any { it is UnrecoverableKeyException } ->
+            CertificateErrorCode.INVALID_PASSWORD
         causes.any { it is EOFException || it is CertificateException } -> CertificateErrorCode.INVALID_PKCS12_FILE
         causes.any { it is UnrecoverableKeyException } && causes.any { it is BadPaddingException } ->
             CertificateErrorCode.INVALID_PASSWORD
@@ -386,12 +393,16 @@ private fun invalidPkcs12Envelope(bytes: ByteArray): Boolean {
 
 private class Pkcs12ReadFailure(val code: CertificateErrorCode) : Exception()
 
-private inline fun <T> pkcs12Operation(bytes: ByteArray?, block: () -> T): T = try {
+private inline fun <T> pkcs12Operation(
+    bytes: ByteArray?,
+    authenticatedKeyRecovery: Boolean = false,
+    block: () -> T,
+): T = try {
     block()
 } catch (error: IOException) {
-    throw Pkcs12ReadFailure(classifyPkcs12Failure(error, bytes))
+    throw Pkcs12ReadFailure(classifyPkcs12Failure(error, bytes, authenticatedKeyRecovery))
 } catch (error: GeneralSecurityException) {
-    throw Pkcs12ReadFailure(classifyPkcs12Failure(error, bytes))
+    throw Pkcs12ReadFailure(classifyPkcs12Failure(error, bytes, authenticatedKeyRecovery))
 }
 
 private const val ASN1_SEQUENCE_TAG = 0x30

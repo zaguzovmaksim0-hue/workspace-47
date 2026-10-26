@@ -71,6 +71,88 @@ class ParameterizedCadesDetachedAdapterTest {
         }
     }
 
+    @Test
+    fun absentCertificateMatcherAcceptsEitherSigningCertificate() = runBlocking {
+        val adapter = ParameterizedCadesDetachedAdapter(contract, clock, BundledBouncyCastle.provider)
+        for (chain in listOf(identity.chain, freshSyntheticIdentity().chain)) {
+            request(null).use { owner ->
+                val result = adapter.prepare(owner, chain)
+                if (result is ProtocolPrepareResult.Success) result.preSign.close()
+                assertTrue(result is ProtocolPrepareResult.Success)
+            }
+        }
+    }
+
+    @Test
+    fun certificateMatcherBindsPropertiesToFirstSigningCertificate() = runBlocking {
+        val bound = contract.copy(certificatePropertiesMatcher = { properties, certificate ->
+            properties.isEmpty() && certificate.encoded.contentEquals(identity.certificate.encoded)
+        })
+        val adapter = ParameterizedCadesDetachedAdapter(bound, clock, BundledBouncyCastle.provider)
+        request(null).use { owner ->
+            (adapter.prepare(owner, identity.chain) as ProtocolPrepareResult.Success).preSign.use { prepared ->
+                sign(prepared).use { signature ->
+                    (adapter.complete(owner, prepared, signature) as ProtocolCompletionResult.Success).signature.close()
+                }
+            }
+            val other = freshSyntheticIdentity()
+            val result = adapter.prepare(owner, listOf(other.certificate, identity.certificate))
+            if (result is ProtocolPrepareResult.Success) result.preSign.close()
+            assertEquals(SigningErrorCode.PROTOCOL_FAILED, (result as? ProtocolPrepareResult.Failure)?.code)
+        }
+    }
+
+    @Test
+    fun certificateMatcherCannotBeCombinedWithCompletionRevalidation() {
+        val failure = runCatching {
+            contract.copy(revalidatePayloadOnComplete = true, certificatePropertiesMatcher = { _, _ -> true })
+        }.exceptionOrNull()
+        assertTrue(failure is IllegalArgumentException)
+        contract.copy(revalidatePayloadOnComplete = true)
+    }
+
+    @Test
+    fun certificateMatcherExceptionsBecomeProtocolFailures() = runBlocking {
+        val adapter = ParameterizedCadesDetachedAdapter(
+            contract.copy(certificatePropertiesMatcher = { _, _ -> error("invalid certificate properties") }),
+            clock, BundledBouncyCastle.provider,
+        )
+        request(null).use { owner ->
+            val result = adapter.prepare(owner, identity.chain)
+            if (result is ProtocolPrepareResult.Success) result.preSign.close()
+            assertEquals(SigningErrorCode.PROTOCOL_FAILED, (result as? ProtocolPrepareResult.Failure)?.code)
+        }
+    }
+
+    @Test
+    fun certificateMatcherRunsOnlyAfterChainAndPayloadGuards() = runBlocking {
+        var calls = 0
+        val bound = contract.copy(certificatePropertiesMatcher = { _, _ -> calls++; true })
+        request(null).use { owner ->
+            for (chain in listOf(emptyList(), List(11) { identity.certificate })) {
+                val adapter = ParameterizedCadesDetachedAdapter(bound, clock, BundledBouncyCastle.provider)
+                assertEquals(
+                    SigningErrorCode.UNSUPPORTED_PROTOCOL,
+                    (adapter.prepare(owner, chain) as ProtocolPrepareResult.Failure).code,
+                )
+            }
+            for (invalid in listOf(
+                bound.copy(contentValidator = { false }),
+                bound.copy(extraPropertiesMatcher = { false }),
+            )) {
+                val adapter = ParameterizedCadesDetachedAdapter(invalid, clock, BundledBouncyCastle.provider)
+                assertEquals(
+                    SigningErrorCode.PROTOCOL_FAILED,
+                    (adapter.prepare(owner, identity.chain) as ProtocolPrepareResult.Failure).code,
+                )
+            }
+            assertEquals(0, calls)
+            val adapter = ParameterizedCadesDetachedAdapter(bound, clock, BundledBouncyCastle.provider)
+            (adapter.prepare(owner, identity.chain) as ProtocolPrepareResult.Success).preSign.close()
+            assertEquals(1, calls)
+        }
+    }
+
     private fun sign(prepared: PreSignResult): LocalSignature =
         (prepared.withBytesToSign {
             JcaLocalSignatureEngine().sign(it, identity, SigningAlgorithm.SHA1_WITH_RSA)
