@@ -24,11 +24,29 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
         .first { it.isDirectory }
+
+    @Test
+    fun disabledBadajozOmitsItsContractStateAndDiagnostics() {
+        val disabled = configuration.copy(flags = configuration.flags.copy(badajoz = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            check(it.name != "BADAJOZ")
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        for (body in listOf(
+            "https://sede.dip-badajoz.es", "badajozSignHookReadyDiagnosticPosted",
+            "badajozDiagnosticWrappedFunctions", "badajozDiagnosticPostedStages",
+            "BADAJOZ_SIGN_HOOK_READY", "BADAJOZ_LATE_REWRAP_STARTED",
+        )) assertFalse(body, output.contains(body))
+        assertTrue(output.contains("const badajozCompatibilityEnabled = false;"))
+        assertTrue(output.contains("window.setInterval(repairCurrentSigningLibraries, 500)"))
+        assertTrue(output.contains("window.clearInterval"))
+        assertFalse(output.contains("__JFM_"))
+    }
 
     @Test
     fun realFragmentsPreserveLegacyCoreAndTupleInOrderAndAreReadOnce() {
@@ -186,6 +204,191 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledUgrOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(ugr = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.UGR)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.UGR, reads)
+        assertFalse(output.contains("https://sede.ugr.es"))
+        assertFalse(output.contains("Universidad de Granada"))
+        assertFalse(output.contains("VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ=="))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const ugrCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_ugr.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const ugrCompatibilityEnabled = true;", "const ugrCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledSevillaAtseOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(sevillaAtse = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.SEVILLA_ATSE)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.SEVILLA_ATSE, reads)
+        assertFalse(output.contains("https://www.sevilla.org"))
+        assertFalse(output.contains("sevillaAtseSetupState"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const sevillaAtseCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_sevilla_atse.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const sevillaAtseCompatibilityEnabled = true;", "const sevillaAtseCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledAccedaOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(acceda = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.ACCEDA)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.ACCEDA, reads)
+        assertFalse(output.contains("https://sede.administracionespublicas.gob.es"))
+        assertFalse(output.contains("const accedaExtraProperties ="))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const accedaCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_acceda.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const accedaCompatibilityEnabled = true;", "const accedaCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledXuntaOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(xuntaGalicia = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.XUNTA)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.XUNTA, reads)
+        assertFalse(output.contains("https://sede.xunta.gal"))
+        assertFalse(output.contains("function isExactXuntaProperties"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const xSel = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_xunta.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const xSel = true;", "const xSel = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledCanariasOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(canarias = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.CANARIAS)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.CANARIAS, reads)
+        assertFalse(output.contains("https://sede.gobiernodecanarias.org"))
+        assertFalse(output.contains("function isExactCanariasChallenge"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const canariasCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_canarias.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const canariasCompatibilityEnabled = true;", "const canariasCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledMinecoOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(mineco = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.MINECO)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.MINECO, reads)
+        assertFalse(output.contains("https://serviciosede.mineco.gob.es"))
+        assertFalse(output.contains("const minecoExtraProperties ="))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const minecoCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_mineco.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const minecoCompatibilityEnabled = true;", "const minecoCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledFuerteventuraOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(fuerteventura = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.FUERTEVENTURA)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.FUERTEVENTURA, reads)
+        assertFalse(output.contains("https://sede.cabildofuer.es"))
+        assertFalse(output.contains("const fuerteventuraExtraProperties ="))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const fuerteventuraCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_fuerteventura.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const fuerteventuraCompatibilityEnabled = true;", "const fuerteventuraCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
+    fun disabledGranCanariaOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(granCanaria = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.GRAN_CANARIA)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.GRAN_CANARIA, reads)
+        assertFalse(output.contains("https://sede.grancanaria.com"))
+        assertFalse(output.contains("const granCanariaExtraProperties ="))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const granCanariaCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_gran_canaria.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const granCanariaCompatibilityEnabled = true;", "const granCanariaCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
     fun missingDuplicateExtraOrReorderedManifestFailsBeforeReading() {
         val fragments = AfirmaJavascriptShimFragment.entries
         for (invalid in listOf(fragments.dropLast(1), fragments + fragments.first(), fragments.reversed())) {
@@ -240,11 +443,20 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
+    val badajozRestored = restoreBadajozExtraction(assembled, flags.badajoz)
+    val ugrRestored = restoreUgrExtraction(legacy, badajozRestored, flags.ugr)
+    val sevillaRestored = restoreSevillaAtseExtraction(legacy, ugrRestored, flags.sevillaAtse)
+    val accedaRestored = restoreAccedaExtraction(legacy, sevillaRestored, flags.acceda)
+    val xuntaRestored = restoreXuntaExtraction(legacy, accedaRestored, flags.xuntaGalicia)
+    val canariasRestored = restoreCanariasExtraction(legacy, xuntaRestored, flags.canarias)
+    val minecoRestored = restoreMinecoExtraction(legacy, canariasRestored, flags.mineco)
+    val fuerteventuraRestored = restoreFuerteventuraExtraction(legacy, minecoRestored, flags.fuerteventura)
+    val granCanariaRestored = restoreGranCanariaExtraction(legacy, fuerteventuraRestored, flags.granCanaria)
     val actual = restoreJccmExtraction(
         legacy, restoreJccmRegistroExtraction(
             legacy, restoreAirefExtraction(
                 legacy, restoreCdtiExtraction(
-                    legacy, restorePoliciaExtraction(legacy, assembled, flags.policia), flags.cdti,
+                    legacy, restorePoliciaExtraction(legacy, granCanariaRestored, flags.policia), flags.cdti,
                 ), flags.airef,
             ), flags.jccmRegistro,
         ), flags.jccm,
@@ -368,4 +580,225 @@ private fun restorePoliciaExtraction(legacy: String, actual: String, enabled: Bo
         .replace("  const staBatchOrigin =", constants + "  const staBatchOrigin =")
         .replace("    const isExactPoliciaCall = matchesPoliciaSign(args, successCallback, errorCallback);\n", branch)
         .replace("if (isExactPoliciaCall === false)", "if (isPoliciaOrigin && !isExactPoliciaCall)")
+}
+
+private fun restoreGranCanariaExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val origin = legacy.substring(legacy.indexOf("  const granCanariaOrigin ="), legacy.indexOf("  const canariasOrigin ="))
+    val constants = legacy.substring(
+        legacy.indexOf("  const granCanariaExtraProperties ="), legacy.indexOf("  const fuerteventuraOrigin ="),
+    )
+    val start = legacy.indexOf("    const isGranCanariaOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isGranCanariaOrigin && !isExactGranCanariaCall)", start))
+    val module = "\n  matchesGranCanariaSign = (args, successCallback, errorCallback) => {\n" +
+        (origin + constants).replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isGranCanariaOrigin ? isExactGranCanariaCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesGranCanariaSign = () => null;\n",
+            origin,
+        )
+        .replace("  const fuerteventuraOrigin =", constants + "  const fuerteventuraOrigin =")
+        .replace("    const isExactGranCanariaCall = matchesGranCanariaSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactGranCanariaCall === false)", "if (isGranCanariaOrigin && !isExactGranCanariaCall)")
+}
+
+private fun restoreFuerteventuraExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(legacy.indexOf("  const fuerteventuraOrigin ="), legacy.indexOf("  const minecoOrigin ="))
+    val start = legacy.indexOf("    const isFuerteventuraOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isFuerteventuraOrigin && !isExactFuerteventuraCall)", start))
+    val module = "\n  matchesFuerteventuraSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isFuerteventuraOrigin ? isExactFuerteventuraCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesFuerteventuraSign = () => null;\n",
+            constants,
+        )
+        .replace("    const isExactFuerteventuraCall = matchesFuerteventuraSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactFuerteventuraCall === false)", "if (isFuerteventuraOrigin && !isExactFuerteventuraCall)")
+}
+
+private fun restoreMinecoExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(legacy.indexOf("  const minecoOrigin ="), legacy.indexOf("  const policiaProcedurePage ="))
+    val start = legacy.indexOf("    const isMinecoOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isMinecoOrigin && !isExactMinecoCall)", start))
+    val module = "\n  matchesMinecoSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isMinecoOrigin ? isExactMinecoCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesMinecoSign = () => null;\n",
+            constants,
+        )
+        .replace("    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactMinecoCall === false)", "if (isMinecoOrigin && !isExactMinecoCall)")
+}
+
+private fun restoreCanariasExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(
+        legacy.indexOf("  const canariasOrigin ="), legacy.indexOf("  const granCanariaExtraProperties ="),
+    )
+    val helpers = legacy.substring(
+        legacy.indexOf("  function isExactCanariasChallenge"), legacy.indexOf("  function isExactXuntaProperties"),
+    )
+    val start = legacy.indexOf("    const isCanariasOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isCanariasOrigin && !isExactCanariasCall)", start))
+    val module = "\n  matchesCanariasSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const").replace("\n    \"", "\n      \"") + "\n" +
+        helpers.split('\n').dropLast(1)
+            .joinToString("") { if (it.isBlank()) "\n" else "  $it\n" } +
+        branch + "    return isCanariasOrigin ? isExactCanariasCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesCanariasSign = () => null;\n",
+            constants,
+        )
+        .replace("    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactCanariasCall === false)", "if (isCanariasOrigin && !isExactCanariasCall)")
+        .replace("  function isExactXuntaProperties", helpers + "  function isExactXuntaProperties")
+}
+
+private fun restoreXuntaExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(legacy.indexOf("  const xuntaOrigin ="), legacy.indexOf("  const maxUriChars ="))
+    val helpers = legacy.substring(
+        legacy.indexOf("  function isExactXuntaProperties"), legacy.indexOf("  function interceptCertificateSelection"),
+    )
+    val selectionStart = legacy.indexOf("xSel && location.href === xuntaPage")
+    val selection = legacy.substring(selectionStart, legacy.indexOf(") {\n      valid = true;", selectionStart))
+    val start = legacy.indexOf("    const isXuntaOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isXuntaOrigin && !isExactXuntaCall)", start))
+    fun indent(source: String): String = source.split('\n').dropLast(1)
+        .joinToString("") { if (it.isBlank()) "\n" else "  $it\n" }
+    val module = "\n  {\n" + indent(constants) + "\n" + indent(helpers) +
+        "    matchesXuntaSelection = a =>\n      " + selection + ";\n\n" +
+        "    matchesXuntaSign = (args, successCallback, errorCallback) => {\n" + indent(branch) +
+        "      return isXuntaOrigin ? isExactXuntaCall : null;\n    };\n  }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n" +
+                "  let matchesXuntaSign = () => null;\n  let matchesXuntaSelection = () => false;\n",
+            constants,
+        )
+        .replace("matchesXuntaSelection(a)", selection)
+        .replace("    const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactXuntaCall === false)", "if (isXuntaOrigin && !isExactXuntaCall)")
+        .replace("  function interceptCertificateSelection", helpers + "  function interceptCertificateSelection")
+}
+
+private fun restoreAccedaExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    val constants = legacy.substring(legacy.indexOf("  const accedaOrigin ="), legacy.indexOf("  const badajozOrigin ="))
+    val start = legacy.indexOf("    const isAccedaOrigin =")
+    val branch = legacy.substring(start, legacy.indexOf("    if (isAccedaOrigin && !isExactAccedaCall)", start))
+    val module = "\n  matchesAccedaSign = (args, successCallback, errorCallback) => {\n" +
+        constants.replace("  const", "    const").replace("\n    \"", "\n      \"") + branch +
+        "    return isAccedaOrigin ? isExactAccedaCall : null;\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace(
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesAccedaSign = () => null;\n",
+            constants,
+        )
+        .replace("    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);\n", branch)
+        .replace("if (isExactAccedaCall === false)", "if (isAccedaOrigin && !isExactAccedaCall)")
+}
+
+private fun restoreSevillaAtseExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    fun section(start: String, end: String): String {
+        val at = legacy.indexOf(start)
+        return legacy.substring(at, legacy.indexOf(end, at + start.length))
+    }
+    fun indent(source: String, spaces: Int = 2): String = source.split('\n').dropLast(1)
+        .joinToString("") { if (it.isBlank()) "\n" else " ".repeat(spaces) + it + "\n" }
+    val constants = section("  const sevillaAtseOrigin =", "  const airefOrigin =")
+    val challenge = section("  function isValidSevillaAtseChallenge", "  function isValidAirefPayload")
+    val page = section("  function isExactSevillaAtsePage", "  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled)")
+    val click = section("  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled)", "  function interceptSevillaAtseSetupCall")
+    val setup = section("  function interceptSevillaAtseSetupCall", "  function interceptUgrSetupCall")
+    val hooks = section("      if (sevillaAtseCompatibilityEnabled)", "      if (includeUgrSetup)")
+    val sign = section("    const isSevillaAtseOrigin =", "    const isAccedaOrigin =")
+    val branch = sign.substringBefore("    if (isSevillaAtseOrigin && !isExactSevillaAtseCall)")
+    val assignedSetup = setup.replace(
+        "  function interceptSevillaAtseSetupCall(call, args) {", "  interceptSevillaAtseSetupCall = (call, args) => {",
+    ).removeSuffix("  }\n\n") + "  };\n\n"
+    val module = "\n  {\n" + indent(constants) + "\n" + indent(challenge) + indent(page) + indent(assignedSetup) +
+        "    installSevillaAtseClickHook = () => {\n" + indent(click, 4) + "    };\n\n" +
+        "    installSevillaAtseMethodHooks = value => {\n" + hooks + "    };\n\n" +
+        "    matchesSevillaAtseSign = (args, successCallback, errorCallback) => {\n" + indent(branch) +
+        "      if (isSevillaAtseOrigin && !isExactSevillaAtseCall) sevillaAtseSetupState = 0;\n" +
+        "      if (isExactSevillaAtseCall) sevillaAtseSetupState = 0;\n" +
+        "      return isSevillaAtseOrigin ? isExactSevillaAtseCall : null;\n    };\n  }\n"
+    val stub = "  // null: not applicable; false: reject; true: exact tuple.\n" +
+        "  let matchesSevillaAtseSign = () => null;\n" +
+        "  let interceptSevillaAtseSetupCall = () => false;\n" +
+        "  let installSevillaAtseClickHook = () => {};\n" +
+        "  let installSevillaAtseMethodHooks = () => {};\n"
+    val dispatch = "    const isExactSevillaAtseCall = matchesSevillaAtseSign(args, successCallback, errorCallback);\n" +
+        "    if (isExactSevillaAtseCall === false) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "").replace(stub, constants).replace(dispatch, sign)
+        .replace("  installSevillaAtseClickHook();\n\n", page + click + setup)
+        .replace("      installSevillaAtseMethodHooks(value);\n", hooks)
+        .replace("  function interceptCertificateSelection", challenge + "  function interceptCertificateSelection")
+}
+
+private fun restoreUgrExtraction(legacy: String, actual: String, enabled: Boolean): String {
+    fun section(start: String, end: String): String {
+        val at = legacy.indexOf(start)
+        return legacy.substring(at, legacy.indexOf(end, at + start.length))
+    }
+    fun indent(source: String): String = source.split('\n').dropLast(1)
+        .joinToString("") { if (it.isBlank()) "\n" else "  $it\n" }
+    val origin = section("  const ugrOrigin =", "  const cantabriaOrigin =")
+    val constants = section("  const ugrLiteral =", "  const jccmOrigin =")
+    val setup = section("  function interceptUgrSetupCall", "  function receiveMelillaBatchResult")
+    val hooks = section("      if (includeUgrSetup)", "    } catch (_) {")
+    val branch = section("    const isExactUgrLiteralCall =", "    const isExactCantabriaCall =")
+    val assignedSetup = setup.replace(
+        "  function interceptUgrSetupCall(call, args) {", "  interceptUgrSetupCall = (call, args) => {",
+    ).removeSuffix("  }\n\n") + "  };\n\n"
+    val module = "\n  {\n" + indent(origin + constants) + "\n" + indent(assignedSetup) +
+        "    installUgrMethodHooks = (value, includeUgrSetup) => {\n" + hooks + "    };\n\n" +
+        "    encodeUgrLiteral = () => ugrLiteralBase64;\n" +
+        "    matchesUgrSign = args => {\n      return " + branch.substringAfter("=\n").trimStart() + "    };\n  }\n"
+    val stub = "  let matchesUgrSign = () => false;\n  let interceptUgrSetupCall = () => false;\n" +
+        "  let installUgrMethodHooks = () => {};\n  let encodeUgrLiteral = () => null;\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "").replace(stub, origin)
+        .replace("  let matchesJccmSign = () => false;\n", constants + "  let matchesJccmSign = () => false;\n")
+        .replace("  function receiveMelillaBatchResult", setup + "  function receiveMelillaBatchResult")
+        .replace("      installUgrMethodHooks(value, includeUgrSetup);\n", hooks)
+        .replace("    const isExactUgrLiteralCall = matchesUgrSign(args);\n", branch)
+        .replace("isExactUgrLiteralCall ? encodeUgrLiteral() :", "isExactUgrLiteralCall ? ugrLiteralBase64 :")
+}
+
+private fun restoreBadajozExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  {\n    let badajozSignHookReadyDiagnosticPosted = false;\n    const badajozDiagnosticWrappedFunctions = new WeakSet();\n    const badajozDiagnosticPostedStages = new Set();\n    const badajozOrigin = \"https://sede.dip-badajoz.es\";\n    const badajozExtraProperties =\n      \"policy=FirmaAGE\\nheadless=true\\nfilters=nonexpired:true;authCert:true\";\n\n    function markBadajozSignHookReady() {\n      try {\n        window.__jfmBadajozSignHookReady = true;\n      } catch (_) {}\n      if (!badajozSignHookReadyDiagnosticPosted) {\n        badajozSignHookReadyDiagnosticPosted = true;\n        postShimDiagnostic(\"BADAJOZ_SIGN_HOOK_READY\");\n      }\n    }\n\n    function postBadajozDiagnosticOnce(stage) {\n      if (badajozDiagnosticPostedStages.has(stage)) {\n        return;\n      }\n      badajozDiagnosticPostedStages.add(stage);\n      postShimDiagnostic(stage);\n    }\n\n    function wrapBadajozDiagnostic(target, name, stage) {\n      if (target == null || (typeof target !== \"object\" && typeof target !== \"function\")) {\n        return;\n      }\n      const current = target[name];\n      if (typeof current !== \"function\" || badajozDiagnosticWrappedFunctions.has(current)) {\n        return;\n      }\n      const wrapped = function() {\n        postBadajozDiagnosticOnce(stage);\n        return Reflect.apply(current, this, arguments);\n      };\n      try {\n        target[name] = wrapped;\n        badajozDiagnosticWrappedFunctions.add(wrapped);\n      } catch (_) {}\n    }\n\n    getBadajozExtraProperties = () => badajozExtraProperties;\n\n    notifyBadajozSignHook = call => {\n      if (call === \"SIGN\" && badajozCompatibilityEnabled &&\n          !badajozSignHookReadyDiagnosticPosted) {\n        markBadajozSignHookReady();\n      }\n    };\n\n    repairBadajozDiagnostics = () => {\n        if (badajozCompatibilityEnabled) {\n          wrapBadajozDiagnostic(window, \"pulsarFirmarIdentificate\", \"BADAJOZ_PULSAR_SIGN_ENTRY\");\n          wrapBadajozDiagnostic(window, \"firmar\", \"BADAJOZ_FIRMAR_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"getBase64FromText\", \"BADAJOZ_GET_BASE64_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"echo\", \"BADAJOZ_ECHO_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"setForceWSMode\", \"BADAJOZ_FORCE_WS_ENTRY\");\n        }\n    };\n\n    installBadajozLateHooks = () => {\n      if (badajozCompatibilityEnabled) {\n        postShimDiagnostic(\"BADAJOZ_LATE_REWRAP_STARTED\");\n        document.addEventListener(\"click\", event => {\n          if (event.target && event.target.id === \"firmar\") postBadajozDiagnosticOnce(\"BADAJOZ_CERT_BUTTON_CLICK\");\n        }, true);\n      }\n    };\n\n    matchesBadajozSign = (args, successCallback, errorCallback) => {\n      const isBadajozOrigin =\n        badajozCompatibilityEnabled && window.location.origin === badajozOrigin;\n      const isExactBadajozCall =\n        isBadajozOrigin && args.length === 6 &&\n        typeof args[0] === \"string\" && args[0].length > 0 &&\n        args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&\n        args[1] === \"SHA256withRSA\" && typeof args[2] === \"string\" && args[2].toLowerCase() === \"cades\" &&\n        equivalentLiteralProperties(args[3], badajozExtraProperties) &&\n        typeof successCallback === \"function\" && typeof errorCallback === \"function\";\n      return isBadajozOrigin ? isExactBadajozCall : null;\n    };\n  }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("extraProperties: isExactBadajozCall ? getBadajozExtraProperties() : args[3]", "extraProperties: isExactBadajozCall ? badajozExtraProperties : args[3]")
+        .replace("if (isExactBadajozCall === false)", "if (isBadajozOrigin && !isExactBadajozCall)")
+        .replace("    const isExactBadajozCall = matchesBadajozSign(args, successCallback, errorCallback);\n", "    const isBadajozOrigin =\n      badajozCompatibilityEnabled && window.location.origin === badajozOrigin;\n    const isExactBadajozCall =\n      isBadajozOrigin && args.length === 6 &&\n      typeof args[0] === \"string\" && args[0].length > 0 &&\n      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&\n      args[1] === \"SHA256withRSA\" && typeof args[2] === \"string\" && args[2].toLowerCase() === \"cades\" &&\n      equivalentLiteralProperties(args[3], badajozExtraProperties) &&\n      typeof successCallback === \"function\" && typeof errorCallback === \"function\";\n")
+        .replace("    if (typeof current === \"function\") notifyBadajozSignHook(call);\n", "    if (typeof current === \"function\" && call === \"SIGN\" && badajozCompatibilityEnabled &&\n        !badajozSignHookReadyDiagnosticPosted) {\n      markBadajozSignHookReady();\n    }\n")
+        .replace("        notifyBadajozSignHook(call);\n", "        if (call === \"SIGN\" && badajozCompatibilityEnabled &&\n            !badajozSignHookReadyDiagnosticPosted) {\n          markBadajozSignHookReady();\n        }\n")
+        .replace("    installBadajozLateHooks();\n", "    if (badajozCompatibilityEnabled) {\n      postShimDiagnostic(\"BADAJOZ_LATE_REWRAP_STARTED\");\n      document.addEventListener(\"click\", event => {\n        if (event.target && event.target.id === \"firmar\") postBadajozDiagnosticOnce(\"BADAJOZ_CERT_BUTTON_CLICK\");\n      }, true);\n    }\n")
+        .replace("        repairBadajozDiagnostics();\n", "        if (badajozCompatibilityEnabled) {\n          wrapBadajozDiagnostic(window, \"pulsarFirmarIdentificate\", \"BADAJOZ_PULSAR_SIGN_ENTRY\");\n          wrapBadajozDiagnostic(window, \"firmar\", \"BADAJOZ_FIRMAR_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"getBase64FromText\", \"BADAJOZ_GET_BASE64_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"echo\", \"BADAJOZ_ECHO_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"setForceWSMode\", \"BADAJOZ_FORCE_WS_ENTRY\");\n        }\n")
+        .replace("  function wrapMiniApplet(", "  function wrapBadajozDiagnostic(target, name, stage) {\n    if (target == null || (typeof target !== \"object\" && typeof target !== \"function\")) {\n      return;\n    }\n    const current = target[name];\n    if (typeof current !== \"function\" || badajozDiagnosticWrappedFunctions.has(current)) {\n      return;\n    }\n    const wrapped = function() {\n      postBadajozDiagnosticOnce(stage);\n      return Reflect.apply(current, this, arguments);\n    };\n    try {\n      target[name] = wrapped;\n      badajozDiagnosticWrappedFunctions.add(wrapped);\n    } catch (_) {}\n  }\n\n  function wrapMiniApplet(")
+        .replace("  const euskadiProfileId =", "  const badajozOrigin = \"https://sede.dip-badajoz.es\";\n  const badajozExtraProperties =\n    \"policy=FirmaAGE\\nheadless=true\\nfilters=nonexpired:true;authCert:true\";\n  const euskadiProfileId =")
+        .replace("  postShimDiagnostic(\"SCRIPT_INSTALLED\");", "  function postBadajozDiagnosticOnce(stage) {\n    if (badajozDiagnosticPostedStages.has(stage)) {\n      return;\n    }\n    badajozDiagnosticPostedStages.add(stage);\n    postShimDiagnostic(stage);\n  }\n\n  postShimDiagnostic(\"SCRIPT_INSTALLED\");")
+        .replace("  function postShimDiagnostic", "  function markBadajozSignHookReady() {\n    try {\n      window.__jfmBadajozSignHookReady = true;\n    } catch (_) {}\n    if (!badajozSignHookReadyDiagnosticPosted) {\n      badajozSignHookReadyDiagnosticPosted = true;\n      postShimDiagnostic(\"BADAJOZ_SIGN_HOOK_READY\");\n    }\n  }\n\n  function postShimDiagnostic")
+        .replace("  // null: not applicable; false: reject; true: exact tuple.\n  let matchesBadajozSign = () => null;\n  let getBadajozExtraProperties = () => null;\n  let notifyBadajozSignHook = () => {};\n  let repairBadajozDiagnostics = () => {};\n  let installBadajozLateHooks = () => {};\n", "  let badajozSignHookReadyDiagnosticPosted = false;\n  const badajozDiagnosticWrappedFunctions = new WeakSet();\n  const badajozDiagnosticPostedStages = new Set();\n")
 }

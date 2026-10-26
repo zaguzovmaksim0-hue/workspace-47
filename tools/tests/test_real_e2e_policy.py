@@ -738,7 +738,8 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('document.visibilityState === "hidden"', source)
         self.assertIn('window.addEventListener("pagehide", () => { documentActive = false; stopHookGuard(); })', source)
         self.assertIn('window.addEventListener("pageshow", () => { documentActive = true; startHookGuard(); })', source)
-        self.assertNotIn('certificate', source[source.index('BADAJOZ_LATE_REWRAP_STARTED'):])
+        badajoz = self.read(ROOT / "app/src/main/res/raw/afirma_shim_badajoz.js")
+        self.assertNotIn('certificate', badajoz[badajoz.index('BADAJOZ_LATE_REWRAP_STARTED'):])
 
     def test_badajoz_recipe_waits_in_webview_for_the_ready_sign_hook(self) -> None:
         source = self.read(INSTRUMENTATION)

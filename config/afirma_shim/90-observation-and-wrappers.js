@@ -190,10 +190,7 @@
     if (descriptor && descriptor.configurable === false) {
       if (descriptor.writable === true && typeof target[name] === "function") {
         target[name] = wrapMiniAppletMethod(target[name], call);
-        if (call === "SIGN" && badajozCompatibilityEnabled &&
-            !badajozSignHookReadyDiagnosticPosted) {
-          markBadajozSignHookReady();
-        }
+        notifyBadajozSignHook(call);
       }
       return;
     }
@@ -209,28 +206,7 @@
       }
     });
     installedMethodGetters.add(Object.getOwnPropertyDescriptor(target, name).get);
-    if (typeof current === "function" && call === "SIGN" && badajozCompatibilityEnabled &&
-        !badajozSignHookReadyDiagnosticPosted) {
-      markBadajozSignHookReady();
-    }
-  }
-
-  function wrapBadajozDiagnostic(target, name, stage) {
-    if (target == null || (typeof target !== "object" && typeof target !== "function")) {
-      return;
-    }
-    const current = target[name];
-    if (typeof current !== "function" || badajozDiagnosticWrappedFunctions.has(current)) {
-      return;
-    }
-    const wrapped = function() {
-      postBadajozDiagnosticOnce(stage);
-      return Reflect.apply(current, this, arguments);
-    };
-    try {
-      target[name] = wrapped;
-      badajozDiagnosticWrappedFunctions.add(wrapped);
-    } catch (_) {}
+    if (typeof current === "function") notifyBadajozSignHook(call);
   }
 
   function wrapMiniApplet(
@@ -265,16 +241,8 @@
         installMethodHook(value, "setServlets", "CAIB_SET_SERVLETS");
         installMethodHook(value, "signBatch", "CAIB_BATCH_SIGN");
       }
-      if (sevillaAtseCompatibilityEnabled) {
-        installMethodHook(value, "setForceWSMode", "SEVILLA_SET_FORCE_WS_MODE");
-        installMethodHook(value, "setServlets", "SEVILLA_SET_SERVLETS");
-        installMethodHook(value, "cargarAppAfirma", "SEVILLA_CARGAR_APP_AFIRMA");
-      }
-      if (includeUgrSetup) {
-        installMethodHook(value, "setForceWSMode", "UGR_SET_FORCE_WS_MODE");
-        installMethodHook(value, "cargarAppAfirma", "UGR_CARGAR_APP_AFIRMA");
-        installMethodHook(value, "setServlets", "UGR_SET_SERVLETS");
-      }
+      installSevillaAtseMethodHooks(value);
+      installUgrMethodHooks(value, includeUgrSetup);
     } catch (_) {
       // A hostile/non-configurable object remains untouched and signing stays fail-closed.
     }

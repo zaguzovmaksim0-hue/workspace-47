@@ -35,6 +35,9 @@
   const euskadiClientAuthPostEnabled = __JFM_EUSKADI_CLIENT_AUTH_POST_ENABLED__;
   const accedaCompatibilityEnabled = __JFM_ACCEDA_COMPATIBILITY_ENABLED__;
   const badajozCompatibilityEnabled = __JFM_BADAJOZ_COMPATIBILITY_ENABLED__;
-  let badajozSignHookReadyDiagnosticPosted = false;
-  const badajozDiagnosticWrappedFunctions = new WeakSet();
-  const badajozDiagnosticPostedStages = new Set();
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesBadajozSign = () => null;
+  let getBadajozExtraProperties = () => null;
+  let notifyBadajozSignHook = () => {};
+  let repairBadajozDiagnostics = () => {};
+  let installBadajozLateHooks = () => {};

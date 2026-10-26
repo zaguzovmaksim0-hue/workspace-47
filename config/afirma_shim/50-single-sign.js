@@ -1,62 +1,4 @@
 
-  function isValidSevillaAtseChallenge(value) {
-    if (typeof value !== "string") {
-      return false;
-    }
-    try {
-      const decoded = atob(value);
-      return decoded.length === 40 && sevillaAtseChallengePattern.test(decoded);
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function isExactCanariasChallenge(value) {
-    if (typeof value !== "string" || !base64Pattern.test(value)) {
-      return false;
-    }
-    try {
-      const decoded = globalThis.atob(value);
-      return canariasChallengePattern.test(decoded) && globalThis.btoa(decoded) === value;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  function isExactXuntaProperties(value) {
-    if (typeof value !== "string" || value.length === 0 || value.length > maxExtraPropertiesChars) {
-      return false;
-    }
-    const entries = new Map();
-    for (const rawLine of value.split("\n")) {
-      const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
-      const separator = line.indexOf("=");
-      if (separator <= 0) return false;
-      const key = line.slice(0, separator);
-      const propertyValue = line.slice(separator + 1);
-      if (!/^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(key) || propertyValue.length > 8192 ||
-          entries.has(key) || Array.from(propertyValue).some(ch => ch.charCodeAt(0) < 0x20 || ch.charCodeAt(0) === 0x7f)) {
-        return false;
-      }
-      entries.set(key, propertyValue);
-    }
-    for (const [key, expected] of Object.entries(xuntaFixedProperties)) {
-      if (entries.get(key) !== expected) return false;
-    }
-    if (!entries.has("filters") || !entries.has("locale") || entries.get("locale") === "") return false;
-    const filters = entries.get("filters");
-    if (filters !== "nonexpired" &&
-        !(filters.startsWith("nonexpired;encodedcert:") &&
-          base64Pattern.test(filters.slice("nonexpired;encodedcert:".length)))) {
-      return false;
-    }
-    for (const key of entries.keys()) {
-      if (!Object.prototype.hasOwnProperty.call(xuntaFixedProperties, key) &&
-          !xuntaAllowedDynamicProperties.has(key)) return false;
-    }
-    return true;
-  }
-
   function interceptCertificateSelection(a) {
     if (!iSel && !vSel && !xSel) return false;
     let valid = false;
@@ -66,8 +8,7 @@
     } else if (vSel && location.href === vPage && a.length === 3 && a[0] === vProps &&
         typeof a[1] === "function" && typeof a[2] === "function") {
       valid = true;
-    } else if (xSel && location.href === xuntaPage && a.length === 3 && a[0] === xuntaSelectProps &&
-        typeof a[1] === "function" && typeof a[2] === "function") {
+    } else if (matchesXuntaSelection(a)) {
       valid = true;
     }
     if (!valid) {
@@ -120,37 +61,13 @@
     postShimDiagnostic("SIGN_INTERCEPT_ENTRY");
     const successCallback = args[4];
     const errorCallback = args[5];
-    const isSevillaAtseOrigin =
-      sevillaAtseCompatibilityEnabled && window.location.origin === sevillaAtseOrigin;
-    const isExactSevillaAtseCall =
-      isSevillaAtseOrigin && isExactSevillaAtsePage() && sevillaAtseSetupState === 3 &&
-      args.length === 6 &&
-      isValidSevillaAtseChallenge(args[0]) &&
-      args[1] === "SHA1withRSA" &&
-      args[2] === "XAdES" &&
-      args[3] == null &&
-      typeof successCallback === "function" &&
-      typeof errorCallback === "function";
-    if (isSevillaAtseOrigin && !isExactSevillaAtseCall) {
-      sevillaAtseSetupState = 0;
+    const isExactSevillaAtseCall = matchesSevillaAtseSign(args, successCallback, errorCallback);
+    if (isExactSevillaAtseCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    if (isExactSevillaAtseCall) sevillaAtseSetupState = 0;
-    const isAccedaOrigin =
-      accedaCompatibilityEnabled && window.location.origin === accedaOrigin;
-    const isExactAccedaCall =
-      isAccedaOrigin &&
-      args.length === 6 &&
-      typeof args[0] === "string" &&
-      base64Pattern.test(args[0]) &&
-      args[1] === "SHA1withRSA" &&
-      args[2] === "PAdES" &&
-      typeof args[3] === "string" &&
-      args[3].trim() === accedaExtraProperties &&
-      typeof successCallback === "function" &&
-      typeof errorCallback === "function";
-    if (isAccedaOrigin && !isExactAccedaCall) {
+    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);
+    if (isExactAccedaCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -159,84 +76,28 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isCanariasOrigin =
-      canariasCompatibilityEnabled && window.location.origin === canariasOrigin;
-    const isCanariasPage =
-      isCanariasOrigin && window.location.href === canariasPage &&
-      window.location.search === "" && window.location.hash === "";
-    const isExactCanariasCall =
-      isCanariasPage && args.length === 6 && isExactCanariasChallenge(args[0]) &&
-      args[1] === "SHA1withRSA" && args[2] === "CAdES" &&
-      args[3] === canariasExtraProperties &&
-      typeof successCallback === "function" && typeof errorCallback === "function";
-    if (isCanariasOrigin && !isExactCanariasCall) {
+    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);
+    if (isExactCanariasCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isGranCanariaOrigin =
-      granCanariaCompatibilityEnabled && window.location.origin === granCanariaOrigin;
-    const isExactGranCanariaCall =
-      isGranCanariaOrigin &&
-      args.length === 6 &&
-      typeof args[0] === "string" &&
-      args[0].length > 0 &&
-      args[0].length <= maxDirectDataChars &&
-      base64Pattern.test(args[0]) &&
-      args[1] === "SHA512withRSA" &&
-      args[2] === "PAdES" &&
-      args[3] === granCanariaExtraProperties &&
-      typeof successCallback === "function" &&
-      typeof errorCallback === "function";
-    if (isGranCanariaOrigin && !isExactGranCanariaCall) {
+    const isExactGranCanariaCall = matchesGranCanariaSign(args, successCallback, errorCallback);
+    if (isExactGranCanariaCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isFuerteventuraOrigin =
-      fuerteventuraCompatibilityEnabled && window.location.origin === fuerteventuraOrigin;
-    const isFuerteventuraSigningPage =
-      isFuerteventuraOrigin && window.location.href === fuerteventuraSigningPage &&
-      window.location.hash === "";
-    const isExactFuerteventuraCall =
-      isFuerteventuraSigningPage &&
-      args.length === 6 &&
-      typeof args[0] === "string" &&
-      args[0].length > 0 &&
-      args[0].length <= maxDirectDataChars &&
-      base64Pattern.test(args[0]) &&
-      args[1] === "SHA256withRSA" &&
-      args[2] === "PAdES" &&
-      args[3] === fuerteventuraExtraProperties &&
-      typeof successCallback === "function" &&
-      typeof errorCallback === "function";
-    if (isFuerteventuraOrigin && !isExactFuerteventuraCall) {
+    const isExactFuerteventuraCall = matchesFuerteventuraSign(args, successCallback, errorCallback);
+    if (isExactFuerteventuraCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isMinecoOrigin =
-      minecoCompatibilityEnabled && window.location.origin === minecoOrigin;
-    const isMinecoSigningPage =
-      isMinecoOrigin && window.location.href === minecoSigningPage &&
-      window.location.search === "" && window.location.hash === "";
-    const isExactMinecoCall =
-      isMinecoSigningPage && args.length === 6 &&
-      typeof args[0] === "string" && args[0].length > 0 &&
-      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&
-      args[1] === "SHA512withRSA" && args[2] === "PAdES" &&
-      args[3] === minecoExtraProperties &&
-      typeof successCallback === "function" && typeof errorCallback === "function";
-    if (isMinecoOrigin && !isExactMinecoCall) {
+    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);
+    if (isExactMinecoCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isXuntaOrigin = xSel && window.location.origin === xuntaOrigin;
-    const isXuntaPage = isXuntaOrigin && window.location.href === xuntaPage &&
-      window.location.search === "" && window.location.hash === "";
-    const isExactXuntaCall =
-      isXuntaPage && args.length === 6 && args[0] === "doc" &&
-      args[1] === "SHA1withRSA" && args[2] === "PAdEStri" &&
-      isExactXuntaProperties(args[3]) &&
-      typeof successCallback === "function" && typeof errorCallback === "function";
-    if (isXuntaOrigin && !isExactXuntaCall) {
+    const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);
+    if (isExactXuntaCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -255,29 +116,15 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isBadajozOrigin =
-      badajozCompatibilityEnabled && window.location.origin === badajozOrigin;
-    const isExactBadajozCall =
-      isBadajozOrigin && args.length === 6 &&
-      typeof args[0] === "string" && args[0].length > 0 &&
-      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&
-      args[1] === "SHA256withRSA" && typeof args[2] === "string" && args[2].toLowerCase() === "cades" &&
-      equivalentLiteralProperties(args[3], badajozExtraProperties) &&
-      typeof successCallback === "function" && typeof errorCallback === "function";
-    if (isBadajozOrigin && !isExactBadajozCall) {
+    const isExactBadajozCall = matchesBadajozSign(args, successCallback, errorCallback);
+    if (isExactBadajozCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isExactUgrLiteralCall =
-      ugrCompatibilityEnabled &&
-      window.location.origin === ugrOrigin &&
-      args[0] === ugrLiteral &&
-      args[1] === "SHA1withRSA" &&
-      args[2] === "CAdES" &&
-      args[3] === "";
+    const isExactUgrLiteralCall = matchesUgrSign(args);
     const isExactCantabriaCall = matchesCantabriaSign(args);
     const isExactJccmCall = matchesJccmSign(args);
-    const dataB64 = isExactUgrLiteralCall ? ugrLiteralBase64 :
+    const dataB64 = isExactUgrLiteralCall ? encodeUgrLiteral() :
       isExactCantabriaCall && typeof globalThis.btoa === "function" ?
         globalThis.btoa(args[0]) :
       isExactXuntaCall && typeof globalThis.btoa === "function" ?
@@ -361,7 +208,7 @@
         dataB64,
         algorithm: args[1],
         format: nativeFormat,
-        extraProperties: isExactBadajozCall ? badajozExtraProperties : args[3]
+        extraProperties: isExactBadajozCall ? getBadajozExtraProperties() : args[3]
       }));
       postShimDiagnostic("SIGN_MESSAGE_POSTED");
     } catch (_) {

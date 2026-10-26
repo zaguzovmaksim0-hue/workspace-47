@@ -31,6 +31,182 @@ def cdti_extraction(legacy):
     return constants, branch, module
 
 
+def gran_canaria_extraction(legacy):
+    origin = legacy[legacy.index('  const granCanariaOrigin ='):legacy.index('  const canariasOrigin =')]
+    constants = legacy[legacy.index("  const granCanariaExtraProperties ="):legacy.index('  const fuerteventuraOrigin =')]
+    start = legacy.index('    const isGranCanariaOrigin =')
+    branch = legacy[start:legacy.index('    if (isGranCanariaOrigin && !isExactGranCanariaCall)', start)]
+    module = ('\n  matchesGranCanariaSign = (args, successCallback, errorCallback) => {\n' +
+              (origin + constants).replace("  const", "    const").replace('\n    "', '\n      "') + branch +
+              '    return isGranCanariaOrigin ? isExactGranCanariaCall : null;\n  };\n')
+    return origin, constants, branch, module
+
+
+def fuerteventura_extraction(legacy):
+    origin = ""
+    constants = legacy[legacy.index('  const fuerteventuraOrigin ='):legacy.index('  const minecoOrigin =')]
+    start = legacy.index('    const isFuerteventuraOrigin =')
+    branch = legacy[start:legacy.index('    if (isFuerteventuraOrigin && !isExactFuerteventuraCall)', start)]
+    module = ('\n  matchesFuerteventuraSign = (args, successCallback, errorCallback) => {\n' +
+              (origin + constants).replace("  const", "    const").replace('\n    "', '\n      "') + branch +
+              '    return isFuerteventuraOrigin ? isExactFuerteventuraCall : null;\n  };\n')
+    return origin, constants, branch, module
+
+
+def mineco_extraction(legacy):
+    origin = ""
+    constants = legacy[legacy.index('  const minecoOrigin ='):legacy.index('  const policiaProcedurePage =')]
+    start = legacy.index('    const isMinecoOrigin =')
+    branch = legacy[start:legacy.index('    if (isMinecoOrigin && !isExactMinecoCall)', start)]
+    module = ('\n  matchesMinecoSign = (args, successCallback, errorCallback) => {\n' +
+              (origin + constants).replace("  const", "    const").replace('\n    "', '\n      "') + branch +
+              '    return isMinecoOrigin ? isExactMinecoCall : null;\n  };\n')
+    return origin, constants, branch, module
+
+
+def canarias_extraction(legacy):
+    constants = legacy[legacy.index("  const canariasOrigin ="):legacy.index("  const granCanariaExtraProperties =")]
+    helpers = legacy[legacy.index("  function isExactCanariasChallenge"):legacy.index("  function isExactXuntaProperties")]
+    start = legacy.index("    const isCanariasOrigin =")
+    branch = legacy[start:legacy.index("    if (isCanariasOrigin && !isExactCanariasCall)", start)]
+    module = ("\n  matchesCanariasSign = (args, successCallback, errorCallback) => {\n" +
+              constants.replace("  const", "    const").replace('\n    "', '\n      "') + "\n" +
+              "".join("  " + line if line.strip() else line for line in helpers.splitlines(keepends=True)) +
+              branch + "    return isCanariasOrigin ? isExactCanariasCall : null;\n  };\n")
+    return constants, helpers, branch, module
+
+
+def xunta_extraction(legacy):
+    constants = legacy[legacy.index("  const xuntaOrigin ="):legacy.index("  const maxUriChars =")]
+    helpers = legacy[legacy.index("  function isExactXuntaProperties"):legacy.index("  function interceptCertificateSelection")]
+    start = legacy.index("xSel && location.href === xuntaPage")
+    selection = legacy[start:legacy.index(") {\n      valid = true;", start)]
+    start = legacy.index("    const isXuntaOrigin =")
+    branch = legacy[start:legacy.index("    if (isXuntaOrigin && !isExactXuntaCall)", start)]
+    indent = lambda source: "".join("  " + line if line.strip() else line for line in source.splitlines(keepends=True))
+    module = ("\n  {\n" + indent(constants) + "\n" + indent(helpers) +
+              "    matchesXuntaSelection = a =>\n      " + selection + ";\n\n" +
+              "    matchesXuntaSign = (args, successCallback, errorCallback) => {\n" + indent(branch) +
+              "      return isXuntaOrigin ? isExactXuntaCall : null;\n    };\n  }\n")
+    return constants, helpers, selection, branch, module
+
+
+def acceda_extraction(legacy):
+    origin = ""
+    constants = legacy[legacy.index('  const accedaOrigin ='):legacy.index('  const badajozOrigin =')]
+    start = legacy.index('    const isAccedaOrigin =')
+    branch = legacy[start:legacy.index('    if (isAccedaOrigin && !isExactAccedaCall)', start)]
+    module = ('\n  matchesAccedaSign = (args, successCallback, errorCallback) => {\n' +
+              (origin + constants).replace("  const", "    const").replace('\n    "', '\n      "') + branch +
+              '    return isAccedaOrigin ? isExactAccedaCall : null;\n  };\n')
+    return origin, constants, branch, module
+
+
+def sevilla_extraction(legacy):
+    def section(start, end):
+        at = legacy.index(start)
+        return legacy[at:legacy.index(end, at + len(start))]
+    indent = lambda source, n=2: "".join(" " * n + line if line.strip() else line for line in source.splitlines(keepends=True))
+    constants = section("  const sevillaAtseOrigin =", "  const airefOrigin =")
+    challenge = section("  function isValidSevillaAtseChallenge", "  function isValidAirefPayload")
+    page = section("  function isExactSevillaAtsePage", "  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled)")
+    click = section("  if (functionalSigningEnabled && sevillaAtseCompatibilityEnabled)", "  function interceptSevillaAtseSetupCall")
+    setup = section("  function interceptSevillaAtseSetupCall", "  function interceptUgrSetupCall")
+    hooks = section("      if (sevillaAtseCompatibilityEnabled)", "      if (includeUgrSetup)")
+    sign = section("    const isSevillaAtseOrigin =", "    const isAccedaOrigin =")
+    branch = sign[:sign.index("    if (isSevillaAtseOrigin && !isExactSevillaAtseCall)")]
+    assert setup.endswith("  }\n\n")
+    assigned_setup = setup.replace("  function interceptSevillaAtseSetupCall(call, args) {", "  interceptSevillaAtseSetupCall = (call, args) => {", 1)[:-5] + "  };\n\n"
+    module = ("\n  {\n" + indent(constants) + "\n" + indent(challenge) + indent(page) + indent(assigned_setup) +
+        "    installSevillaAtseClickHook = () => {\n" + indent(click, 4) + "    };\n\n" +
+        "    installSevillaAtseMethodHooks = value => {\n" + hooks + "    };\n\n" +
+        "    matchesSevillaAtseSign = (args, successCallback, errorCallback) => {\n" + indent(branch) +
+        "      if (isSevillaAtseOrigin && !isExactSevillaAtseCall) sevillaAtseSetupState = 0;\n" +
+        "      if (isExactSevillaAtseCall) sevillaAtseSetupState = 0;\n" +
+        "      return isSevillaAtseOrigin ? isExactSevillaAtseCall : null;\n    };\n  }\n")
+    stub = ("  // null: not applicable; false: reject; true: exact tuple.\n" +
+        "  let matchesSevillaAtseSign = () => null;\n" +
+        "  let interceptSevillaAtseSetupCall = () => false;\n" +
+        "  let installSevillaAtseClickHook = () => {};\n" +
+        "  let installSevillaAtseMethodHooks = () => {};\n")
+    dispatch = ("    const isExactSevillaAtseCall = matchesSevillaAtseSign(args, successCallback, errorCallback);\n" +
+        "    if (isExactSevillaAtseCall === false) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n")
+    return dict(constants=constants, challenge=challenge, group=page + click + setup, hooks=hooks,
+                sign=sign, module=module, stub=stub, dispatch=dispatch)
+
+
+def ugr_extraction(legacy):
+    def section(start, end):
+        at = legacy.index(start)
+        return legacy[at:legacy.index(end, at + len(start))]
+    indent = lambda source: "".join("  " + line if line.strip() else line for line in source.splitlines(keepends=True))
+    origin = section("  const ugrOrigin =", "  const cantabriaOrigin =")
+    constants = section("  const ugrLiteral =", "  const jccmOrigin =")
+    setup = section("  function interceptUgrSetupCall", "  function receiveMelillaBatchResult")
+    hooks = section("      if (includeUgrSetup)", "    } catch (_) {")
+    branch = section("    const isExactUgrLiteralCall =", "    const isExactCantabriaCall =")
+    assert setup.endswith("  }\n\n")
+    assigned_setup = setup.replace("  function interceptUgrSetupCall(call, args) {", "  interceptUgrSetupCall = (call, args) => {", 1)[:-5] + "  };\n\n"
+    expression = branch.split("=\n", 1)[1].lstrip()
+    module = ("\n  {\n" + indent(origin + constants) + "\n" + indent(assigned_setup) +
+        "    installUgrMethodHooks = (value, includeUgrSetup) => {\n" + hooks + "    };\n\n" +
+        "    encodeUgrLiteral = () => ugrLiteralBase64;\n" +
+        "    matchesUgrSign = args => {\n      return " + expression + "    };\n  }\n")
+    stub = ("  let matchesUgrSign = () => false;\n  let interceptUgrSetupCall = () => false;\n" +
+        "  let installUgrMethodHooks = () => {};\n  let encodeUgrLiteral = () => null;\n")
+    return dict(origin=origin, constants=constants, setup=setup, hooks=hooks, branch=branch,
+                module=module, stub=stub)
+
+
+def badajoz_extraction(legacy):
+    def section(start, end):
+        at = legacy.index("\n" + start) + 1
+        return legacy[at:legacy.index("\n" + end, at) + 1]
+    state = section("  let badajozSignHookReadyDiagnosticPosted", "  function markBadajozSignHookReady")
+    state = state.removesuffix("\n")
+    mark = section("  function markBadajozSignHookReady", "  function postShimDiagnostic")
+    once = section("  function postBadajozDiagnosticOnce", '  postShimDiagnostic("SCRIPT_INSTALLED");')
+    constants = section("  const badajozOrigin =", "  const euskadiProfileId =")
+    wrap = section("  function wrapBadajozDiagnostic", "  function wrapMiniApplet(")
+    repair = section("        if (badajozCompatibilityEnabled)", "      } catch (_) {")
+    late = section("    if (badajozCompatibilityEnabled)", "    startHookGuard();")
+    branch = section("    const isBadajozOrigin =", "    if (isBadajozOrigin && !isExactBadajozCall)")
+    first = '        if (call === "SIGN" && badajozCompatibilityEnabled &&\n            !badajozSignHookReadyDiagnosticPosted) {\n          markBadajozSignHookReady();\n        }\n'
+    second = '    if (typeof current === "function" && call === "SIGN" && badajozCompatibilityEnabled &&\n        !badajozSignHookReadyDiagnosticPosted) {\n      markBadajozSignHookReady();\n    }\n'
+    stub = ('  // null: not applicable; false: reject; true: exact tuple.\n'
+            '  let matchesBadajozSign = () => null;\n'
+            '  let getBadajozExtraProperties = () => null;\n'
+            '  let notifyBadajozSignHook = () => {};\n'
+            '  let repairBadajozDiagnostics = () => {};\n'
+            '  let installBadajozLateHooks = () => {};\n')
+    indent = lambda s: ''.join('  '+line if line.strip() else line for line in s.splitlines(keepends=True))
+    module = ('\n  {\n' + indent(state + constants + '\n' + mark + once + wrap) +
+              '    getBadajozExtraProperties = () => badajozExtraProperties;\n\n' +
+              '    notifyBadajozSignHook = call => {\n' +
+              '      if (call === "SIGN" && badajozCompatibilityEnabled &&\n' +
+              '          !badajozSignHookReadyDiagnosticPosted) {\n' +
+              '        markBadajozSignHookReady();\n      }\n    };\n\n' +
+              '    repairBadajozDiagnostics = () => {\n' + repair + '    };\n\n' +
+              '    installBadajozLateHooks = () => {\n' + indent(late) + '    };\n\n' +
+              '    matchesBadajozSign = (args, successCallback, errorCallback) => {\n' + indent(branch) +
+              '      return isBadajozOrigin ? isExactBadajozCall : null;\n    };\n  }\n')
+    edits = [
+        (state, stub),
+        (mark + '  function postShimDiagnostic', '  function postShimDiagnostic'),
+        (once + '  postShimDiagnostic("SCRIPT_INSTALLED");', '  postShimDiagnostic("SCRIPT_INSTALLED");'),
+        (constants + '  const euskadiProfileId =', '  const euskadiProfileId ='),
+        (wrap + '  function wrapMiniApplet(', '  function wrapMiniApplet('),
+        (repair, '        repairBadajozDiagnostics();\n'),
+        (late, '    installBadajozLateHooks();\n'),
+        (first, '        notifyBadajozSignHook(call);\n'),
+        (second, '    if (typeof current === "function") notifyBadajozSignHook(call);\n'),
+        (branch, '    const isExactBadajozCall = matchesBadajozSign(args, successCallback, errorCallback);\n'),
+        ('if (isBadajozOrigin && !isExactBadajozCall)', 'if (isExactBadajozCall === false)'),
+        ('extraProperties: isExactBadajozCall ? badajozExtraProperties : args[3]', 'extraProperties: isExactBadajozCall ? getBadajozExtraProperties() : args[3]'),
+    ]
+    return module, edits
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -41,7 +217,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(18)]
+        self.names = [f"{i:02d}-section.js" for i in range(27)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -99,6 +275,47 @@ class AfirmaShimGenerationTest(unittest.TestCase):
             constants, "").replace(branch,
             "    const isExactPoliciaCall = matchesPoliciaSign(args, successCallback, errorCallback);\n").replace(
             "if (isPoliciaOrigin && !isExactPoliciaCall)", "if (isExactPoliciaCall === false)")
+        origin, constants, branch, _ = gran_canaria_extraction(legacy)
+        expected_core = expected_core.replace(origin, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesGranCanariaSign = () => null;\n').replace(constants, "").replace(
+            branch, '    const isExactGranCanariaCall = matchesGranCanariaSign(args, successCallback, errorCallback);\n').replace(
+            'if (isGranCanariaOrigin && !isExactGranCanariaCall)', 'if (isExactGranCanariaCall === false)')
+        origin, constants, branch, _ = fuerteventura_extraction(legacy)
+        expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesFuerteventuraSign = () => null;\n').replace(
+            branch, '    const isExactFuerteventuraCall = matchesFuerteventuraSign(args, successCallback, errorCallback);\n').replace(
+            'if (isFuerteventuraOrigin && !isExactFuerteventuraCall)', 'if (isExactFuerteventuraCall === false)')
+        origin, constants, branch, _ = mineco_extraction(legacy)
+        expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesMinecoSign = () => null;\n').replace(
+            branch, '    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);\n').replace(
+            'if (isMinecoOrigin && !isExactMinecoCall)', 'if (isExactMinecoCall === false)')
+        constants, helpers, branch, _ = canarias_extraction(legacy)
+        expected_core = expected_core.replace(constants,
+            "  // null: not applicable; false: reject; true: exact tuple.\n  let matchesCanariasSign = () => null;\n").replace(
+            helpers, "").replace(branch,
+            "    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);\n").replace(
+            "if (isCanariasOrigin && !isExactCanariasCall)", "if (isExactCanariasCall === false)")
+        constants, helpers, selection, branch, _ = xunta_extraction(legacy)
+        expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesXuntaSign = () => null;\n  let matchesXuntaSelection = () => false;\n').replace(helpers, "").replace(
+            selection, "matchesXuntaSelection(a)").replace(branch, '    const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);\n').replace(
+            "if (isXuntaOrigin && !isExactXuntaCall)", "if (isExactXuntaCall === false)")
+        origin, constants, branch, _ = acceda_extraction(legacy)
+        expected_core = expected_core.replace(constants, '  // null: not applicable; false: reject; true: exact tuple.\n  let matchesAccedaSign = () => null;\n').replace(
+            branch, '    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);\n').replace(
+            'if (isAccedaOrigin && !isExactAccedaCall)', 'if (isExactAccedaCall === false)')
+        sevilla = sevilla_extraction(legacy)
+        expected_core = expected_core.replace(sevilla["constants"], sevilla["stub"]).replace(
+            sevilla["challenge"], "").replace(sevilla["sign"], sevilla["dispatch"]).replace(
+            sevilla["group"], "  installSevillaAtseClickHook();\n\n").replace(
+            sevilla["hooks"], "      installSevillaAtseMethodHooks(value);\n")
+        ugr = ugr_extraction(legacy)
+        expected_core = expected_core.replace(ugr["origin"], ugr["stub"]).replace(
+            ugr["constants"], "").replace(ugr["setup"], "").replace(
+            ugr["hooks"], "      installUgrMethodHooks(value, includeUgrSetup);\n").replace(
+            ugr["branch"], "    const isExactUgrLiteralCall = matchesUgrSign(args);\n").replace(
+            "isExactUgrLiteralCall ? ugrLiteralBase64 :", "isExactUgrLiteralCall ? encodeUgrLiteral() :")
+        _, edits = badajoz_extraction(legacy)
+        for old, new in edits:
+            self.assertEqual(1, expected_core.count(old))
+            expected_core = expected_core.replace(old, new, 1)
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -190,6 +407,171 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertLess(core.index(dispatch), core.index("const isExactJccmRegistroCall = matchesJccmRegistroSign"))
         self.assertIn('    if (isExactPoliciaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
 
+    def test_gran_canaria_is_packaged_with_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_gran_canaria.js"
+        self.assertTrue(module.is_file(), "GranCanaria needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, _, expected = gran_canaria_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://sede.grancanaria.com', core)
+        self.assertNotIn("const granCanariaExtraProperties =", core)
+        dispatch = '    const isExactGranCanariaCall = matchesGranCanariaSign(args, successCallback, errorCallback);\n'
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index('const isExactCanariasCall = matchesCanariasSign'), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index('const isExactFuerteventuraCall = matchesFuerteventuraSign'))
+        self.assertIn('    if (isExactGranCanariaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
+    def test_fuerteventura_is_packaged_with_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_fuerteventura.js"
+        self.assertTrue(module.is_file(), "Fuerteventura needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, _, expected = fuerteventura_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://sede.cabildofuer.es', core)
+        self.assertNotIn("const fuerteventuraExtraProperties =", core)
+        dispatch = '    const isExactFuerteventuraCall = matchesFuerteventuraSign(args, successCallback, errorCallback);\n'
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index('const isExactGranCanariaCall = matchesGranCanariaSign'), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index('const isExactMinecoCall ='))
+        self.assertIn('    if (isExactFuerteventuraCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
+    def test_mineco_is_packaged_with_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_mineco.js"
+        self.assertTrue(module.is_file(), "Mineco needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, _, expected = mineco_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://serviciosede.mineco.gob.es', core)
+        self.assertNotIn("const minecoExtraProperties =", core)
+        dispatch = '    const isExactMinecoCall = matchesMinecoSign(args, successCallback, errorCallback);\n'
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index('const isExactFuerteventuraCall = matchesFuerteventuraSign'), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index('const isExactXuntaCall = matchesXuntaSign'))
+        self.assertIn('    if (isExactMinecoCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
+    def test_canarias_is_packaged_with_challenge_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_canarias.js"
+        self.assertTrue(module.is_file(), "Canarias needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, _, expected = canarias_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn("https://sede.gobiernodecanarias.org", core)
+        self.assertNotIn("function isExactCanariasChallenge", core)
+        self.assertNotIn("const canariasExtraProperties =", core)
+        dispatch = "    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);\n"
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index("const isExactAirefCall = matchesAirefSign"), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index("const isExactGranCanariaCall = matchesGranCanariaSign"))
+        self.assertIn('    if (isExactCanariasCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
+    def test_xunta_is_packaged_with_sign_selection_and_exact_properties(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_xunta.js"
+        self.assertTrue(module.is_file(), "Xunta needs one optional sign-and-selection body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, selection, _, expected = xunta_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        self.assertIn(selection, expected)
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn("https://sede.xunta.gal", core)
+        self.assertNotIn("function isExactXuntaProperties", core)
+        self.assertNotIn("const xuntaFixedProperties", core)
+        self.assertIn("else if (matchesXuntaSelection(a))", core)
+        dispatch = "    const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);\n"
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index("const isExactMinecoCall = matchesMinecoSign"), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index("const isExactCdtiCall = matchesCdtiSign"))
+        self.assertIn('    if (isExactXuntaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
+    def test_acceda_is_packaged_with_exact_tuple_and_rejection_dispatch(self):
+        raw = ROOT / "app/src/main/res/raw"
+        module = raw / "afirma_shim_acceda.js"
+        self.assertTrue(module.is_file(), "Acceda needs an optional packaged body")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        _, _, _, expected = acceda_extraction(legacy)
+        self.assertEqual(expected, module.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn('https://sede.administracionespublicas.gob.es', core)
+        self.assertNotIn("const accedaExtraProperties =", core)
+        dispatch = '    const isExactAccedaCall = matchesAccedaSign(args, successCallback, errorCallback);\n'
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index('const isExactSevillaAtseCall ='), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index('const isExactAirefCall = matchesAirefSign'))
+        self.assertIn('    if (isExactAccedaCall === false) {\n      rejectDirectCall(errorCallback, "INVALID_REQUEST");\n      return true;\n    }\n', core)
+
+    def test_sevilla_state_setup_sign_and_hooks_share_one_optional_fragment(self):
+        raw = ROOT / "app/src/main/res/raw"
+        path = raw / "afirma_shim_sevilla_atse.js"
+        self.assertTrue(path.is_file(), "Sevilla needs one optional stateful fragment")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        expected = sevilla_extraction(legacy)
+        self.assertEqual(expected["module"], path.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn("https://www.sevilla.org", core)
+        self.assertNotIn("sevillaAtseSetupState", core)
+        self.assertNotIn("function isValidSevillaAtseChallenge", core)
+        self.assertNotIn("SEVILLA_SET_SERVLETS", core)
+        self.assertIn(expected["dispatch"], core)
+        self.assertLess(core.index(expected["dispatch"]), core.index("const isExactAccedaCall = matchesAccedaSign"))
+        self.assertLess(core.index("  installSevillaAtseClickHook();"), core.index("  function receiveMelillaBatchResult"))
+        self.assertLess(core.index("      installSevillaAtseMethodHooks(value);"), core.index("      installUgrMethodHooks(value, includeUgrSetup);"))
+        self.assertIn("sevillaAtseSetupState === 3", path.read_text())
+        self.assertIn("return isSevillaAtseOrigin ? isExactSevillaAtseCall : null;", path.read_text())
+
+    def test_ugr_literal_encoding_setup_and_hooks_share_one_optional_fragment(self):
+        raw = ROOT / "app/src/main/res/raw"
+        path = raw / "afirma_shim_ugr.js"
+        self.assertTrue(path.is_file(), "UGR needs one optional literal-and-setup fragment")
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        expected = ugr_extraction(legacy)
+        self.assertEqual(expected["module"], path.read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        self.assertNotIn("https://sede.ugr.es", core)
+        self.assertNotIn("Universidad de Granada", core)
+        self.assertNotIn("VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ==", core)
+        self.assertNotIn("UGR_SET_SERVLETS", core)
+        dispatch = "    const isExactUgrLiteralCall = matchesUgrSign(args);\n"
+        self.assertIn(dispatch, core)
+        self.assertLess(core.index("const isExactBadajozCall ="), core.index(dispatch))
+        self.assertLess(core.index(dispatch), core.index("const isExactCantabriaCall = matchesCantabriaSign"))
+        self.assertIn("isExactUgrLiteralCall ? encodeUgrLiteral() :", core)
+        self.assertIn("const hasValidUgrDataEncoding = base64Pattern.test(dataB64)", core)
+        self.assertLess(core.index("      installSevillaAtseMethodHooks(value);"),
+                        core.index("      installUgrMethodHooks(value, includeUgrSetup);"))
+        self.assertIn("window.location.origin !== ugrOrigin", path.read_text())
+        self.assertIn("return ugrCompatibilityEnabled &&", path.read_text())
+
+    def test_badajoz_contract_state_and_diagnostics_share_one_optional_resource(self):
+        raw = ROOT / "app/src/main/res/raw"
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        expected, _ = badajoz_extraction(legacy)
+        self.assertEqual(expected, (raw / "afirma_shim_badajoz.js").read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        for token in ("https://sede.dip-badajoz.es", "badajozSignHookReadyDiagnosticPosted",
+                      "badajozDiagnosticWrappedFunctions", "badajozDiagnosticPostedStages"):
+            self.assertNotIn(token, core)
+        self.assertIn("if (isExactBadajozCall === false)", core)
+        self.assertLess(core.index("const isExactJccmRegistroCall ="), core.index("const isExactBadajozCall ="))
+        self.assertLess(core.index("const isExactBadajozCall ="), core.index("const isExactUgrLiteralCall ="))
+        self.assertIn("window.setInterval(repairCurrentSigningLibraries, 500)", core)
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -198,7 +580,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 

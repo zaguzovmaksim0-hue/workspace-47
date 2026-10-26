@@ -87,6 +87,11 @@ class AfirmaJavascriptShimTest {
     fun shimObservesMiniAppletCallsAndBlocksLoopbackWebSocketsWithoutCallbacks() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(context)
+        val badajoz = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            flags = AfirmaShimCompatibilityFlags(badajoz = true),
+        )
 
         assertTrue(script.contains("window.JuntaFirmaProbe"))
         assertTrue(script.contains("MiniApplet"))
@@ -99,14 +104,22 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("SCRIPT_INSTALLED"))
         assertTrue(script.contains("SIGN_INTERCEPT_ENTRY"))
         assertTrue(script.contains("SIGN_MESSAGE_POSTED"))
-        assertTrue(script.contains("BADAJOZ_LATE_REWRAP_STARTED"))
-        assertTrue(script.contains("BADAJOZ_SIGN_HOOK_READY"))
-        assertTrue(script.contains("BADAJOZ_CERT_BUTTON_CLICK"))
-        assertTrue(script.contains("BADAJOZ_PULSAR_SIGN_ENTRY"))
-        assertTrue(script.contains("BADAJOZ_FIRMAR_ENTRY"))
-        assertTrue(script.contains("BADAJOZ_GET_BASE64_ENTRY"))
-        assertTrue(script.contains("BADAJOZ_ECHO_ENTRY"))
-        assertTrue(script.contains("BADAJOZ_FORCE_WS_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_LATE_REWRAP_STARTED"))
+        assertFalse(script.contains("BADAJOZ_LATE_REWRAP_STARTED"))
+        assertTrue(badajoz.contains("BADAJOZ_SIGN_HOOK_READY"))
+        assertFalse(script.contains("BADAJOZ_SIGN_HOOK_READY"))
+        assertTrue(badajoz.contains("BADAJOZ_CERT_BUTTON_CLICK"))
+        assertFalse(script.contains("BADAJOZ_CERT_BUTTON_CLICK"))
+        assertTrue(badajoz.contains("BADAJOZ_PULSAR_SIGN_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_PULSAR_SIGN_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_FIRMAR_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_FIRMAR_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_GET_BASE64_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_GET_BASE64_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_ECHO_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_ECHO_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_FORCE_WS_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_FORCE_WS_ENTRY"))
         assertTrue(script.contains("installMethodHook(value, \"sign\", \"SIGN\")"))
         assertTrue(script.contains("probeDocumentId"))
         assertTrue(script.contains("documentId: probeDocumentId"))
@@ -315,6 +328,10 @@ class AfirmaJavascriptShimTest {
 
         assertTrue(script.contains("const ugrCompatibilityEnabled = true"))
         assertTrue(script.contains("https://sede.ugr.es"))
+        assertTrue(script.contains("window.location.origin === ugrOrigin"))
+        assertTrue(script.contains("window.location.origin !== ugrOrigin"))
+        assertTrue(script.contains("isExactUgrLiteralCall ? encodeUgrLiteral() :"))
+        assertTrue(script.contains("args[0] === ugrStorageUrl && args[1] === ugrRetrieveUrl"))
         assertTrue(script.contains("Universidad de Granada"))
         assertTrue(script.contains("VW5pdmVyc2lkYWQgZGUgR3JhbmFkYQ=="))
         assertTrue(script.contains("SHA1withRSA"))
@@ -426,6 +443,10 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("args[2] === \"XAdES\""))
         assertTrue(script.contains("args[3] == null"))
         assertTrue(script.contains("if (isSevillaAtseOrigin && !isExactSevillaAtseCall)"))
+        assertTrue(script.contains("const isExactSevillaAtseCall = matchesSevillaAtseSign(args, successCallback, errorCallback);\n    if (isExactSevillaAtseCall === false) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }"))
+        assertTrue(script.contains("return isSevillaAtseOrigin ? isExactSevillaAtseCall : null;"))
+        assertTrue(script.contains("  installSevillaAtseClickHook();"))
+        assertTrue(script.contains("      installSevillaAtseMethodHooks(value);"))
         assertTrue(script.contains("location.pathname === sevillaAtsePage"))
         assertTrue(script.contains("location.search === \"?modo=Contribuyente\""))
         assertTrue(script.contains("https://www.sevilla.org/ovweb/sign/StorageService"))
@@ -604,7 +625,10 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("const ugrCompatibilityEnabled = false"))
         assertTrue(script.contains("!base64Pattern.test(args[0])"))
         assertTrue(script.contains("args[3] === null"))
-        assertTrue(script.contains("window.location.origin === ugrOrigin"))
+        assertTrue(script.contains("let matchesUgrSign = () => false;"))
+        assertTrue(script.contains("const isExactUgrLiteralCall = matchesUgrSign(args);"))
+        assertFalse(script.contains("https://sede.ugr.es"))
+        assertFalse(script.contains("Universidad de Granada"))
     }
 
     @Test
@@ -863,7 +887,12 @@ class AfirmaJavascriptShimTest {
         assertTrue(enabled.contains("args[2] === \"PAdEStri\""))
         assertTrue(enabled.contains("filters=nonexpired"))
         assertTrue(enabled.contains("isExactXuntaProperties"))
-        assertTrue(enabled.contains("if (isXuntaOrigin && !isExactXuntaCall)"))
+        assertTrue(enabled.contains("return isXuntaOrigin ? isExactXuntaCall : null;"))
+        assertTrue(enabled.contains("const isExactXuntaCall = matchesXuntaSign(args, successCallback, errorCallback);"))
+        assertTrue(enabled.contains("if (isExactXuntaCall === false) {\n      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }"))
+        assertTrue(enabled.contains("else if (matchesXuntaSelection(a))"))
+        assertFalse(disabled.contains("https://sede.xunta.gal"))
+        assertFalse(disabled.contains("function isExactXuntaProperties"))
     }
 
     @Test
