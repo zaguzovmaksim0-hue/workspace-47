@@ -605,16 +605,7 @@ object SiteProfileCatalogParser {
                     (clientAuthPolicy.fixedQueryParameters.isNotEmpty() ||
                         clientAuthPolicy.requiredEphemeralQueryParameters.isNotEmpty() ||
                         p.profileId.value == PATTEX_PROFILE_ID)
-            val sameOriginRedirectClientAuth =
-                p.profileId.value == LA_RIOJA_PROFILE_ID &&
-                    clientAuthPolicy?.transitionMode == ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE &&
-                    clientAuthPolicy.requestPort == HTTPS_PORT &&
-                    clientAuthOrigins == p.initiatorOrigins &&
-                    clientAuthPolicy.sourceUrls == setOf(URI(LA_RIOJA_SOURCE_URL)) &&
-                    clientAuthPolicy.fixedQueryParameters.isEmpty() &&
-                    clientAuthPolicy.requiredEphemeralQueryParameters.isEmpty() &&
-                    clientAuthPolicy.sourceFixedQueryParameters == LA_RIOJA_SOURCE_FIXED_QUERY &&
-                    clientAuthPolicy.sourceRequiredEphemeralQueryParameters == LA_RIOJA_SOURCE_EPHEMERAL_QUERY
+            val sameOriginRedirectClientAuth = LaRiojaClientAuthContract.allowsSameOriginRedirect(p)
             if (clientAuthPolicy?.requestPort == HTTPS_PORT) {
                 require(
                     (clientAuthOrigins intersect p.initiatorOrigins).isEmpty() ||
@@ -2166,22 +2157,7 @@ object SiteProfileCatalogParser {
         require(profile.operationPolicies.isEmpty())
         require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), false))
-        require(
-            profile.clientAuthPolicy == ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
-                requestOrigins = setOf(ExactOrigin.parse(LA_RIOJA_ORIGIN)),
-                sourceUrls = setOf(URI(LA_RIOJA_SOURCE_URL)),
-                requestPath = LA_RIOJA_REQUEST_PATH,
-                fixedQueryParameters = emptyMap(),
-                requiredEphemeralQueryParameters = emptySet(),
-                allowEmptyIssuerList = true,
-                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
-                requestPort = HTTPS_PORT,
-                sourceFixedQueryParameters = LA_RIOJA_SOURCE_FIXED_QUERY,
-                sourceRequiredEphemeralQueryParameters = LA_RIOJA_SOURCE_EPHEMERAL_QUERY,
-                linkedEphemeralQueryParameters = emptySet(),
-            ),
-        )
+        require(profile.clientAuthPolicy == LaRiojaClientAuthContract.expectedPolicy())
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == LA_RIOJA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
     }
@@ -2880,13 +2856,6 @@ object SiteProfileCatalogParser {
         "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697"
     private const val LA_RIOJA_ORIGIN = "https://ias1.larioja.org"
     private const val LA_RIOJA_SOURCE_URL = "https://ias1.larioja.org/casLR/login"
-    private const val LA_RIOJA_REQUEST_PATH = "/clientcertSSL/login"
-    private val LA_RIOJA_SOURCE_FIXED_QUERY = linkedMapOf(
-        "inst" to "G",
-        "apli" to "OFIVIR",
-        "nodo" to "CIUDANO",
-    )
-    private val LA_RIOJA_SOURCE_EPHEMERAL_QUERY = setOf("param", "TARGET")
     private val LA_RIOJA_EVIDENCE_URLS = setOf(
         "https://web.larioja.org/oficina-electronica/tramite?n=24697",
         LA_RIOJA_START_URL,
