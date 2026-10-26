@@ -723,13 +723,13 @@ class BrowserSecurityRegressionTest {
             "Melilla batch protocol must use the existing direct HTTPS transport stack",
             "MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate))" in adaptersSource,
         )
-        val melillaAdapterBlock = source
-            .substringAfter("melillaBatchSigningAdapter = MelillaBatchSigningAdapter(", missingDelimiterValue = "")
-            .substringBefore("\n        )")
+        val routesSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/BatchBridgeSigningRoutes.kt",
+        )
         assertTrue(
             "MainActivity must normalize only against the built-in Melilla profile registry",
-            melillaAdapterBlock.isNotEmpty() &&
-                "registry = BuiltInSiteProfiles.runtimeRegistry" in melillaAdapterBlock,
+            "batchBridgeRoutes = signingModule.batchBridgeRoutes(BuiltInSiteProfiles.runtimeRegistry)" in source &&
+                "MelillaBatchSigningAdapter(registry)" in routesSource,
         )
         assertTrue(
             "BrowserScreen must forward Melilla request and cancellation into MainActivity",
@@ -832,19 +832,17 @@ class BrowserSecurityRegressionTest {
         val moduleCoordinatorBlock = moduleBatchBlock
             .substringAfter("return BatchSigningCoordinator(", missingDelimiterValue = "")
             .substringBefore("\n        )")
-        val melillaAdapterBlock = source
-            .substringAfter("melillaBatchSigningAdapter = MelillaBatchSigningAdapter(", missingDelimiterValue = "")
-            .substringBefore("\n        )")
-        val extremaduraAdapterBlock = source
-            .substringAfter("extremaduraBatchSigningAdapter = ExtremaduraBatchSigningAdapter(", missingDelimiterValue = "")
-            .substringBefore("\n        )")
+        val routesSource = projectSource(
+            "app/src/main/java/dev/junta/firmamobile/browser/BatchBridgeSigningRoutes.kt",
+        )
         val batchPrepareBlock = source
             .substringAfter("private fun prepareMelillaBatchSigning(", missingDelimiterValue = "")
             .substringBefore("\n    private fun confirmSigning")
 
         assertTrue(
-            "MainActivity must own a distinct Extremadura batch normalizer",
-            "private lateinit var extremaduraBatchSigningAdapter: ExtremaduraBatchSigningAdapter" in source,
+            "The batch routes must own a distinct Extremadura normalizer and reply sink",
+            "ExtremaduraBatchBridgeAdapter.PROFILE_ID to\n" +
+                "            ExtremaduraBatchSigningAdapter(registry).let { Route(it::normalize, it::replySink) }" in routesSource,
         )
         assertTrue(
             "Runtime adapters must create fixed Melilla and Extremadura STA protocol adapters over HTTPS transport",
@@ -878,19 +876,17 @@ class BrowserSecurityRegressionTest {
         )
         assertTrue(
             "Melilla and Extremadura normalizers must use the same active profile registry",
-            melillaAdapterBlock.isNotEmpty() &&
-                extremaduraAdapterBlock.isNotEmpty() &&
-                "registry = BuiltInSiteProfiles.runtimeRegistry" in melillaAdapterBlock &&
-                "registry = BuiltInSiteProfiles.runtimeRegistry" in extremaduraAdapterBlock,
+            "batchBridgeRoutes = signingModule.batchBridgeRoutes(BuiltInSiteProfiles.runtimeRegistry)" in source &&
+                "MelillaBatchSigningAdapter(registry)" in routesSource &&
+                "ExtremaduraBatchSigningAdapter(registry)" in routesSource,
         )
         assertTrue(
             "MainActivity must normalize an accepted batch with the adapter fixed to its exact profile id",
             batchPrepareBlock.isNotEmpty() &&
-                "when (request.profileId.value)" in batchPrepareBlock &&
-                "MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.normalize(request)" in batchPrepareBlock &&
-                "ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.normalize(request)" in batchPrepareBlock &&
-                "MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.replySink(reply)" in batchPrepareBlock &&
-                "ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.replySink(reply)" in batchPrepareBlock,
+                "batchBridgeRoutes.dispatch(request, reply)" in batchPrepareBlock &&
+                "routes[request.profileId.value]" in routesSource &&
+                "MelillaBatchBridgeAdapter.PROFILE_ID to" in routesSource &&
+                "ExtremaduraBatchBridgeAdapter.PROFILE_ID to" in routesSource,
         )
         assertTrue(
             "Extremadura batch requests must retain the existing single BATCH ownership gate",
