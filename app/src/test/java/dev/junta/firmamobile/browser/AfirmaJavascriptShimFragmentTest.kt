@@ -24,11 +24,55 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true, melillaBatch = true, lugoBatch = true, caibBatch = true, euskadiClientAuthPost = true, isciiiCertificateSelection = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true, melillaBatch = true, lugoBatch = true, caibBatch = true, euskadiClientAuthPost = true, isciiiCertificateSelection = true, valenciaCertificateSelection = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
         .first { it.isDirectory }
+
+    @Test
+    fun disabledValenciaSelectionOmitsOnlyItsOwnResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(valenciaCertificateSelection = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.VALENCIA_SELECTION)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.VALENCIA_SELECTION, reads)
+        assertFalse(output.contains("https://portafirmas.dival.es"))
+        assertFalse(output.contains("const vPage ="))
+        assertFalse(output.contains("const vProps ="))
+        assertTrue(output.contains("MINIAPPLET_SELECT_CERTIFICATE_RESULT"))
+        assertTrue(output.contains("successCallback(certificateB64)"))
+        assertTrue(output.contains("if (!iSel && !vSel && !xSel) return false;"))
+        assertFalse(output.contains("__JFM_"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_valencia_selection.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace("const vSel = true;", "const vSel = false;"), output)
+    }
+
+    @Test
+    fun valenciaSelectionRetainsNativeProfileGateAndDispatchOrder() {
+        for (active in listOf(false, true)) {
+            val flags = WebMessageBridge.shimCompatibilityFlags(
+                dev.junta.firmamobile.profile.ProfileId(ValenciaCertificateSelectionBridgeAdapter.PROFILE_ID), active, false,
+            )
+            assertEquals(active, flags.valenciaCertificateSelection)
+            val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+            val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration.copy(flags = flags)) {
+                reads += it
+                File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+            }
+            assertEquals(active, reads.contains(AfirmaJavascriptShimFragment.VALENCIA_SELECTION))
+            assertEquals(active, output.contains("https://portafirmas.dival.es"))
+            val selection = output.substringAfter("  function interceptCertificateSelection(a) {").substringBefore("  function equivalentLiteralProperties")
+            assertTrue(selection.indexOf("matchesIsciiiSelection(a)") < selection.indexOf("} else if ("))
+            assertTrue(selection.indexOf("} else if (") < selection.indexOf("matchesXuntaSelection(a)"))
+        }
+    }
 
     @Test
     fun disabledIsciiiSelectionOmitsOnlyItsOwnResource() {
@@ -713,7 +757,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val isciiiRestored = restoreIsciiiSelectionExtraction(assembled, flags.isciiiCertificateSelection)
+    val valenciaRestored = restoreValenciaSelectionExtraction(assembled, flags.valenciaCertificateSelection)
+    val isciiiRestored = restoreIsciiiSelectionExtraction(valenciaRestored, flags.isciiiCertificateSelection)
     val euskadiRestored = restoreEuskadiPostExtraction(isciiiRestored, flags.euskadiClientAuthPost)
     val caibRestored = restoreCaibBatchExtraction(euskadiRestored, flags.caibBatch)
     val lugoRestored = restoreLugoBatchExtraction(caibRestored, flags.lugoBatch)
@@ -1127,4 +1172,13 @@ private fun restoreIsciiiSelectionExtraction(actual: String, enabled: Boolean): 
     return actual.replace(module, "")
         .replace("  let matchesIsciiiSelection = () => false;\n", "  const iPage = \"https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null\";\n  const iProps = \"serverUrl=http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService\";\n")
         .replace("matchesIsciiiSelection(a)", "iSel && location.href === iPage && a.length === 3 && a[0] === iProps &&\n        typeof a[1] === \"function\" && typeof a[2] === \"function\"")
+}
+
+private fun restoreValenciaSelectionExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  matchesValenciaSelection = a => {\n    const vPage = \"https://portafirmas.dival.es/signingpad/xhtml/login.xhtml\";\n    const vProps = \"filters=keyusage.nonrepudiation:true;nonexpired:true\\nheadless=true\";\n    return vSel && location.href === vPage && a.length === 3 && a[0] === vProps &&\n        typeof a[1] === \"function\" && typeof a[2] === \"function\";\n  };\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("  let matchesValenciaSelection = () => false;\n", "  const vPage = \"https://portafirmas.dival.es/signingpad/xhtml/login.xhtml\";\n  const vProps = \"filters=keyusage.nonrepudiation:true;nonexpired:true\\nheadless=true\";\n")
+        .replace("matchesValenciaSelection(a)", "vSel && location.href === vPage && a.length === 3 && a[0] === vProps &&\n        typeof a[1] === \"function\" && typeof a[2] === \"function\"")
 }

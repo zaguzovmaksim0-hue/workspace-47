@@ -36,8 +36,7 @@
   let interceptCaibBatchSign = () => false;
   let installCaibBatchMethodHooks = () => {};
   let matchesIsciiiSelection = () => false;
-  const vPage = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml";
-  const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
+  let matchesValenciaSelection = () => false;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesAccedaSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.

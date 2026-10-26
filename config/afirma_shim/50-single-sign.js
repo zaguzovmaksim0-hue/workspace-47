@@ -4,8 +4,7 @@
     let valid = false;
     if (matchesIsciiiSelection(a)) {
       valid = true;
-    } else if (vSel && location.href === vPage && a.length === 3 && a[0] === vProps &&
-        typeof a[1] === "function" && typeof a[2] === "function") {
+    } else if (matchesValenciaSelection(a)) {
       valid = true;
     } else if (matchesXuntaSelection(a)) {
       valid = true;
