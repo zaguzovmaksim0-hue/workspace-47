@@ -22,6 +22,7 @@ internal data class CadesDetachedContract(
     val extraPropertiesMatcher: (String) -> Boolean = { it == extraProperties },
     // Optional prepare-only policy bound to the first (signing) certificate.
     val certificatePropertiesMatcher: ((String, X509Certificate) -> Boolean)? = null,
+    val payloadRevalidationError: SigningErrorCode = SigningErrorCode.PROTOCOL_FAILED,
 ) {
     init {
         require(!revalidatePayloadOnComplete || certificatePropertiesMatcher == null) {
@@ -83,7 +84,7 @@ internal class ParameterizedCadesDetachedAdapter(
         val validationError = when {
             !request.matchesContract() -> SigningErrorCode.UNSUPPORTED_PROTOCOL
             contract.revalidatePayloadOnComplete && !request.matchesPayloadContract() ->
-                SigningErrorCode.PROTOCOL_FAILED
+                contract.payloadRevalidationError
             else -> null
         }
         if (validationError != null) return ProtocolCompletionResult.Failure(validationError)
