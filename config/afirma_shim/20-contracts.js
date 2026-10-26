@@ -18,7 +18,8 @@
   let matchesAirefSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesCdtiSign = () => null;
-  const policiaOrigin = "https://sede.policia.gob.es";
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesPoliciaSign = () => null;
   const granCanariaOrigin = "https://sede.grancanaria.com";
   const canariasOrigin = "https://sede.gobiernodecanarias.org";
   const canariasPage = "https://sede.gobiernodecanarias.org/sede/identificacion";
@@ -50,10 +51,6 @@
   const minecoSigningPage = "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx";
   const minecoExtraProperties =
     "filters=signingCert:;nonexpired:\nexpPolicy=FirmaAGE\nsignatureSubFilter=ETSI.CAdES.detached";
-  const policiaProcedurePage =
-    "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml";
-  const policiaExtraProperties =
-    "format=XAdES Detached\nfilters.1=dnie:;nonexpired:\nfilters.2=keyusage.nonrepudiation:true;nonexpired:";
   const staBatchOrigin = __JFM_STA_BATCH_ORIGIN__;
   const lugoOrigin = "https://sede.deputacionlugo.org";
   const lugoClientBase = "https://sede.deputacionlugo.org/opencms";
