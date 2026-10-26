@@ -1,6 +1,7 @@
 package dev.junta.firmamobile
 
 import android.Manifest
+import android.net.Uri
 import android.content.pm.PackageManager
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +22,14 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import dev.junta.firmamobile.certificate.CertificateEntryChoice
+import dev.junta.firmamobile.certificate.CertificateErrorCode
+import dev.junta.firmamobile.certificate.CertificateGateway
+import dev.junta.firmamobile.certificate.CertificateLoadResult
+import dev.junta.firmamobile.certificate.CertificateSelectionResult
+import dev.junta.firmamobile.certificate.CertificateSummary
+import dev.junta.firmamobile.certificate.StoredCertificateReference
+import java.time.Instant
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -202,6 +211,38 @@ class MainActivityRootNavigationTest {
         rule.onNodeWithTag("catalog-list").assertIsDisplayed()
     }
 
+    @Test fun certificatePanelSystemBackDropsTheOfferedEntriesAndTheHeldPassword() {
+        val app = ApplicationProvider.getApplicationContext<JuntaFirmaApplication>()
+        val original = app.certificateGateway
+        val gateway = SeveralKeysGateway()
+        scenario.close()
+        app.certificateGateway = gateway
+        try {
+            scenario = ActivityScenario.launch(MainActivity::class.java)
+            awaitHome()
+            openPublicBrowser()
+            openCertificatePanel()
+            rule.onNodeWithContentDescription("Contraseña del certificado").performScrollTo()
+                .performTextReplacement("secret")
+            rule.onNodeWithText("Desbloquear certificado").performScrollTo().performClick()
+            rule.waitUntil(5_000) {
+                rule.onAllNodesWithTag("certificate-entry-chooser").fetchSemanticsNodes().isNotEmpty()
+            }
+            rule.runOnIdle {
+                (ShadowDialog.getLatestDialog() as ComponentDialog).onBackPressedDispatcher.onBackPressed()
+            }
+            rule.onNodeWithTag("jfm-home-background").assertDoesNotExist()
+
+            openCertificatePanel()
+            rule.onNodeWithTag("certificate-entry-chooser").assertDoesNotExist()
+            rule.onNodeWithContentDescription("Contraseña del certificado").assertExists()
+            rule.runOnIdle { assertTrue(gateway.chosen.isEmpty()) }
+        } finally {
+            scenario.close()
+            app.certificateGateway = original
+        }
+    }
+
     @Test fun forcedActivityRecreationDoesNotRestoreBrowserDestination() {
         openPublicBrowser()
         scenario.recreate()
@@ -299,6 +340,31 @@ class MainActivityRootNavigationTest {
         is WebView -> listOf(view)
         is ViewGroup -> (0 until view.childCount).flatMap { webViews(view.getChildAt(it)) }
         else -> emptyList()
+    }
+
+    private class SeveralKeysGateway : CertificateGateway {
+        val chosen = mutableListOf<String>()
+        private val reference = StoredCertificateReference(
+            Uri.parse("content://documents/several"), "several.p12", "application/x-pkcs12", 100, null,
+        )
+
+        override suspend fun currentReference() = reference
+
+        override suspend fun select(uri: Uri): CertificateSelectionResult = error("Not used")
+
+        override suspend fun unlock(password: CharArray): CertificateLoadResult =
+            CertificateLoadResult.Failure(CertificateErrorCode.MULTIPLE_PRIVATE_KEYS)
+
+        override suspend fun forget() = Unit
+
+        override suspend fun certificateChoices(password: CharArray) = listOf(1, 2).map {
+            CertificateEntryChoice(it, CertificateSummary("Titular $it", "Emisor", Instant.EPOCH, Instant.EPOCH), "h$it")
+        }
+
+        override suspend fun unlockChosen(password: CharArray, certificateSha256: String): CertificateLoadResult {
+            chosen += certificateSha256
+            return CertificateLoadResult.Failure(CertificateErrorCode.NO_CERTIFICATE_SELECTED)
+        }
     }
 
     private companion object {
