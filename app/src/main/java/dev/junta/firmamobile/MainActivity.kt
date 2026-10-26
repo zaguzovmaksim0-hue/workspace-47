@@ -27,23 +27,10 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
+import dev.junta.firmamobile.browser.BatchBridgeSigningRoutes
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
-import dev.junta.firmamobile.browser.BurgosBatchBridgeAdapter
-import dev.junta.firmamobile.browser.CaibBatchBridgeAdapter
-import dev.junta.firmamobile.browser.CaibBatchSigningAdapter
-import dev.junta.firmamobile.browser.BurgosBatchSigningAdapter
-import dev.junta.firmamobile.browser.ExtremaduraBatchBridgeAdapter
-import dev.junta.firmamobile.browser.ExtremaduraBatchSigningAdapter
-import dev.junta.firmamobile.browser.HuescaBatchBridgeAdapter
-import dev.junta.firmamobile.browser.HuescaBatchSigningAdapter
-import dev.junta.firmamobile.browser.LaPalmaBatchBridgeAdapter
-import dev.junta.firmamobile.browser.LaPalmaBatchSigningAdapter
-import dev.junta.firmamobile.browser.LugoBatchBridgeAdapter
-import dev.junta.firmamobile.browser.LugoBatchSigningAdapter
-import dev.junta.firmamobile.browser.MelillaBatchBridgeAdapter
 import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
-import dev.junta.firmamobile.browser.MelillaBatchSigningAdapter
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
 import dev.junta.firmamobile.catalog.PortalCatalogViewModel
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
@@ -151,14 +138,8 @@ class MainActivity : ComponentActivity() {
     private val destination get() = navigation.destination
     private val certificatePanelVisible get() = navigation.certificatePanelVisible
     private lateinit var signingCoordinator: SigningCoordinator
+    private lateinit var batchBridgeRoutes: BatchBridgeSigningRoutes
     private lateinit var batchSigningCoordinator: BatchSigningCoordinator
-    private lateinit var melillaBatchSigningAdapter: MelillaBatchSigningAdapter
-    private lateinit var extremaduraBatchSigningAdapter: ExtremaduraBatchSigningAdapter
-    private lateinit var laPalmaBatchSigningAdapter: LaPalmaBatchSigningAdapter
-    private lateinit var huescaBatchSigningAdapter: HuescaBatchSigningAdapter
-    private lateinit var lugoBatchSigningAdapter: LugoBatchSigningAdapter
-    private lateinit var caibBatchSigningAdapter: CaibBatchSigningAdapter
-    private lateinit var burgosBatchSigningAdapter: BurgosBatchSigningAdapter
     private val signingFlowOwnership = SigningFlowOwnershipGate()
     private var externalAfirma: dev.junta.firmamobile.afirma.servlet.ExternalAfirmaController? = null
     private var externalAfirmaPrompt by mutableStateOf<dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt?>(null)
@@ -298,27 +279,7 @@ class MainActivity : ComponentActivity() {
                 it.profileId == ProfileId("melilla-sede")
             },
         )
-        melillaBatchSigningAdapter = MelillaBatchSigningAdapter(
-            registry = BuiltInSiteProfiles.runtimeRegistry,
-        )
-        extremaduraBatchSigningAdapter = ExtremaduraBatchSigningAdapter(
-            registry = BuiltInSiteProfiles.runtimeRegistry,
-        )
-        laPalmaBatchSigningAdapter = LaPalmaBatchSigningAdapter(
-            registry = BuiltInSiteProfiles.runtimeRegistry,
-        )
-        huescaBatchSigningAdapter = HuescaBatchSigningAdapter(
-            registry = BuiltInSiteProfiles.runtimeRegistry,
-        )
-        lugoBatchSigningAdapter = LugoBatchSigningAdapter(
-            registry = BuiltInSiteProfiles.runtimeRegistry,
-        )
-        caibBatchSigningAdapter = CaibBatchSigningAdapter(
-            registry = BuiltInSiteProfiles.runtimeRegistry,
-        )
-        burgosBatchSigningAdapter = BurgosBatchSigningAdapter(
-            registry = BuiltInSiteProfiles.runtimeRegistry,
-        )
+        batchBridgeRoutes = signingModule.batchBridgeRoutes(BuiltInSiteProfiles.runtimeRegistry)
         batchSigningCoordinator = signingModule.batch(
             currentOrigin = { currentSigningOrigin() },
             currentNavigationEpoch = { currentNavigationEpoch },
@@ -895,30 +856,12 @@ class MainActivity : ComponentActivity() {
         request: MelillaBatchBridgeRequest,
         reply: MelillaBatchReplyChannel,
     ) {
-        val normalized = when (request.profileId.value) {
-            MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.normalize(request)
-            ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.normalize(request)
-            LaPalmaBatchBridgeAdapter.PROFILE_ID -> laPalmaBatchSigningAdapter.normalize(request)
-            HuescaBatchBridgeAdapter.PROFILE_ID -> huescaBatchSigningAdapter.normalize(request)
-            LugoBatchBridgeAdapter.PROFILE_ID -> lugoBatchSigningAdapter.normalize(request)
-            CaibBatchBridgeAdapter.PROFILE_ID -> caibBatchSigningAdapter.normalize(request)
-            BurgosBatchBridgeAdapter.PROFILE_ID -> burgosBatchSigningAdapter.normalize(request)
-            else -> null
+        val routed = batchBridgeRoutes.dispatch(request, reply) ?: run {
+            runCatching { reply.failure(SigningErrorCode.INVALID_REQUEST) }
+            return
         }
-        val replySink = when (request.profileId.value) {
-            MelillaBatchBridgeAdapter.PROFILE_ID -> melillaBatchSigningAdapter.replySink(reply)
-            ExtremaduraBatchBridgeAdapter.PROFILE_ID -> extremaduraBatchSigningAdapter.replySink(reply)
-            LaPalmaBatchBridgeAdapter.PROFILE_ID -> laPalmaBatchSigningAdapter.replySink(reply)
-            HuescaBatchBridgeAdapter.PROFILE_ID -> huescaBatchSigningAdapter.replySink(reply)
-            LugoBatchBridgeAdapter.PROFILE_ID -> lugoBatchSigningAdapter.replySink(reply)
-            CaibBatchBridgeAdapter.PROFILE_ID -> caibBatchSigningAdapter.replySink(reply)
-            BurgosBatchBridgeAdapter.PROFILE_ID -> burgosBatchSigningAdapter.replySink(reply)
-            else -> {
-                runCatching { reply.failure(SigningErrorCode.INVALID_REQUEST) }
-                return
-            }
-        }
-        if (normalized == null) {
+        val replySink = routed.replySink
+        val normalized = routed.normalized ?: run {
             runCatching { replySink.failure(SigningErrorCode.INVALID_REQUEST) }
             return
         }
