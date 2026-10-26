@@ -158,6 +158,55 @@ def ugr_extraction(legacy):
                 module=module, stub=stub)
 
 
+def badajoz_extraction(legacy):
+    def section(start, end):
+        at = legacy.index("\n" + start) + 1
+        return legacy[at:legacy.index("\n" + end, at) + 1]
+    state = section("  let badajozSignHookReadyDiagnosticPosted", "  function markBadajozSignHookReady")
+    state = state.removesuffix("\n")
+    mark = section("  function markBadajozSignHookReady", "  function postShimDiagnostic")
+    once = section("  function postBadajozDiagnosticOnce", '  postShimDiagnostic("SCRIPT_INSTALLED");')
+    constants = section("  const badajozOrigin =", "  const euskadiProfileId =")
+    wrap = section("  function wrapBadajozDiagnostic", "  function wrapMiniApplet(")
+    repair = section("        if (badajozCompatibilityEnabled)", "      } catch (_) {")
+    late = section("    if (badajozCompatibilityEnabled)", "    startHookGuard();")
+    branch = section("    const isBadajozOrigin =", "    if (isBadajozOrigin && !isExactBadajozCall)")
+    first = '        if (call === "SIGN" && badajozCompatibilityEnabled &&\n            !badajozSignHookReadyDiagnosticPosted) {\n          markBadajozSignHookReady();\n        }\n'
+    second = '    if (typeof current === "function" && call === "SIGN" && badajozCompatibilityEnabled &&\n        !badajozSignHookReadyDiagnosticPosted) {\n      markBadajozSignHookReady();\n    }\n'
+    stub = ('  // null: not applicable; false: reject; true: exact tuple.\n'
+            '  let matchesBadajozSign = () => null;\n'
+            '  let getBadajozExtraProperties = () => null;\n'
+            '  let notifyBadajozSignHook = () => {};\n'
+            '  let repairBadajozDiagnostics = () => {};\n'
+            '  let installBadajozLateHooks = () => {};\n')
+    indent = lambda s: ''.join('  '+line if line.strip() else line for line in s.splitlines(keepends=True))
+    module = ('\n  {\n' + indent(state + constants + '\n' + mark + once + wrap) +
+              '    getBadajozExtraProperties = () => badajozExtraProperties;\n\n' +
+              '    notifyBadajozSignHook = call => {\n' +
+              '      if (call === "SIGN" && badajozCompatibilityEnabled &&\n' +
+              '          !badajozSignHookReadyDiagnosticPosted) {\n' +
+              '        markBadajozSignHookReady();\n      }\n    };\n\n' +
+              '    repairBadajozDiagnostics = () => {\n' + repair + '    };\n\n' +
+              '    installBadajozLateHooks = () => {\n' + indent(late) + '    };\n\n' +
+              '    matchesBadajozSign = (args, successCallback, errorCallback) => {\n' + indent(branch) +
+              '      return isBadajozOrigin ? isExactBadajozCall : null;\n    };\n  }\n')
+    edits = [
+        (state, stub),
+        (mark + '  function postShimDiagnostic', '  function postShimDiagnostic'),
+        (once + '  postShimDiagnostic("SCRIPT_INSTALLED");', '  postShimDiagnostic("SCRIPT_INSTALLED");'),
+        (constants + '  const euskadiProfileId =', '  const euskadiProfileId ='),
+        (wrap + '  function wrapMiniApplet(', '  function wrapMiniApplet('),
+        (repair, '        repairBadajozDiagnostics();\n'),
+        (late, '    installBadajozLateHooks();\n'),
+        (first, '        notifyBadajozSignHook(call);\n'),
+        (second, '    if (typeof current === "function") notifyBadajozSignHook(call);\n'),
+        (branch, '    const isExactBadajozCall = matchesBadajozSign(args, successCallback, errorCallback);\n'),
+        ('if (isBadajozOrigin && !isExactBadajozCall)', 'if (isExactBadajozCall === false)'),
+        ('extraProperties: isExactBadajozCall ? badajozExtraProperties : args[3]', 'extraProperties: isExactBadajozCall ? getBadajozExtraProperties() : args[3]'),
+    ]
+    return module, edits
+
+
 class AfirmaShimGenerationTest(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -168,7 +217,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(26)]
+        self.names = [f"{i:02d}-section.js" for i in range(27)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -263,6 +312,10 @@ class AfirmaShimGenerationTest(unittest.TestCase):
             ugr["hooks"], "      installUgrMethodHooks(value, includeUgrSetup);\n").replace(
             ugr["branch"], "    const isExactUgrLiteralCall = matchesUgrSign(args);\n").replace(
             "isExactUgrLiteralCall ? ugrLiteralBase64 :", "isExactUgrLiteralCall ? encodeUgrLiteral() :")
+        _, edits = badajoz_extraction(legacy)
+        for old, new in edits:
+            self.assertEqual(1, expected_core.count(old))
+            expected_core = expected_core.replace(old, new, 1)
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -504,6 +557,21 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertIn("window.location.origin !== ugrOrigin", path.read_text())
         self.assertIn("return ugrCompatibilityEnabled &&", path.read_text())
 
+    def test_badajoz_contract_state_and_diagnostics_share_one_optional_resource(self):
+        raw = ROOT / "app/src/main/res/raw"
+        legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
+        expected, _ = badajoz_extraction(legacy)
+        self.assertEqual(expected, (raw / "afirma_shim_badajoz.js").read_text())
+        core = "".join((raw / name).read_text() for name in (
+            "afirma_shim_bootstrap.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"))
+        for token in ("https://sede.dip-badajoz.es", "badajozSignHookReadyDiagnosticPosted",
+                      "badajozDiagnosticWrappedFunctions", "badajozDiagnosticPostedStages"):
+            self.assertNotIn(token, core)
+        self.assertIn("if (isExactBadajozCall === false)", core)
+        self.assertLess(core.index("const isExactJccmRegistroCall ="), core.index("const isExactBadajozCall ="))
+        self.assertLess(core.index("const isExactBadajozCall ="), core.index("const isExactUgrLiteralCall ="))
+        self.assertIn("window.setInterval(repairCurrentSigningLibraries, 500)", core)
+
     def test_repository_resource_is_generated_exactly(self):
         actual = compose(ROOT)
         self.assertIn(b"matchesCantabriaSign(args)", actual)
@@ -512,7 +580,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_handlers.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 

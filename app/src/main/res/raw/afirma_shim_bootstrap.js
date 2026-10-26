@@ -35,19 +35,12 @@
   const euskadiClientAuthPostEnabled = __JFM_EUSKADI_CLIENT_AUTH_POST_ENABLED__;
   const accedaCompatibilityEnabled = __JFM_ACCEDA_COMPATIBILITY_ENABLED__;
   const badajozCompatibilityEnabled = __JFM_BADAJOZ_COMPATIBILITY_ENABLED__;
-  let badajozSignHookReadyDiagnosticPosted = false;
-  const badajozDiagnosticWrappedFunctions = new WeakSet();
-  const badajozDiagnosticPostedStages = new Set();
-
-  function markBadajozSignHookReady() {
-    try {
-      window.__jfmBadajozSignHookReady = true;
-    } catch (_) {}
-    if (!badajozSignHookReadyDiagnosticPosted) {
-      badajozSignHookReadyDiagnosticPosted = true;
-      postShimDiagnostic("BADAJOZ_SIGN_HOOK_READY");
-    }
-  }
+  // null: not applicable; false: reject; true: exact tuple.
+  let matchesBadajozSign = () => null;
+  let getBadajozExtraProperties = () => null;
+  let notifyBadajozSignHook = () => {};
+  let repairBadajozDiagnostics = () => {};
+  let installBadajozLateHooks = () => {};
 
   function postShimDiagnostic(stage) {
     if (!qaDiagnosticsEnabled || !bridge || typeof bridge.postMessage !== "function") {
@@ -61,14 +54,6 @@
     } catch (_) {
       // Diagnostics must never change the portal method's behavior.
     }
-  }
-
-  function postBadajozDiagnosticOnce(stage) {
-    if (badajozDiagnosticPostedStages.has(stage)) {
-      return;
-    }
-    badajozDiagnosticPostedStages.add(stage);
-    postShimDiagnostic(stage);
   }
 
   postShimDiagnostic("SCRIPT_INSTALLED");
@@ -115,9 +100,6 @@
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
   // null: not applicable; false: reject; true: exact tuple.
   let matchesAccedaSign = () => null;
-  const badajozOrigin = "https://sede.dip-badajoz.es";
-  const badajozExtraProperties =
-    "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true";
   const euskadiProfileId = "euskadi-sede-electronica";
   const euskadiAuthPage =
     "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication";

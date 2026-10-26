@@ -190,10 +190,7 @@
     if (descriptor && descriptor.configurable === false) {
       if (descriptor.writable === true && typeof target[name] === "function") {
         target[name] = wrapMiniAppletMethod(target[name], call);
-        if (call === "SIGN" && badajozCompatibilityEnabled &&
-            !badajozSignHookReadyDiagnosticPosted) {
-          markBadajozSignHookReady();
-        }
+        notifyBadajozSignHook(call);
       }
       return;
     }
@@ -209,28 +206,7 @@
       }
     });
     installedMethodGetters.add(Object.getOwnPropertyDescriptor(target, name).get);
-    if (typeof current === "function" && call === "SIGN" && badajozCompatibilityEnabled &&
-        !badajozSignHookReadyDiagnosticPosted) {
-      markBadajozSignHookReady();
-    }
-  }
-
-  function wrapBadajozDiagnostic(target, name, stage) {
-    if (target == null || (typeof target !== "object" && typeof target !== "function")) {
-      return;
-    }
-    const current = target[name];
-    if (typeof current !== "function" || badajozDiagnosticWrappedFunctions.has(current)) {
-      return;
-    }
-    const wrapped = function() {
-      postBadajozDiagnosticOnce(stage);
-      return Reflect.apply(current, this, arguments);
-    };
-    try {
-      target[name] = wrapped;
-      badajozDiagnosticWrappedFunctions.add(wrapped);
-    } catch (_) {}
+    if (typeof current === "function") notifyBadajozSignHook(call);
   }
 
   function wrapMiniApplet(

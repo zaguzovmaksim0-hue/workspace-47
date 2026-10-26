@@ -87,6 +87,11 @@ class AfirmaJavascriptShimTest {
     fun shimObservesMiniAppletCallsAndBlocksLoopbackWebSocketsWithoutCallbacks() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val script = AfirmaJavascriptShim.load(context)
+        val badajoz = AfirmaJavascriptShim.load(
+            context = context,
+            mode = MiniAppletBridgeMode.FUNCTIONAL,
+            flags = AfirmaShimCompatibilityFlags(badajoz = true),
+        )
 
         assertTrue(script.contains("window.JuntaFirmaProbe"))
         assertTrue(script.contains("MiniApplet"))
@@ -99,14 +104,22 @@ class AfirmaJavascriptShimTest {
         assertTrue(script.contains("SCRIPT_INSTALLED"))
         assertTrue(script.contains("SIGN_INTERCEPT_ENTRY"))
         assertTrue(script.contains("SIGN_MESSAGE_POSTED"))
-        assertTrue(script.contains("BADAJOZ_LATE_REWRAP_STARTED"))
-        assertTrue(script.contains("BADAJOZ_SIGN_HOOK_READY"))
-        assertTrue(script.contains("BADAJOZ_CERT_BUTTON_CLICK"))
-        assertTrue(script.contains("BADAJOZ_PULSAR_SIGN_ENTRY"))
-        assertTrue(script.contains("BADAJOZ_FIRMAR_ENTRY"))
-        assertTrue(script.contains("BADAJOZ_GET_BASE64_ENTRY"))
-        assertTrue(script.contains("BADAJOZ_ECHO_ENTRY"))
-        assertTrue(script.contains("BADAJOZ_FORCE_WS_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_LATE_REWRAP_STARTED"))
+        assertFalse(script.contains("BADAJOZ_LATE_REWRAP_STARTED"))
+        assertTrue(badajoz.contains("BADAJOZ_SIGN_HOOK_READY"))
+        assertFalse(script.contains("BADAJOZ_SIGN_HOOK_READY"))
+        assertTrue(badajoz.contains("BADAJOZ_CERT_BUTTON_CLICK"))
+        assertFalse(script.contains("BADAJOZ_CERT_BUTTON_CLICK"))
+        assertTrue(badajoz.contains("BADAJOZ_PULSAR_SIGN_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_PULSAR_SIGN_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_FIRMAR_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_FIRMAR_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_GET_BASE64_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_GET_BASE64_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_ECHO_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_ECHO_ENTRY"))
+        assertTrue(badajoz.contains("BADAJOZ_FORCE_WS_ENTRY"))
+        assertFalse(script.contains("BADAJOZ_FORCE_WS_ENTRY"))
         assertTrue(script.contains("installMethodHook(value, \"sign\", \"SIGN\")"))
         assertTrue(script.contains("probeDocumentId"))
         assertTrue(script.contains("documentId: probeDocumentId"))

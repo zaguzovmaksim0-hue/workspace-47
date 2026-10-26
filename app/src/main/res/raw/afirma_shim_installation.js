@@ -190,10 +190,7 @@
     if (descriptor && descriptor.configurable === false) {
       if (descriptor.writable === true && typeof target[name] === "function") {
         target[name] = wrapMiniAppletMethod(target[name], call);
-        if (call === "SIGN" && badajozCompatibilityEnabled &&
-            !badajozSignHookReadyDiagnosticPosted) {
-          markBadajozSignHookReady();
-        }
+        notifyBadajozSignHook(call);
       }
       return;
     }
@@ -209,28 +206,7 @@
       }
     });
     installedMethodGetters.add(Object.getOwnPropertyDescriptor(target, name).get);
-    if (typeof current === "function" && call === "SIGN" && badajozCompatibilityEnabled &&
-        !badajozSignHookReadyDiagnosticPosted) {
-      markBadajozSignHookReady();
-    }
-  }
-
-  function wrapBadajozDiagnostic(target, name, stage) {
-    if (target == null || (typeof target !== "object" && typeof target !== "function")) {
-      return;
-    }
-    const current = target[name];
-    if (typeof current !== "function" || badajozDiagnosticWrappedFunctions.has(current)) {
-      return;
-    }
-    const wrapped = function() {
-      postBadajozDiagnosticOnce(stage);
-      return Reflect.apply(current, this, arguments);
-    };
-    try {
-      target[name] = wrapped;
-      badajozDiagnosticWrappedFunctions.add(wrapped);
-    } catch (_) {}
+    if (typeof current === "function") notifyBadajozSignHook(call);
   }
 
   function wrapMiniApplet(
@@ -353,13 +329,7 @@
         wrapMiniApplet(window.MiniApplet, false, false, xSel, false, caibBatchCompatibilityEnabled);
         wrapMiniApplet(window.AutoScript, ugrCompatibilityEnabled, melillaBatchCompatibilityEnabled,
           iSel || vSel || xSel, lugoBatchCompatibilityEnabled);
-        if (badajozCompatibilityEnabled) {
-          wrapBadajozDiagnostic(window, "pulsarFirmarIdentificate", "BADAJOZ_PULSAR_SIGN_ENTRY");
-          wrapBadajozDiagnostic(window, "firmar", "BADAJOZ_FIRMAR_ENTRY");
-          wrapBadajozDiagnostic(window.MiniApplet, "getBase64FromText", "BADAJOZ_GET_BASE64_ENTRY");
-          wrapBadajozDiagnostic(window.MiniApplet, "echo", "BADAJOZ_ECHO_ENTRY");
-          wrapBadajozDiagnostic(window.MiniApplet, "setForceWSMode", "BADAJOZ_FORCE_WS_ENTRY");
-        }
+        repairBadajozDiagnostics();
       } catch (_) {
         // A non-configurable or throwing page object is not forcibly replaced.
       }
@@ -385,12 +355,7 @@
     });
     window.addEventListener("pagehide", () => { documentActive = false; stopHookGuard(); });
     window.addEventListener("pageshow", () => { documentActive = true; startHookGuard(); });
-    if (badajozCompatibilityEnabled) {
-      postShimDiagnostic("BADAJOZ_LATE_REWRAP_STARTED");
-      document.addEventListener("click", event => {
-        if (event.target && event.target.id === "firmar") postBadajozDiagnosticOnce("BADAJOZ_CERT_BUTTON_CLICK");
-      }, true);
-    }
+    installBadajozLateHooks();
     startHookGuard();
   }
 

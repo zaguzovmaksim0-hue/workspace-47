@@ -116,16 +116,8 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isBadajozOrigin =
-      badajozCompatibilityEnabled && window.location.origin === badajozOrigin;
-    const isExactBadajozCall =
-      isBadajozOrigin && args.length === 6 &&
-      typeof args[0] === "string" && args[0].length > 0 &&
-      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&
-      args[1] === "SHA256withRSA" && typeof args[2] === "string" && args[2].toLowerCase() === "cades" &&
-      equivalentLiteralProperties(args[3], badajozExtraProperties) &&
-      typeof successCallback === "function" && typeof errorCallback === "function";
-    if (isBadajozOrigin && !isExactBadajozCall) {
+    const isExactBadajozCall = matchesBadajozSign(args, successCallback, errorCallback);
+    if (isExactBadajozCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
@@ -216,7 +208,7 @@
         dataB64,
         algorithm: args[1],
         format: nativeFormat,
-        extraProperties: isExactBadajozCall ? badajozExtraProperties : args[3]
+        extraProperties: isExactBadajozCall ? getBadajozExtraProperties() : args[3]
       }));
       postShimDiagnostic("SIGN_MESSAGE_POSTED");
     } catch (_) {

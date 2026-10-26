@@ -41,9 +41,6 @@
   const vProps = "filters=keyusage.nonrepudiation:true;nonexpired:true\nheadless=true";
   // null: not applicable; false: reject; true: exact tuple.
   let matchesAccedaSign = () => null;
-  const badajozOrigin = "https://sede.dip-badajoz.es";
-  const badajozExtraProperties =
-    "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true";
   const euskadiProfileId = "euskadi-sede-electronica";
   const euskadiAuthPage =
     "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication";

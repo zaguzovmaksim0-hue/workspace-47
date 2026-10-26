@@ -24,11 +24,29 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true),
+        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
         .first { it.isDirectory }
+
+    @Test
+    fun disabledBadajozOmitsItsContractStateAndDiagnostics() {
+        val disabled = configuration.copy(flags = configuration.flags.copy(badajoz = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            check(it.name != "BADAJOZ")
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        for (body in listOf(
+            "https://sede.dip-badajoz.es", "badajozSignHookReadyDiagnosticPosted",
+            "badajozDiagnosticWrappedFunctions", "badajozDiagnosticPostedStages",
+            "BADAJOZ_SIGN_HOOK_READY", "BADAJOZ_LATE_REWRAP_STARTED",
+        )) assertFalse(body, output.contains(body))
+        assertTrue(output.contains("const badajozCompatibilityEnabled = false;"))
+        assertTrue(output.contains("window.setInterval(repairCurrentSigningLibraries, 500)"))
+        assertTrue(output.contains("window.clearInterval"))
+        assertFalse(output.contains("__JFM_"))
+    }
 
     @Test
     fun realFragmentsPreserveLegacyCoreAndTupleInOrderAndAreReadOnce() {
@@ -425,7 +443,8 @@ class AfirmaJavascriptShimFragmentTest {
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val ugrRestored = restoreUgrExtraction(legacy, assembled, flags.ugr)
+    val badajozRestored = restoreBadajozExtraction(assembled, flags.badajoz)
+    val ugrRestored = restoreUgrExtraction(legacy, badajozRestored, flags.ugr)
     val sevillaRestored = restoreSevillaAtseExtraction(legacy, ugrRestored, flags.sevillaAtse)
     val accedaRestored = restoreAccedaExtraction(legacy, sevillaRestored, flags.acceda)
     val xuntaRestored = restoreXuntaExtraction(legacy, accedaRestored, flags.xuntaGalicia)
@@ -763,4 +782,23 @@ private fun restoreUgrExtraction(legacy: String, actual: String, enabled: Boolea
         .replace("      installUgrMethodHooks(value, includeUgrSetup);\n", hooks)
         .replace("    const isExactUgrLiteralCall = matchesUgrSign(args);\n", branch)
         .replace("isExactUgrLiteralCall ? encodeUgrLiteral() :", "isExactUgrLiteralCall ? ugrLiteralBase64 :")
+}
+
+private fun restoreBadajozExtraction(actual: String, enabled: Boolean): String {
+    val module = "\n  {\n    let badajozSignHookReadyDiagnosticPosted = false;\n    const badajozDiagnosticWrappedFunctions = new WeakSet();\n    const badajozDiagnosticPostedStages = new Set();\n    const badajozOrigin = \"https://sede.dip-badajoz.es\";\n    const badajozExtraProperties =\n      \"policy=FirmaAGE\\nheadless=true\\nfilters=nonexpired:true;authCert:true\";\n\n    function markBadajozSignHookReady() {\n      try {\n        window.__jfmBadajozSignHookReady = true;\n      } catch (_) {}\n      if (!badajozSignHookReadyDiagnosticPosted) {\n        badajozSignHookReadyDiagnosticPosted = true;\n        postShimDiagnostic(\"BADAJOZ_SIGN_HOOK_READY\");\n      }\n    }\n\n    function postBadajozDiagnosticOnce(stage) {\n      if (badajozDiagnosticPostedStages.has(stage)) {\n        return;\n      }\n      badajozDiagnosticPostedStages.add(stage);\n      postShimDiagnostic(stage);\n    }\n\n    function wrapBadajozDiagnostic(target, name, stage) {\n      if (target == null || (typeof target !== \"object\" && typeof target !== \"function\")) {\n        return;\n      }\n      const current = target[name];\n      if (typeof current !== \"function\" || badajozDiagnosticWrappedFunctions.has(current)) {\n        return;\n      }\n      const wrapped = function() {\n        postBadajozDiagnosticOnce(stage);\n        return Reflect.apply(current, this, arguments);\n      };\n      try {\n        target[name] = wrapped;\n        badajozDiagnosticWrappedFunctions.add(wrapped);\n      } catch (_) {}\n    }\n\n    getBadajozExtraProperties = () => badajozExtraProperties;\n\n    notifyBadajozSignHook = call => {\n      if (call === \"SIGN\" && badajozCompatibilityEnabled &&\n          !badajozSignHookReadyDiagnosticPosted) {\n        markBadajozSignHookReady();\n      }\n    };\n\n    repairBadajozDiagnostics = () => {\n        if (badajozCompatibilityEnabled) {\n          wrapBadajozDiagnostic(window, \"pulsarFirmarIdentificate\", \"BADAJOZ_PULSAR_SIGN_ENTRY\");\n          wrapBadajozDiagnostic(window, \"firmar\", \"BADAJOZ_FIRMAR_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"getBase64FromText\", \"BADAJOZ_GET_BASE64_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"echo\", \"BADAJOZ_ECHO_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"setForceWSMode\", \"BADAJOZ_FORCE_WS_ENTRY\");\n        }\n    };\n\n    installBadajozLateHooks = () => {\n      if (badajozCompatibilityEnabled) {\n        postShimDiagnostic(\"BADAJOZ_LATE_REWRAP_STARTED\");\n        document.addEventListener(\"click\", event => {\n          if (event.target && event.target.id === \"firmar\") postBadajozDiagnosticOnce(\"BADAJOZ_CERT_BUTTON_CLICK\");\n        }, true);\n      }\n    };\n\n    matchesBadajozSign = (args, successCallback, errorCallback) => {\n      const isBadajozOrigin =\n        badajozCompatibilityEnabled && window.location.origin === badajozOrigin;\n      const isExactBadajozCall =\n        isBadajozOrigin && args.length === 6 &&\n        typeof args[0] === \"string\" && args[0].length > 0 &&\n        args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&\n        args[1] === \"SHA256withRSA\" && typeof args[2] === \"string\" && args[2].toLowerCase() === \"cades\" &&\n        equivalentLiteralProperties(args[3], badajozExtraProperties) &&\n        typeof successCallback === \"function\" && typeof errorCallback === \"function\";\n      return isBadajozOrigin ? isExactBadajozCall : null;\n    };\n  }\n"
+    assertEquals(enabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("extraProperties: isExactBadajozCall ? getBadajozExtraProperties() : args[3]", "extraProperties: isExactBadajozCall ? badajozExtraProperties : args[3]")
+        .replace("if (isExactBadajozCall === false)", "if (isBadajozOrigin && !isExactBadajozCall)")
+        .replace("    const isExactBadajozCall = matchesBadajozSign(args, successCallback, errorCallback);\n", "    const isBadajozOrigin =\n      badajozCompatibilityEnabled && window.location.origin === badajozOrigin;\n    const isExactBadajozCall =\n      isBadajozOrigin && args.length === 6 &&\n      typeof args[0] === \"string\" && args[0].length > 0 &&\n      args[0].length <= maxDirectDataChars && base64Pattern.test(args[0]) &&\n      args[1] === \"SHA256withRSA\" && typeof args[2] === \"string\" && args[2].toLowerCase() === \"cades\" &&\n      equivalentLiteralProperties(args[3], badajozExtraProperties) &&\n      typeof successCallback === \"function\" && typeof errorCallback === \"function\";\n")
+        .replace("    if (typeof current === \"function\") notifyBadajozSignHook(call);\n", "    if (typeof current === \"function\" && call === \"SIGN\" && badajozCompatibilityEnabled &&\n        !badajozSignHookReadyDiagnosticPosted) {\n      markBadajozSignHookReady();\n    }\n")
+        .replace("        notifyBadajozSignHook(call);\n", "        if (call === \"SIGN\" && badajozCompatibilityEnabled &&\n            !badajozSignHookReadyDiagnosticPosted) {\n          markBadajozSignHookReady();\n        }\n")
+        .replace("    installBadajozLateHooks();\n", "    if (badajozCompatibilityEnabled) {\n      postShimDiagnostic(\"BADAJOZ_LATE_REWRAP_STARTED\");\n      document.addEventListener(\"click\", event => {\n        if (event.target && event.target.id === \"firmar\") postBadajozDiagnosticOnce(\"BADAJOZ_CERT_BUTTON_CLICK\");\n      }, true);\n    }\n")
+        .replace("        repairBadajozDiagnostics();\n", "        if (badajozCompatibilityEnabled) {\n          wrapBadajozDiagnostic(window, \"pulsarFirmarIdentificate\", \"BADAJOZ_PULSAR_SIGN_ENTRY\");\n          wrapBadajozDiagnostic(window, \"firmar\", \"BADAJOZ_FIRMAR_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"getBase64FromText\", \"BADAJOZ_GET_BASE64_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"echo\", \"BADAJOZ_ECHO_ENTRY\");\n          wrapBadajozDiagnostic(window.MiniApplet, \"setForceWSMode\", \"BADAJOZ_FORCE_WS_ENTRY\");\n        }\n")
+        .replace("  function wrapMiniApplet(", "  function wrapBadajozDiagnostic(target, name, stage) {\n    if (target == null || (typeof target !== \"object\" && typeof target !== \"function\")) {\n      return;\n    }\n    const current = target[name];\n    if (typeof current !== \"function\" || badajozDiagnosticWrappedFunctions.has(current)) {\n      return;\n    }\n    const wrapped = function() {\n      postBadajozDiagnosticOnce(stage);\n      return Reflect.apply(current, this, arguments);\n    };\n    try {\n      target[name] = wrapped;\n      badajozDiagnosticWrappedFunctions.add(wrapped);\n    } catch (_) {}\n  }\n\n  function wrapMiniApplet(")
+        .replace("  const euskadiProfileId =", "  const badajozOrigin = \"https://sede.dip-badajoz.es\";\n  const badajozExtraProperties =\n    \"policy=FirmaAGE\\nheadless=true\\nfilters=nonexpired:true;authCert:true\";\n  const euskadiProfileId =")
+        .replace("  postShimDiagnostic(\"SCRIPT_INSTALLED\");", "  function postBadajozDiagnosticOnce(stage) {\n    if (badajozDiagnosticPostedStages.has(stage)) {\n      return;\n    }\n    badajozDiagnosticPostedStages.add(stage);\n    postShimDiagnostic(stage);\n  }\n\n  postShimDiagnostic(\"SCRIPT_INSTALLED\");")
+        .replace("  function postShimDiagnostic", "  function markBadajozSignHookReady() {\n    try {\n      window.__jfmBadajozSignHookReady = true;\n    } catch (_) {}\n    if (!badajozSignHookReadyDiagnosticPosted) {\n      badajozSignHookReadyDiagnosticPosted = true;\n      postShimDiagnostic(\"BADAJOZ_SIGN_HOOK_READY\");\n    }\n  }\n\n  function postShimDiagnostic")
+        .replace("  // null: not applicable; false: reject; true: exact tuple.\n  let matchesBadajozSign = () => null;\n  let getBadajozExtraProperties = () => null;\n  let notifyBadajozSignHook = () => {};\n  let repairBadajozDiagnostics = () => {};\n  let installBadajozLateHooks = () => {};\n", "  let badajozSignHookReadyDiagnosticPosted = false;\n  const badajozDiagnosticWrappedFunctions = new WeakSet();\n  const badajozDiagnosticPostedStages = new Set();\n")
 }
