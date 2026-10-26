@@ -495,13 +495,13 @@ legal/dependencies/a8bda3d26dee65a7d781915538ec4462f11937bc72a14973e28af37c50653
 legal/dependencies/cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30.txt
 legal/upstream/Apache-2.0.txt
 
-org.bouncycastle:bcpkix-jdk18on:1.85
+org.bouncycastle:bcpkix-jdk18on:1.86
 legal/dependencies/0e01f1549c9022f406392ac2947d32223b7c2e977d21ea2f8c182fdeb4dae5fd.txt
 
-org.bouncycastle:bcprov-jdk18on:1.85
+org.bouncycastle:bcprov-jdk18on:1.86
 legal/dependencies/0e01f1549c9022f406392ac2947d32223b7c2e977d21ea2f8c182fdeb4dae5fd.txt
 
-org.bouncycastle:bcutil-jdk18on:1.85
+org.bouncycastle:bcutil-jdk18on:1.86
 legal/dependencies/0e01f1549c9022f406392ac2947d32223b7c2e977d21ea2f8c182fdeb4dae5fd.txt
 
 org.codehaus.woodstox:stax2-api:4.2.1

@@ -342,6 +342,8 @@ android {
 val javaToolchains = extensions.getByType<org.gradle.jvm.toolchain.JavaToolchainService>()
 
 tasks.withType<Test>().configureEach {
+    // Robolectric 4.17 needs SharedSecrets for file-descriptor interception on JDK 21.
+    jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
     javaLauncher.set(
         javaToolchains.launcherFor {
             languageVersion.set(JavaLanguageVersion.of(21))

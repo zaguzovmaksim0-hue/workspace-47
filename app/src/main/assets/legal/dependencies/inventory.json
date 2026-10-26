@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "configuration": "optimizedRuntimeClasspath",
-  "lock_sha256": "d99d3e95c9b7172158bab87b1ea383183f8668c687c6b916ef943a81b92dd3c3",
+  "lock_sha256": "bcd43559175587eff8bc58348bc57d9669eb3781bb6a4119f6a2ee92b0079c9a",
   "release_approved": false,
   "limitations": [
     "Cache evidence is not a resolved-artifact selection proof.",
@@ -3318,11 +3318,11 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "org.bouncycastle:bcpkix-jdk18on:1.85",
+      "coordinate": "org.bouncycastle:bcpkix-jdk18on:1.86",
       "artifacts": [
         {
-          "file": "bcpkix-jdk18on-1.85.jar",
-          "sha256": "c9f82b2d4e99c4bbdfccf684e52cc06ea06a0b567bfd0d08f9c5a3f417055996",
+          "file": "bcpkix-jdk18on-1.86.jar",
+          "sha256": "8d8b41a4b149bdae8d331f059a578870954d1e3ff29f8269a9eb3ee19a7e4ef7",
           "notices": [
             {
               "entry": "META-INF/LICENSE.md",
@@ -3334,8 +3334,8 @@
       ],
       "poms": [
         {
-          "file": "bcpkix-jdk18on-1.85.pom",
-          "sha256": "9b052b0cb85cb7d8bb0956afcc74f31c814f1c67e03498e1ca74f8fe8611d957",
+          "file": "bcpkix-jdk18on-1.86.pom",
+          "sha256": "44989844fb17b39eb08eabeaf81e1fd16ac50c994d5c02119f891220c3ac5878",
           "licenses": [
             {
               "name": "Bouncy Castle Licence",
@@ -3347,11 +3347,11 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "org.bouncycastle:bcprov-jdk18on:1.85",
+      "coordinate": "org.bouncycastle:bcprov-jdk18on:1.86",
       "artifacts": [
         {
-          "file": "bcprov-jdk18on-1.85.jar",
-          "sha256": "20af26bf6060bb8005cc2389916812c1e0e998dc48d2ced7131b89461b54cff7",
+          "file": "bcprov-jdk18on-1.86.jar",
+          "sha256": "2af190b300cbb0b35e248ccf5f4a06b6072030aeb3da7a98ec73abe5b4cb371f",
           "notices": [
             {
               "entry": "META-INF/LICENSE.md",
@@ -3363,8 +3363,8 @@
       ],
       "poms": [
         {
-          "file": "bcprov-jdk18on-1.85.pom",
-          "sha256": "a48e978d6b24c183c4832f5c49d71c1f84156b99c6fa9a410aafb373a254be7c",
+          "file": "bcprov-jdk18on-1.86.pom",
+          "sha256": "970b70cb75a184639b6fb9ba3c465aca6a4e1a5f3fff4d65ce8574b2fd79ef38",
           "licenses": [
             {
               "name": "Bouncy Castle Licence",
@@ -3376,11 +3376,11 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "org.bouncycastle:bcutil-jdk18on:1.85",
+      "coordinate": "org.bouncycastle:bcutil-jdk18on:1.86",
       "artifacts": [
         {
-          "file": "bcutil-jdk18on-1.85.jar",
-          "sha256": "590f55ed5d68529239898a4a5c4f730b6e37f45d1cfa3fbe51f8485abe32c42d",
+          "file": "bcutil-jdk18on-1.86.jar",
+          "sha256": "1c268e15f785aafb1e4670d8d6e5f856f69475e96c162dadcd1ff9b350e9139f",
           "notices": [
             {
               "entry": "META-INF/LICENSE.md",
@@ -3392,8 +3392,8 @@
       ],
       "poms": [
         {
-          "file": "bcutil-jdk18on-1.85.pom",
-          "sha256": "9f1c79a12a7c03d78860e05750dcc44e855e20205c7af7cffbf29a69448d85ea",
+          "file": "bcutil-jdk18on-1.86.pom",
+          "sha256": "2209b3e5d1eb2bb3c593b824c1b8f142b05dea8e9df7400b0f33f2b91a0741fa",
           "licenses": [
             {
               "name": "Bouncy Castle Licence",
