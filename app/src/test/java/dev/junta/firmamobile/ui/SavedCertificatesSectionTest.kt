@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.runtime.CompositionLocalProvider
 import dev.junta.firmamobile.testing.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -65,6 +66,30 @@ class SavedCertificatesSectionTest {
         rule.setContent { JuntaFirmaTheme { AppRoot() } }
 
         rule.onNodeWithTag("saved-certificates").assertDoesNotExist()
+    }
+
+    @Test
+    fun fullCatalogueShowsAnActionableMessage() = assertCatalogError(
+        "CATALOG_FULL",
+        "El catálogo de certificados está lleno. Elimina un certificado guardado para añadir otro.",
+    )
+
+    @Test
+    fun duplicateDocumentShowsAlreadySavedInsteadOfTheGenericError() = assertCatalogError(
+        "ALREADY_SAVED", "Este documento ya está guardado en el catálogo.",
+    )
+
+    private fun assertCatalogError(name: String, message: String) {
+        val actions = SavedCertificatesActions(
+            SavedCertificatesUiState(listOf(active, saved), CertificateUiError.valueOf(name)),
+            onAdd = {}, onSwitch = {}, onRemove = {},
+        )
+        rule.setContent {
+            CompositionLocalProvider(LocalSavedCertificates provides actions) {
+                JuntaFirmaTheme { savedCertificatesSection(CertificateUiState.NoCertificate()) }
+            }
+        }
+        rule.onNodeWithText(message).assertExists()
     }
 
     private fun entry(name: String) = StoredCertificateEntry(

@@ -44,7 +44,12 @@ internal fun savedCertificatesSection(state: CertificateUiState) {
         }
         saved.forEach { savedCertificateRow(it, actions) }
         actions.state.error?.let {
-            Text(stringResource(R.string.saved_certificate_error), color = MaterialTheme.colorScheme.error)
+            val message = when (it) {
+                CertificateUiError.CATALOG_FULL -> R.string.error_catalog_full
+                CertificateUiError.ALREADY_SAVED -> R.string.error_already_saved
+                else -> R.string.saved_certificate_error
+            }
+            Text(stringResource(message), color = MaterialTheme.colorScheme.error)
         }
         TextButton(
             onClick = actions.onAdd,

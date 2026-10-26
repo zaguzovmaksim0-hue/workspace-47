@@ -50,6 +50,10 @@ interface CertificateReferenceCatalogStore : CertificateReferenceStore {
     suspend fun acknowledgeKeyDeletion(alias: String)
 }
 
+/** An expected append refusal; other validation and persistence failures remain storage errors. */
+internal class CertificateCatalogException(val code: CertificateSelectionErrorCode) :
+    IllegalArgumentException(code.name)
+
 internal object CertificateReferenceCatalogCodec {
     const val MAX_ENTRIES = 16
     private const val VERSION = 3

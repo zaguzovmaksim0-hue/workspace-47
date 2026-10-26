@@ -65,11 +65,11 @@ class CertificateFileCatalogTest {
         store.write(reference("active"))
 
         // A duplicate URI fails, and the saved entry keeps its grant.
-        assertFailure(catalog.add(uri("active")))
+        assertEquals("ALREADY_SAVED", (catalog.add(uri("active")) as CertificateSelectionResult.Failure).code.name)
         repeat(CertificateReferenceCatalogCodec.MAX_ENTRIES - 1) {
             assertTrue(catalog.add(uri("e$it")) is CertificateSelectionResult.Success)
         }
-        assertFailure(catalog.add(uri("overflow")))
+        assertEquals("CATALOG_FULL", (catalog.add(uri("overflow")) as CertificateSelectionResult.Failure).code.name)
 
         assertEquals(listOf(uri("overflow")), access.released)
         assertEquals(CertificateReferenceCatalogCodec.MAX_ENTRIES, store.readCatalog().entries.size)
@@ -126,6 +126,49 @@ class CertificateFileCatalogTest {
         repository.removeInactive(former)
         assertEquals(listOf(uri("saved")), repository.savedEntries().map { it.reference?.uri })
         assertEquals(listOf(uri("active")), access.released)
+    }
+
+    @Test
+    fun duplicateInactiveUriKeepsItsGrantAndTheWholeCatalog() = runBlocking {
+        val repository = CertificateRepository(access, store, Pkcs12Loader(), Dispatchers.IO)
+        store.write(reference("active"))
+        repository.saveInactive(uri("saved"))
+        val before = store.readCatalog()
+
+        val result = repository.saveInactive(uri("saved"))
+
+        assertTrue(access.released.isEmpty())
+        assertEquals(before, store.readCatalog())
+        assertEquals("ALREADY_SAVED", (result as CertificateSelectionResult.Failure).code.name)
+    }
+
+    @Test
+    fun fullCatalogReportsCapacityAndReleasesOnlyTheNewGrant() = runBlocking {
+        store.write(reference("active"))
+        repeat(CertificateReferenceCatalogCodec.MAX_ENTRIES - 1) { catalog.add(uri("saved-$it")) }
+        val before = store.readCatalog()
+
+        val result = catalog.add(uri("overflow"))
+
+        assertEquals(before, store.readCatalog())
+        assertEquals(listOf(uri("overflow")), access.released)
+        assertEquals("CATALOG_FULL", (result as CertificateSelectionResult.Failure).code.name)
+    }
+
+    @Test
+    fun unexpectedAppendFailureStillReportsStorageFailureAndRollsBackItsGrant() = runBlocking {
+        store.write(reference("active"))
+        val before = store.readCatalog()
+        val broken = object : CertificateReferenceCatalogStore by store {
+            override suspend fun add(reference: StoredCertificateReference): StoredCertificateEntry =
+                throw java.io.IOException("Synthetic commit failure")
+        }
+        val repository = CertificateRepository(access, broken, Pkcs12Loader(), Dispatchers.IO)
+
+        assertFailure(repository.saveInactive(uri("new")))
+
+        assertEquals(before, store.readCatalog())
+        assertEquals(listOf(uri("new")), access.released)
     }
 
     private fun signingKey() = StoredSigningKeyReference(

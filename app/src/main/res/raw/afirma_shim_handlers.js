@@ -444,25 +444,8 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
-    const isPoliciaOrigin =
-      policiaCompatibilityEnabled && window.location.origin === policiaOrigin;
-    const isPoliciaProcedurePage =
-      isPoliciaOrigin &&
-      window.location.href === policiaProcedurePage &&
-      window.location.search === "" &&
-      window.location.hash === "";
-    const isExactPoliciaCall =
-      isPoliciaProcedurePage &&
-      typeof args[0] === "string" &&
-      args[0].length > 0 &&
-      args[0].length <= maxDirectDataChars &&
-      base64Pattern.test(args[0]) &&
-      args[1] === "SHA1withRSA" &&
-      args[2] === "XAdES" &&
-      (args[3] === policiaExtraProperties || args[3] === policiaExtraProperties.replace(/\n/g, "\r\n")) &&
-      typeof successCallback === "function" &&
-      typeof errorCallback === "function";
-    if (isPoliciaOrigin && !isExactPoliciaCall) {
+    const isExactPoliciaCall = matchesPoliciaSign(args, successCallback, errorCallback);
+    if (isExactPoliciaCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

@@ -53,6 +53,7 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.JCCM_REGISTRO -> R.raw.afirma_shim_jccm_registro
             AfirmaJavascriptShimFragment.AIREF -> R.raw.afirma_shim_airef
             AfirmaJavascriptShimFragment.CDTI -> R.raw.afirma_shim_cdti
+            AfirmaJavascriptShimFragment.POLICIA -> R.raw.afirma_shim_policia
             AfirmaJavascriptShimFragment.HANDLERS -> R.raw.afirma_shim_handlers
             AfirmaJavascriptShimFragment.INSTALLATION -> R.raw.afirma_shim_installation
         }
