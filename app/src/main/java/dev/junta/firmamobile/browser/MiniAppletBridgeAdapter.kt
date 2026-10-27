@@ -1008,7 +1008,8 @@ internal class ProfileMiniAppletBridgeAdapter(
     ): Boolean {
         val page = currentPageUrl?.let { runCatching { URI(it) }.getOrNull() } ?: return false
         val path = page.rawPath ?: return false
-        val signingPage = page.scheme == "https" && page.host == "seu.conselldeivissa.es" &&
+        val eivissaHost = URI(EivissaCadesDetachedAdapter.INITIATOR_ORIGIN).host
+        val signingPage = page.scheme == "https" && page.host == eivissaHost &&
             page.userInfo == null && (page.port == -1 || page.port == 443) &&
             page.rawQuery == null && page.rawFragment == null && EIVISSA_SUMMARY_PATH.matches(path)
         return signingPage &&
