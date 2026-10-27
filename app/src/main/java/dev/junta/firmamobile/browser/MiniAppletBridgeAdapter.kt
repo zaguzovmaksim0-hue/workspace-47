@@ -1280,7 +1280,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             origin.serialized == MinecoPadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(MinecoPadesAdapter.INITIATOR_ORIGIN)) &&
             profile.redirectOrigins.isEmpty() &&
-            profile.trustedBrowseOrigins == MINECO_TRUSTED_BROWSE_ORIGINS &&
+            profile.trustedBrowseOrigins == MinecoPadesAdapter.TRUSTED_BROWSE_ORIGINS &&
             profile.endpoints.isEmpty() &&
             profile.capabilities == setOf(Capability.SIGN) &&
             profile.clientAuthPolicy == null &&
@@ -1864,10 +1864,6 @@ internal class ProfileMiniAppletBridgeAdapter(
             "filters" to "signingCert:;nonexpired:",
             "expPolicy" to "FirmaAGE",
             "signatureSubFilter" to "ETSI.CAdES.detached",
-        )
-        private val MINECO_TRUSTED_BROWSE_ORIGINS = setOf(
-            ExactOrigin.parse("https://pasarela.clave.gob.es"),
-            ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
         )
         private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
         private const val CANTABRIA_PROFILE_VERSION = 1

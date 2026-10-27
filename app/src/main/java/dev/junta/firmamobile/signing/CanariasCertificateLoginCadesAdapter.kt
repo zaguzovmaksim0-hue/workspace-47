@@ -29,20 +29,21 @@ class CanariasCertificateLoginCadesAdapter internal constructor(
         const val PROFILE_ID = "canarias-sede"
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://sede.gobiernodecanarias.org"
-        const val PUBLIC_START_URL = "https://sede.gobiernodecanarias.org/sede/la_sede"
-        const val SIGNING_PAGE_URL = "https://sede.gobiernodecanarias.org/sede/identificacion"
+        const val PUBLIC_START_URL = "$INITIATOR_ORIGIN/sede/la_sede"
+        const val SIGNING_PAGE_URL = "$INITIATOR_ORIGIN/sede/identificacion"
+        const val SERVER_URL = "$INITIATOR_ORIGIN/platino/servlet_afirma/SignatureService"
         const val SAFE_DESCRIPTION =
             "Acceso con certificado a la Sede electrónica del Gobierno de Canarias"
         const val EXPECTED_EXTRA_PROPERTIES =
             "format=CAdES Detached\n" +
-                "serverUrl=https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService\n" +
+                "serverUrl=$SERVER_URL\n" +
                 "referencesDigestMethod=http://www.w3.org/2001/04/xmlenc#sha512\n" +
                 "filters=nonexpired:true;signingCert:true;issuer.rfc2254:" +
                 "(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))" +
                 "(!(O=PKI))(!(O=DO_NOT_TRUST*)))"
         internal val EXPECTED_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "format" to "CAdES Detached",
-            "serverUrl" to "https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService",
+            "serverUrl" to SERVER_URL,
             "referencesDigestMethod" to "http://www.w3.org/2001/04/xmlenc#sha512",
             "filters" to "nonexpired:true;signingCert:true;issuer.rfc2254:" +
                 "(&(!(CN=CiberCentro*))(!(CN=GobCanCA))(!(O=Gobierno de Canarias))" +
