@@ -8,7 +8,7 @@ tasks.register("verifyResolvedCoreVersion") {
     description = "Verifies the resolved AndroidX Core matrix used by the debug app."
 
     doLast {
-        val expectedVersion = "1.18.0"
+        val expectedVersion = "1.19.1"
         val expectedModules = setOf("core", "core-ktx")
         val resolved = project(":app")
             .configurations

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "configuration": "optimizedRuntimeClasspath",
-  "lock_sha256": "bcd43559175587eff8bc58348bc57d9669eb3781bb6a4119f6a2ee92b0079c9a",
+  "lock_sha256": "8d846e4be1d745f2236d7d78e812338dd835db935b8da0772e60cf76b667dc64",
   "release_approved": false,
   "limitations": [
     "Cache evidence is not a resolved-artifact selection proof.",
@@ -1202,11 +1202,11 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "androidx.core:core-ktx:1.18.0",
+      "coordinate": "androidx.core:core-ktx:1.19.1",
       "artifacts": [
         {
-          "file": "core-ktx-1.18.0.aar",
-          "sha256": "c7c511e3df838fcbcb61ace36944de6bb7c10eb597be546974f001119939c85d",
+          "file": "core-ktx-1.19.1.aar",
+          "sha256": "9a3e2919e64026ad18b42bf9931e8fea90a6a70e95e13a26519841e926fe5913",
           "notices": [
             {
               "entry": "META-INF/androidx/core/core-ktx/LICENSE.txt",
@@ -1218,8 +1218,8 @@
       ],
       "poms": [
         {
-          "file": "core-ktx-1.18.0.pom",
-          "sha256": "3a5e0009e06517627756b9203d9a8f055fda87b215a17b775bae568697854196",
+          "file": "core-ktx-1.19.1.pom",
+          "sha256": "df7efd0c621fa87d23e02b4354fc40e82935ae3b746b5aa246cc74a84472a3ba",
           "licenses": [
             {
               "name": "The Apache Software License, Version 2.0",
@@ -1260,11 +1260,11 @@
       "cached_evidence_present": true
     },
     {
-      "coordinate": "androidx.core:core:1.18.0",
+      "coordinate": "androidx.core:core:1.19.1",
       "artifacts": [
         {
-          "file": "core-1.18.0.aar",
-          "sha256": "311d83ac67d394076ec21d12ed2d10a44b59cb2929b7dce00e5a90a93842e37d",
+          "file": "core-1.19.1.aar",
+          "sha256": "08108ea780205bd54603088a62a6dd5378f63bd25542674be24cd4cdb8191a09",
           "notices": [
             {
               "entry": "META-INF/androidx/core/core/LICENSE.txt",
@@ -1276,8 +1276,8 @@
       ],
       "poms": [
         {
-          "file": "core-1.18.0.pom",
-          "sha256": "57d644ebb37d309ad959d740157d8e8424e273b9c672842e4f4c758edc6d30e7",
+          "file": "core-1.19.1.pom",
+          "sha256": "71341cd4c4d8d3b50c890852bacd373d9ce319b5f9c05aa2bd7a5b5610f33d6b",
           "licenses": [
             {
               "name": "The Apache Software License, Version 2.0",
