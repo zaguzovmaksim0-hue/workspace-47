@@ -515,6 +515,9 @@ object SiteProfileCatalogParser {
                 validateSanidadProfile(p)
             }
             CLAVE_DIRECT_PINS[p.profileId.value]?.takeIf { p.hasClientTls() }?.let { validateClaveDirectProfile(p, it) }
+            if (p.profileId.value == VEA_PEG_PROFILE_ID && p.hasClientTls()) {
+                validateVeaPegProfile(p)
+            }
             if (p.profileId.value == CARNE_JOVEN_PROFILE_ID && p.hasClientTls()) {
                 validateCarneJovenProfile(p)
             }
@@ -1124,6 +1127,94 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == pin.evidence)
     }
+
+    private fun validateVeaPegProfile(profile: SiteProfile) {
+        require(profile.profileVersion == VEA_PEG_PROFILE_VERSION)
+        require(profile.displayName == "Junta de Andalucía — Presentación electrónica general")
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == VEA_PEG_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(VEA_PEG_PORTAL_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), false))
+        require(profile.clientAuthPolicy == veaPegPolicy())
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == VEA_PEG_EVIDENCE)
+    }
+
+    private fun veaPegPolicy() = ClientAuthPolicy(
+        transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+        requestOrigins = setOf(ExactOrigin.parse(VEA_PEG_REQUEST_ORIGIN)),
+        sourceUrls = setOf(URI(VEA_PEG_SOURCE_URL)),
+        requestPath = VEA_PEG_REQUEST_PATH,
+        fixedQueryParameters = veaPegFacadeQuery(),
+        requiredEphemeralQueryParameters = VEA_PEG_TICKET_PARAMETERS,
+        allowEmptyIssuerList = true,
+        grantTtlSeconds = VEA_PEG_GRANT_TTL_SECONDS,
+        requireOfferedKeyTypeMatch = false,
+        requireTlsClientAuthExtendedKeyUsage = false,
+        requestPort = HTTPS_PORT,
+        requestMethod = HttpMethod.GET,
+        sourceFixedQueryParameters = mapOf(
+            "modoAcceso" to "afirma",
+            "codigoProcedimiento" to "PEG_VEA",
+            "comeBackUrl" to "aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2F1dGhGYWNhZGU=",
+        ),
+        sourceRequiredEphemeralQueryParameters = setOf("redirectUrl"),
+        linkedEphemeralQueryParameters = emptySet(),
+        linkedEphemeralQueryParameterMappings = emptyMap(),
+        sourceBase64UrlConstraints = mapOf(
+            "redirectUrl" to ClientAuthUrlConstraint(
+                origin = ExactOrigin.parse(VEA_PEG_PORTAL_ORIGIN),
+                path = "/inicio/procedimiento-detalle/PEG_VEA",
+                fixedQueryParameters = mapOf("iniciarSolicitud" to "true"),
+                requiredEphemeralQueryParameters = setOf("procedureId", "versionId"),
+            ),
+        ),
+        requestContinuationUrlConstraints = (1..VEA_PEG_CONTINUATION_HOPS).map { hop ->
+            ClientAuthUrlConstraint(
+                origin = ExactOrigin.parse("https://ws235-$hop.juntadeandalucia.es"),
+                path = "/authenticationFacade/${hop + 1}",
+                fixedQueryParameters = veaPegFacadeQuery(),
+                requiredEphemeralQueryParameters = VEA_PEG_TICKET_PARAMETERS,
+            )
+        }.toSet(),
+        returnUrlConstraints = veaPegReturnConstraints(),
+    )
+
+    private fun veaPegReturnConstraints() = setOf(
+        ClientAuthUrlConstraint(
+            origin = ExactOrigin.parse(VEA_PEG_API_ORIGIN),
+            path = "/auth/returnLogin",
+            requiredEphemeralQueryParameters = setOf("resCode"),
+        ),
+        ClientAuthUrlConstraint(
+            origin = ExactOrigin.parse(VEA_PEG_API_ORIGIN),
+            path = "/auth/returnLogin",
+            fixedQueryParameters = mapOf("appId" to "CHIE.VEA"),
+            requiredEphemeralQueryParameters = setOf("resCode", "ticketId", "webSessionId"),
+        ),
+        ClientAuthUrlConstraint(origin = ExactOrigin.parse(VEA_PEG_API_ORIGIN), path = "/auth/endLogin"),
+        ClientAuthUrlConstraint(
+            origin = ExactOrigin.parse(VEA_PEG_PORTAL_ORIGIN),
+            path = "/authFacade",
+            requiredEphemeralQueryParameters = setOf("error", "redirectUrl"),
+        ),
+        ClientAuthUrlConstraint(
+            origin = ExactOrigin.parse(VEA_PEG_PORTAL_ORIGIN),
+            path = "/authFacade",
+            requiredEphemeralQueryParameters = setOf("token", "redirectUrl"),
+        ),
+    )
+
+    private fun veaPegFacadeQuery() = mapOf(
+        "action" to "validateCert",
+        "appId" to "CHIE.VEA",
+        "comeBackURL" to "aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu",
+    )
 
     private fun validateCarneJovenProfile(profile: SiteProfile) {
         require(profile.profileVersion == 1)
@@ -3173,6 +3264,27 @@ object SiteProfileCatalogParser {
             "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
     )
+    private const val VEA_PEG_PROFILE_ID = "junta-andalucia-vea-peg"
+    private const val VEA_PEG_PROFILE_VERSION = 3
+    private const val VEA_PEG_START_URL =
+        "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"
+    private const val VEA_PEG_PORTAL_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
+    private const val VEA_PEG_API_ORIGIN = "https://api-veaja.cloud.juntadeandalucia.es"
+    private const val VEA_PEG_REQUEST_ORIGIN = "https://ws235.juntadeandalucia.es"
+    private const val VEA_PEG_SOURCE_URL = "https://api-veaja.cloud.juntadeandalucia.es/auth/login"
+    private const val VEA_PEG_REQUEST_PATH = "/authenticationFacade"
+    private const val VEA_PEG_GRANT_TTL_SECONDS = 60
+    private const val VEA_PEG_CONTINUATION_HOPS = 6
+    private val VEA_PEG_TICKET_PARAMETERS = setOf("ticketId", "webSessionId")
+    private val VEA_PEG_EVIDENCE = listOf(
+        "https://www.juntadeandalucia.es/servicios/sede/tramites.html",
+        VEA_PEG_START_URL,
+        VEA_PEG_SOURCE_URL,
+        "https://ws235.juntadeandalucia.es/authenticationFacade",
+        "https://ws235-2.juntadeandalucia.es/authenticationFacade/3",
+        "https://ws235-3.juntadeandalucia.es/authenticationFacade/4",
+        "https://ws235-4.juntadeandalucia.es/authenticationFacade/5",
+    ).associateWith { "2026-08-28" }
     private const val CLAVE_IDENT_ORIGIN = "https://pasarela-ident.clave.gob.es"
     private const val CLAVE_AUTHENTICATE_PATH = "/IdP2/AuthenticateCitizen"
     private const val CLAVE_IDENT_EVIDENCE_URL = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
