@@ -3,6 +3,7 @@ package dev.junta.firmamobile.signing
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import java.net.URI
 import java.nio.charset.CodingErrorAction
 import java.security.MessageDigest
 import java.security.Signature
@@ -138,7 +139,10 @@ class PoliciaXadesDetachedAdapter internal constructor(
         val ID = SigningProtocolId("policia-xades-detached-v1")
         const val PROFILE_ID = "policia-solicitud-generica"
         const val PROFILE_VERSION = 1
-        const val HOST = "sede.policia.gob.es"
+        const val ORIGIN = "https://sede.policia.gob.es"
+        const val START_URL = "$ORIGIN/"
+        const val PROCEDURE_PAGE = "$ORIGIN/portalCiudadano/_es/solicitudGenerica.xhtml"
+        val HOST: String = URI(ORIGIN).host
         const val SAFE_DESCRIPTION = "Firma de solicitud en la Sede de la Policía Nacional"
         val EXPECTED_EXTRA_PROPERTIES = linkedMapOf(
             "format" to "XAdES Detached",

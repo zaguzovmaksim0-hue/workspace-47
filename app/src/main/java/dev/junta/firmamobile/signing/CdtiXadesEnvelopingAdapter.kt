@@ -24,9 +24,9 @@ class CdtiXadesEnvelopingAdapter internal constructor(
         val ID = SigningProtocolId("cdti-xades-enveloping-v1")
         const val PROFILE_ID = "cdti-certificate-validation"
         const val PROFILE_VERSION = 1
-        const val START_URL =
-            "https://sede.cdti.gob.es/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx"
         const val INITIATOR_ORIGIN = "https://sede.cdti.gob.es"
+        const val START_URL =
+            "$INITIATOR_ORIGIN/AreaPrivada/Expedientes/Common/Certificados/ValidarCertificado.aspx"
         const val SAFE_DESCRIPTION = "Validación de certificado digital en CDTI"
         const val EXPECTED_EXTRA_PROPERTIES = "filters=nonexpired"
 

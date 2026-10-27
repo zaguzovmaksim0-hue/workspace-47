@@ -15,10 +15,12 @@ import dev.junta.firmamobile.profile.SignatureFormat
 import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.MonotonicSecurityTime
+import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.AirefXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
+import dev.junta.firmamobile.signing.CantabriaRecCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
@@ -28,6 +30,7 @@ import dev.junta.firmamobile.signing.EivissaCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
+import dev.junta.firmamobile.signing.PoliciaXadesDetachedAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
 import dev.junta.firmamobile.signing.FuerteventuraPadesAdapter
 import dev.junta.firmamobile.signing.TransparenciaPadesAdapter
@@ -963,12 +966,12 @@ internal class ProfileMiniAppletBridgeAdapter(
         signingProtocolId: String,
         currentPageUrl: String?,
     ): Boolean =
-        currentPageUrl == JCCM_START_URL &&
+        currentPageUrl == JccmCertificateLoginProbeCadesAdapter.START_URL &&
             profile.profileId.value == JccmCertificateLoginProbeCadesAdapter.PROFILE_ID &&
             profile.profileVersion == JccmCertificateLoginProbeCadesAdapter.PROFILE_VERSION &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&
-            profile.startUrl.toASCIIString() == JCCM_START_URL &&
+            profile.startUrl.toASCIIString() == JccmCertificateLoginProbeCadesAdapter.START_URL &&
             origin.serialized == JccmCertificateLoginProbeCadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(
                 ExactOrigin.parse(JccmCertificateLoginProbeCadesAdapter.INITIATOR_ORIGIN),
@@ -1534,7 +1537,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.profileVersion == UgrCadesDetachedAdapter.PROFILE_VERSION &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&
-            profile.startUrl.toASCIIString() == UGR_START_URL &&
+            profile.startUrl.toASCIIString() == UgrCadesDetachedAdapter.START_URL &&
             origin.serialized == UgrCadesDetachedAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(UgrCadesDetachedAdapter.INITIATOR_ORIGIN)) &&
             profile.redirectOrigins.isEmpty() &&
@@ -1570,9 +1573,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.displayName == CANTABRIA_DISPLAY_NAME &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&
-            profile.startUrl.toASCIIString() == CANTABRIA_START_URL &&
-            origin.serialized == CANTABRIA_ORIGIN &&
-            profile.initiatorOrigins == setOf(ExactOrigin.parse(CANTABRIA_ORIGIN)) &&
+            profile.startUrl.toASCIIString() == CantabriaRecCertificateLoginCadesAdapter.START_URL &&
+            origin.serialized == CantabriaRecCertificateLoginCadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(
+                    CantabriaRecCertificateLoginCadesAdapter.INITIATOR_ORIGIN,
+                ),
+            ) &&
             profile.redirectOrigins.isEmpty() &&
             profile.trustedBrowseOrigins.isEmpty() &&
             profile.endpoints.isEmpty() &&
@@ -1786,19 +1793,17 @@ internal class ProfileMiniAppletBridgeAdapter(
         private val AIREF_SIGNING_QUERY = Regex("id=[0-9]{1,20}")
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val SEVILLA_ATSE_PROFILE_VERSION = 1
-        private const val SEVILLA_ATSE_START_URL =
-            "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
-        private const val SEVILLA_ATSE_ORIGIN = "https://www.sevilla.org"
+        private val SEVILLA_ATSE_START_URL = SevillaAtseXadesEnvelopingAdapter.START_URL
+        private val SEVILLA_ATSE_ORIGIN = SevillaAtseXadesEnvelopingAdapter.ORIGIN
         private const val SEVILLA_ATSE_SAFE_DESCRIPTION =
             "Acceso con certificado a la Agencia Tributaria de Sevilla"
         private const val SEVILLA_ATSE_PROTOCOL_ID = "sevilla-atse-xades-enveloping-v1"
         private const val SEVILLA_ATSE_CHALLENGE_BYTES = 40
         private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
         private const val POLICIA_PROFILE_VERSION = 1
-        private const val POLICIA_START_URL = "https://sede.policia.gob.es/"
-        private const val POLICIA_PROCEDURE_PAGE =
-            "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml"
-        private const val POLICIA_ORIGIN = "https://sede.policia.gob.es"
+        private val POLICIA_START_URL = PoliciaXadesDetachedAdapter.START_URL
+        private val POLICIA_PROCEDURE_PAGE = PoliciaXadesDetachedAdapter.PROCEDURE_PAGE
+        private val POLICIA_ORIGIN = PoliciaXadesDetachedAdapter.ORIGIN
         private const val POLICIA_SAFE_DESCRIPTION =
             "Firma de solicitud en la Sede de la Policía Nacional"
         private const val POLICIA_PROTOCOL_ID = "policia-xades-detached-v1"
@@ -1807,14 +1812,10 @@ internal class ProfileMiniAppletBridgeAdapter(
             "filters.1" to "dnie:;nonexpired:",
             "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
         )
-        private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
         private const val LLEIDA_LOGIN_PAGE_URL =
             "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
         private const val BADAJOZ_LOGIN_PAGE_URL =
             "https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1"
-        private const val JCCM_START_URL =
-            "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
-                "formularios/identificacion.phtml"
         private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
         private const val JCCM_REGISTRO_PROFILE_VERSION = 1
         private const val JCCM_REGISTRO_START_URL =
@@ -1872,8 +1873,6 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val CANTABRIA_PROFILE_VERSION = 1
         private const val CANTABRIA_DISPLAY_NAME =
             "Registro Electrónico Común de Cantabria — Acceso con certificado"
-        private const val CANTABRIA_START_URL = "https://rec.cantabria.es/rec/bienvenida.htm"
-        private const val CANTABRIA_ORIGIN = "https://rec.cantabria.es"
         private const val CANTABRIA_SAFE_DESCRIPTION =
             "Acceso con certificado al Registro Electrónico Común de Cantabria"
         private const val CANTABRIA_PROTOCOL_ID = "cantabria-rec-cert-login-cades-v1"

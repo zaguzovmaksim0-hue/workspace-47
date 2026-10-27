@@ -13,8 +13,8 @@ class FuerteventuraPadesAdapter(
         const val PROFILE_ID = "fuerteventura-sede-electronica"
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://sede.cabildofuer.es"
-        const val PUBLIC_START_URL = "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
-        const val SIGNING_PAGE_URL = "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert"
+        const val PUBLIC_START_URL = "$INITIATOR_ORIGIN/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
+        const val SIGNING_PAGE_URL = "$INITIATOR_ORIGIN/eAdmin/Registrar.do?action=verYfirmar&modo=cert"
         const val SAFE_DESCRIPTION = "Firma PAdES de solicitud en la Sede electrónica del Cabildo Insular de Fuerteventura"
         val EXPECTED_EXTRA_PROPERTIES = listOf(
             "signaturePositionOnPageLowerLeftX = 50",
