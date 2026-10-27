@@ -154,6 +154,67 @@ class ValenciaCertificateSelectionBridgeAdapterTest {
         assertEquals(DOCUMENT_ID, result.navigationId.value)
     }
 
+    @Test
+    fun originLookalikesSchemesPortsAndComponentsFailClosed() {
+        val invalidOrigins = listOf(
+            "https://evil.example",
+            "https://portafirmas.dival.es.evil.example",
+            "https://evilportafirmas.dival.es",
+            "http://portafirmas.dival.es",
+            "https://portafirmas.dival.es:8443",
+            "https://portafirmas.dival.es/extra",
+            "https://user@portafirmas.dival.es",
+            "https://portafirmas.dival.es?extra=1",
+            "https://portafirmas.dival.es#extra",
+        )
+        invalidOrigins.forEach { origin ->
+            val result = adapter.route(
+                rawMessage = message(EXTRA_PROPERTIES),
+                sourceOrigin = Uri.parse(origin),
+                isMainFrame = true,
+                navigationEpoch = 17,
+                currentPageUrl = START_URL,
+            ) as CertificateSelectionBridgeRouteResult.Rejected
+            assertEquals(origin, SigningErrorCode.ORIGIN_NOT_ALLOWED, result.code)
+        }
+    }
+
+    @Test
+    fun explicitDefaultSourcePortPreservesTheObservedContract() {
+        val result = adapter.route(
+            rawMessage = message(EXTRA_PROPERTIES),
+            sourceOrigin = Uri.parse("https://portafirmas.dival.es:443"),
+            isMainFrame = true,
+            navigationEpoch = 17,
+            currentPageUrl = START_URL,
+        ) as CertificateSelectionBridgeRouteResult.Accepted
+        assertEquals("https://portafirmas.dival.es", result.request.context.origin.serialized)
+        assertEquals(443, result.request.context.origin.port)
+        assertEquals(START_URL, result.request.pageUrl)
+    }
+
+    @Test
+    fun changedPagePathsQueriesSchemesAndPortsFailClosed() {
+        val invalidPages = listOf(
+            "$START_URL/extra",
+            "$START_URL?extra=1",
+            START_URL.replace("login.xhtml", "other.xhtml"),
+            START_URL.replace("https://", "http://"),
+            START_URL.replace("portafirmas.dival.es", "portafirmas.dival.es:443"),
+            START_URL.replace("portafirmas.dival.es", "portafirmas.dival.es:8443"),
+        )
+        invalidPages.forEach { page ->
+            val result = adapter.route(
+                rawMessage = message(EXTRA_PROPERTIES),
+                sourceOrigin = Uri.parse(ORIGIN),
+                isMainFrame = true,
+                navigationEpoch = 17,
+                currentPageUrl = page,
+            ) as CertificateSelectionBridgeRouteResult.Rejected
+            assertEquals(page, SigningErrorCode.UNOBSERVED_CONTRACT, result.code)
+        }
+    }
+
     private fun message(properties: String): String = JSONObject()
         .put("type", "MINIAPPLET_SELECT_CERTIFICATE")
         .put("documentId", DOCUMENT_ID)
