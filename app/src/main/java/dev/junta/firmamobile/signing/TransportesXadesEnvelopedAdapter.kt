@@ -121,10 +121,11 @@ class TransportesXadesEnvelopedAdapter internal constructor(
         val ID = SigningProtocolId("transportes-qys-xades-enveloped-v1")
         const val PROFILE_ID = "transportes-qys-cert-login"
         const val PROFILE_VERSION = 1
-        const val START_URL = "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002"
-        const val AUTH_PAGE_URL =
-            "https://sede.transportes.gob.es/MFOM.genericprocedure.web/Autenticacion.aspx"
         const val INITIATOR_ORIGIN = "https://sede.transportes.gob.es"
+        private const val START_PATH = "/MFOM.genericprocedure.web/?id=7002"
+        private const val AUTH_PAGE_PATH = "/MFOM.genericprocedure.web/Autenticacion.aspx"
+        val START_URL = "$INITIATOR_ORIGIN$START_PATH"
+        val AUTH_PAGE_URL = "$INITIATOR_ORIGIN$AUTH_PAGE_PATH"
         const val SAFE_DESCRIPTION =
             "Acceso con certificado a Quejas y Sugerencias del Ministerio de Transportes"
         const val EXPECTED_EXTRA_PROPERTIES =
