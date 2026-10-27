@@ -150,6 +150,52 @@ class IsciiiCertificateSelectionBridgeAdapterTest {
         assertEquals(SigningErrorCode.INVALID_REQUEST, malformed.code)
     }
 
+    @Test
+    fun originVariantsAndChangedPagesFailClosedWithoutChangingDefaultPortBehavior() {
+        val invalidOrigins = listOf(
+            "https://evil.example",
+            "$ORIGIN.evil.example",
+            ORIGIN.replace("https://", "http://"),
+            "$ORIGIN:8443",
+            "$ORIGIN/extra",
+            ORIGIN.replace("https://", "https://user@"),
+            "$ORIGIN?extra=1",
+            "$ORIGIN#extra",
+        )
+        invalidOrigins.forEach { origin ->
+            val result = adapter.route(
+                rawMessage = message(EXTRA_PROPERTIES),
+                sourceOrigin = Uri.parse(origin),
+                isMainFrame = true,
+                currentPageUrl = START_URL,
+            ) as CertificateSelectionBridgeRouteResult.Rejected
+            assertEquals(origin, SigningErrorCode.ORIGIN_NOT_ALLOWED, result.code)
+        }
+        val defaultPort = adapter.route(
+            rawMessage = message(EXTRA_PROPERTIES),
+            sourceOrigin = Uri.parse("$ORIGIN:443"),
+            isMainFrame = true,
+            currentPageUrl = START_URL,
+        )
+        assertTrue(defaultPort is CertificateSelectionBridgeRouteResult.Accepted)
+        listOf(
+            "$ORIGIN/other.jsp",
+            START_URL.replace("/cargaApplet.jsp", "/extra/cargaApplet.jsp"),
+            "$START_URL&extra=1",
+            START_URL.replace("https://", "http://"),
+            START_URL.replace("sede.isciii.gob.es", "sede.isciii.gob.es:443"),
+            START_URL.replace("sede.isciii.gob.es", "sede.isciii.gob.es:8443"),
+        ).forEach { page ->
+            val result = adapter.route(
+                rawMessage = message(EXTRA_PROPERTIES),
+                sourceOrigin = Uri.parse(ORIGIN),
+                isMainFrame = true,
+                currentPageUrl = page,
+            ) as CertificateSelectionBridgeRouteResult.Rejected
+            assertEquals(page, SigningErrorCode.UNOBSERVED_CONTRACT, result.code)
+        }
+    }
+
     private fun message(properties: String): String = JSONObject()
         .put("type", "MINIAPPLET_SELECT_CERTIFICATE")
         .put("documentId", DOCUMENT_ID)
