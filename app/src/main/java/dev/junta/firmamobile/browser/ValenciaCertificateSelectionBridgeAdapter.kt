@@ -237,9 +237,9 @@ class ValenciaCertificateSelectionBridgeAdapter(
     companion object {
         const val PROFILE_ID = "diputacion-valencia-sede"
         const val PROFILE_VERSION = 1
-        const val ORIGIN = "https://portafirmas.dival.es"
         const val HOST = "portafirmas.dival.es"
-        const val START_URL = "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml"
+        const val ORIGIN = "https://$HOST"
+        const val START_URL = "$ORIGIN/signingpad/xhtml/login.xhtml"
         const val SAFE_DESCRIPTION =
             "Compartir certificado con el Portafirmas de la Diputació de València"
         const val EXTRA_PROPERTIES =
