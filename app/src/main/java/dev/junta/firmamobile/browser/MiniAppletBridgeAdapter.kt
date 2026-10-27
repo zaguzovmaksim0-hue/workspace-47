@@ -953,10 +953,12 @@ internal class ProfileMiniAppletBridgeAdapter(
 
     private fun isExactJccmRegistroPage(raw: String?): Boolean {
         val uri = raw?.let { runCatching { java.net.URI(it) }.getOrNull() } ?: return false
-        if (uri.isOpaque || uri.scheme != "https" || uri.host != "registrounicociudadanos.jccm.es" ||
-            uri.userInfo != null || uri.port !in setOf(-1, 443) || uri.rawFragment != null
-        ) return false
-        return uri.rawPath == "/registrounicociudadanos/accesoclvd.do" && uri.rawQuery == null
+        if (uri.isOpaque || uri.scheme != "https") return false
+        if (uri.host != JCCM_REGISTRO_HOST) return false
+        if (uri.userInfo != null || uri.port !in setOf(-1, 443) || uri.rawFragment != null) {
+            return false
+        }
+        return uri.rawPath == JCCM_REGISTRO_PROTECTED_PAGE_PATH && uri.rawQuery == null
     }
 
     private fun isExactJccmContract(
@@ -1815,9 +1817,14 @@ internal class ProfileMiniAppletBridgeAdapter(
         )
         private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
         private const val JCCM_REGISTRO_PROFILE_VERSION = 1
-        private const val JCCM_REGISTRO_START_URL =
-            "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"
         private const val JCCM_REGISTRO_ORIGIN = "https://registrounicociudadanos.jccm.es"
+        private val JCCM_REGISTRO_HOST = java.net.URI(JCCM_REGISTRO_ORIGIN).host
+        private val JCCM_REGISTRO_START_URL =
+            "$JCCM_REGISTRO_ORIGIN/registrounicociudadanos/acceso.do?id=SJLZ"
+        private val JCCM_REGISTRO_PROTECTED_PAGE =
+            "$JCCM_REGISTRO_ORIGIN/registrounicociudadanos/accesoclvd.do"
+        private val JCCM_REGISTRO_PROTECTED_PAGE_PATH =
+            java.net.URI(JCCM_REGISTRO_PROTECTED_PAGE).rawPath
         private const val JCCM_REGISTRO_SAFE_DESCRIPTION =
             "Firma del resumen XML de la Solicitud Genérica de JCCM"
         private const val JCCM_REGISTRO_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
