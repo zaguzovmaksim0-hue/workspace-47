@@ -28,6 +28,7 @@ class UgrCadesDetachedAdapter internal constructor(
         const val PROFILE_ID = "ugr-certificado-login"
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://sede.ugr.es"
+        const val START_URL = "$INITIATOR_ORIGIN/Hades/jsp/pantallacertificado.jsp"
         const val EXPECTED_EXTRA_PROPERTIES = ""
         const val PAYLOAD_BYTES = 22
         private const val SAFE_DESCRIPTION = "Acceso con certificado a la Universidad de Granada"
