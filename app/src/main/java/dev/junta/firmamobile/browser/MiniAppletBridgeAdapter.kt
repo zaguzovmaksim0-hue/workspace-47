@@ -30,6 +30,7 @@ import dev.junta.firmamobile.signing.EivissaCadesDetachedAdapter
 import dev.junta.firmamobile.signing.JccmCertificateLoginProbeCadesAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.MitesCertificateLoginCadesAdapter
+import dev.junta.firmamobile.signing.PoliciaXadesDetachedAdapter
 import dev.junta.firmamobile.signing.GranCanariaPadesAdapter
 import dev.junta.firmamobile.signing.FuerteventuraPadesAdapter
 import dev.junta.firmamobile.signing.TransparenciaPadesAdapter
@@ -1800,10 +1801,9 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val SEVILLA_ATSE_CHALLENGE_BYTES = 40
         private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
         private const val POLICIA_PROFILE_VERSION = 1
-        private const val POLICIA_START_URL = "https://sede.policia.gob.es/"
-        private const val POLICIA_PROCEDURE_PAGE =
-            "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml"
-        private const val POLICIA_ORIGIN = "https://sede.policia.gob.es"
+        private val POLICIA_START_URL = PoliciaXadesDetachedAdapter.START_URL
+        private val POLICIA_PROCEDURE_PAGE = PoliciaXadesDetachedAdapter.PROCEDURE_PAGE
+        private val POLICIA_ORIGIN = PoliciaXadesDetachedAdapter.ORIGIN
         private const val POLICIA_SAFE_DESCRIPTION =
             "Firma de solicitud en la Sede de la Policía Nacional"
         private const val POLICIA_PROTOCOL_ID = "policia-xades-detached-v1"
