@@ -514,6 +514,19 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
+            CLAVE_DIRECT_PINS[p.profileId.value]?.takeIf { p.hasClientTls() }?.let { validateClaveDirectProfile(p, it) }
+            if (p.profileId.value == VEA_PEG_PROFILE_ID && p.hasClientTls()) {
+                validateVeaPegProfile(p)
+            }
+            if (p.profileId.value == CARNE_JOVEN_PROFILE_ID && p.hasClientTls()) {
+                validateCarneJovenProfile(p)
+            }
+            if (p.profileId.value == AEAT_MIS_DATOS_PROFILE_ID) {
+                validateAeatMisDatosProfile(p)
+            }
+            if (p.profileId.value == IMPORTASS_PROFILE_ID) {
+                validateImportassProfile(p)
+            }
             if (p.profileId.value == TOLEDO_PROFILE_ID) {
                 validateToledoProfile(p)
             }
@@ -1054,6 +1067,281 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    // A profile id without a TLS contract (navigation-only owner) grants nothing the pins would guard.
+    private fun SiteProfile.hasClientTls() = clientAuthPolicy != null || Capability.CLIENT_TLS_AUTH in capabilities
+
+    private fun claveEvidence(reviewedOn: String, vararg urls: String) = urls.associateWith { reviewedOn }
+
+    private class ClaveOriginPins(
+        val initiator: String,
+        val redirect: Set<String>,
+        val trustedBrowse: Set<String>,
+    )
+
+    private class ClaveDirectPin(
+        val displayName: String,
+        val startUrl: String,
+        val origins: ClaveOriginPins,
+        val sourceUrl: String,
+        val keyAlgorithms: Set<String>,
+        val evidence: Map<String, String>,
+    )
+
+    private fun validateClaveDirectProfile(profile: SiteProfile, pin: ClaveDirectPin) {
+        require(profile.profileVersion == 1)
+        require(profile.displayName == pin.displayName)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == pin.startUrl)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(pin.origins.initiator)))
+        require(profile.redirectOrigins == pin.origins.redirect.map { ExactOrigin.parse(it) }.toSet())
+        require(profile.trustedBrowseOrigins == pin.origins.trustedBrowse.map { ExactOrigin.parse(it) }.toSet())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(pin.keyAlgorithms, true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(CLAVE_IDENT_ORIGIN)),
+                sourceUrls = setOf(URI(pin.sourceUrl)),
+                requestPath = CLAVE_AUTHENTICATE_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = HTTPS_PORT,
+                requestMethod = HttpMethod.GET,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = emptyMap(),
+                sourceBase64UrlConstraints = emptyMap(),
+                requestContinuationUrlConstraints = emptySet(),
+                returnUrlConstraints = emptySet(),
+            ),
+        )
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == pin.evidence)
+    }
+
+    private fun validateVeaPegProfile(profile: SiteProfile) {
+        require(profile.profileVersion == VEA_PEG_PROFILE_VERSION)
+        require(profile.displayName == "Junta de Andalucía — Presentación electrónica general")
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == VEA_PEG_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(VEA_PEG_PORTAL_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), false))
+        require(profile.clientAuthPolicy == veaPegPolicy())
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == VEA_PEG_EVIDENCE)
+    }
+
+    private fun veaPegPolicy() = ClientAuthPolicy(
+        transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+        requestOrigins = setOf(ExactOrigin.parse(VEA_PEG_REQUEST_ORIGIN)),
+        sourceUrls = setOf(URI(VEA_PEG_SOURCE_URL)),
+        requestPath = VEA_PEG_REQUEST_PATH,
+        fixedQueryParameters = veaPegFacadeQuery(),
+        requiredEphemeralQueryParameters = VEA_PEG_TICKET_PARAMETERS,
+        allowEmptyIssuerList = true,
+        grantTtlSeconds = VEA_PEG_GRANT_TTL_SECONDS,
+        requireOfferedKeyTypeMatch = false,
+        requireTlsClientAuthExtendedKeyUsage = false,
+        requestPort = HTTPS_PORT,
+        requestMethod = HttpMethod.GET,
+        sourceFixedQueryParameters = mapOf(
+            "modoAcceso" to "afirma",
+            "codigoProcedimiento" to "PEG_VEA",
+            "comeBackUrl" to "aHR0cHM6Ly92ZWFqYS5jbG91ZC5qdW50YWRlYW5kYWx1Y2lhLmVzL2F1dGhGYWNhZGU=",
+        ),
+        sourceRequiredEphemeralQueryParameters = setOf("redirectUrl"),
+        linkedEphemeralQueryParameters = emptySet(),
+        linkedEphemeralQueryParameterMappings = emptyMap(),
+        sourceBase64UrlConstraints = mapOf(
+            "redirectUrl" to ClientAuthUrlConstraint(
+                origin = ExactOrigin.parse(VEA_PEG_PORTAL_ORIGIN),
+                path = "/inicio/procedimiento-detalle/PEG_VEA",
+                fixedQueryParameters = mapOf("iniciarSolicitud" to "true"),
+                requiredEphemeralQueryParameters = setOf("procedureId", "versionId"),
+            ),
+        ),
+        requestContinuationUrlConstraints = (1..VEA_PEG_CONTINUATION_HOPS).map { hop ->
+            ClientAuthUrlConstraint(
+                origin = ExactOrigin.parse("https://ws235-$hop.juntadeandalucia.es"),
+                path = "/authenticationFacade/${hop + 1}",
+                fixedQueryParameters = veaPegFacadeQuery(),
+                requiredEphemeralQueryParameters = VEA_PEG_TICKET_PARAMETERS,
+            )
+        }.toSet(),
+        returnUrlConstraints = veaPegReturnConstraints(),
+    )
+
+    private fun veaPegReturnConstraints() = setOf(
+        ClientAuthUrlConstraint(
+            origin = ExactOrigin.parse(VEA_PEG_API_ORIGIN),
+            path = "/auth/returnLogin",
+            requiredEphemeralQueryParameters = setOf("resCode"),
+        ),
+        ClientAuthUrlConstraint(
+            origin = ExactOrigin.parse(VEA_PEG_API_ORIGIN),
+            path = "/auth/returnLogin",
+            fixedQueryParameters = mapOf("appId" to "CHIE.VEA"),
+            requiredEphemeralQueryParameters = setOf("resCode", "ticketId", "webSessionId"),
+        ),
+        ClientAuthUrlConstraint(origin = ExactOrigin.parse(VEA_PEG_API_ORIGIN), path = "/auth/endLogin"),
+        ClientAuthUrlConstraint(
+            origin = ExactOrigin.parse(VEA_PEG_PORTAL_ORIGIN),
+            path = "/authFacade",
+            requiredEphemeralQueryParameters = setOf("error", "redirectUrl"),
+        ),
+        ClientAuthUrlConstraint(
+            origin = ExactOrigin.parse(VEA_PEG_PORTAL_ORIGIN),
+            path = "/authFacade",
+            requiredEphemeralQueryParameters = setOf("token", "redirectUrl"),
+        ),
+    )
+
+    private fun veaPegFacadeQuery() = mapOf(
+        "action" to "validateCert",
+        "appId" to "CHIE.VEA",
+        "comeBackURL" to "aHR0cHM6Ly9hcGktdmVhamEuY2xvdWQuanVudGFkZWFuZGFsdWNpYS5lcy9hdXRoL3JldHVybkxvZ2lu",
+    )
+
+    private fun validateCarneJovenProfile(profile: SiteProfile) {
+        require(profile.profileVersion == 1)
+        require(profile.displayName == CARNE_JOVEN_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_E2E)
+        // QA_ONLY only narrows the profile, so the catalogue may downgrade it but never widen it.
+        require(profile.activation == ProfileActivation.ENABLED || profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CARNE_JOVEN_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CARNE_JOVEN_INITIATOR_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(CARNE_JOVEN_REQUEST_ORIGIN)),
+                sourceUrls = setOf(URI(CARNE_JOVEN_SOURCE_URL)),
+                requestPath = CARNE_JOVEN_REQUEST_PATH,
+                fixedQueryParameters = mapOf(
+                    "action" to "validateCert",
+                    "appId" to "IAJ.CARNETJOVEN",
+                    "comeBackURL" to CARNE_JOVEN_COME_BACK_URL,
+                ),
+                requiredEphemeralQueryParameters = setOf("ticketId", "webSessionId"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = HTTPS_PORT,
+                requestMethod = HttpMethod.GET,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = emptyMap(),
+                sourceBase64UrlConstraints = emptyMap(),
+                requestContinuationUrlConstraints = emptySet(),
+                returnUrlConstraints = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CARNE_JOVEN_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-07-18") })
+    }
+
+    private fun validateAeatMisDatosProfile(profile: SiteProfile) {
+        require(profile.profileVersion == AEAT_PROFILE_VERSION)
+        require(profile.displayName == AEAT_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == AEAT_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(AEAT_INITIATOR_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(AEAT_REQUEST_ORIGIN)),
+                sourceUrls = setOf(URI(AEAT_SOURCE_URL)),
+                requestPath = AEAT_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = HTTPS_PORT,
+                requestMethod = HttpMethod.GET,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = emptyMap(),
+                sourceBase64UrlConstraints = emptyMap(),
+                requestContinuationUrlConstraints = emptySet(),
+                returnUrlConstraints = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == AEAT_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-07-31") })
+    }
+
+    private fun validateImportassProfile(profile: SiteProfile) {
+        require(profile.profileVersion == IMPORTASS_PROFILE_VERSION)
+        require(profile.displayName == IMPORTASS_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == IMPORTASS_START_URL)
+        require(
+            profile.initiatorOrigins ==
+                setOf(ExactOrigin.parse(IMPORTASS_PORTAL_ORIGIN), ExactOrigin.parse(IMPORTASS_IDP_ORIGIN)),
+        )
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(IMPORTASS_REQUEST_ORIGIN)),
+                sourceUrls = setOf(URI(IMPORTASS_SOURCE_URL)),
+                requestPath = IMPORTASS_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = HTTPS_PORT,
+                requestMethod = HttpMethod.GET,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = emptyMap(),
+                sourceBase64UrlConstraints = emptyMap(),
+                requestContinuationUrlConstraints = emptySet(),
+                returnUrlConstraints = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == IMPORTASS_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-21") })
     }
 
     private fun validateToledoProfile(profile: SiteProfile) {
@@ -2975,6 +3263,162 @@ object SiteProfileCatalogParser {
         "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
             "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+    )
+    private const val VEA_PEG_PROFILE_ID = "junta-andalucia-vea-peg"
+    private const val VEA_PEG_PROFILE_VERSION = 3
+    private const val VEA_PEG_START_URL =
+        "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"
+    private const val VEA_PEG_PORTAL_ORIGIN = "https://veaja.cloud.juntadeandalucia.es"
+    private const val VEA_PEG_API_ORIGIN = "https://api-veaja.cloud.juntadeandalucia.es"
+    private const val VEA_PEG_REQUEST_ORIGIN = "https://ws235.juntadeandalucia.es"
+    private const val VEA_PEG_SOURCE_URL = "https://api-veaja.cloud.juntadeandalucia.es/auth/login"
+    private const val VEA_PEG_REQUEST_PATH = "/authenticationFacade"
+    private const val VEA_PEG_GRANT_TTL_SECONDS = 60
+    private const val VEA_PEG_CONTINUATION_HOPS = 6
+    private val VEA_PEG_TICKET_PARAMETERS = setOf("ticketId", "webSessionId")
+    private val VEA_PEG_EVIDENCE = listOf(
+        "https://www.juntadeandalucia.es/servicios/sede/tramites.html",
+        VEA_PEG_START_URL,
+        VEA_PEG_SOURCE_URL,
+        "https://ws235.juntadeandalucia.es/authenticationFacade",
+        "https://ws235-2.juntadeandalucia.es/authenticationFacade/3",
+        "https://ws235-3.juntadeandalucia.es/authenticationFacade/4",
+        "https://ws235-4.juntadeandalucia.es/authenticationFacade/5",
+    ).associateWith { "2026-08-28" }
+    private const val CLAVE_IDENT_ORIGIN = "https://pasarela-ident.clave.gob.es"
+    private const val CLAVE_AUTHENTICATE_PATH = "/IdP2/AuthenticateCitizen"
+    private const val CLAVE_IDENT_EVIDENCE_URL = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+    private const val CLAVE_PROVIDER_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private const val CLAVE_REDIRECT_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+    private const val CLAVE_PASARELA_ORIGIN = "https://pasarela.clave.gob.es"
+    private val CLAVE_DIRECT_PINS = mapOf(
+        ASTURIAS_PROFILE_ID to ClaveDirectPin(
+            displayName = "Principado de Asturias — MiPrincipado / Solicitud Genérica",
+            startUrl = "https://miprincipado.asturias.es/-/dboid-6269000102616541907573" +
+                "?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
+            origins = ClaveOriginPins(
+                initiator = "https://miprincipado.asturias.es",
+                redirect = setOf(
+                    "https://tramita.asturias.es",
+                    "https://rhsso.asturias.es",
+                    CLAVE_PASARELA_ORIGIN,
+                ),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_PROVIDER_URL,
+            keyAlgorithms = setOf("RSA"),
+            evidence = claveEvidence(
+                "2026-08-19",
+                "https://miprincipado.asturias.es/-/dboid-6269000102616541907573" +
+                    "?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
+                "https://tramita.asturias.es/sta/Relec/STARhssoManager",
+                CLAVE_PROVIDER_URL,
+                CLAVE_IDENT_EVIDENCE_URL,
+            ),
+        ),
+        OURENSE_PROFILE_ID to ClaveDirectPin(
+            displayName = "Deputación de Ourense — Solicitud de propósito general",
+            startUrl = "https://sede.depourense.es/sta/CarpetaPublic/doEvent" +
+                "?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES",
+            origins = ClaveOriginPins(
+                initiator = "https://sede.depourense.es",
+                redirect = setOf(CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-20",
+                "https://sede.depourense.es/sta/CarpetaPublic/doEvent" +
+                    "?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES",
+                "https://sede.depourense.es/sta/pages/webapps/js/components/catserv.js?ver=2602.0.4",
+                CLAVE_REDIRECT_URL,
+                CLAVE_IDENT_EVIDENCE_URL,
+            ),
+        ),
+        SEVILLA_DIPUTACION_PROFILE_ID to ClaveDirectPin(
+            displayName = "Diputación de Sevilla — Sede electrónica",
+            startUrl = "https://sedeelectronicadipusevilla.es",
+            origins = ClaveOriginPins(
+                initiator = "https://sedeelectronicadipusevilla.es",
+                redirect = setOf(CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://sedeelectronicadipusevilla.es",
+                "https://sedeelectronicadipusevilla.es/opencms/system/modules/gsede/elements/secciones/" +
+                    "autenticacion/autenticacion.jsp",
+                "https://sedeelectronicadipusevilla.es/opencms/common-js/clientSigner.js",
+                CLAVE_REDIRECT_URL,
+                CLAVE_IDENT_EVIDENCE_URL,
+            ),
+        ),
+        CORUNA_PROFILE_ID to ClaveDirectPin(
+            displayName = "Deputación da Coruña — Solicitude Xeral",
+            startUrl = "https://www.dacoruna.gal/portada",
+            origins = ClaveOriginPins(
+                initiator = "https://www.dacoruna.gal",
+                redirect = setOf(CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = setOf("https://sede.dacoruna.gal"),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://www.dacoruna.gal/portada",
+                "https://sede.dacoruna.gal/sxc/gl/procedimientosytramites/tramites/SolicitudGeneral_N",
+                "https://sede.dacoruna.gal/tramitador/entrada" +
+                    "?idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL",
+                CLAVE_REDIRECT_URL,
+                CLAVE_IDENT_EVIDENCE_URL,
+            ),
+        ),
+    )
+    private const val CARNE_JOVEN_PROFILE_ID = "carne-joven-andalucia"
+    private const val CARNE_JOVEN_DISPLAY_NAME = "Carné Joven Europeo de Andalucía"
+    private const val CARNE_JOVEN_START_URL =
+        "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+    private const val CARNE_JOVEN_INITIATOR_ORIGIN = "https://ws104.juntadeandalucia.es"
+    private const val CARNE_JOVEN_REQUEST_ORIGIN = "https://ws235.juntadeandalucia.es"
+    private const val CARNE_JOVEN_SOURCE_URL =
+        "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
+    private const val CARNE_JOVEN_REQUEST_PATH = "/authenticationFacade"
+    private const val CARNE_JOVEN_COME_BACK_URL =
+        "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ="
+    private val CARNE_JOVEN_EVIDENCE_URLS = setOf(
+        "https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html",
+        CARNE_JOVEN_SOURCE_URL,
+    )
+    private const val AEAT_MIS_DATOS_PROFILE_ID = "aeat-mis-datos-censales"
+    private const val AEAT_PROFILE_VERSION = 1
+    private const val AEAT_DISPLAY_NAME = "Agencia Tributaria — Mis datos censales"
+    private const val AEAT_START_URL = "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+    private const val AEAT_INITIATOR_ORIGIN = "https://sede.agenciatributaria.gob.es"
+    private const val AEAT_REQUEST_ORIGIN = "https://www1.agenciatributaria.gob.es"
+    private const val AEAT_SOURCE_URL = AEAT_START_URL
+    private const val AEAT_REQUEST_PATH = "/wlpl/BUGC-JDIT/MdcAcceso"
+    private val AEAT_EVIDENCE_URLS = setOf(
+        AEAT_START_URL,
+        "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso",
+    )
+    private const val IMPORTASS_PROFILE_ID = "tgss-importass-client-auth"
+    private const val IMPORTASS_PROFILE_VERSION = 1
+    private const val IMPORTASS_DISPLAY_NAME = "TGSS Import@ss — acceso con certificado"
+    private const val IMPORTASS_START_URL =
+        "https://portal.seg-social.gob.es/wps/myportal/importass/importass/personal/"
+    private const val IMPORTASS_PORTAL_ORIGIN = "https://portal.seg-social.gob.es"
+    private const val IMPORTASS_IDP_ORIGIN = "https://idp.seg-social.es"
+    private const val IMPORTASS_REQUEST_ORIGIN = "https://ipce.seg-social.es"
+    private const val IMPORTASS_SOURCE_URL = "https://idp.seg-social.es/PGIS/Login?seleccion=IPCE"
+    private const val IMPORTASS_REQUEST_PATH = "/IPCE/Login"
+    private val IMPORTASS_EVIDENCE_URLS = setOf(
+        "https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda",
+        IMPORTASS_START_URL,
+        IMPORTASS_SOURCE_URL,
+        "https://ipce.seg-social.es/IPCE/Login",
     )
     private const val TOLEDO_PROFILE_ID = "diputacion-toledo-sede"
     private const val TOLEDO_PROFILE_VERSION = 1
