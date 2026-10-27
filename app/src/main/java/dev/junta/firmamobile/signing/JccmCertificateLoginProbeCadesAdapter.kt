@@ -28,6 +28,8 @@ class JccmCertificateLoginProbeCadesAdapter internal constructor(
         const val PROFILE_ID = "jccm-certificate-login-probe"
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://ventanillaelectronica.jccm.es"
+        const val START_URL =
+            "$INITIATOR_ORIGIN/administracion_electronica/formularios/identificacion.phtml"
         const val SAFE_DESCRIPTION =
             "Validación pública de acceso con certificado de Castilla-La Mancha"
         const val EXPECTED_EXTRA_PROPERTIES = ""
