@@ -3,12 +3,16 @@ package dev.junta.firmamobile.browser
 import android.net.Uri
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.ExactOrigin
+import dev.junta.firmamobile.profile.SiteProfileCatalogParser
+import java.net.URI
 import dev.junta.firmamobile.signing.SigningErrorCode
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -134,6 +138,70 @@ class EuskadiClientAuthPostBridgeAdapterTest {
             ),
             SigningErrorCode.INVALID_REQUEST,
         )
+    }
+
+    @Test
+    fun bridgeUrlFactsEqualTheIndependentlyPinnedCatalog() {
+        val profile = SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON)
+            .profiles.single { it.profileId == profileId }
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(EuskadiClientAuthPostBridgeAdapter.START_URL, profile.startUrl.toASCIIString())
+        assertEquals(setOf(ExactOrigin.parse(EuskadiClientAuthPostBridgeAdapter.EUSKADI_ORIGIN)), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse(EuskadiClientAuthPostBridgeAdapter.IZENPE_ORIGIN)), profile.redirectOrigins)
+        assertEquals(setOf(ExactOrigin.parse(EuskadiClientAuthPostBridgeAdapter.TARGET_ORIGIN)), policy.requestOrigins)
+        assertEquals(setOf(URI(EuskadiClientAuthPostBridgeAdapter.SOURCE_PAGE)), policy.sourceUrls)
+        assertEquals(EuskadiClientAuthPostBridgeAdapter.TARGET_PATH, policy.requestPath)
+        assertEquals(EuskadiClientAuthPostBridgeAdapter.IZENPE_HOST,
+            URI(EuskadiClientAuthPostBridgeAdapter.IZENPE_ORIGIN).host)
+        assertEquals(EuskadiClientAuthPostBridgeAdapter.TARGET_ORIGIN + policy.requestPath,
+            EuskadiClientAuthPostBridgeAdapter.TARGET_URL)
+    }
+
+    @Test
+    fun catalogCannotRebindAnyEuskadiHostEvenWithConsistentUrlsAndEvidence() {
+        listOf("www.euskadi.eus", "eidas.izenpe.com", "eidas2.izenpe.com").forEach { host ->
+            val root = JSONObject(BuiltInSiteProfiles.JSON)
+            val profiles = root.getJSONArray("profiles")
+            val index = (0 until profiles.length()).single {
+                profiles.getJSONObject(it).getString("profileId") == profileId.value
+            }
+            val original = profiles.getJSONObject(index).toString()
+            assertTrue(original.contains(host))
+            profiles.put(index, JSONObject(original.replace(host, "unreviewed.example.es")))
+            try {
+                SiteProfileCatalogParser.parse(root.toString())
+                fail("Parser accepted a consistently rebound host: $host")
+            } catch (_: IllegalArgumentException) {
+                // Independent Kotlin pins must reject a catalog-only rebind.
+            }
+        }
+    }
+
+    @Test
+    fun sourceOriginAndTargetUrlMutationsFailClosed() {
+        listOf(
+            "https://evil.example",
+            "https://eidas.izenpe.com.evil.example",
+            "https://eidas.izenpe.com:8443",
+            "http://eidas.izenpe.com",
+            "https://eidas.izenpe.com/extra",
+            "https://user@eidas.izenpe.com",
+            "https://eidas.izenpe.com?extra=1",
+            "https://eidas.izenpe.com#extra",
+        ).forEach { origin ->
+            assertRejected(route(adapter(), validMessage(), source = Uri.parse(origin)),
+                SigningErrorCode.ORIGIN_NOT_ALLOWED)
+        }
+        listOf(
+            "https://evil.example/cert-authn-external-validation/authenticate",
+            "https://eidas2.izenpe.com.evil.example/cert-authn-external-validation/authenticate",
+            "https://eidas2.izenpe.com:8443/cert-authn-external-validation/authenticate",
+            "http://eidas2.izenpe.com/cert-authn-external-validation/authenticate",
+            EuskadiClientAuthPostBridgeAdapter.TARGET_URL + "/extra",
+        ).forEach { target ->
+            assertRejected(route(adapter(), validMessage(target = target)),
+                SigningErrorCode.UNOBSERVED_CONTRACT)
+        }
     }
 
     private fun adapter() = EuskadiClientAuthPostBridgeAdapter(
