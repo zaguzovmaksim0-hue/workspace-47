@@ -60,10 +60,10 @@ internal class CarneJovenPreTlsRetryController(
     private companion object {
         const val MAX_RETRIES = 4
         const val PROFILE_ID = "carne-joven-andalucia"
+        const val SOURCE_ORIGIN = "https://ws104.juntadeandalucia.es"
         const val TARGET_HOST = "ws235.juntadeandalucia.es"
         const val TARGET_PATH = "/authenticationFacade"
-        const val SOURCE_URL =
-            "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
+        const val SOURCE_URL = "$SOURCE_ORIGIN/carneJoven/servlet/CallAuthenticationServlet"
         const val COME_BACK_URL =
             "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ="
 
