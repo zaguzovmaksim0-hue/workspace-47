@@ -120,7 +120,7 @@ class AccedaPadesAdapter internal constructor(
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://sede.administracionespublicas.gob.es"
         const val START_URL =
-            "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES"
+            "$INITIATOR_ORIGIN/certificado/info/idp/82/ida/0/language/es_ES"
         const val SAFE_DESCRIPTION = "Firma de solicitud en Plataforma ACCEDA"
         internal const val EXPECTED_EXTRA_PROPERTIES =
             "format=PAdES Detached\nexpPolicy=FirmaAGE\nnonexpired:true"
