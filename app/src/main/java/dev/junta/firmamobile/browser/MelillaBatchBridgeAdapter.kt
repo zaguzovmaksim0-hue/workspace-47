@@ -15,6 +15,7 @@ import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.signing.SigningErrorCode
 import java.io.StringReader
+import java.net.URI
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONObject
@@ -79,7 +80,7 @@ class MelillaBatchBridgeAdapter(
         currentOrigin = currentOrigin,
         contract = StaBatchBridgeContract(
             profileId = ProfileId(PROFILE_ID),
-            origin = TrustedOrigin("https", "sede.melilla.es", 443),
+            origin = httpsTrustedOrigin(SOURCE_ORIGIN),
             urlValidator = StaBatchBridgeUrlValidator { rawUrl, operation, operationId, documentId ->
                 urlPolicy.validate(rawUrl, operation, operationId, documentId)
             },
@@ -94,7 +95,7 @@ class MelillaBatchBridgeAdapter(
 
     companion object {
         const val PROFILE_ID = "melilla-sede"
-        const val SOURCE_ORIGIN = "https://sede.melilla.es"
+        const val SOURCE_ORIGIN = MelillaBatchUrlPolicy.ORIGIN
         const val TYPE = "MINIAPPLET_BATCH"
         const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
@@ -117,7 +118,7 @@ class ExtremaduraBatchBridgeAdapter(
         currentOrigin = currentOrigin,
         contract = StaBatchBridgeContract(
             profileId = ProfileId(PROFILE_ID),
-            origin = TrustedOrigin("https", "tramites.juntaex.es", 443),
+            origin = httpsTrustedOrigin(SOURCE_ORIGIN),
             urlValidator = StaBatchBridgeUrlValidator { rawUrl, operation, operationId, documentId ->
                 urlPolicy.validate(rawUrl, operation, operationId, documentId)
             },
@@ -132,7 +133,7 @@ class ExtremaduraBatchBridgeAdapter(
 
     companion object {
         const val PROFILE_ID = "extremadura-tramites"
-        const val SOURCE_ORIGIN = "https://tramites.juntaex.es"
+        const val SOURCE_ORIGIN = ExtremaduraBatchUrlPolicy.ORIGIN
         const val TYPE = "MINIAPPLET_BATCH"
         const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
@@ -155,7 +156,7 @@ class LaPalmaBatchBridgeAdapter(
         currentOrigin = currentOrigin,
         contract = StaBatchBridgeContract(
             profileId = ProfileId(PROFILE_ID),
-            origin = TrustedOrigin("https", "sedeelectronica.cabildodelapalma.es", 443),
+            origin = httpsTrustedOrigin(SOURCE_ORIGIN),
             urlValidator = StaBatchBridgeUrlValidator { rawUrl, operation, operationId, documentId ->
                 urlPolicy.validate(rawUrl, operation, operationId, documentId)
             },
@@ -170,7 +171,7 @@ class LaPalmaBatchBridgeAdapter(
 
     companion object {
         const val PROFILE_ID = "la-palma-sede-electronica"
-        const val SOURCE_ORIGIN = "https://sedeelectronica.cabildodelapalma.es"
+        const val SOURCE_ORIGIN = LaPalmaBatchUrlPolicy.ORIGIN
         const val TYPE = "MINIAPPLET_BATCH"
         const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
@@ -193,7 +194,7 @@ class HuescaBatchBridgeAdapter(
         currentOrigin = currentOrigin,
         contract = StaBatchBridgeContract(
             profileId = ProfileId(PROFILE_ID),
-            origin = TrustedOrigin("https", "ovc24.dphuesca.es", 443),
+            origin = httpsTrustedOrigin(SOURCE_ORIGIN),
             urlValidator = StaBatchBridgeUrlValidator { rawUrl, operation, operationId, documentId ->
                 urlPolicy.validate(rawUrl, operation, operationId, documentId)
             },
@@ -208,7 +209,7 @@ class HuescaBatchBridgeAdapter(
 
     companion object {
         const val PROFILE_ID = "diputacion-huesca-portal"
-        const val SOURCE_ORIGIN = "https://ovc24.dphuesca.es"
+        const val SOURCE_ORIGIN = HuescaBatchUrlPolicy.ORIGIN
         const val TYPE = "MINIAPPLET_BATCH"
         const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
@@ -232,7 +233,7 @@ class BurgosBatchBridgeAdapter(
         currentOrigin = currentOrigin,
         contract = StaBatchBridgeContract(
             profileId = ProfileId(PROFILE_ID),
-            origin = TrustedOrigin("https", "registro.diputaciondeburgos.es", 443),
+            origin = httpsTrustedOrigin(SOURCE_ORIGIN),
             urlValidator = StaBatchBridgeUrlValidator { rawUrl, operation, operationId, documentId ->
                 urlPolicy.validate(rawUrl, operation, operationId, documentId)
             },
@@ -246,7 +247,7 @@ class BurgosBatchBridgeAdapter(
 
     companion object {
         const val PROFILE_ID = "diputacion-burgos-portal"
-        const val SOURCE_ORIGIN = "https://registro.diputaciondeburgos.es"
+        const val SOURCE_ORIGIN = BurgosBatchUrlPolicy.ORIGIN
         const val TYPE = "MINIAPPLET_BATCH"
         const val BATCH_RESULT_TYPE = "MINIAPPLET_BATCH_RESULT"
         const val MAX_MESSAGE_CHARS = 786_432
@@ -808,3 +809,8 @@ class MelillaBatchReplyChannel internal constructor(
         val BASE64_XML = Regex("(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?")
     }
 }
+
+/** The one place a batch portal origin string becomes a [TrustedOrigin]; the catalog pins the same string. */
+internal fun httpsTrustedOrigin(origin: String) = TrustedOrigin("https", URI(origin).host, HTTPS_PORT)
+
+private const val HTTPS_PORT = 443
