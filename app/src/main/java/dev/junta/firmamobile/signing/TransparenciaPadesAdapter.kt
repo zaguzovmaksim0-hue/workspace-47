@@ -13,10 +13,11 @@ class TransparenciaPadesAdapter(
         const val PROFILE_ID = "age-portal-de-la-transparencia"
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://transparencia.sede.gob.es"
-        const val PUBLIC_START_URL = "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524"
-        const val SIGNING_PAGE_PREFIX = "https://transparencia.sede.gob.es/procedimiento/firma?"
+        const val PUBLIC_START_URL =
+            INITIATOR_ORIGIN + "/procedimiento/portada?idProc=133628&idAmb=101524"
+        const val SIGNING_PAGE_PREFIX = INITIATOR_ORIGIN + "/procedimiento/firma?"
         private val SIGNING_PAGE_PATTERN = Regex(
-            "^https://transparencia\\.sede\\.gob\\.es/procedimiento/firma\\?" +
+            "^" + Regex.escape(SIGNING_PAGE_PREFIX) +
                 "idProc=133628&idBorr=[1-9][0-9]*&idAmb=101524$",
         )
 

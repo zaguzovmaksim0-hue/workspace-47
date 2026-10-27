@@ -58,17 +58,41 @@ class MinecoMiniAppletBridgeTest {
         val adapter = MiniAppletBridgeAdapter(
             activeProfileId = { ProfileId(PROFILE_ID) },
         )
-        fun route(raw: String, page: String = SIGNING_PAGE_URL) = adapter.route(
+        fun route(
+            raw: String,
+            page: String = SIGNING_PAGE_URL,
+            sourceOrigin: Uri = Uri.parse(ORIGIN),
+        ) = adapter.route(
             rawMessage = raw,
-            sourceOrigin = Uri.parse(ORIGIN),
+            sourceOrigin = sourceOrigin,
             isMainFrame = true,
             navigationEpoch = 9,
             currentPageUrl = page,
         )
-        assertEquals(true, route(message(pdf), "$ORIGIN/other") is MiniAppletBridgeRouteResult.Rejected)
-        assertEquals(true, route(message(pdf).replace("SHA512withRSA", "SHA256withRSA")) is MiniAppletBridgeRouteResult.Rejected)
-        assertEquals(true, route(message(pdf).replace("PAdES", "CAdES")) is MiniAppletBridgeRouteResult.Rejected)
-        assertEquals(true, route(message(pdf).replace("signingCert:;nonexpired:", "signingCert:;expired:")) is MiniAppletBridgeRouteResult.Rejected)
+        assertEquals(
+            true,
+            route(message(pdf), "$ORIGIN/other") is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertEquals(
+            true,
+            route(message(pdf), sourceOrigin = Uri.parse("https://evil.example"))
+                is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertEquals(
+            true,
+            route(message(pdf).replace("SHA512withRSA", "SHA256withRSA"))
+                is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertEquals(
+            true,
+            route(message(pdf).replace("PAdES", "CAdES")) is MiniAppletBridgeRouteResult.Rejected,
+        )
+        assertEquals(
+            true,
+            route(
+                message(pdf).replace("signingCert:;nonexpired:", "signingCert:;expired:"),
+            ) is MiniAppletBridgeRouteResult.Rejected,
+        )
         pdf.fill(0)
     }
 
@@ -87,6 +111,8 @@ class MinecoMiniAppletBridgeTest {
         const val PROTOCOL_ID = "mineco-instancia-generica-pades-v1"
         const val ORIGIN = "https://serviciosede.mineco.gob.es"
         const val SIGNING_PAGE_URL = "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx"
-        const val EXTRA_PROPERTIES = "filters=signingCert:;nonexpired:\nexpPolicy=FirmaAGE\nsignatureSubFilter=ETSI.CAdES.detached"
+        const val EXTRA_PROPERTIES =
+            "filters=signingCert:;nonexpired:\nexpPolicy=FirmaAGE\n" +
+                "signatureSubFilter=ETSI.CAdES.detached"
     }
 }

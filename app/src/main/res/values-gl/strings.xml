@@ -350,4 +350,13 @@
     <string name="error_already_saved">Este documento xa está gardado no catálogo.</string>
     <string name="saved_certificate_selected">Seleccionado</string>
     <string name="saved_keystore_locked">A clave está seleccionada e bloqueada. A selección non autoriza o seu uso para asinar.</string>
+    <string name="certificate_default_name">Certificado sen nome</string>
+    <string name="native_format_batch_local">Batch · local</string>
+    <string name="native_format_batch_remote">Batch · trifásico</string>
+    <string name="native_format_batch_local_cades_cosign">Batch local · CAdES co-sign</string>
+    <string name="native_format_triphase">%1$s · trifásico</string>
+    <plurals name="signing_batch_operation_description">
+        <item quantity="one">Sinatura por lotes (%1$d documento)</item>
+        <item quantity="other">Sinatura por lotes (%1$d documentos)</item>
+    </plurals>
 </resources>

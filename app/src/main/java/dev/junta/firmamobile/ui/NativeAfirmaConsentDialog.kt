@@ -36,6 +36,7 @@ import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentProblem
 import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPrompt
+import dev.junta.firmamobile.afirma.servlet.NativeMultiPhaseFormat
 import dev.junta.firmamobile.afirma.servlet.NativeBatchConsentReview
 import dev.junta.firmamobile.afirma.servlet.AfirmaResultSummary
 
@@ -112,9 +113,15 @@ internal fun NativeAfirmaConsentDialog(
                         else prompt.details.sourceOrigin?.let {
                             ConsentIdentityField(stringResource(R.string.native_consent_page_label), it)
                         }
-                        ConsentIdentityField(stringResource(R.string.native_consent_recipient_label), prompt.details.destination)
+                        ConsentIdentityField(
+                            stringResource(R.string.native_consent_recipient_label),
+                            prompt.details.destination,
+                        )
                         prompt.certificateOwner?.let {
-                            ConsentIdentityField(stringResource(R.string.native_consent_certificate_label), it)
+                            ConsentIdentityField(
+                                stringResource(R.string.native_consent_certificate_label),
+                                certificateDisplayNameText(it),
+                            )
                         }
                         if (external) prompt.certificateEvidence?.let {
                             Text(stringResource(R.string.external_afirma_certificate_evidence, it.bytes, it.sha256))
@@ -153,9 +160,13 @@ internal fun NativeAfirmaConsentDialog(
                     }
                     key(prompt.token, previewIndex) { pdfPreview(previewIndex?.let(prompt.pdfPreviews::get)) }
                 }
-                if (!prompt.details.delegatedSigning &&
-                    (prompt.details.operation == "cosign" && prompt.details.format?.startsWith("CAdES") == true ||
-                        prompt.details.operation == "batch" && prompt.details.format?.contains("CAdES co-sign") == true)) {
+                val cadesCosign = when (prompt.details.operation) {
+                    "cosign" -> prompt.details.format?.startsWith("CAdES") == true
+                    "batch" -> prompt.details.multiPhaseFormat == NativeMultiPhaseFormat.LOCAL_CADES_COSIGN_BATCH ||
+                        prompt.details.format?.contains("CAdES co-sign") == true
+                    else -> false
+                }
+                if (!prompt.details.delegatedSigning && cadesCosign) {
                     Text(stringResource(R.string.native_cades_cosign_notice), Modifier.testTag("native-cades-cosign-notice"))
                 }
                 prompt.details.signaturePolicySummary?.let { policy ->
@@ -201,7 +212,9 @@ internal fun NativeAfirmaConsentDialog(
                     AfirmaConsentProblem.CANCEL_UNCERTAIN -> Text(stringResource(R.string.native_afirma_cancel_uncertain))
                     null -> if (review) Text(stringResource(R.string.native_afirma_review_notice))
                 }
-                val detailsState = stringResource(if (detailsExpanded) R.string.native_consent_expanded else R.string.native_consent_collapsed)
+                val detailsState = stringResource(
+                    if (detailsExpanded) R.string.native_consent_expanded else R.string.native_consent_collapsed,
+                )
                 TextButton(
                     onClick = { detailsExpanded = !detailsExpanded },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
@@ -213,7 +226,9 @@ internal fun NativeAfirmaConsentDialog(
                 if (detailsExpanded) {
                     Column(Modifier.fillMaxWidth().testTag("native-afirma-details"),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        prompt.details.format?.let { Text(stringResource(R.string.native_afirma_format, it)) }
+                        nativeFormatText(prompt.details)?.let {
+                            Text(stringResource(R.string.native_afirma_format, it))
+                        }
                         prompt.details.algorithm?.let { Text(stringResource(R.string.native_afirma_algorithm, it)) }
                         if (prompt.details.operation != "selectcert") {
                             Text(stringResource(when {

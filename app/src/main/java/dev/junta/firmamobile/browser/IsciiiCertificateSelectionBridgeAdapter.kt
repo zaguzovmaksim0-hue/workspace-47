@@ -258,10 +258,9 @@ class IsciiiCertificateSelectionBridgeAdapter(
     companion object {
         const val PROFILE_ID = "isciii-certificate-selection"
         const val PROFILE_VERSION = 1
-        const val ORIGIN = "https://sede.isciii.gob.es"
         const val HOST = "sede.isciii.gob.es"
-        const val START_URL =
-            "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null"
+        const val ORIGIN = "https://$HOST"
+        const val START_URL = "$ORIGIN/cargaApplet.jsp?accion=generico&recurso.opcion=null"
         const val SAFE_DESCRIPTION = "Compartir certificado con la Sede electrónica del ISCIII"
         const val SERVER_URL =
             "http://dtomcat7.isciiides.es:8080/afirma-server-triphase-signer/SignatureService"

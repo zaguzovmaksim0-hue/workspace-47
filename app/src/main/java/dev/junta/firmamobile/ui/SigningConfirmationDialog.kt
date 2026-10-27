@@ -52,8 +52,8 @@ internal fun SigningConfirmationDialog(
                 if (state.compatibilityStatus != CompatibilityStatus.VERIFIED_E2E) {
                     Text(stringResource(R.string.compatibility_unverified_operation))
                 }
-                Text(stringResource(R.string.signing_operation, state.safeDescription))
-                Text(stringResource(R.string.signing_certificate, state.certificateOwner))
+                Text(stringResource(R.string.signing_operation, signingOperationText(state.operationDescription)))
+                Text(stringResource(R.string.signing_certificate, certificateDisplayNameText(state.certificateOwner)))
                 Text(stringResource(R.string.signing_format, state.format))
                 Text(stringResource(R.string.signing_algorithm, state.algorithm))
                 if (state.requiresLegacySha1Warning) {

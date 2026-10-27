@@ -233,14 +233,14 @@ internal class EuskadiClientAuthPostBridgeAdapter(
         const val PROFILE_VERSION = 1
         const val DISPLAY_NAME = "Gobierno Vasco — Registro Electrónico General"
         const val EUSKADI_ORIGIN = "https://www.euskadi.eus"
-        const val IZENPE_ORIGIN = "https://eidas.izenpe.com"
         const val IZENPE_HOST = "eidas.izenpe.com"
+        const val IZENPE_ORIGIN = "https://$IZENPE_HOST"
         const val TARGET_ORIGIN = "https://eidas2.izenpe.com"
         const val START_URL =
-            "https://www.euskadi.eus/web01-sedeform/es/x43kToolkitWar/form/fdp?" +
+            "$EUSKADI_ORIGIN/web01-sedeform/es/x43kToolkitWar/form/fdp?" +
                 "procedureId=1017701&tipoPresentacion=19&language=es"
         const val SOURCE_PAGE =
-            "https://eidas.izenpe.com/trustedx-authserver/izenpe/authentication"
+            "$IZENPE_ORIGIN/trustedx-authserver/izenpe/authentication"
         const val TARGET_PATH = "/cert-authn-external-validation/authenticate"
         const val TARGET_URL = "$TARGET_ORIGIN$TARGET_PATH"
         const val FORM_CONTENT_TYPE = "application/x-www-form-urlencoded"

@@ -26,6 +26,14 @@ internal class NativeMultiPhaseOperation(
     private val clock: Clock = Clock.systemUTC(),
 ) : PreparedAfirmaOperation {
     private val remote = checkNotNull(invocation.remoteOptions)
+    private val formatPresentation = when {
+        remote.batch != null && remote.localBatch && remote.batch.items.any {
+            it.operation == "cosign" && it.format.equals("CAdES", true)
+        } -> NativeMultiPhaseFormat.LOCAL_CADES_COSIGN_BATCH
+        remote.batch != null && remote.localBatch -> NativeMultiPhaseFormat.LOCAL_BATCH
+        remote.batch != null -> NativeMultiPhaseFormat.REMOTE_BATCH
+        else -> NativeMultiPhaseFormat.TRIPHASE
+    }
     private val started = AtomicBoolean(false)
     @Volatile private var closed = false
     override val pdfPreviews: Map<Int, PdfPreviewSource?> = when {
@@ -58,12 +66,11 @@ internal class NativeMultiPhaseOperation(
 
     override val details: AfirmaConsentDetails = invocation.payloadCopy().let { bytes ->
         try { AfirmaConsentDetails(invocation.sourceOrigin, destination(invocation.storageUrl),
-            invocation.operation.name.lowercase(), if (remote.batch != null) "Batch · ${if (remote.localBatch) "local" else "trifásico"}" +
-                if (remote.localBatch && remote.batch.items.any { it.operation == "cosign" && it.format.equals("CAdES", true) }) " · CAdES co-sign" else ""
-            else "${remote.format} · trifásico",
+            invocation.operation.name.lowercase(), if (remote.batch != null) "Batch" else remote.format,
             checkNotNull(invocation.algorithm).let { with(NativeTriphaseCodec) { it.wireName() } }, bytes.size,
             MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) },
             externalContext = invocation.externalContext,
+            multiPhaseFormat = formatPresentation,
             serviceDestinations = listOfNotNull(remote.preUrl, remote.postUrl).map(::destination).distinct(),
             batchItems = remote.batch?.items?.size, delegatedSigning = !remote.localBatch,
             batchReview = remote.batch?.let { NativeBatchConsentReview.from(it, remote.localBatch) },
