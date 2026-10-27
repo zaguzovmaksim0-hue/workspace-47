@@ -20,6 +20,7 @@ import dev.junta.firmamobile.signing.AirefXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
+import dev.junta.firmamobile.signing.CantabriaRecCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.DgtVerificationCadesAdapter
@@ -1571,9 +1572,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.displayName == CANTABRIA_DISPLAY_NAME &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&
-            profile.startUrl.toASCIIString() == CANTABRIA_START_URL &&
-            origin.serialized == CANTABRIA_ORIGIN &&
-            profile.initiatorOrigins == setOf(ExactOrigin.parse(CANTABRIA_ORIGIN)) &&
+            profile.startUrl.toASCIIString() == CantabriaRecCertificateLoginCadesAdapter.START_URL &&
+            origin.serialized == CantabriaRecCertificateLoginCadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(
+                    CantabriaRecCertificateLoginCadesAdapter.INITIATOR_ORIGIN,
+                ),
+            ) &&
             profile.redirectOrigins.isEmpty() &&
             profile.trustedBrowseOrigins.isEmpty() &&
             profile.endpoints.isEmpty() &&
@@ -1868,8 +1873,6 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val CANTABRIA_PROFILE_VERSION = 1
         private const val CANTABRIA_DISPLAY_NAME =
             "Registro Electrónico Común de Cantabria — Acceso con certificado"
-        private const val CANTABRIA_START_URL = "https://rec.cantabria.es/rec/bienvenida.htm"
-        private const val CANTABRIA_ORIGIN = "https://rec.cantabria.es"
         private const val CANTABRIA_SAFE_DESCRIPTION =
             "Acceso con certificado al Registro Electrónico Común de Cantabria"
         private const val CANTABRIA_PROTOCOL_ID = "cantabria-rec-cert-login-cades-v1"
