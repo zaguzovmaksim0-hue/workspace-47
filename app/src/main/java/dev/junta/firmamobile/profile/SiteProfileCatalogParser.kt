@@ -602,6 +602,12 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID) {
                 validateSeguridadSocialAutoFirmaProfile(p)
             }
+            if (p.profileId.value == LLEIDA_PROFILE_ID) {
+                validateLleidaProfile(p)
+            }
+            if (p.profileId.value == BADAJOZ_PROFILE_ID) {
+                validateBadajozProfile(p)
+            }
             require(p.initiatorOrigins.isNotEmpty())
             require(p.startUrl.origin() in p.initiatorOrigins)
             require((p.initiatorOrigins intersect p.redirectOrigins).isEmpty())
@@ -1813,6 +1819,18 @@ object SiteProfileCatalogParser {
         require(op.allowedExtraProperties == setOf("filter", "mimeType"))
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == EIVISSA_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+    }
+
+    private fun validateLleidaProfile(profile: SiteProfile) {
+        require(profile.startUrl.toASCIIString() == LLEIDA_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(LLEIDA_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty())
+    }
+
+    private fun validateBadajozProfile(profile: SiteProfile) {
+        require(profile.startUrl.toASCIIString() == BADAJOZ_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(BADAJOZ_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty() && profile.trustedBrowseOrigins.isEmpty())
     }
 
     private fun validateTenerifeProfile(profile: SiteProfile) {
@@ -3519,6 +3537,10 @@ object SiteProfileCatalogParser {
     )
     private const val LLEIDA_PROFILE_ID = "diputacion-lleida-sede"
     private const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"
+    private const val LLEIDA_START_URL = "https://seu.diputaciolleida.cat"
+    private const val LLEIDA_ORIGIN = "https://seu.diputaciolleida.cat"
+    private const val BADAJOZ_START_URL = "https://sede.dip-badajoz.es"
+    private const val BADAJOZ_ORIGIN = "https://sede.dip-badajoz.es"
     private val LLEIDA_EXTRA_PROPERTIES = linkedMapOf(
         "policy" to "FirmaAGE",
         "headless" to "true",
