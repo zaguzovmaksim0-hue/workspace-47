@@ -52,9 +52,9 @@ class SevillaAtseXadesEnvelopingAdapter internal constructor(
             .resolve("/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente")
             .toString()
         val HOST = URI(ORIGIN).host
-        private val ORIGIN_URI = URI(ORIGIN)
-        private val HTTPS = ORIGIN_URI.scheme
-        private val HTTPS_PORT = ORIGIN_URI.port.takeIf { it != -1 } ?: ORIGIN_URI.toURL().defaultPort
+        // scheme and port stay independent of ORIGIN: an edited origin must not loosen the TLS requirement
+        private const val HTTPS = "https"
+        private const val HTTPS_PORT = 443
         private const val PROFILE_VERSION = 1
     }
 }
