@@ -964,12 +964,12 @@ internal class ProfileMiniAppletBridgeAdapter(
         signingProtocolId: String,
         currentPageUrl: String?,
     ): Boolean =
-        currentPageUrl == JCCM_START_URL &&
+        currentPageUrl == JccmCertificateLoginProbeCadesAdapter.START_URL &&
             profile.profileId.value == JccmCertificateLoginProbeCadesAdapter.PROFILE_ID &&
             profile.profileVersion == JccmCertificateLoginProbeCadesAdapter.PROFILE_VERSION &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&
-            profile.startUrl.toASCIIString() == JCCM_START_URL &&
+            profile.startUrl.toASCIIString() == JccmCertificateLoginProbeCadesAdapter.START_URL &&
             origin.serialized == JccmCertificateLoginProbeCadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(
                 ExactOrigin.parse(JccmCertificateLoginProbeCadesAdapter.INITIATOR_ORIGIN),
@@ -1535,7 +1535,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.profileVersion == UgrCadesDetachedAdapter.PROFILE_VERSION &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&
-            profile.startUrl.toASCIIString() == UGR_START_URL &&
+            profile.startUrl.toASCIIString() == UgrCadesDetachedAdapter.START_URL &&
             origin.serialized == UgrCadesDetachedAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(UgrCadesDetachedAdapter.INITIATOR_ORIGIN)) &&
             profile.redirectOrigins.isEmpty() &&
@@ -1812,14 +1812,10 @@ internal class ProfileMiniAppletBridgeAdapter(
             "filters.1" to "dnie:;nonexpired:",
             "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
         )
-        private const val UGR_START_URL = "https://sede.ugr.es/Hades/jsp/pantallacertificado.jsp"
         private const val LLEIDA_LOGIN_PAGE_URL =
             "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
         private const val BADAJOZ_LOGIN_PAGE_URL =
             "https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1"
-        private const val JCCM_START_URL =
-            "https://ventanillaelectronica.jccm.es/administracion_electronica/" +
-                "formularios/identificacion.phtml"
         private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
         private const val JCCM_REGISTRO_PROFILE_VERSION = 1
         private const val JCCM_REGISTRO_START_URL =
