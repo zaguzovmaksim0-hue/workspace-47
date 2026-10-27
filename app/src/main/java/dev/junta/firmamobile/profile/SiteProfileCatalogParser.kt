@@ -514,6 +514,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
+            if (p.profileId.value == CARNE_JOVEN_PROFILE_ID && p.hasClientTls()) {
+                validateCarneJovenProfile(p)
+            }
             if (p.profileId.value == AEAT_MIS_DATOS_PROFILE_ID) {
                 validateAeatMisDatosProfile(p)
             }
@@ -1060,6 +1063,54 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    // A profile id without a TLS contract (navigation-only owner) grants nothing the pins would guard.
+    private fun SiteProfile.hasClientTls() = clientAuthPolicy != null || Capability.CLIENT_TLS_AUTH in capabilities
+
+    private fun validateCarneJovenProfile(profile: SiteProfile) {
+        require(profile.profileVersion == 1)
+        require(profile.displayName == CARNE_JOVEN_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_E2E)
+        // QA_ONLY only narrows the profile, so the catalogue may downgrade it but never widen it.
+        require(profile.activation == ProfileActivation.ENABLED || profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == CARNE_JOVEN_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(CARNE_JOVEN_INITIATOR_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(CARNE_JOVEN_REQUEST_ORIGIN)),
+                sourceUrls = setOf(URI(CARNE_JOVEN_SOURCE_URL)),
+                requestPath = CARNE_JOVEN_REQUEST_PATH,
+                fixedQueryParameters = mapOf(
+                    "action" to "validateCert",
+                    "appId" to "IAJ.CARNETJOVEN",
+                    "comeBackURL" to CARNE_JOVEN_COME_BACK_URL,
+                ),
+                requiredEphemeralQueryParameters = setOf("ticketId", "webSessionId"),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = HTTPS_PORT,
+                requestMethod = HttpMethod.GET,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = emptyMap(),
+                sourceBase64UrlConstraints = emptyMap(),
+                requestContinuationUrlConstraints = emptySet(),
+                returnUrlConstraints = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CARNE_JOVEN_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-07-18") })
     }
 
     private fun validateAeatMisDatosProfile(profile: SiteProfile) {
@@ -3064,6 +3115,21 @@ object SiteProfileCatalogParser {
         "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
             "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+    )
+    private const val CARNE_JOVEN_PROFILE_ID = "carne-joven-andalucia"
+    private const val CARNE_JOVEN_DISPLAY_NAME = "Carné Joven Europeo de Andalucía"
+    private const val CARNE_JOVEN_START_URL =
+        "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
+    private const val CARNE_JOVEN_INITIATOR_ORIGIN = "https://ws104.juntadeandalucia.es"
+    private const val CARNE_JOVEN_REQUEST_ORIGIN = "https://ws235.juntadeandalucia.es"
+    private const val CARNE_JOVEN_SOURCE_URL =
+        "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"
+    private const val CARNE_JOVEN_REQUEST_PATH = "/authenticationFacade"
+    private const val CARNE_JOVEN_COME_BACK_URL =
+        "aHR0cHM6Ly93czEwNC5qdW50YWRlYW5kYWx1Y2lhLmVzL2Nhcm5lSm92ZW4vc2VydmxldC9SZXR1cm5BdXRoZW50aWNhdGlvblNlcnZsZXQ="
+    private val CARNE_JOVEN_EVIDENCE_URLS = setOf(
+        "https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html",
+        CARNE_JOVEN_SOURCE_URL,
     )
     private const val AEAT_MIS_DATOS_PROFILE_ID = "aeat-mis-datos-censales"
     private const val AEAT_PROFILE_VERSION = 1
