@@ -58,14 +58,20 @@ class TransparenciaMiniAppletBridgeTest {
         val adapter = MiniAppletBridgeAdapter(
             activeProfileId = { ProfileId(PROFILE_ID) },
         )
-        fun route(raw: String, page: String = SIGNING_PAGE_URL) = adapter.route(
+        fun route(
+            raw: String,
+            page: String = SIGNING_PAGE_URL,
+            sourceOrigin: Uri = Uri.parse(ORIGIN),
+        ) = adapter.route(
             rawMessage = raw,
-            sourceOrigin = Uri.parse(ORIGIN),
+            sourceOrigin = sourceOrigin,
             isMainFrame = true,
             navigationEpoch = 9,
             currentPageUrl = page,
         )
+        assertEquals(true, route(message(pdf), sourceOrigin = Uri.parse("https://evil.example")) is MiniAppletBridgeRouteResult.Rejected)
         assertEquals(true, route(message(pdf), "$ORIGIN/other") is MiniAppletBridgeRouteResult.Rejected)
+        assertEquals(true, route(message(pdf), "$ORIGIN/procedimiento/firma?idBorr=12345&idProc=133628&idAmb=101524") is MiniAppletBridgeRouteResult.Rejected)
         assertEquals(true, route(message(pdf), "$ORIGIN/procedimiento/firma?idProc=133628&idBorr=12345&idAmb=999999") is MiniAppletBridgeRouteResult.Rejected)
         assertEquals(true, route(message(pdf), "$SIGNING_PAGE_URL&extra=1") is MiniAppletBridgeRouteResult.Rejected)
         assertEquals(true, route(message(pdf).replace("SHA512withRSA", "SHA256withRSA")) is MiniAppletBridgeRouteResult.Rejected)
