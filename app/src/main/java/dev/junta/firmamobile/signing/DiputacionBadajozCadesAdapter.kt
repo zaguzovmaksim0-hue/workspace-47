@@ -31,6 +31,9 @@ class DiputacionBadajozCadesAdapter internal constructor(
         const val PROFILE_ID = "diputacion-badajoz-portal"
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://sede.dip-badajoz.es"
+        const val START_URL = INITIATOR_ORIGIN
+        const val LOGIN_PAGE_URL =
+            "$INITIATOR_ORIGIN/portal/entidades.do?ent_id=10&idioma=1"
         const val SAFE_DESCRIPTION = "Acceso con certificado a la Diputación de Badajoz"
         const val EXPECTED_EXTRA_PROPERTIES =
             "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true"
