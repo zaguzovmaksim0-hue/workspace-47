@@ -1282,7 +1282,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             origin.serialized == MinecoPadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(MinecoPadesAdapter.INITIATOR_ORIGIN)) &&
             profile.redirectOrigins.isEmpty() &&
-            profile.trustedBrowseOrigins == MINECO_TRUSTED_BROWSE_ORIGINS &&
+            profile.trustedBrowseOrigins == MinecoPadesAdapter.TRUSTED_BROWSE_ORIGINS &&
             profile.endpoints.isEmpty() &&
             profile.capabilities == setOf(Capability.SIGN) &&
             profile.clientAuthPolicy == null &&
@@ -1397,7 +1397,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         val uri = raw?.let { runCatching { java.net.URI(it) }.getOrNull() } ?: return false
         return !uri.isOpaque &&
             uri.scheme == "https" &&
-            uri.host == "sede.airef.es" &&
+            uri.host == AIREF_PORTAL_HOST &&
             uri.userInfo == null &&
             uri.port in setOf(-1, 443) &&
             uri.rawPath == AirefXadesEnvelopingAdapter.SIGNING_PATH &&
@@ -1792,7 +1792,10 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val FORMAT_XADES = "XAdES"
         private const val FORMAT_XADES_JCCM = "XADES"
         private const val FORMAT_XADES_ENVELOPING = "XAdES Enveloping"
-        private const val AIREF_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
+        private val AIREF_CLAVE_ORIGIN = AirefXadesEnvelopingAdapter.CLIENT_AUTH_SOURCE_ORIGIN
+        private val AIREF_PORTAL_HOST = requireNotNull(
+            java.net.URI(AirefXadesEnvelopingAdapter.INITIATOR_ORIGIN).host,
+        )
         private val AIREF_SIGNING_QUERY = Regex("id=[0-9]{1,20}")
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val SEVILLA_ATSE_PROFILE_VERSION = 1
@@ -1868,10 +1871,6 @@ internal class ProfileMiniAppletBridgeAdapter(
             "filters" to "signingCert:;nonexpired:",
             "expPolicy" to "FirmaAGE",
             "signatureSubFilter" to "ETSI.CAdES.detached",
-        )
-        private val MINECO_TRUSTED_BROWSE_ORIGINS = setOf(
-            ExactOrigin.parse("https://pasarela.clave.gob.es"),
-            ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
         )
         private const val CANTABRIA_PROFILE_ID = "cantabria-rec-cert-login"
         private const val CANTABRIA_PROFILE_VERSION = 1

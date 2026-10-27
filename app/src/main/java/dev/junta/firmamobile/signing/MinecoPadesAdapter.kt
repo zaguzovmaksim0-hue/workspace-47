@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.signing
 
+import dev.junta.firmamobile.profile.ExactOrigin
 import java.security.Provider
 import java.time.Clock
 
@@ -13,8 +14,10 @@ class MinecoPadesAdapter(
         const val PROFILE_ID = "ministerio-economia-instancia-generica"
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://serviciosede.mineco.gob.es"
-        const val PUBLIC_START_URL = "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG"
-        const val SIGNING_PAGE_URL = "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx"
+        const val PUBLIC_START_URL = INITIATOR_ORIGIN + "/FB/Home.aspx?control=161_IG"
+        const val SIGNING_PAGE_URL = INITIATOR_ORIGIN + "/FB/solicitud/firma.aspx"
+        const val CLAVE_BROWSE_ORIGIN = "https://pasarela.clave.gob.es"
+        const val CLAVE_IDENT_BROWSE_ORIGIN = "https://pasarela-ident.clave.gob.es"
         const val SAFE_DESCRIPTION =
             "Firma PAdES de Instancia Genérica del Ministerio de Economía, Comercio y Empresa"
         const val EXPECTED_EXTRA_PROPERTIES =
@@ -24,6 +27,10 @@ class MinecoPadesAdapter(
         const val AGE_POLICY_HASH_BASE64 = "G7roucf600+f03r/o0bAOQ6WAs0="
         const val AGE_POLICY_QUALIFIER =
             "https://sede.administracion.gob.es/politica_de_firma_anexo_1.pdf"
+        val TRUSTED_BROWSE_ORIGINS = setOf(
+            ExactOrigin.parse(CLAVE_BROWSE_ORIGIN),
+            ExactOrigin.parse(CLAVE_IDENT_BROWSE_ORIGIN),
+        )
         internal val SIGNATURE_POLICY = CadesSignaturePolicy(
             policyIdentifierOid = AGE_POLICY_IDENTIFIER_OID,
             hashAlgorithmOid = AGE_POLICY_HASH_ALGORITHM_OID,
