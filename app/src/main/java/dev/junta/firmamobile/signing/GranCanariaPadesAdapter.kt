@@ -13,8 +13,8 @@ class GranCanariaPadesAdapter(
         const val PROFILE_ID = "gran-canaria-sede-electronica"
         const val PROFILE_VERSION = 1
         const val INITIATOR_ORIGIN = "https://sede.grancanaria.com"
-        const val PUBLIC_START_URL = "https://sede.grancanaria.com/sede-privado/instancia-general?inicio"
-        const val SIGNING_PAGE_URL = "https://sede.grancanaria.com/sede-privado/auth"
+        const val PUBLIC_START_URL = "$INITIATOR_ORIGIN/sede-privado/instancia-general?inicio"
+        const val SIGNING_PAGE_URL = "$INITIATOR_ORIGIN/sede-privado/auth"
         const val SAFE_DESCRIPTION = "Firma PAdES de solicitud en la Sede del Cabildo de Gran Canaria"
         const val EXPECTED_EXTRA_PROPERTIES = "headless=true\nfilters=nonexpired:"
         const val MAX_PDF_BYTES = MiniAppletPadesAdapter.MAX_PDF_BYTES
