@@ -1008,7 +1008,8 @@ internal class ProfileMiniAppletBridgeAdapter(
     ): Boolean {
         val page = currentPageUrl?.let { runCatching { URI(it) }.getOrNull() } ?: return false
         val path = page.rawPath ?: return false
-        val signingPage = page.scheme == "https" && page.host == "seu.conselldeivissa.es" &&
+        val eivissaHost = URI(EivissaCadesDetachedAdapter.INITIATOR_ORIGIN).host
+        val signingPage = page.scheme == "https" && page.host == eivissaHost &&
             page.userInfo == null && (page.port == -1 || page.port == 443) &&
             page.rawQuery == null && page.rawFragment == null && EIVISSA_SUMMARY_PATH.matches(path)
         return signingPage &&
@@ -1654,12 +1655,12 @@ internal class ProfileMiniAppletBridgeAdapter(
         signingProtocolId: String,
         currentPageUrl: String?,
     ): Boolean =
-        currentPageUrl == LLEIDA_LOGIN_PAGE_URL &&
+        currentPageUrl == DiputacionLleidaCadesAdapter.LOGIN_PAGE_URL &&
             profile.profileId.value == DiputacionLleidaCadesAdapter.PROFILE_ID &&
             profile.profileVersion == DiputacionLleidaCadesAdapter.PROFILE_VERSION &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&
-            profile.startUrl.toASCIIString() == LLEIDA_START_URL &&
+            profile.startUrl.toASCIIString() == DiputacionLleidaCadesAdapter.START_URL &&
             origin.serialized == DiputacionLleidaCadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(DiputacionLleidaCadesAdapter.INITIATOR_ORIGIN)) &&
             profile.redirectOrigins.isEmpty() &&
@@ -1697,12 +1698,12 @@ internal class ProfileMiniAppletBridgeAdapter(
         signingProtocolId: String,
         currentPageUrl: String?,
     ): Boolean =
-        currentPageUrl == BADAJOZ_LOGIN_PAGE_URL &&
+        currentPageUrl == DiputacionBadajozCadesAdapter.LOGIN_PAGE_URL &&
             profile.profileId.value == DiputacionBadajozCadesAdapter.PROFILE_ID &&
             profile.profileVersion == DiputacionBadajozCadesAdapter.PROFILE_VERSION &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
             profile.activation == ProfileActivation.QA_ONLY &&
-            profile.startUrl.toASCIIString() == BADAJOZ_START_URL &&
+            profile.startUrl.toASCIIString() == DiputacionBadajozCadesAdapter.START_URL &&
             origin.serialized == DiputacionBadajozCadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(DiputacionBadajozCadesAdapter.INITIATOR_ORIGIN)) &&
             profile.redirectOrigins.isEmpty() &&
@@ -1812,10 +1813,6 @@ internal class ProfileMiniAppletBridgeAdapter(
             "filters.1" to "dnie:;nonexpired:",
             "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
         )
-        private const val LLEIDA_LOGIN_PAGE_URL =
-            "https://seu.diputaciolleida.cat/portal/entidades.do?ent_id=1&idioma=2"
-        private const val BADAJOZ_LOGIN_PAGE_URL =
-            "https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1"
         private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
         private const val JCCM_REGISTRO_PROFILE_VERSION = 1
         private const val JCCM_REGISTRO_START_URL =
@@ -1882,14 +1879,12 @@ internal class ProfileMiniAppletBridgeAdapter(
             "mode" to "implicit",
         )
         private const val CANTABRIA_CHALLENGE_BYTES = 40
-        private const val LLEIDA_START_URL = "https://seu.diputaciolleida.cat"
         private const val MAX_LLEIDA_CHALLENGE_BYTES = 512
         private val LLEIDA_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "policy" to "FirmaAGE",
             "headless" to "true",
             "filters" to "nonexpired:true;authCert:true",
         )
-        private const val BADAJOZ_START_URL = "https://sede.dip-badajoz.es"
         private const val MAX_BADAJOZ_CHALLENGE_BYTES = 512
         private val BADAJOZ_FIXED_EXTRA_PROPERTIES = linkedMapOf(
             "policy" to "FirmaAGE",
