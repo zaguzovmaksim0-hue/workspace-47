@@ -28,9 +28,9 @@ class MitesCertificateLoginCadesAdapter internal constructor(
         val ID = SigningProtocolId("mites-certificate-login-local-cades-v1")
         const val PROFILE_ID = "mites-certificate-login"
         const val PROFILE_VERSION = 1
-        const val START_URL = "https://sede.mites.gob.es/"
-        const val LOGIN_PAGE_URL = "https://sede.mites.gob.es/auth"
         const val INITIATOR_ORIGIN = "https://sede.mites.gob.es"
+        const val START_URL = "$INITIATOR_ORIGIN/"
+        const val LOGIN_PAGE_URL = "$INITIATOR_ORIGIN/auth"
         const val SAFE_DESCRIPTION = "Acceso con certificado a la Sede del Ministerio de Trabajo"
         const val EXPECTED_EXTRA_PROPERTIES =
             "mode=implicit\nfilters.1=signingCert:;keyusage.nonrepudiation:true;nonexpired:"

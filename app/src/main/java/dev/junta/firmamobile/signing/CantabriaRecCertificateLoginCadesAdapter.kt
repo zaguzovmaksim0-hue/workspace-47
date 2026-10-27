@@ -28,8 +28,8 @@ class CantabriaRecCertificateLoginCadesAdapter internal constructor(
         val ID = SigningProtocolId("cantabria-rec-cert-login-cades-v1")
         const val PROFILE_ID = "cantabria-rec-cert-login"
         const val PROFILE_VERSION = 1
-        const val START_URL = "https://rec.cantabria.es/rec/bienvenida.htm"
         const val INITIATOR_ORIGIN = "https://rec.cantabria.es"
+        const val START_URL = "$INITIATOR_ORIGIN/rec/bienvenida.htm"
         const val SAFE_DESCRIPTION = "Acceso con certificado al Registro Electrónico Común de Cantabria"
         const val EXPECTED_EXTRA_PROPERTIES =
             "filters=\nmode=implicit"
