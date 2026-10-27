@@ -514,6 +514,12 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
+            if (p.profileId.value == AEAT_MIS_DATOS_PROFILE_ID) {
+                validateAeatMisDatosProfile(p)
+            }
+            if (p.profileId.value == IMPORTASS_PROFILE_ID) {
+                validateImportassProfile(p)
+            }
             if (p.profileId.value == TOLEDO_PROFILE_ID) {
                 validateToledoProfile(p)
             }
@@ -1054,6 +1060,89 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    private fun validateAeatMisDatosProfile(profile: SiteProfile) {
+        require(profile.profileVersion == AEAT_PROFILE_VERSION)
+        require(profile.displayName == AEAT_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == AEAT_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(AEAT_INITIATOR_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(AEAT_REQUEST_ORIGIN)),
+                sourceUrls = setOf(URI(AEAT_SOURCE_URL)),
+                requestPath = AEAT_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = HTTPS_PORT,
+                requestMethod = HttpMethod.GET,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = emptyMap(),
+                sourceBase64UrlConstraints = emptyMap(),
+                requestContinuationUrlConstraints = emptySet(),
+                returnUrlConstraints = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == AEAT_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-07-31") })
+    }
+
+    private fun validateImportassProfile(profile: SiteProfile) {
+        require(profile.profileVersion == IMPORTASS_PROFILE_VERSION)
+        require(profile.displayName == IMPORTASS_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == IMPORTASS_START_URL)
+        require(
+            profile.initiatorOrigins ==
+                setOf(ExactOrigin.parse(IMPORTASS_PORTAL_ORIGIN), ExactOrigin.parse(IMPORTASS_IDP_ORIGIN)),
+        )
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(IMPORTASS_REQUEST_ORIGIN)),
+                sourceUrls = setOf(URI(IMPORTASS_SOURCE_URL)),
+                requestPath = IMPORTASS_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = HTTPS_PORT,
+                requestMethod = HttpMethod.GET,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = emptyMap(),
+                sourceBase64UrlConstraints = emptyMap(),
+                requestContinuationUrlConstraints = emptySet(),
+                returnUrlConstraints = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == IMPORTASS_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-21") })
     }
 
     private fun validateToledoProfile(profile: SiteProfile) {
@@ -2975,6 +3064,34 @@ object SiteProfileCatalogParser {
         "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
             "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+    )
+    private const val AEAT_MIS_DATOS_PROFILE_ID = "aeat-mis-datos-censales"
+    private const val AEAT_PROFILE_VERSION = 1
+    private const val AEAT_DISPLAY_NAME = "Agencia Tributaria — Mis datos censales"
+    private const val AEAT_START_URL = "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+    private const val AEAT_INITIATOR_ORIGIN = "https://sede.agenciatributaria.gob.es"
+    private const val AEAT_REQUEST_ORIGIN = "https://www1.agenciatributaria.gob.es"
+    private const val AEAT_SOURCE_URL = AEAT_START_URL
+    private const val AEAT_REQUEST_PATH = "/wlpl/BUGC-JDIT/MdcAcceso"
+    private val AEAT_EVIDENCE_URLS = setOf(
+        AEAT_START_URL,
+        "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso",
+    )
+    private const val IMPORTASS_PROFILE_ID = "tgss-importass-client-auth"
+    private const val IMPORTASS_PROFILE_VERSION = 1
+    private const val IMPORTASS_DISPLAY_NAME = "TGSS Import@ss — acceso con certificado"
+    private const val IMPORTASS_START_URL =
+        "https://portal.seg-social.gob.es/wps/myportal/importass/importass/personal/"
+    private const val IMPORTASS_PORTAL_ORIGIN = "https://portal.seg-social.gob.es"
+    private const val IMPORTASS_IDP_ORIGIN = "https://idp.seg-social.es"
+    private const val IMPORTASS_REQUEST_ORIGIN = "https://ipce.seg-social.es"
+    private const val IMPORTASS_SOURCE_URL = "https://idp.seg-social.es/PGIS/Login?seleccion=IPCE"
+    private const val IMPORTASS_REQUEST_PATH = "/IPCE/Login"
+    private val IMPORTASS_EVIDENCE_URLS = setOf(
+        "https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda",
+        IMPORTASS_START_URL,
+        IMPORTASS_SOURCE_URL,
+        "https://ipce.seg-social.es/IPCE/Login",
     )
     private const val TOLEDO_PROFILE_ID = "diputacion-toledo-sede"
     private const val TOLEDO_PROFILE_VERSION = 1
