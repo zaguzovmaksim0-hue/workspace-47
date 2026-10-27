@@ -15,6 +15,7 @@ import dev.junta.firmamobile.profile.SignatureFormat
 import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.security.MonotonicSecurityTime
+import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.AirefXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
@@ -1786,9 +1787,8 @@ internal class ProfileMiniAppletBridgeAdapter(
         private val AIREF_SIGNING_QUERY = Regex("id=[0-9]{1,20}")
         private const val SEVILLA_ATSE_PROFILE_ID = "sevilla-atse-certificate-login"
         private const val SEVILLA_ATSE_PROFILE_VERSION = 1
-        private const val SEVILLA_ATSE_START_URL =
-            "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
-        private const val SEVILLA_ATSE_ORIGIN = "https://www.sevilla.org"
+        private val SEVILLA_ATSE_START_URL = SevillaAtseXadesEnvelopingAdapter.START_URL
+        private val SEVILLA_ATSE_ORIGIN = SevillaAtseXadesEnvelopingAdapter.ORIGIN
         private const val SEVILLA_ATSE_SAFE_DESCRIPTION =
             "Acceso con certificado a la Agencia Tributaria de Sevilla"
         private const val SEVILLA_ATSE_PROTOCOL_ID = "sevilla-atse-xades-enveloping-v1"

@@ -2,6 +2,7 @@ package dev.junta.firmamobile.signing
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.net.URI
 import java.security.MessageDigest
 import java.security.Signature
 import java.security.cert.CertificateFactory
@@ -46,10 +47,15 @@ class SevillaAtseXadesEnvelopingAdapter internal constructor(
         val ID = SigningProtocolId("sevilla-atse-xades-enveloping-v1")
         const val PROFILE_ID = "sevilla-atse-certificate-login"
         const val SAFE_DESCRIPTION = "Acceso con certificado a la Agencia Tributaria de Sevilla"
+        const val ORIGIN = "https://www.sevilla.org"
+        val START_URL = URI(ORIGIN)
+            .resolve("/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente")
+            .toString()
+        val HOST = URI(ORIGIN).host
+        private val ORIGIN_URI = URI(ORIGIN)
+        private val HTTPS = ORIGIN_URI.scheme
+        private val HTTPS_PORT = ORIGIN_URI.port.takeIf { it != -1 } ?: ORIGIN_URI.toURL().defaultPort
         private const val PROFILE_VERSION = 1
-        private const val HTTPS = "https"
-        private const val HOST = "www.sevilla.org"
-        private const val HTTPS_PORT = 443
     }
 }
 
