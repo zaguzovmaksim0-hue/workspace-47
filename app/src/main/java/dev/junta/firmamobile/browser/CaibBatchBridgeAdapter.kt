@@ -162,7 +162,7 @@ class CaibBatchBridgeAdapter(
         private const val SIGN_SAVER = "org.fundaciobit.pluginsib.signatureweb.afirmatriphaseserver.signsaver.SignSaverFile"
         private const val MAX_BATCH_XML_BASE64_CHARS = 8 * 1024
         private const val MAX_BATCH_XML_BYTES = 6 * 1024
-        private val ORIGIN = TrustedOrigin("https", "intranet.caib.es", 443)
+        private val ORIGIN = httpsTrustedOrigin(SOURCE_ORIGIN)
         private val URL_BASE64 = Regex("[A-Za-z0-9_-]+={0,2}")
         private val SIGNATURE_ID = Regex("[A-Za-z0-9_-]{40}")
         private val SAVER_CONFIG = Regex("FileName=/tmp/PluginAutofirmaBatch[0-9]+\\.bin\ndebug=false")

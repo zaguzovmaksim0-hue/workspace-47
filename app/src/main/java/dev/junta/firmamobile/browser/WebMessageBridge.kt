@@ -113,7 +113,7 @@ class WebMessageBridge internal constructor(
     private val batchRuntime: StaBatchBridgeRuntime? = when (profileId.value) {
         MelillaBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
             sourceOrigin = MelillaBatchBridgeAdapter.SOURCE_ORIGIN,
-            trustedOrigin = TrustedOrigin("https", "sede.melilla.es", 443),
+            trustedOrigin = httpsTrustedOrigin(MelillaBatchBridgeAdapter.SOURCE_ORIGIN),
             adapter = StaBatchBridgeAdapterOps.from(
                 melillaBatchAdapter ?: MelillaBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
@@ -125,7 +125,7 @@ class WebMessageBridge internal constructor(
         )
         ExtremaduraBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
             sourceOrigin = ExtremaduraBatchBridgeAdapter.SOURCE_ORIGIN,
-            trustedOrigin = TrustedOrigin("https", "tramites.juntaex.es", 443),
+            trustedOrigin = httpsTrustedOrigin(ExtremaduraBatchBridgeAdapter.SOURCE_ORIGIN),
             adapter = StaBatchBridgeAdapterOps.from(
                 extremaduraBatchAdapter ?: ExtremaduraBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
@@ -137,7 +137,7 @@ class WebMessageBridge internal constructor(
         )
         LaPalmaBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
             sourceOrigin = LaPalmaBatchBridgeAdapter.SOURCE_ORIGIN,
-            trustedOrigin = TrustedOrigin("https", "sedeelectronica.cabildodelapalma.es", 443),
+            trustedOrigin = httpsTrustedOrigin(LaPalmaBatchBridgeAdapter.SOURCE_ORIGIN),
             adapter = StaBatchBridgeAdapterOps.from(
                 laPalmaBatchAdapter ?: LaPalmaBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
@@ -149,7 +149,7 @@ class WebMessageBridge internal constructor(
         )
         HuescaBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
             sourceOrigin = HuescaBatchBridgeAdapter.SOURCE_ORIGIN,
-            trustedOrigin = TrustedOrigin("https", "ovc24.dphuesca.es", 443),
+            trustedOrigin = httpsTrustedOrigin(HuescaBatchBridgeAdapter.SOURCE_ORIGIN),
             adapter = StaBatchBridgeAdapterOps.from(
                 huescaBatchAdapter ?: HuescaBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
@@ -161,7 +161,7 @@ class WebMessageBridge internal constructor(
         )
         LugoBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
             sourceOrigin = LugoBatchBridgeAdapter.SOURCE_ORIGIN,
-            trustedOrigin = TrustedOrigin("https", "sede.deputacionlugo.org", 443),
+            trustedOrigin = httpsTrustedOrigin(LugoBatchBridgeAdapter.SOURCE_ORIGIN),
             adapter = StaBatchBridgeAdapterOps.from(
                 lugoBatchAdapter ?: LugoBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
@@ -173,7 +173,7 @@ class WebMessageBridge internal constructor(
         )
         CaibBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
             sourceOrigin = CaibBatchBridgeAdapter.SOURCE_ORIGIN,
-            trustedOrigin = TrustedOrigin("https", "intranet.caib.es", 443),
+            trustedOrigin = httpsTrustedOrigin(CaibBatchBridgeAdapter.SOURCE_ORIGIN),
             adapter = StaBatchBridgeAdapterOps.from(
                 caibBatchAdapter ?: CaibBatchBridgeAdapter(
                     activeProfileId = activeProfileId,
@@ -185,7 +185,7 @@ class WebMessageBridge internal constructor(
         )
         BurgosBatchBridgeAdapter.PROFILE_ID -> StaBatchBridgeRuntime(
             sourceOrigin = BurgosBatchBridgeAdapter.SOURCE_ORIGIN,
-            trustedOrigin = TrustedOrigin("https", "registro.diputaciondeburgos.es", 443),
+            trustedOrigin = httpsTrustedOrigin(BurgosBatchBridgeAdapter.SOURCE_ORIGIN),
             adapter = StaBatchBridgeAdapterOps.from(
                 burgosBatchAdapter ?: BurgosBatchBridgeAdapter(
                     activeProfileId = activeProfileId,

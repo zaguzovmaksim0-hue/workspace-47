@@ -178,7 +178,7 @@ class LugoBatchBridgeAdapter(
         private const val SIGN_SAVER = "es.guadaltel.framework.clientsigner.servlet.batch.util.SignSaverFile"
         private const val MAX_BATCH_XML_BASE64_CHARS = 512 * 1024
         private const val MAX_BATCH_XML_BYTES = 384 * 1024
-        private val ORIGIN = TrustedOrigin("https", "sede.deputacionlugo.org", 443)
+        private val ORIGIN = httpsTrustedOrigin(SOURCE_ORIGIN)
         private val BASE64 = Regex("(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?")
         private val SAFE_ID = Regex("[A-Za-z0-9._-]{1,128}")
         private val UUID_PATTERN = Regex("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", RegexOption.IGNORE_CASE)

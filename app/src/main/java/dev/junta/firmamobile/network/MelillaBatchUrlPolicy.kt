@@ -92,7 +92,7 @@ class MelillaBatchUrlPolicy {
         const val MAX_RAW_QUERY_CHARS = 4_096
         const val MAX_EPHEMERAL_VALUE_CHARS = STA_MAX_EPHEMERAL_VALUE_CHARS
 
-        private const val HOST = "sede.melilla.es"
+        private val HOST = URI(ORIGIN).host
     }
 }
 
@@ -137,7 +137,7 @@ class ExtremaduraBatchUrlPolicy {
         const val ORIGIN = "https://tramites.juntaex.es"
         const val PATH = STA_BATCH_PATH
 
-        private const val HOST = "tramites.juntaex.es"
+        private val HOST = URI(ORIGIN).host
     }
 }
 
@@ -182,7 +182,7 @@ class LaPalmaBatchUrlPolicy {
         const val ORIGIN = "https://sedeelectronica.cabildodelapalma.es"
         const val PATH = STA_BATCH_PATH
 
-        private const val HOST = "sedeelectronica.cabildodelapalma.es"
+        private val HOST = URI(ORIGIN).host
     }
 }
 
@@ -227,7 +227,7 @@ class HuescaBatchUrlPolicy {
         const val ORIGIN = "https://ovc24.dphuesca.es"
         const val PATH = STA_BATCH_PATH
 
-        private const val HOST = "ovc24.dphuesca.es"
+        private val HOST = URI(ORIGIN).host
     }
 }
 
@@ -253,7 +253,7 @@ class BurgosBatchUrlPolicy {
     companion object {
         const val ORIGIN = "https://registro.diputaciondeburgos.es"
         const val PATH = STA_BATCH_PATH
-        private const val HOST = "registro.diputaciondeburgos.es"
+        private val HOST = URI(ORIGIN).host
     }
 }
 
