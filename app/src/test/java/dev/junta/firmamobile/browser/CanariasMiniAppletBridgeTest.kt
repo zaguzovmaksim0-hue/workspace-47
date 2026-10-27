@@ -12,6 +12,7 @@ import java.util.Base64
 import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -70,6 +71,20 @@ class CanariasMiniAppletBridgeTest {
         assertEquals(true, route(exact.replace("CAdES", "XAdES")) is MiniAppletBridgeRouteResult.Rejected)
         assertEquals(true, route(exact.replace("signingCert:true", "signingCert:false")) is MiniAppletBridgeRouteResult.Rejected)
         assertEquals(true, route(message("Mon, 17 Aug 2026 21:55:05 UTC".encodeToByteArray())) is MiniAppletBridgeRouteResult.Rejected)
+    }
+
+    @Test
+    fun rejectsForeignSourceOrigin() {
+        val adapter = MiniAppletBridgeAdapter(activeProfileId = { ProfileId(PROFILE_ID) })
+        val result = adapter.route(
+            rawMessage = message(CHALLENGE.encodeToByteArray()),
+            sourceOrigin = Uri.parse("https://evil.example"),
+            isMainFrame = true,
+            navigationEpoch = 9,
+            currentPageUrl = SIGNING_PAGE_URL,
+        )
+
+        assertTrue(result is MiniAppletBridgeRouteResult.Rejected)
     }
 
     private fun message(challenge: ByteArray): String = JSONObject()
