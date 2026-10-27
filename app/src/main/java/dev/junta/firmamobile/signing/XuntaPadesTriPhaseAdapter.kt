@@ -63,10 +63,10 @@ class XuntaPadesTriPhaseAdapter internal constructor(
         val ID = SigningProtocolId("xunta-galicia-pades-triphase-v1")
         const val PROFILE_ID = "xunta-galicia-solicitude-xenerica"
         const val PROFILE_VERSION = 1
-        const val PUBLIC_START_URL = "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
-        const val SIGNING_PAGE_URL = "https://sede.xunta.gal/presenta/novo/PR004A_2025_1"
         const val INITIATOR_ORIGIN = "https://sede.xunta.gal"
-        const val ENDPOINT = "https://sede.xunta.gal/presenta/sinatura/SignatureService"
+        const val PUBLIC_START_URL = "$INITIATOR_ORIGIN/tramites-e-servizos/solicitude-xenerica"
+        const val SIGNING_PAGE_URL = "$INITIATOR_ORIGIN/presenta/novo/PR004A_2025_1"
+        const val ENDPOINT = "$INITIATOR_ORIGIN/presenta/sinatura/SignatureService"
         const val SAFE_DESCRIPTION = "Firma PAdES de solicitud genérica en la Sede de la Xunta de Galicia"
         const val SELECT_CERTIFICATE_SAFE_DESCRIPTION =
             "Seleccionar certificado para la solicitud genérica de la Xunta de Galicia"

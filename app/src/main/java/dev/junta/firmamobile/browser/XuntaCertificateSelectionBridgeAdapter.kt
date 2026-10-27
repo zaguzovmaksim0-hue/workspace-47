@@ -16,6 +16,7 @@ import dev.junta.firmamobile.signing.SigningContext
 import dev.junta.firmamobile.signing.SigningErrorCode
 import dev.junta.firmamobile.signing.XuntaPadesTriPhaseAdapter
 import java.io.StringReader
+import java.net.URI
 import java.time.Clock
 import java.util.UUID
 import org.json.JSONObject
@@ -169,7 +170,7 @@ class XuntaCertificateSelectionBridgeAdapter(
 
     companion object {
         const val PROFILE_ID = XuntaPadesTriPhaseAdapter.PROFILE_ID
-        const val HOST = "sede.xunta.gal"
+        val HOST: String = URI(XuntaPadesTriPhaseAdapter.INITIATOR_ORIGIN).host
         const val EXTRA_PROPERTIES = XuntaPadesTriPhaseAdapter.SELECT_CERTIFICATE_EXTRA_PROPERTIES
         const val INPUT_ADAPTER_ID = "autoscript-select-certificate-v1"
         const val CALLBACK_CONTRACT_ID = "autoscript-select-certificate-callback-v1"

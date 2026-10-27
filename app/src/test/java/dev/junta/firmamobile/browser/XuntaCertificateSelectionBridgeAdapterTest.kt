@@ -59,6 +59,39 @@ class XuntaCertificateSelectionBridgeAdapterTest {
         assertEquals(SigningErrorCode.INVALID_REQUEST, wrongProperties.code)
     }
 
+    @Test
+    fun forgedOriginVariantsFailClosed() {
+        listOf(
+            "https://other.example",
+            "https://sede.xunta.gal.evil.example",
+            "https://sede.xunta.gal:444",
+            "http://sede.xunta.gal",
+            "https://sede.xunta.gal/extra",
+            "https://sede.xunta.gal/",
+            "https://sede.xunta.gal?extra=1",
+            "https://sede.xunta.gal#extra",
+            "https://user@sede.xunta.gal",
+        ).forEach { origin ->
+            val rejected = adapter.route(
+                message("filters=nonexpired"), Uri.parse(origin), true, 17,
+                XuntaPadesTriPhaseAdapter.SIGNING_PAGE_URL,
+            ) as CertificateSelectionBridgeRouteResult.Rejected
+            assertEquals(origin, SigningErrorCode.ORIGIN_NOT_ALLOWED, rejected.code)
+        }
+    }
+
+    @Test
+    fun defaultAndExplicitHttpsPortKeepTheSameTrustedOrigin() {
+        listOf("https://sede.xunta.gal", "https://sede.xunta.gal:443").forEach { origin ->
+            val accepted = adapter.route(
+                message("filters=nonexpired"), Uri.parse(origin), true, 17,
+                XuntaPadesTriPhaseAdapter.SIGNING_PAGE_URL,
+            ) as CertificateSelectionBridgeRouteResult.Accepted
+            assertEquals("https://sede.xunta.gal", accepted.request.context.origin.serialized)
+            assertEquals(443, accepted.request.context.origin.port)
+        }
+    }
+
     private fun message(properties: String): String = JSONObject()
         .put("type", "MINIAPPLET_SELECT_CERTIFICATE")
         .put("documentId", DOCUMENT_ID)
