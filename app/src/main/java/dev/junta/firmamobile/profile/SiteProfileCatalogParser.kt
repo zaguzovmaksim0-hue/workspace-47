@@ -514,6 +514,12 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == SANIDAD_PROFILE_ID) {
                 validateSanidadProfile(p)
             }
+            if (p.profileId.value == TOLEDO_PROFILE_ID) {
+                validateToledoProfile(p)
+            }
+            if (p.profileId.value == VALLADOLID_PROFILE_ID) {
+                validateValladolidProfile(p)
+            }
             if (p.profileId.value == MENORCA_PROFILE_ID) {
                 validateMenorcaProfile(p)
             }
@@ -1048,6 +1054,86 @@ object SiteProfileCatalogParser {
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+    }
+
+    private fun validateToledoProfile(profile: SiteProfile) {
+        require(profile.profileVersion == TOLEDO_PROFILE_VERSION)
+        require(profile.displayName == TOLEDO_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == TOLEDO_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(TOLEDO_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(TOLEDO_ORIGIN)),
+                sourceUrls = setOf(URI(TOLEDO_SOURCE_URL)),
+                requestPath = TOLEDO_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = false,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = TOLEDO_REQUEST_PORT,
+                requestMethod = HttpMethod.GET,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = emptyMap(),
+                sourceBase64UrlConstraints = emptyMap(),
+                requestContinuationUrlConstraints = emptySet(),
+                returnUrlConstraints = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TOLEDO_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-13") })
+    }
+
+    private fun validateValladolidProfile(profile: SiteProfile) {
+        require(profile.profileVersion == VALLADOLID_PROFILE_VERSION)
+        require(profile.displayName == VALLADOLID_DISPLAY_NAME)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == VALLADOLID_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(VALLADOLID_ORIGIN)))
+        require(profile.redirectOrigins.isEmpty())
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.operationPolicies.isEmpty())
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(
+            profile.clientAuthPolicy == ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse(VALLADOLID_ORIGIN)),
+                sourceUrls = setOf(URI(VALLADOLID_SOURCE_URL)),
+                requestPath = VALLADOLID_REQUEST_PATH,
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = VALLADOLID_REQUEST_PORT,
+                requestMethod = HttpMethod.GET,
+                sourceFixedQueryParameters = emptyMap(),
+                sourceRequiredEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameters = emptySet(),
+                linkedEphemeralQueryParameterMappings = emptyMap(),
+                sourceBase64UrlConstraints = emptyMap(),
+                requestContinuationUrlConstraints = emptySet(),
+                returnUrlConstraints = emptySet(),
+            ),
+        )
+        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == VALLADOLID_EVIDENCE_URLS)
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-13") })
     }
 
     private fun validateSoriaProfile(profile: SiteProfile) {
@@ -2889,6 +2975,35 @@ object SiteProfileCatalogParser {
         "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
             "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+    )
+    private const val TOLEDO_PROFILE_ID = "diputacion-toledo-sede"
+    private const val TOLEDO_PROFILE_VERSION = 1
+    private const val TOLEDO_DISPLAY_NAME = "Diputación de Toledo — Registro Telemático con certificado"
+    private const val TOLEDO_START_URL =
+        "https://diputacion.toledo.gob.es/SIGEM_RegistroTelematicoWeb/realizarSolicitudRegistro.do?tramiteId=TRAM_31"
+    private const val TOLEDO_ORIGIN = "https://diputacion.toledo.gob.es"
+    private const val TOLEDO_SOURCE_URL =
+        "https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/seleccionEntidad.do" +
+            "?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&SESION_ID=&ENTIDAD_ID=&LANG=&COUNTRY="
+    private const val TOLEDO_REQUEST_PATH = "/SIGEM_AutenticacionWeb/validacionCertificado.do"
+    private const val TOLEDO_REQUEST_PORT = 843
+    private val TOLEDO_EVIDENCE_URLS = setOf(
+        "https://diputacion.toledo.gob.es/procedimientos/1",
+        TOLEDO_START_URL,
+        TOLEDO_SOURCE_URL,
+    )
+    private const val VALLADOLID_PROFILE_ID = "diputacion-valladolid-sede"
+    private const val VALLADOLID_PROFILE_VERSION = 1
+    private const val VALLADOLID_DISPLAY_NAME = "Diputación de Valladolid — acceso con certificado"
+    private const val VALLADOLID_START_URL = "https://www.sede.diputaciondevalladolid.es/tgauth/login"
+    private const val VALLADOLID_ORIGIN = "https://www.sede.diputaciondevalladolid.es"
+    private const val VALLADOLID_SOURCE_URL = "https://www.sede.diputaciondevalladolid.es/c/portal/cert-login"
+    private const val VALLADOLID_REQUEST_PATH = "/c/portal/cert-login"
+    private const val VALLADOLID_REQUEST_PORT = 21460
+    private val VALLADOLID_EVIDENCE_URLS = setOf(
+        "https://www.sede.diputaciondevalladolid.es/tramites-disponibles/12S203/",
+        VALLADOLID_START_URL,
+        VALLADOLID_SOURCE_URL,
     )
     private const val SORIA_PROFILE_ID = "diputacion-soria-sede-client-auth"
     private const val SORIA_ORIGIN = "https://portaltramitador.dipsoria.es"
