@@ -170,5 +170,7 @@ object BuiltInSiteProfiles {
             releaseRegistry
         }
 
-    val JSON: String = BuildConfig.SITE_PROFILE_CATALOG_JSON
+    val JSON: String by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        SiteProfileCatalogResource.read()
+    }
 }
