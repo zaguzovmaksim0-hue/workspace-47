@@ -25,6 +25,8 @@ import okhttp3.RequestBody
 import okio.BufferedSink
 import okhttp3.Response
 
+internal const val AFIRMA_MAX_RESULT_CHARS = 6 * 1024 * 1024
+
 internal enum class AfirmaDeliveryResult {
     ACKNOWLEDGED,
     REJECTED,
@@ -234,7 +236,7 @@ internal class AfirmaServletTransport(
     private companion object {
         val SESSION_ID = Regex("[A-Za-z0-9_-]{1,128}")
         val RESERVED_QUERY_KEYS = setOf("op", "v", "id", "dat")
-        const val MAX_RESULT_CHARS = 6 * 1024 * 1024
+        const val MAX_RESULT_CHARS = AFIRMA_MAX_RESULT_CHARS
         const val MAX_ACK_BYTES = 256
         fun publicDns(): Dns = object : Dns {
             override fun lookup(hostname: String): List<InetAddress> {
