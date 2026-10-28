@@ -3,6 +3,7 @@ package dev.junta.firmamobile.browser
 import android.content.Context
 import dev.junta.firmamobile.BuildConfig
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.profile.ShimFeature
 
 internal data class AfirmaShimCompatibilityFlags(
     val ugr: Boolean = false,
@@ -26,7 +27,41 @@ internal data class AfirmaShimCompatibilityFlags(
     val euskadiClientAuthPost: Boolean = false,
     val acceda: Boolean = false,
     val badajoz: Boolean = false,
-)
+) {
+    companion object {
+        private val FEATURE_FLAG_UPDATERS: Map<
+            ShimFeature,
+            AfirmaShimCompatibilityFlags.() -> AfirmaShimCompatibilityFlags,
+            > = mapOf(
+            ShimFeature.UGR_LOGIN to { copy(ugr = true) },
+            ShimFeature.CANTABRIA_LOGIN to { copy(cantabria = true) },
+            ShimFeature.JCCM_PROBE to { copy(jccm = true) },
+            ShimFeature.JCCM_REGISTRO to { copy(jccmRegistro = true) },
+            ShimFeature.SEVILLA_ATSE to { copy(sevillaAtse = true) },
+            ShimFeature.AIREF_SIGN to { copy(airef = true) },
+            ShimFeature.CDTI_SIGN to { copy(cdti = true) },
+            ShimFeature.POLICIA_SIGN to { copy(policia = true) },
+            ShimFeature.GRAN_CANARIA_SIGN to { copy(granCanaria = true) },
+            ShimFeature.FUERTEVENTURA_SIGN to { copy(fuerteventura = true) },
+            ShimFeature.CANARIAS_LOGIN to { copy(canarias = true) },
+            ShimFeature.MINECO_SIGN to { copy(mineco = true) },
+            ShimFeature.ACCEDA_SIGN to { copy(acceda = true) },
+            ShimFeature.BADAJOZ_SIGN to { copy(badajoz = true) },
+            ShimFeature.ISCIII_SELECTION to { copy(isciiiCertificateSelection = true) },
+            ShimFeature.VALENCIA_SELECTION to { copy(valenciaCertificateSelection = true) },
+            ShimFeature.XUNTA_SIGN_SELECTION to { copy(xuntaGalicia = true) },
+            ShimFeature.EUSKADI_CLIENT_AUTH_POST to { copy(euskadiClientAuthPost = true) },
+            ShimFeature.STA_JSON_BATCH to { copy(melillaBatch = true) },
+            ShimFeature.LUGO_XML_BATCH to { copy(lugoBatch = true) },
+            ShimFeature.CAIB_PORTAFIB_BATCH to { copy(caibBatch = true) },
+        )
+
+        internal fun fromFeatures(features: Set<ShimFeature>): AfirmaShimCompatibilityFlags =
+            features.fold(AfirmaShimCompatibilityFlags()) { flags, feature ->
+                FEATURE_FLAG_UPDATERS.getValue(feature)(flags)
+            }
+    }
+}
 
 object AfirmaJavascriptShim {
     const val MAX_SCRIPT_CHARS = 96 * 1024
