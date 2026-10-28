@@ -1,7 +1,13 @@
 import java.net.IDN
+import java.security.MessageDigest
 import java.util.Base64
 import java.util.Locale
 import org.gradle.api.artifacts.dsl.LockMode
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 
@@ -45,41 +51,6 @@ fun quotedBuildConfigString(value: String): String {
             }
         }
         append('"')
-    }
-}
-
-fun quotedBuildConfigText(value: String): String = buildString(value.length + 2) {
-    append('"')
-    value.forEach { character ->
-        when (character) {
-            '\\' -> append("\\\\")
-            '"' -> append("\\\"")
-            '\n' -> append("\\n")
-            '\r' -> append("\\r")
-            '\t' -> append("\\t")
-            '\b' -> append("\\b")
-            '\u000C' -> append("\\f")
-            else -> {
-                if (character.code < 0x20) {
-                    append("\\u")
-                    append(character.code.toString(16).padStart(4, '0'))
-                } else {
-                    append(character)
-                }
-            }
-        }
-    }
-    append('"')
-}
-
-// BuildConfig fields are Java source expressions. Keep every literal comfortably below
-// the class-file CONSTANT_Utf8 limit as the checked-in profile catalog grows.
-fun chunkedBuildConfigText(value: String): String {
-    val literals = value.chunked(4_096).map(::quotedBuildConfigText)
-    return when (literals.size) {
-        0 -> quotedBuildConfigText("")
-        1 -> literals.single()
-        else -> literals.joinToString(prefix = "String.join(\"\", ", postfix = ")")
     }
 }
 
@@ -127,7 +98,10 @@ val androidVersionFile = rootProject.layout.projectDirectory.file("version.prope
 val androidVersion = parseAndroidVersion(providers.fileContents(androidVersionFile).asText.get())
 
 val siteProfileCatalogFile = rootProject.layout.projectDirectory.file("config/site_profiles_v1.json")
-val siteProfileCatalogJson = providers.fileContents(siteProfileCatalogFile).asText.get()
+val siteProfileCatalogSha256 = providers.fileContents(siteProfileCatalogFile).asBytes.map { bytes ->
+    MessageDigest.getInstance("SHA-256").digest(bytes)
+        .joinToString(separator = "") { byte -> "%02x".format(byte) }
+}
 
 val qaRelayHostInput = providers.secretValue("JFM_WS024_QA_RELAY_HOST")
 val qaRelayPortInput = providers.secretValue("JFM_WS024_QA_RELAY_PORT")
@@ -160,6 +134,33 @@ val releaseSigningConfigured = listOf(
     releaseKeyAlias,
     releaseKeyPassword,
 ).all { it != null }
+
+abstract class SiteProfileCatalogResourceTask : DefaultTask() {
+    @get:InputFile
+    abstract val catalogFile: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun copyCatalog() {
+        val source = catalogFile.get().asFile
+        val target = outputDir.get()
+            .file("dev/junta/firmamobile/profile/site_profiles_v1.json")
+            .asFile
+        target.parentFile.mkdirs()
+        source.copyTo(target, overwrite = true)
+    }
+}
+
+val siteProfileCatalogResourceTask = tasks.register<SiteProfileCatalogResourceTask>(
+    "generateSiteProfileCatalogResource",
+) {
+    group = "build"
+    description = "Copies the site profile catalog as a Java classpath resource."
+    catalogFile.set(siteProfileCatalogFile)
+    outputDir.set(layout.buildDirectory.dir("generated/siteProfileCatalog/resources"))
+}
 
 val verifyRuntimeDependencyLocks by tasks.registering {
     group = "verification"
@@ -217,8 +218,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField(
             "String",
-            "SITE_PROFILE_CATALOG_JSON",
-            chunkedBuildConfigText(siteProfileCatalogJson),
+            "SITE_PROFILE_CATALOG_SHA256",
+            quotedBuildConfigString(siteProfileCatalogSha256.get()),
         )
         buildConfigField("boolean", "ALLOW_QA_PROFILES", "false")
         buildConfigField("boolean", "ALLOW_UNVERIFIED_PROFILES", "false")
@@ -373,6 +374,12 @@ androidComponents {
         variantBuilder.hostTests[
             com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE
         ]?.enable = true
+    }
+    onVariants { variant ->
+        variant.sources.resources?.addGeneratedSourceDirectory(
+            siteProfileCatalogResourceTask,
+            SiteProfileCatalogResourceTask::outputDir,
+        )
     }
 }
 

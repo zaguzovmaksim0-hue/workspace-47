@@ -1,6 +1,5 @@
 package dev.junta.firmamobile.profile
 
-import dev.junta.firmamobile.BuildConfig
 import org.json.JSONObject
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -231,11 +230,12 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun generatedBuildConfigSourceMatchesTheCompiledCatalog() {
-        assertEquals(BuildConfig.SITE_PROFILE_CATALOG_JSON, BuiltInSiteProfiles.JSON)
+    fun generatedResourceMatchesTheCompiledCatalog() {
+        val resourceJson = SiteProfileCatalogResource.read()
+        assertEquals(BuiltInSiteProfiles.JSON, resourceJson)
         assertEquals(
             BuiltInSiteProfiles.catalog,
-            SiteProfileCatalogParser.parse(BuildConfig.SITE_PROFILE_CATALOG_JSON),
+            SiteProfileCatalogParser.parse(resourceJson),
         )
     }
 
