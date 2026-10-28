@@ -24,11 +24,11 @@ object SiteProfileCatalogParser {
         val requiredKeys = setOf("schemaVersion", "catalogVersion", "profiles")
         require(root.values.keys == requiredKeys + listOf("reviewedOriginShares").filter { it in root.values })
         val schemaVersion = root.int("schemaVersion")
-        require(schemaVersion == 1)
+        require(schemaVersion == 1 || schemaVersion == 2)
         val catalog = SiteProfileCatalog(
             schemaVersion = schemaVersion,
             catalogVersion = root.int("catalogVersion").also { require(it >= 1) },
-            profiles = root.array("profiles").map(::profile),
+            profiles = root.array("profiles").map { if (schemaVersion == 1) profile(it) else profileV2(it) },
             reviewedOriginShares = if ("reviewedOriginShares" in root.values) {
                 root.array("reviewedOriginShares").also { require(it.size <= MAX_REVIEWED_ORIGIN_SHARES) }
                     .map(::reviewedOriginShare)
@@ -39,6 +39,7 @@ object SiteProfileCatalogParser {
         require(catalog.profiles.map { it.profileId }.toSet().size == catalog.profiles.size)
         validateReviewedOriginShares(catalog)
         validateCatalog(catalog)
+        if (schemaVersion == 2) catalog.profiles.forEach(ShimFeatureResolver.Companion::validate)
         return catalog
     }
 
@@ -135,6 +136,17 @@ object SiteProfileCatalogParser {
             evidence = o.array("evidence").map(::evidence),
         )
     }
+
+    private fun profileV2(value: JValue): SiteProfile {
+        val o = value.obj("profile")
+        val features = shimFeatures(o.array("shimFeatures"))
+        val baseValues = LinkedHashMap(o.values)
+        baseValues.remove("shimFeatures")
+        return profile(JObject(baseValues)).copy(shimFeatures = features)
+    }
+
+    private fun shimFeatures(values: List<JValue>): Set<ShimFeature> =
+        values.map { ShimFeature.fromModuleId(it.string()) }.toSet().also { require(it.size == values.size) }
 
     private fun endpoint(value: JValue): ProfileEndpoint {
         val o = value.obj("endpoint")

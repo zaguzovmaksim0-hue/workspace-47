@@ -23,6 +23,110 @@ import org.robolectric.annotation.SQLiteMode
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SiteProfileCatalogParserTest {
+
+    @Test
+    fun schemaV2AcceptsRequiredEmptyFeatures() {
+        val parsed = SiteProfileCatalogParser.parse(schemaV2Fixture().toString())
+        assertEquals(2, parsed.schemaVersion)
+        assertEquals(BuiltInSiteProfiles.catalog.profiles.map { it.profileId }, parsed.profiles.map { it.profileId })
+    }
+
+    @Test
+    fun schemaV2AcceptsReviewedFeatureOnItsProfile() {
+        val root = schemaV2Fixture()
+        schemaV2Profile(root, "ugr-certificado-login").put("shimFeatures", org.json.JSONArray().put("ugr-login"))
+        assertEquals(2, SiteProfileCatalogParser.parse(root.toString()).schemaVersion)
+    }
+
+    @Test
+    fun schemaV2RequiresFeaturesOnEveryProfile() {
+        val root = schemaV2Fixture()
+        val profiles = root.getJSONArray("profiles")
+        for (index in 0 until profiles.length()) {
+            profiles.getJSONObject(index).remove("shimFeatures")
+            assertThrows(RuntimeException::class.java) { SiteProfileCatalogParser.parse(root.toString()) }
+            profiles.getJSONObject(index).put("shimFeatures", org.json.JSONArray())
+        }
+    }
+
+    @Test
+    fun schemaV2RejectsUnknownDuplicateAndNonArrayFeatures() {
+        val invalid = listOf<Any>(
+            org.json.JSONArray().put("unknown"),
+            org.json.JSONArray().put("ugr-login").put("ugr-login"),
+            org.json.JSONArray().put("https://example.org/shim.js"),
+            org.json.JSONArray().put("../shim.js"),
+            org.json.JSONArray().put(".*"),
+            org.json.JSONArray().put("eval('code')"),
+            org.json.JSONArray().put(1), org.json.JSONArray().put(JSONObject.NULL),
+            "ugr-login", JSONObject.NULL, JSONObject(),
+        )
+        for (value in invalid) {
+            val root = schemaV2Fixture()
+            schemaV2Profile(root, "ugr-certificado-login").put("shimFeatures", value)
+            assertThrows(RuntimeException::class.java) { SiteProfileCatalogParser.parse(root.toString()) }
+        }
+    }
+
+    @Test
+    fun schemaV2RejectsExtraAndDuplicateKeysAndForeignFeatures() {
+        val extra = schemaV2Fixture()
+        schemaV2Profile(extra, "ugr-certificado-login").put("shimUrl", "https://example.org/shim.js")
+        assertThrows(RuntimeException::class.java) { SiteProfileCatalogParser.parse(extra.toString()) }
+        val duplicate = schemaV2Fixture().toString().replaceFirst(
+            "\"shimFeatures\":[]", "\"shimFeatures\":[],\"shimFeatures\":[]",
+        )
+        assertThrows(RuntimeException::class.java) { SiteProfileCatalogParser.parse(duplicate) }
+        val foreign = schemaV2Fixture()
+        schemaV2Profile(foreign, "cantabria-rec-cert-login").put(
+            "shimFeatures", org.json.JSONArray().put("ugr-login"),
+        )
+        assertThrows(RuntimeException::class.java) { SiteProfileCatalogParser.parse(foreign.toString()) }
+        val batch = schemaV2Fixture()
+        schemaV2Profile(batch, "melilla-sede").put(
+            "shimFeatures", org.json.JSONArray().put("sta-json-batch").put("lugo-xml-batch"),
+        )
+        assertThrows(RuntimeException::class.java) { SiteProfileCatalogParser.parse(batch.toString()) }
+    }
+
+    @Test
+    fun schemaV1StillRejectsShimFeaturesAndUnsupportedVersions() {
+        val root = JSONObject(BuiltInSiteProfiles.JSON)
+        root.getJSONArray("profiles").getJSONObject(0).put("shimFeatures", org.json.JSONArray())
+        assertThrows(RuntimeException::class.java) { SiteProfileCatalogParser.parse(root.toString()) }
+        for (version in listOf(0, 3, -1)) {
+            val unsupported = schemaV2Fixture().put("schemaVersion", version)
+            assertThrows(RuntimeException::class.java) { SiteProfileCatalogParser.parse(unsupported.toString()) }
+        }
+    }
+
+    @Test
+    fun schemaV2RetainsExactOriginAndAdapterPins() {
+        for (key in listOf("initiatorOrigins", "operationPolicies")) {
+            val root = schemaV2Fixture()
+            val profile = schemaV2Profile(root, "ugr-certificado-login")
+            profile.put("shimFeatures", org.json.JSONArray().put("ugr-login"))
+            if (key == "initiatorOrigins") {
+                profile.put(key, org.json.JSONArray().put("https://sede.ugr.es.evil.example"))
+            } else {
+                profile.getJSONArray(key).getJSONObject(0).put("inputAdapterId", "autoscript-select-certificate-v1")
+            }
+            assertThrows(RuntimeException::class.java) { SiteProfileCatalogParser.parse(root.toString()) }
+        }
+    }
+
+    private fun schemaV2Fixture(): JSONObject {
+        val root = JSONObject(BuiltInSiteProfiles.JSON).put("schemaVersion", 2)
+        val profiles = root.getJSONArray("profiles")
+        for (index in 0 until profiles.length()) profiles.getJSONObject(index).put("shimFeatures", org.json.JSONArray())
+        return root
+    }
+
+    private fun schemaV2Profile(root: JSONObject, id: String): JSONObject {
+        val profiles = root.getJSONArray("profiles")
+        return (0 until profiles.length()).map { profiles.getJSONObject(it) }.single { it.getString("profileId") == id }
+    }
+
     @Test
     fun escapedSchemaKeyAndJsonWhitespacePreserveTheCatalog() {
         val json = BuiltInSiteProfiles.JSON
