@@ -103,6 +103,17 @@ class MainActivityRootNavigationTest {
         scenario.onActivity { assertFalse(it.isFinishing) }
     }
 
+    @Test fun certificateHomeSystemBackAfterCatalogReturnFinishesInsteadOfReopeningCatalog() {
+        openCatalog()
+        rule.onNodeWithContentDescription("← Volver al certificado").performClick()
+        awaitHome()
+        rule.onNodeWithTag("catalog-list").assertDoesNotExist()
+        scenario.onActivity {
+            it.onBackPressedDispatcher.onBackPressed()
+            assertTrue(it.isFinishing)
+        }
+    }
+
     @Test fun typedPublicAddressOpensWithoutCertificateAndHomeExitsToCatalog() {
         openPublicBrowser()
         rule.onNodeWithText("Sin certificado desbloqueado").assertIsDisplayed()

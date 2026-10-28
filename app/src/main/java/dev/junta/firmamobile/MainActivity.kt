@@ -9,6 +9,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.webkit.WebView
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -17,6 +19,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -27,10 +30,14 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchReplyChannel
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
+import dev.junta.firmamobile.browser.download.DocumentDownloadActivity
 import dev.junta.firmamobile.catalog.PortalCatalogViewModel
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalCatalogScreen
@@ -366,182 +373,258 @@ class MainActivity : ComponentActivity() {
                 LocalCertificateEntryChoice provides entryChoiceActions,
             ) { JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
-                val browserDestination = destination as? AppDestination.Browser
-                if (browserDestination != null) {
-                    val app = application as JuntaFirmaApplication
-                    key(
-                        browserDestination.profileId?.value,
-                        browserDestination.entryUrl.toASCIIString(),
-                    ) {
-                        BrowserScreen(
-                        profileId = browserDestination.profileId,
-                        entryUrl = browserDestination.entryUrl,
-                        certificateState = unlocked,
-                        certificatePanelVisible = certificatePanelVisible,
-                        mayRetainExternalReturn = {
-                            currentWebView?.let { browserExternalReturn.markDeparture(it, currentNavigationEpoch) } == true
-                        },
-                        consumeExternalReturn = {
-                            currentWebView?.let { browserExternalReturn.consume(it, currentNavigationEpoch) } == true
-                        },
-                        logger = app.sanitizedLogger,
-                        signingState = signingState,
-                        onMiniAppletRequest = ::prepareMiniAppletSigning,
-                        onMiniAppletCancel = { requestId ->
-                            cancelSigning(SigningCancelReason.JAVASCRIPT, requestId)
-                        },
-                        onMelillaBatchRequest = ::prepareMelillaBatchSigning,
-                        onMelillaBatchCancel = { requestId ->
-                            cancelSigning(SigningCancelReason.JAVASCRIPT, requestId)
-                        },
-                        onConfirmSigning = ::confirmSigning,
-                        onCancelSigning = ::cancelSigning,
-                        onDismissSigningState = ::dismissSigningState,
-                        onExitBrowser = {
-                            cancelSigning(SigningCancelReason.NAVIGATION)
-                            navigation.showCatalog()
-                        },
-                        onOpenExternal = { uri -> requestExternalHandoff(dev.junta.firmamobile.browser.ExternalHandoff.Kind.BROWSER, uri) },
-                        onOpenOfficialAutoFirma = { uri -> requestExternalHandoff(dev.junta.firmamobile.browser.ExternalHandoff.Kind.AUTOFIRMA, uri) },
-                        onExternalAppRequest = ::requestExternalApp,
-                        onChangeCertificate = {
-                            cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            navigation.showCertificatePanel()
-                        },
-                        onLockCertificate = {
-                            cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            certificateViewModel.lock()
-                        },
-                        onClearSession = {
-                            cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
-                            certificateViewModel.lock()
-                        },
-                        clientCertificateIdentityProvider = {
-                            app.certificateSession.identityForSigning()
-                        },
-                        clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
-                        onShowFileChooser = { view, callback, params -> browserFileChooser.open(view, callback, params) },
-                        onDocumentDownload = { view, request ->
-                            // A dedicated certificate session is deliberately not a signing
-                            // view (currentWebView is null); its own visible view may still save.
-                            val ownView = currentWebView === view ||
-                                (currentWebView == null && view.isAttachedToWindow && view.isShown)
-                            if (!ownView || certificatePanelVisible || request.component?.packageName != packageName ||
-                                request.component?.className != dev.junta.firmamobile.browser.download.DocumentDownloadActivity::class.java.name
-                            ) false else try {
-                                withBrowserExternalReturn(onToken = { documentDownloadReturnToken = it }) {
-                                    documentDownloadLauncher.launch(request)
-                                }
-                                true
-                            } catch (_: Exception) { false }
-                        },
-                        onWebViewChanged = {
-                            if (currentWebView !== it) { clearExternalApp(); browserFileChooser.cancel(); pendingExternalHandoff = null; browserExternalReturn.invalidate() }
-                            currentWebView = it
-                        },
-                        onNavigationEpochChanged = {
-                            clearExternalApp()
-                            browserExternalReturn.invalidate()
-                            browserFileChooser.cancel()
-                            pendingExternalHandoff = null
-                            currentNavigationEpoch = it
-                        },
+                val app = application as JuntaFirmaApplication
+                val navController = rememberNavController()
+                LaunchedEffect(destination, navigation.activeBrowserSessionId) {
+                    val currentEntry = navController.currentBackStackEntry
+                    val currentDestination = currentEntry?.destination
+                    val route = when (val destination = destination) {
+                        AppDestination.Certificate -> AppNavigationRoutes.CERTIFICATE
+                        AppDestination.Catalog -> AppNavigationRoutes.CATALOG
+                        is AppDestination.Browser ->
+                            AppNavigationRoutes.browser(navigation.activeBrowserSessionId.orEmpty())
+                    }
+                    val isCurrent = when (val destination = destination) {
+                        AppDestination.Certificate ->
+                            currentDestination?.route == AppNavigationRoutes.CERTIFICATE
+                        AppDestination.Catalog ->
+                            currentDestination?.route == AppNavigationRoutes.CATALOG
+                        is AppDestination.Browser ->
+                            currentDestination?.route == AppNavigationRoutes.BROWSER &&
+                                currentEntry?.arguments?.getString(
+                                    AppNavigationRoutes.SESSION_ARG,
+                                ) == navigation.activeBrowserSessionId
+                    }
+                    if (!isCurrent) {
+                        navController.navigate(route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                }
+                NavHost(
+                    navController = navController,
+                    startDestination = AppNavigationRoutes.CERTIFICATE,
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None },
+                    popEnterTransition = { EnterTransition.None },
+                    popExitTransition = { ExitTransition.None },
+                ) {
+                    composable(AppNavigationRoutes.CERTIFICATE) {
+                        AppRoot(
+                            state = certificateState.value,
+                            onSelectCertificate = ::launchCertificatePicker,
+                            onUnlock = certificateViewModel::unlock,
+                            onRestoreSavedUnlock = certificateViewModel::restoreSavedUnlock,
+                            onLock = certificateViewModel::lock,
+                            onForget = certificateViewModel::forget,
+                            onContinue = { navigation.showCatalog() },
                         )
                     }
-                } else if (destination == AppDestination.Catalog) {
-                    PortalCatalogScreen(
-                        state = catalogState.value,
-                        verifiedOnly = profileScopePreferences.verifiedOnly(),
-                        onVerifiedOnlyChange = { requestedValue ->
-                            if (profileScopePreferences.setVerifiedOnly(requestedValue)) {
-                                AppRestarter(this).restart()
-                            }
-                        },
-                        onSearchTextChange = catalogViewModel::updateSearchText,
-                        onSelectRegion = catalogViewModel::selectRegion,
-                        onUseLocation = {
-                            if (
-                                ContextCompat.checkSelfPermission(
-                                    this,
-                                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                                ) == PackageManager.PERMISSION_GRANTED
-                            ) {
-                                catalogViewModel.detectRegion()
-                            } else {
-                                coarseLocationPermission.launch(
-                                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                                )
-                            }
-                        },
-                        onOpenLocationSettings = {
-                            runCatching {
-                                startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                            }
-                        },
-                        onOpenAppSettings = {
-                            runCatching {
-                                startActivity(
-                                    Intent(
-                                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                        Uri.parse("package:$packageName"),
-                                    ),
-                                )
-                            }
-                        },
-                        onDismissLocationMessage = catalogViewModel::dismissLocationMessage,
-                        onToggleFavorite = catalogViewModel::toggleFavorite,
-                        onBackToCertificate = { navigation.showCertificate() },
-                        onOpenPortal = { item ->
-                            val target = catalogRepository.resolveUniversalOpenTarget(item)
-                            if (target == null) catalogViewModel.onOpenFailed() else {
-                                cancelSigning(SigningCancelReason.NAVIGATION)
-                                currentWebView = null
-                                catalogViewModel.recordOpened(item.portalId)
-                                navigation.openBrowser(profileId = null, entryUrl = target.entryUrl)
-                            }
-                        },
-                        // Opt-in only: preserves reviewed proprietary flows
-                        // without silently routing the default through them.
-                        onOpenCompatibilityPortal = { item ->
-                            when (val target = catalogRepository.resolveOpenTarget(item)) {
-                                is PortalOpenTarget.InApp -> {
-                                    cancelSigning(SigningCancelReason.NAVIGATION)
-                                    currentWebView = null
-                                    catalogViewModel.recordOpened(item.portalId)
-                                    navigation.openBrowser(
-                                        profileId = target.launch.profileId,
-                                        entryUrl = target.launch.entryUrl,
+                    composable(AppNavigationRoutes.CATALOG) {
+                        PortalCatalogScreen(
+                            state = catalogState.value,
+                            verifiedOnly = profileScopePreferences.verifiedOnly(),
+                            onVerifiedOnlyChange = { requestedValue ->
+                                if (profileScopePreferences.setVerifiedOnly(requestedValue)) {
+                                    AppRestarter(this@MainActivity).restart()
+                                }
+                            },
+                            onSearchTextChange = catalogViewModel::updateSearchText,
+                            onSelectRegion = catalogViewModel::selectRegion,
+                            onUseLocation = {
+                                if (
+                                    ContextCompat.checkSelfPermission(
+                                        this@MainActivity,
+                                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    catalogViewModel.detectRegion()
+                                } else {
+                                    coarseLocationPermission.launch(
+                                        Manifest.permission.ACCESS_COARSE_LOCATION,
                                     )
                                 }
-                                is PortalOpenTarget.PublicWeb -> {
+                            },
+                            onOpenLocationSettings = {
+                                runCatching {
+                                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                                }
+                            },
+                            onOpenAppSettings = {
+                                runCatching {
+                                    startActivity(
+                                        Intent(
+                                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                            Uri.parse("package:$packageName"),
+                                        ),
+                                    )
+                                }
+                            },
+                            onDismissLocationMessage = catalogViewModel::dismissLocationMessage,
+                            onToggleFavorite = catalogViewModel::toggleFavorite,
+                            onBackToCertificate = { navigation.showCertificate() },
+                            onOpenPortal = { item ->
+                                val target = catalogRepository.resolveUniversalOpenTarget(item)
+                                if (target == null) catalogViewModel.onOpenFailed() else {
                                     cancelSigning(SigningCancelReason.NAVIGATION)
                                     currentWebView = null
                                     catalogViewModel.recordOpened(item.portalId)
                                     navigation.openBrowser(profileId = null, entryUrl = target.entryUrl)
                                 }
-                                null -> catalogViewModel.onOpenFailed()
+                            },
+                            onOpenCompatibilityPortal = { item ->
+                                when (val target = catalogRepository.resolveOpenTarget(item)) {
+                                    is PortalOpenTarget.InApp -> {
+                                        cancelSigning(SigningCancelReason.NAVIGATION)
+                                        currentWebView = null
+                                        catalogViewModel.recordOpened(item.portalId)
+                                        navigation.openBrowser(
+                                            profileId = target.launch.profileId,
+                                            entryUrl = target.launch.entryUrl,
+                                        )
+                                    }
+                                    is PortalOpenTarget.PublicWeb -> {
+                                        cancelSigning(SigningCancelReason.NAVIGATION)
+                                        currentWebView = null
+                                        catalogViewModel.recordOpened(item.portalId)
+                                        navigation.openBrowser(profileId = null, entryUrl = target.entryUrl)
+                                    }
+                                    null -> catalogViewModel.onOpenFailed()
+                                }
+                            },
+                            onUserMessageShown = catalogViewModel::onUserMessageShown,
+                            onOpenPublicWeb = { uri ->
+                                val accepted =
+                                    dev.junta.firmamobile.browser.PublicBrowserAddress.parse(uri.toASCIIString())
+                                if (accepted == null) catalogViewModel.onOpenFailed() else {
+                                    cancelSigning(SigningCancelReason.NAVIGATION)
+                                    currentWebView = null
+                                    navigation.openBrowser(profileId = null, entryUrl = accepted)
+                                }
+                            },
+                        )
+                    }
+                    composable(AppNavigationRoutes.BROWSER) { entry ->
+                        val sessionId =
+                            entry.arguments?.getString(AppNavigationRoutes.SESSION_ARG).orEmpty()
+                        val session = navigation.resolveBrowserSession(sessionId)
+                        if (session == null) {
+                            LaunchedEffect(sessionId) {
+                                navigation.showCertificate()
                             }
-                        },
-                        onUserMessageShown = catalogViewModel::onUserMessageShown,
-                        onOpenPublicWeb = { uri ->
-                            val accepted = dev.junta.firmamobile.browser.PublicBrowserAddress.parse(uri.toASCIIString())
-                            if (accepted == null) catalogViewModel.onOpenFailed() else {
-                                cancelSigning(SigningCancelReason.NAVIGATION)
-                                currentWebView = null
-                                navigation.openBrowser(profileId = null, entryUrl = accepted)
+                        } else {
+                            key(
+                                session.profileId?.value,
+                                session.entryUrl.toASCIIString(),
+                            ) {
+                                BrowserScreen(
+                                    profileId = session.profileId,
+                                    entryUrl = session.entryUrl,
+                                    certificateState = unlocked,
+                                    certificatePanelVisible = certificatePanelVisible,
+                                    mayRetainExternalReturn = {
+                                        currentWebView?.let {
+                                            browserExternalReturn.markDeparture(it, currentNavigationEpoch)
+                                        } == true
+                                    },
+                                    consumeExternalReturn = {
+                                        currentWebView?.let {
+                                            browserExternalReturn.consume(it, currentNavigationEpoch)
+                                        } == true
+                                    },
+                                    logger = app.sanitizedLogger,
+                                    signingState = signingState,
+                                    onMiniAppletRequest = ::prepareMiniAppletSigning,
+                                    onMiniAppletCancel = { requestId ->
+                                        cancelSigning(SigningCancelReason.JAVASCRIPT, requestId)
+                                    },
+                                    onMelillaBatchRequest = ::prepareMelillaBatchSigning,
+                                    onMelillaBatchCancel = { requestId ->
+                                        cancelSigning(SigningCancelReason.JAVASCRIPT, requestId)
+                                    },
+                                    onConfirmSigning = ::confirmSigning,
+                                    onCancelSigning = ::cancelSigning,
+                                    onDismissSigningState = ::dismissSigningState,
+                                    onExitBrowser = {
+                                        cancelSigning(SigningCancelReason.NAVIGATION)
+                                        navigation.showCatalog()
+                                    },
+                                    onOpenExternal = { uri ->
+                                        requestExternalHandoff(
+                                            dev.junta.firmamobile.browser.ExternalHandoff.Kind.BROWSER,
+                                            uri,
+                                        )
+                                    },
+                                    onOpenOfficialAutoFirma = { uri ->
+                                        requestExternalHandoff(
+                                            dev.junta.firmamobile.browser.ExternalHandoff.Kind.AUTOFIRMA,
+                                            uri,
+                                        )
+                                    },
+                                    onExternalAppRequest = ::requestExternalApp,
+                                    onChangeCertificate = {
+                                        cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+                                        navigation.showCertificatePanel()
+                                    },
+                                    onLockCertificate = {
+                                        cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+                                        certificateViewModel.lock()
+                                    },
+                                    onClearSession = {
+                                        cancelSigning(SigningCancelReason.CERTIFICATE_LOCKED)
+                                        certificateViewModel.lock()
+                                    },
+                                    clientCertificateIdentityProvider = {
+                                        app.certificateSession.identityForSigning()
+                                    },
+                                    clientCertPreferenceCoordinator = app.clientCertPreferenceCoordinator,
+                                    onShowFileChooser = { view, callback, params ->
+                                        browserFileChooser.open(view, callback, params)
+                                    },
+                                    onDocumentDownload = { view, request ->
+                                        val ownView = currentWebView === view ||
+                                            (currentWebView == null && view.isAttachedToWindow && view.isShown)
+                                        val isDocumentDownloadTarget =
+                                            request.component?.packageName == packageName &&
+                                            request.component?.className ==
+                                            DocumentDownloadActivity::class.java.name
+                                        if (!ownView || certificatePanelVisible ||
+                                            !isDocumentDownloadTarget
+                                        ) false else try {
+                                            withBrowserExternalReturn(
+                                                onToken = { documentDownloadReturnToken = it },
+                                            ) {
+                                                documentDownloadLauncher.launch(request)
+                                            }
+                                            true
+                                        } catch (_: Exception) { false }
+                                    },
+                                    onWebViewChanged = {
+                                        if (currentWebView !== it) {
+                                            clearExternalApp()
+                                            browserFileChooser.cancel()
+                                            pendingExternalHandoff = null
+                                            browserExternalReturn.invalidate()
+                                        }
+                                        currentWebView = it
+                                    },
+                                    onNavigationEpochChanged = {
+                                        clearExternalApp()
+                                        browserExternalReturn.invalidate()
+                                        browserFileChooser.cancel()
+                                        pendingExternalHandoff = null
+                                        currentNavigationEpoch = it
+                                    },
+                                )
                             }
-                        },
-                    )
-                } else {
-                    AppRoot(
-                        state = certificateState.value,
-                        onSelectCertificate = ::launchCertificatePicker,
-                        onUnlock = certificateViewModel::unlock,
-                        onRestoreSavedUnlock = certificateViewModel::restoreSavedUnlock,
-                        onLock = certificateViewModel::lock,
-                        onForget = certificateViewModel::forget,
-                        onContinue = { navigation.showCatalog() },
-                    )
+                            DisposableEffect(sessionId) {
+                                onDispose {
+                                    navigation.invalidateBrowserSession(sessionId)
+                                }
+                            }
+                        }
+                    }
                 }
                 pendingExternalApp?.let { request ->
                     LaunchedEffect(request.token) {
@@ -777,6 +860,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        navigation.clearBrowserSessions()
         (application as JuntaFirmaApplication).certificateUnlockAuthentication.unbind(this)
         externalAfirma?.close()
         externalAfirma = null
