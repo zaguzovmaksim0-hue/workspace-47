@@ -175,7 +175,7 @@
   "androidx.concurrent:concurrent-futures:1.1.0": [
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.core:core-ktx:1.18.0": [
+  "androidx.core:core-ktx:1.19.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
@@ -183,7 +183,7 @@
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
-  "androidx.core:core:1.18.0": [
+  "androidx.core:core:1.19.1": [
     "legal/dependencies/809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0.txt",
     "legal/upstream/Apache-2.0.txt"
   ],
