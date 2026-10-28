@@ -1,0 +1,77 @@
+name: Task verify
+
+# Fast manual check of a task branch: the same release unit tests and detekt that the phone ran locally.
+# The full CI still runs on the pull request.
+on:
+  workflow_dispatch:
+    inputs:
+      tests:
+        description: "Comma-separated test name filters (empty = all release unit tests)"
+        type: string
+        default: ""
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: task-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "17"
+
+jobs:
+  verify:
+    name: Release unit tests and detekt
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: true
+      - name: Install Android API 36 toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +o pipefail
+          yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Raise CI Gradle heap
+        shell: bash
+        run: |
+          set -euo pipefail
+          dir="${GRADLE_USER_HOME:-$HOME/.gradle}"
+          mkdir -p "$dir"
+          printf 'org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8\n' >> "$dir/gradle.properties"
+      - name: Check Kotlin sources against reviewed baseline
+        run: bash scripts/ci/detekt.sh
+      - name: Verify dependency metadata and portable toolchain
+        run: ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon
+      - name: Release unit tests
+        shell: bash
+        env:
+          TESTS: ${{ inputs.tests }}
+        run: |
+          set -euo pipefail
+          [[ "$TESTS" =~ ^[A-Za-z0-9_.,]*$ ]] || { echo "bad tests input"; exit 2; }
+          args=()
+          IFS=',' read -ra names <<< "$TESTS"
+          for n in "${names[@]}"; do [ -n "$n" ] && args+=(--tests "*$n*"); done
+          ./gradlew :app:testReleaseUnitTest -x verifyReleaseSigning --no-daemon --console=plain "${args[@]}"
