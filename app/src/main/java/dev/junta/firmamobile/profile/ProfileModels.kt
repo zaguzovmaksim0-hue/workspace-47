@@ -163,6 +163,8 @@ data class SiteProfile(
     val certificateRules: CertificateFilterRules,
     val evidence: List<EvidenceReference>,
     val lastVerifiedOn: LocalDate? = null,
+    /** null only for schema v1; schema v2 requires an explicit (possibly empty) set. */
+    val shimFeatures: Set<ShimFeature>? = null,
 )
 
 enum class RedirectOriginRoles(val first: Boolean, val later: Boolean) {
