@@ -13,6 +13,7 @@ import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.profile.ShimFeatureResolver
 import dev.junta.firmamobile.security.DiagnosticEventCode
 import dev.junta.firmamobile.security.BoundedReplayLedger
 import dev.junta.firmamobile.security.MonotonicSecurityTime
@@ -69,6 +70,8 @@ class WebMessageBridge internal constructor(
 ) {
     private var batchDocumentId: UUID? = null
     private var batchDocumentEpoch: Long? = null
+
+    private val shimFeatureResolver = ShimFeatureResolver(BuiltInSiteProfiles.catalog)
 
     private val euskadiClientAuthPostBridgeAdapter = when (profileId.value) {
         EuskadiClientAuthPostBridgeAdapter.PROFILE_ID ->
@@ -242,6 +245,14 @@ class WebMessageBridge internal constructor(
         if (originRules.isEmpty()) {
             return WebMessageBridgeAttachment(webView = webView)
         }
+        val shimFlags = AfirmaShimCompatibilityFlags.fromFeatures(
+            shimFeatureResolver.resolve(
+                registry = BuiltInSiteProfiles.runtimeRegistry,
+                profileId = profileId,
+                staBatchEnabled = staBatchEnabled,
+                staBatchSourceOrigin = batchRuntime?.sourceOrigin,
+            ),
+        )
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_FEATURE_UNAVAILABLE)
             return WebMessageBridgeAttachment(webView = webView)
@@ -255,11 +266,6 @@ class WebMessageBridge internal constructor(
             receive(message, sourceOrigin, isMainFrame, replyProxy)
         }
 
-        val shimFlags = shimCompatibilityFlags(
-            profileId = profileId,
-            profileActive = BuiltInSiteProfiles.runtimeRegistry.profile(profileId) != null,
-            melillaBatchEnabled = staBatchEnabled,
-        )
         val scriptHandler = if (
             WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
         ) {
@@ -753,6 +759,7 @@ class WebMessageBridge internal constructor(
         private const val MINECO_PROFILE_ID = "ministerio-economia-instancia-generica"
         private const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"
 
+        // Retained only for step 5b parity tests; removed in step 6.
         internal fun shimCompatibilityFlags(
             profileId: ProfileId,
             profileActive: Boolean,
