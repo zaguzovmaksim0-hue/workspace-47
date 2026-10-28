@@ -35,7 +35,7 @@ class NativeAfirmaOperationTest {
             val fields = checkNotNull(wire).split('|')
             assertEquals(2, fields.size)
             val cert = AfirmaIntermediateCipher.decode(fields[0], "12345678")
-            val signature = AfirmaIntermediateCipher.decode(fields[1], "12345678")
+            val signature = decodeLastPiece(fields[1], "12345678")
             try {
                 assertArrayEquals(identity.identity.certificate.encoded, cert)
                 assertTrue(NativeCadesEngine().verify(signature, payload, identity.identity.certificate, algorithm, detached))
@@ -151,5 +151,13 @@ class NativeAfirmaOperationTest {
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA, detached: Boolean = true) =
         AfirmaServletInvocation(AfirmaServletMetadata(AfirmaServletOperation.SIGN, "https://portal.example",
             URI("https://store.example/StorageService?route=test"), "Request-123", "12345678", algorithm, detached), payload)
+    private fun decodeLastPiece(wire: String, key: String): ByteArray {
+        val decoded = AfirmaIntermediateCipher.decode(wire, key)
+        assertEquals(0, decoded.size % 8)
+        assertTrue(decoded.size >= 8)
+        assertTrue(decoded.copyOfRange(decoded.size - 8, decoded.size).all { it == 0.toByte() })
+        return decoded.copyOfRange(0, decoded.size - 8).also { decoded.fill(0) }
+    }
+
     private fun b64(bytes: ByteArray) = Base64.getEncoder().encodeToString(bytes)
 }

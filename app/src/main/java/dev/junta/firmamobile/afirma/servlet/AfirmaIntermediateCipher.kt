@@ -7,10 +7,14 @@ import javax.crypto.spec.SecretKeySpec
 /** Legacy intermediate-server interoperability, not a new encryption design.
  * TLS remains mandatory. The pinned Java reference uses DES/ECB/NoPadding,
  * even where a JS comment says CBC. The decimal prefix is the ONLY padding
- * removed here; adding/removing an unconditional eight bytes corrupts data.
+ * removed here. For decode (page to app), adding/removing an unconditional
+ * eight bytes corrupts data. For the final result piece (app to page),
+ * AutoScript decipherDES removes the declared padding plus eight bytes;
+ * see upstream autoscript-upstream.js decipherDES, lines 5536-5552.
  */
 internal object AfirmaIntermediateCipher {
     private const val MAX_BYTES = 2_097_152
+    private const val RESULT_TAIL_BYTES = 8
     private val BASE64 = Regex("[A-Za-z0-9+/_-]*={0,2}")
 
     fun encode(data: ByteArray, key: String?): String {
@@ -19,6 +23,22 @@ internal object AfirmaIntermediateCipher {
         val keyBytes = keyBytes(key)
         val padding = (8 - data.size % 8) % 8
         val padded = data.copyOf(data.size + padding)
+        var encrypted: ByteArray? = null
+        return try {
+            val cipher = Cipher.getInstance("DES/ECB/NoPadding")
+            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(keyBytes, "DES"))
+            val result = cipher.doFinal(padded)
+            encrypted = result
+            "$padding." + Base64.getUrlEncoder().encodeToString(result)
+        } finally { keyBytes.fill(0); padded.fill(0); encrypted?.fill(0) }
+    }
+
+    fun encodeLast(data: ByteArray, key: String?): String {
+        if (key == null) return encode(data, key)
+        require(data.size <= MAX_BYTES) { "Payload exceeds wire budget" }
+        val keyBytes = keyBytes(key)
+        val padding = (8 - data.size % 8) % 8
+        val padded = data.copyOf(data.size + padding + RESULT_TAIL_BYTES)
         var encrypted: ByteArray? = null
         return try {
             val cipher = Cipher.getInstance("DES/ECB/NoPadding")
