@@ -53,7 +53,7 @@ internal class AfirmaServletInvocation(
             metadata.precalculatedHash.accepts(payload, algorithm)) { "Invalid precomputed-hash invocation" }
     }
     private var ownedCertificateConstraint = certificateConstraint?.copy()
-    val requiresExactCertificate: Boolean = certificateConstraint != null
+    val requiresExactCertificate: Boolean = certificateConstraint?.requiresExactCertificate ?: false
     @Synchronized fun matchesCertificate(certificate: java.security.cert.X509Certificate): Boolean =
         ownedPayload != null && (ownedCertificateConstraint?.matches(certificate) ?: true)
     val pdfCoSign: Boolean get() = operation == AfirmaServletOperation.COSIGN && padesOptions != null
