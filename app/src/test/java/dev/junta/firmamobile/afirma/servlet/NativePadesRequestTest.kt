@@ -44,13 +44,21 @@ class NativePadesRequestTest {
             assertEquals(input.size, operation.details.payloadBytes)
             assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.execute(id.identity) { authorized++ })
             val parts = wire!!.split('|'); assertEquals(2, parts.size)
-            val cert = AfirmaIntermediateCipher.decode(parts[0], key); val pdf = AfirmaIntermediateCipher.decode(parts[1], key)
+            val cert = AfirmaIntermediateCipher.decode(parts[0], key); val pdf = decodeLastPiece(parts[1], key)
             assertArrayEquals(id.identity.certificate.encoded, cert)
             assertTrue(NativePadesEngine(clock = clock).verify(pdf, input, id.identity.certificate, SigningAlgorithm.SHA256_WITH_RSA))
             try { operation.execute(id.identity) {}; fail("Duplicate operation") } catch (_: IllegalStateException) { }
             assertEquals(1, sends); operation.close(); cert.fill(0); pdf.fill(0)
         }
         assertEquals(0, id.encodedReads.get())
+    }
+
+    private fun decodeLastPiece(wire: String, key: String?): ByteArray {
+        val decoded = AfirmaIntermediateCipher.decode(wire, key)
+        if (key == null) return decoded
+        assertTrue(decoded.size >= 8)
+        assertTrue(decoded.copyOfRange(decoded.size - 8, decoded.size).all { it == 0.toByte() })
+        return decoded.copyOfRange(0, decoded.size - 8).also { decoded.fill(0) }
     }
     @Test fun rejectedUploadAuthorityNeverSendsEvenAValidSignature() = runBlocking {
         val id = nonExportableSyntheticIdentity(); var sends = 0
