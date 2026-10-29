@@ -1,6 +1,8 @@
 package dev.junta.firmamobile.afirma.servlet
 
 import dev.junta.firmamobile.network.PublicIpAddressPolicy
+import dev.junta.firmamobile.network.chainCompletingSslContext
+import dev.junta.firmamobile.network.chainCompletingTrustManager
 import java.io.IOException
 import java.net.InetAddress
 import java.net.Proxy
@@ -64,7 +66,10 @@ internal object AfirmaEndpointPolicy {
  */
 internal class AfirmaServletTransport(
     private val dns: Dns = publicDns(),
-    private val clientBuilder: () -> OkHttpClient.Builder = { OkHttpClient.Builder() },
+    private val clientBuilder: () -> OkHttpClient.Builder = {
+        OkHttpClient.Builder()
+            .sslSocketFactory(chainCompletingSslContext.socketFactory, chainCompletingTrustManager)
+    },
 ) : AfirmaResultTransport, AfirmaRequestTransport {
     override suspend fun store(endpoint: URI, sessionId: String, result: String): AfirmaDeliveryResult {
         if (!AfirmaEndpointPolicy.accepts(endpoint) || !SESSION_ID.matches(sessionId) ||
