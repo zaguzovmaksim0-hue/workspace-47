@@ -269,5 +269,12 @@ internal class NativeMultiPhaseOperation(
     private fun destination(uri: URI) = URI("https", null, uri.host, uri.port, uri.path, null, null).toASCIIString()
 }
 
-internal fun nativeOperation(invocation: AfirmaServletInvocation): PreparedAfirmaOperation =
-    if (invocation.remoteOptions != null) NativeMultiPhaseOperation(invocation) else NativeAfirmaOperation(invocation)
+internal fun nativeOperation(
+    invocation: AfirmaServletInvocation,
+    resultTransport: AfirmaResultTransport = AfirmaServletTransport(),
+    clock: Clock = Clock.systemUTC(),
+): PreparedAfirmaOperation = if (invocation.remoteOptions != null) {
+    NativeMultiPhaseOperation(invocation, storage = resultTransport, clock = clock)
+} else {
+    NativeAfirmaOperation(invocation, transport = resultTransport, clock = clock)
+}
