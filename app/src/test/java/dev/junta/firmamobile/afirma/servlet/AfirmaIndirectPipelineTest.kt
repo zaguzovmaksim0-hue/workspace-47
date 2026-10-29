@@ -48,7 +48,7 @@ class AfirmaIndirectPipelineTest {
             assertEquals(1, uploads)
             val fields = checkNotNull(result).split('|'); assertEquals(2, fields.size)
             val cert = AfirmaIntermediateCipher.decode(fields[0], "87654321")
-            val signature = AfirmaIntermediateCipher.decode(fields[1], "87654321")
+            val signature = decodeLastPiece(fields[1], "87654321")
             assertArrayEquals(identity.identity.certificate.encoded, cert)
             assertTrue(NativeCadesEngine(clock = clock).verify(signature, payload, identity.identity.certificate, SigningAlgorithm.SHA512_WITH_RSA, true))
             assertTrue(wire.all { it == 0.toByte() })
@@ -71,11 +71,18 @@ class AfirmaIndirectPipelineTest {
         assertEquals("selectcert", operation.details.operation); assertNull(operation.details.payloadSha256)
         operation.execute(identity.identity) {}
         assertFalse(checkNotNull(result).contains('|'))
-        val certificate = AfirmaIntermediateCipher.decode(checkNotNull(result), "87654321")
+        val certificate = decodeLastPiece(checkNotNull(result), "87654321")
         assertArrayEquals(identity.identity.certificate.encoded, certificate)
         assertEquals(0, identity.encodedReads.get()); certificate.fill(0); operation.close()
     }
 
+
+    private fun decodeLastPiece(wire: String, key: String): ByteArray {
+        val decoded = AfirmaIntermediateCipher.decode(wire, key)
+        assertTrue(decoded.size >= 8)
+        assertTrue(decoded.copyOfRange(decoded.size - 8, decoded.size).all { it == 0.toByte() })
+        return decoded.copyOfRange(0, decoded.size - 8).also { decoded.fill(0) }
+    }
     private fun form(value: String) = URLEncoder.encode(value, "UTF-8")
     private fun b64(bytes: ByteArray) = Base64.getEncoder().encodeToString(bytes)
     private companion object { const val GET = "https://retriever.example/get?route=A"; const val PUT = "https://storage.example/put?route=B" }

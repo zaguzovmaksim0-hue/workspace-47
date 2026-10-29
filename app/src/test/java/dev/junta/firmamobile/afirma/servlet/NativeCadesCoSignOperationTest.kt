@@ -24,7 +24,7 @@ class NativeCadesCoSignOperationTest {
                 assertEquals(1,authorizations);stores++
                 val parts=wire.split('|');assertEquals(2,parts.size)
                 val cert=AfirmaIntermediateCipher.decode(parts[0],"12345678")
-                val result=AfirmaIntermediateCipher.decode(parts[1],"12345678")
+                val result=decodeLastPiece(parts[1],"12345678")
                 try {
                     assertArrayEquals(f.second.identity.certificate.encoded,cert)
                     checkCms(result,2,detached)
@@ -160,6 +160,13 @@ class NativeCadesCoSignOperationTest {
         finally { operation.close();previous.fill(0) }
     }
 
+
+    private fun decodeLastPiece(wire: String, key: String): ByteArray {
+        val decoded = AfirmaIntermediateCipher.decode(wire, key)
+        assertTrue(decoded.size >= 8)
+        assertTrue(decoded.copyOfRange(decoded.size - 8, decoded.size).all { it == 0.toByte() })
+        return decoded.copyOfRange(0, decoded.size - 8).also { decoded.fill(0) }
+    }
     private fun accepted(uri:String):AfirmaServletInvocation {
         val result=AfirmaServletInvocationParser.parse(uri,NativeCadesCoSignRequestTest.SOURCE)
         assertTrue(result.toString(),result is AfirmaServletParseResult.Accepted)
