@@ -53,7 +53,7 @@ class NativePadesRequestTest {
         assertEquals(0, id.encodedReads.get())
     }
 
-    private fun decodeLastPiece(wire: String, key: String): ByteArray {
+    private fun decodeLastPiece(wire: String, key: String?): ByteArray {
         val decoded = AfirmaIntermediateCipher.decode(wire, key)
         assertTrue(decoded.size >= 8)
         assertTrue(decoded.copyOfRange(decoded.size - 8, decoded.size).all { it == 0.toByte() })
