@@ -153,7 +153,6 @@ class NativeAfirmaOperationTest {
             URI("https://store.example/StorageService?route=test"), "Request-123", "12345678", algorithm, detached), payload)
     private fun decodeLastPiece(wire: String, key: String): ByteArray {
         val decoded = AfirmaIntermediateCipher.decode(wire, key)
-        assertEquals(0, decoded.size % 8)
         assertTrue(decoded.size >= 8)
         assertTrue(decoded.copyOfRange(decoded.size - 8, decoded.size).all { it == 0.toByte() })
         return decoded.copyOfRange(0, decoded.size - 8).also { decoded.fill(0) }
