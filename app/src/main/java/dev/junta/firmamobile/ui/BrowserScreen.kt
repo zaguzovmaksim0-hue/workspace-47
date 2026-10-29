@@ -30,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
@@ -61,9 +62,19 @@ import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletInvocationParser
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletParseResult
 import dev.junta.firmamobile.afirma.servlet.NativeAfirmaOperation
+import dev.junta.firmamobile.afirma.servlet.nativeOperation
 import dev.junta.firmamobile.afirma.servlet.AfirmaDeferredResolver
 import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalController
 import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalPrompt
+import dev.junta.firmamobile.afirma.servlet.AfirmaRequestTransport
+import dev.junta.firmamobile.afirma.servlet.AfirmaResultTransport
+import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievedBytes
+import dev.junta.firmamobile.afirma.servlet.AfirmaRelayStore
+import dev.junta.firmamobile.afirma.servlet.AfirmaServletTransport
+import dev.junta.firmamobile.afirma.servlet.RelayRequestTransport
+import dev.junta.firmamobile.afirma.servlet.RelayResultTransport
+import dev.junta.firmamobile.afirma.servlet.relayScopeFor
+import dev.junta.firmamobile.afirma.servlet.relayServletOrigin
 import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
@@ -368,10 +379,27 @@ fun BrowserScreen(
             (clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
 
     var nativeRetrievalPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaRetrievalPrompt?>(null) }
+    val afirmaRelayStore = remember { AfirmaRelayStore() }
     val nativeRetrieval = remember(selectedServiceId, validatedEntryUrl, nativeAfirma) {
         AfirmaRetrievalController<WebView>(
             scope = nativeAfirmaScope,
-            resolver = AfirmaDeferredResolver(),
+            resolver = AfirmaDeferredResolver(
+                transport = CurrentPageRelayRequestTransport(
+                    afirmaRelayStore,
+                    epoch = { navigationEpoch.longValue },
+                    pageUrl = { webViewRef.get()?.url ?: validatedEntryUrl },
+                ),
+                operationFactory = { invocation ->
+                    nativeOperation(
+                        invocation,
+                        relayResultTransportFor(
+                            afirmaRelayStore,
+                            navigationEpoch.longValue,
+                            webViewRef.get()?.url ?: validatedEntryUrl,
+                        ),
+                    )
+                },
+            ),
             isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
             canRespond = {
                 activePopup == null && !externalAfirmaActive() &&
@@ -388,6 +416,9 @@ fun BrowserScreen(
         )
     }
     DisposableEffect(nativeRetrieval) { onDispose { nativeRetrieval.close() } }
+    DisposableEffect(afirmaRelayStore) {
+        onDispose { nativeAfirmaScope.launch { afirmaRelayStore.invalidate() } }
+    }
     LaunchedEffect(nativeRetrieval, nativeRetrievalPrompt?.token, nativeRetrievalPrompt?.loading) {
         while (nativeRetrievalPrompt?.loading == true) { delay(1_000); nativeRetrieval.tick() }
     }
@@ -399,6 +430,7 @@ fun BrowserScreen(
         nativeFallback.invalidate()
         interactiveClientAuth.cancelPending()
         bridgeAttachmentLease.current()?.abandonMiniAppletRequests()
+        nativeAfirmaScope.launch { afirmaRelayStore.invalidate() }
         check(navigationEpoch.longValue != Long.MAX_VALUE)
         navigationEpoch.longValue++
         onNavigationEpochChanged(navigationEpoch.longValue)
@@ -1249,23 +1281,81 @@ fun BrowserScreen(
                                         currentExternalAppRequest?.invoke(owner, target) == true
                                 },
                                 onNativeAfirmaInvocation = { owner, rawUri, page ->
-                                    val busy = externalAfirmaActive() || activePopup != null || pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                                    val busy = externalAfirmaActive() || activePopup != null ||
+                                        pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
                                         pendingCertificateSelection != null || pendingRequest != null ||
-                                        interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending || clientAuthPreparing ||
+                                        interactivePrompt != null || nativeAfirma.hasPending ||
+                                        nativeFallback.hasPending || nativeRetrieval.hasPending ||
+                                        clientAuthPreparing ||
                                         currentSigningState !is SigningUiState.Idle
                                     if (busy) true else {
                                         when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
                                             is AfirmaServletParseResult.Accepted -> {
-                                                val operation = runCatching { dev.junta.firmamobile.afirma.servlet.nativeOperation(parsed.invocation) }.getOrElse {
-                                                    parsed.invocation.close()
-                                                    null
+                                                val epoch = navigationEpoch.longValue
+                                                val relayScope = relayScopeFor(epoch, page)
+                                                if (relayScope == null) {
+                                                    val operation = runCatching {
+                                                        dev.junta.firmamobile.afirma.servlet.nativeOperation(
+                                                            parsed.invocation,
+                                                        )
+                                                    }.getOrElse {
+                                                        parsed.invocation.close()
+                                                        null
+                                                    }
+                                                    if (operation == null) nativeFallback.offer(owner, epoch, null)
+                                                    else nativeAfirma.offer(owner, epoch, operation)
+                                                } else {
+                                                    nativeAfirmaScope.launch {
+                                                        val operation = runCatching {
+                                                            val servletOrigin = relayServletOrigin(
+                                                                parsed.invocation.storageUrl,
+                                                            )
+                                                            if (servletOrigin != null &&
+                                                                afirmaRelayStore.isBlocked(relayScope, servletOrigin)
+                                                            ) {
+                                                                afirmaRelayStore.expectResult(
+                                                                    relayScope,
+                                                                    parsed.invocation.sessionId,
+                                                                )
+                                                            }
+                                                            dev.junta.firmamobile.afirma.servlet.nativeOperation(
+                                                                parsed.invocation,
+                                                                RelayResultTransport(
+                                                                    afirmaRelayStore,
+                                                                    relayScope,
+                                                                    AfirmaServletTransport(),
+                                                                ),
+                                                            )
+                                                        }.getOrElse {
+                                                            parsed.invocation.close()
+                                                            null
+                                                        }
+                                                        if (operation == null) {
+                                                            nativeFallback.offer(owner, epoch, null)
+                                                        } else {
+                                                            nativeAfirma.offer(owner, epoch, operation)
+                                                        }
+                                                    }
                                                 }
-                                                if (operation == null) nativeFallback.offer(owner, navigationEpoch.longValue, null)
-                                                else nativeAfirma.offer(owner, navigationEpoch.longValue, operation)
                                             }
-                                            is AfirmaServletParseResult.Deferred -> nativeRetrieval.offer(owner, navigationEpoch.longValue, parsed.invocation)
-                                            is AfirmaServletParseResult.Unsupported -> nativeFallback.offer(owner, navigationEpoch.longValue, rawUri)
-                                            is AfirmaServletParseResult.Invalid -> nativeFallback.offer(owner, navigationEpoch.longValue, null)
+                                            is AfirmaServletParseResult.Deferred ->
+                                                nativeRetrieval.offer(
+                                                    owner,
+                                                    navigationEpoch.longValue,
+                                                    parsed.invocation,
+                                                )
+                                            is AfirmaServletParseResult.Unsupported ->
+                                                nativeFallback.offer(
+                                                    owner,
+                                                    navigationEpoch.longValue,
+                                                    rawUri,
+                                                )
+                                            is AfirmaServletParseResult.Invalid ->
+                                                nativeFallback.offer(
+                                                    owner,
+                                                    navigationEpoch.longValue,
+                                                    null,
+                                                )
                                         }
                                         true
                                     }
@@ -1913,5 +2003,31 @@ fun BrowserScreen(
             }
         }
     }
+    }
+}
+
+
+private fun relayResultTransportFor(
+    store: AfirmaRelayStore,
+    epoch: Long,
+    pageUrl: String?,
+): AfirmaResultTransport = relayScopeFor(epoch, pageUrl ?: "")?.let {
+    RelayResultTransport(store, it, AfirmaServletTransport())
+} ?: AfirmaServletTransport()
+
+private class CurrentPageRelayRequestTransport(
+    private val store: AfirmaRelayStore,
+    private val epoch: () -> Long,
+    private val pageUrl: () -> String?,
+) : AfirmaRequestTransport {
+    override suspend fun retrieve(
+        endpoint: java.net.URI,
+        fileId: String,
+    ): AfirmaRetrievedBytes {
+        val relay = relayScopeFor(epoch(), pageUrl() ?: "")?.let {
+            RelayRequestTransport(store, it, AfirmaServletTransport())
+        }
+        return relay?.retrieve(endpoint, fileId)
+            ?: AfirmaServletTransport().retrieve(endpoint, fileId)
     }
 }
