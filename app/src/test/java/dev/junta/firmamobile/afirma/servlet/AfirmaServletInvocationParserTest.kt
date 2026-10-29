@@ -43,7 +43,9 @@ class AfirmaServletInvocationParserTest {
 
     @Test fun selectionHasNoSigningPayloadAndNoAutomaticCertificateFilter() {
         accepted(select()).use { assertEquals(AfirmaServletOperation.SELECT_CERTIFICATE, it.operation); assertEquals(0, it.dataSize) }
-        unsupported(select(mapOf("properties" to b64("filters=nonexpired:"))))
+        accepted(select(mapOf("properties" to b64("filters=nonexpired:")))).use {
+            assertFalse(it.requiresExactCertificate)
+        }
         invalid(select(mapOf("dat" to "AA==")))
     }
 
@@ -227,6 +229,33 @@ class AfirmaServletInvocationParserTest {
         assertEquals(AfirmaServletParseResult.Unsupported("recursive_retrieval"),
             AfirmaServletInvocationParser.parseRetrieved(AfirmaServletOperation.SIGN,
                 "https://page.example", mapOf("fileid" to "remote")))
+    }
+
+    @Test fun ifefCertificateFilterCombinationsAreAcceptedWithoutExactBinding() {
+        accepted(sign(mapOf("properties" to b64("filters=nonexpired:true;authCert:true")))).use {
+            assertFalse(it.requiresExactCertificate)
+        }
+        accepted(sign(mapOf("properties" to b64("filters=nonexpired:true;qualified:ABCDEF")))).use {
+            assertFalse(it.requiresExactCertificate)
+        }
+    }
+
+    @Test fun singularCertificateFilterKeyIsAccepted() {
+        accepted(sign(mapOf("properties" to b64("filter=nonexpired:true;authCert:true")))).use {
+            assertFalse(it.requiresExactCertificate)
+        }
+    }
+
+    @Test fun conflictingCertificateFilterKeysAreInvalid() {
+        invalid(sign(mapOf("properties" to b64(
+            "filter=nonexpired:true\nfilters=authcert:true",
+        ))))
+    }
+
+    @Test fun implementedAndUnimplementedCertificateFiltersKeepTheirRefusals() {
+        unsupported(sign(mapOf("properties" to b64("filter=thumbprint:SHA-1:ABCDEF"))))
+        unsupported(sign(mapOf("properties" to b64("filters.1=nonexpired:true"))))
+        unsupported(sign(mapOf("properties" to b64("filter=nonexpired:true;ssl:true"))))
     }
 
     private fun cipherConfig(keySize: Int, ivSize: Int): String {
