@@ -284,6 +284,51 @@ class ShimFeatureCatalogResolverTest {
         }
     }
 
+    @Test
+    fun resolverFeaturesProduceIdenticalLegacyFlagsAndScriptsForEveryProfile() {
+        for (build in BuildTrustPolicy.entries) {
+            val registry = SiteProfileRegistry(BuiltInSiteProfiles.catalog, build)
+            for (profile in BuiltInSiteProfiles.catalog.profiles) {
+                val id = profile.profileId
+                val active = registry.profile(id) != null
+                for (gate in listOf(false, true)) {
+                    val enabled = gate && active && id.value in batchOrigins
+                    val oldFlags = WebMessageBridge.shimCompatibilityFlags(id, active, enabled)
+                    val newFlags = AfirmaShimCompatibilityFlags.fromFeatures(
+                        legacyResolver.resolve(registry, id, enabled, batchOrigins[id.value]),
+                    )
+                    assertEquals("$build / $id / $gate", oldFlags, newFlags)
+                    assertSameLegacyFlags(oldFlags, newFlags)
+
+                }
+            }
+        }
+    }
+
+    private fun assertSameLegacyFlags(expected: AfirmaShimCompatibilityFlags, actual: AfirmaShimCompatibilityFlags) {
+        assertEquals(expected.ugr, actual.ugr)
+        assertEquals(expected.cantabria, actual.cantabria)
+        assertEquals(expected.jccm, actual.jccm)
+        assertEquals(expected.jccmRegistro, actual.jccmRegistro)
+        assertEquals(expected.sevillaAtse, actual.sevillaAtse)
+        assertEquals(expected.airef, actual.airef)
+        assertEquals(expected.cdti, actual.cdti)
+        assertEquals(expected.policia, actual.policia)
+        assertEquals(expected.granCanaria, actual.granCanaria)
+        assertEquals(expected.fuerteventura, actual.fuerteventura)
+        assertEquals(expected.canarias, actual.canarias)
+        assertEquals(expected.mineco, actual.mineco)
+        assertEquals(expected.melillaBatch, actual.melillaBatch)
+        assertEquals(expected.lugoBatch, actual.lugoBatch)
+        assertEquals(expected.caibBatch, actual.caibBatch)
+        assertEquals(expected.isciiiCertificateSelection, actual.isciiiCertificateSelection)
+        assertEquals(expected.valenciaCertificateSelection, actual.valenciaCertificateSelection)
+        assertEquals(expected.xuntaGalicia, actual.xuntaGalicia)
+        assertEquals(expected.euskadiClientAuthPost, actual.euskadiClientAuthPost)
+        assertEquals(expected.acceda, actual.acceda)
+        assertEquals(expected.badajoz, actual.badajoz)
+    }
+
     private fun legacyFeatures(flags: AfirmaShimCompatibilityFlags): Set<ShimFeature> = listOf(
             ShimFeature.UGR_LOGIN to flags.ugr,
             ShimFeature.CANTABRIA_LOGIN to flags.cantabria,

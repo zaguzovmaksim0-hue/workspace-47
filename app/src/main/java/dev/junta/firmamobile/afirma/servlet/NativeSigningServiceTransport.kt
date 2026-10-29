@@ -1,6 +1,8 @@
 package dev.junta.firmamobile.afirma.servlet
 
 import dev.junta.firmamobile.network.PublicIpAddressPolicy
+import dev.junta.firmamobile.network.chainCompletingSslContext
+import dev.junta.firmamobile.network.chainCompletingTrustManager
 import java.io.IOException
 import java.net.InetAddress
 import java.net.Proxy
@@ -35,7 +37,10 @@ internal class NativeHttpsSigningService(
         if (addresses.isEmpty() || addresses.any { !PublicIpAddressPolicy.isPublicRoutable(it) }) throw UnknownHostException("Non-public signing service")
         addresses
     },
-    private val clientBuilder: () -> OkHttpClient.Builder = { OkHttpClient.Builder() },
+    private val clientBuilder: () -> OkHttpClient.Builder = {
+        OkHttpClient.Builder()
+            .sslSocketFactory(chainCompletingSslContext.socketFactory, chainCompletingTrustManager)
+    },
 ) : NativeSigningServiceTransport {
     override suspend fun exchange(endpoint: URI, form: Map<String, String>): AfirmaRetrievedBytes {
         require(AfirmaEndpointPolicy.accepts(endpoint) && form.size in 1..32)
