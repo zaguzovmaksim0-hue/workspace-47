@@ -148,8 +148,6 @@ class LocationResultDialogTest {
                     onOpenPortal = {},
                     onBackToCertificate = {},
                     onUserMessageShown = {},
-                    verifiedOnly = false,
-                    onVerifiedOnlyChange = {},
                 )
             }
         }

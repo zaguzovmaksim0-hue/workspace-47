@@ -124,11 +124,6 @@
     <string name="unknown_value">desconegut</string>
     <string name="catalog_title">SERVEIS PÚBLICS</string>
     <string name="catalog_subtitle">Troba i obre la seu o el servei públic que necessites.</string>
-    <string name="profile_scope_verified_only_title">Només portals verificats</string>
-    <string name="profile_scope_verified_only_copy">Només s’utilitzaran perfils de compatibilitat comprovats en un escenari real. Els altres portals s’obriran sense perfil verificat.</string>
-    <string name="profile_scope_restart_title">Reinicia l’aplicació</string>
-    <string name="profile_scope_restart_copy">El canvi s’aplicarà en reiniciar. Es cancel·larà qualsevol operació en curs.</string>
-    <string name="profile_scope_restart_confirm">Reinicia</string>
     <string name="catalog_back_to_certificate">← Torna al certificat</string>
     <string name="catalog_my_region_label">LA MEVA REGIÓ</string>
     <string name="catalog_region_copy">Mostrem primer els serveis de la teva regió i els disponibles a tot Espanya.</string>
@@ -144,7 +139,6 @@
     <string name="catalog_open">Obre</string>
     <string name="catalog_open_failed">No s’ha trobat cap aplicació per obrir aquest lloc.</string>
     <string name="catalog_choose_region">TRIA LA TEVA REGIÓ</string>
-    <string name="catalog_region_search">Cerca una regió</string>
     <string name="catalog_section_favorites">Preferits</string>
     <string name="catalog_section_favorites_copy">Els teus serveis desats per trobar-los ràpidament.</string>
     <string name="catalog_section_recent">Recents</string>
@@ -359,4 +353,9 @@
         <item quantity="one">Signatura per lots (%1$d document)</item>
         <item quantity="other">Signatura per lots (%1$d documents)</item>
     </plurals>
+    <string name="catalog_search_or_address">Cerca un portal o escriu una adreça</string>
+    <string name="catalog_region_change">Canvia</string>
+    <string name="catalog_region_inline">%1$s · Canvia</string>
+    <string name="catalog_favorite_add_description">Afegeix a preferits</string>
+    <string name="catalog_favorite_remove_description">Treu dels preferits</string>
 </resources>

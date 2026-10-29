@@ -124,11 +124,6 @@
     <string name="unknown_value">ezezaguna</string>
     <string name="catalog_title">ZERBITZU PUBLIKOAK</string>
     <string name="catalog_subtitle">Bilatu eta ireki behar duzun egoitza edo zerbitzu publikoa.</string>
-    <string name="profile_scope_verified_only_title">Egiaztatutako atariak soilik</string>
-    <string name="profile_scope_verified_only_copy">Benetako egoera batean egiaztatutako bateragarritasun-profilak soilik erabiliko dira. Beste atariak egiaztatutako profilik gabe irekiko dira.</string>
-    <string name="profile_scope_restart_title">Berrabiarazi aplikazioa</string>
-    <string name="profile_scope_restart_copy">Aldaketa berrabiaraztean aplikatuko da. Abian dagoen edozein eragiketa bertan behera utziko da.</string>
-    <string name="profile_scope_restart_confirm">Berrabiarazi</string>
     <string name="catalog_back_to_certificate">← Itzuli ziurtagirira</string>
     <string name="catalog_my_region_label">NIRE ESKUALDEA</string>
     <string name="catalog_region_copy">Zure eskualdeko zerbitzuak eta Espainia osoan erabilgarri daudenak erakusten ditugu lehenik.</string>
@@ -144,7 +139,6 @@
     <string name="catalog_open">Ireki</string>
     <string name="catalog_open_failed">Ez da gune hau irekitzeko aplikaziorik aurkitu.</string>
     <string name="catalog_choose_region">HAUTATU ZURE ESKUALDEA</string>
-    <string name="catalog_region_search">Bilatu eskualdea</string>
     <string name="catalog_section_favorites">Gogokoak</string>
     <string name="catalog_section_favorites_copy">Azkar aurkitzeko gordetako zure zerbitzuak.</string>
     <string name="catalog_section_recent">Azkenak</string>
@@ -359,4 +353,9 @@
         <item quantity="one">Lote-sinadura (%1$d dokumentu)</item>
         <item quantity="other">Lote-sinadura (%1$d dokumentu)</item>
     </plurals>
+    <string name="catalog_search_or_address">Bilatu ataria edo idatzi helbidea</string>
+    <string name="catalog_region_change">Aldatu</string>
+    <string name="catalog_region_inline">%1$s · Aldatu</string>
+    <string name="catalog_favorite_add_description">Gehitu gogokoetara</string>
+    <string name="catalog_favorite_remove_description">Kendu gogokoetatik</string>
 </resources>

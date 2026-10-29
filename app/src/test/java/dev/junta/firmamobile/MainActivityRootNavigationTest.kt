@@ -301,8 +301,8 @@ class MainActivityRootNavigationTest {
 
     private fun findOvorion() {
         openCatalog()
-        rule.onNodeWithTag("catalog-list").performScrollToNode(hasTestTag("catalog-search-field"))
-        rule.onNodeWithTag("catalog-search-field").performTextReplacement("Ovorion")
+        rule.onNodeWithTag("catalog-list").performScrollToNode(hasTestTag("public-web-address"))
+        rule.onNodeWithTag("public-web-address").performTextReplacement("Ovorion")
         rule.waitUntil(20_000) {
             // Search runs off the UI thread; wait for the actual card, including
             // lazy-list placement, rather than sleeping or assuming query completion.
