@@ -2125,7 +2125,8 @@ records:
             [name for name in tracked if name.endswith("/site_profiles_v1.json")],
         )
         registry = REGISTRY_SOURCE.read_text(encoding="utf-8")
-        self.assertIn("BuildConfig.SITE_PROFILE_CATALOG_JSON", registry)
+        self.assertIn("SiteProfileCatalogResource.read()", registry)
+        self.assertNotIn("BuildConfig.SITE_PROFILE_CATALOG_JSON", registry)
         self.assertNotIn('const val JSON = """', registry)
 
 
