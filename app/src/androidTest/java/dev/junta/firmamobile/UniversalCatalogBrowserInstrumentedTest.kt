@@ -65,6 +65,8 @@ val strings = checkNotNull(activityContext).resources
             rule.onNodeWithText(strings.getString(R.string.browse_without_certificate)).performScrollTo().performClick()
             rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-universal-afirma"))
             rule.onNodeWithTag("catalog-universal-afirma").assertIsDisplayed()
+            // The search field is a lazy header and may be composed out after scrolling to a card.
+            rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("public-web-address"))
             rule.onNodeWithTag("public-web-address").performTextReplacement(searchName)
             // A reviewed profile exists in metadata, but is no longer another
             // visible primary action on every user-facing card.
