@@ -29,7 +29,7 @@ class HttpAuthBrowserInstrumentedTest {
             onView(withTagValue(`is`("http-auth-username"))).inRoot(isDialog()).perform(replaceText("synthetic-user"))
             onView(withTagValue(`is`("http-auth-password"))).inRoot(isDialog()).perform(replaceText("not-a-real-password"))
             scenario.onActivity { assertEquals(0, reply.proceeds); assertEquals(0, reply.cancels) }
-            onView(withText("Continuar")).inRoot(isDialog()).perform(click())
+            onView(withText(strings.getString(R.string.http_auth_confirm))).inRoot(isDialog()).perform(click())
             scenario.onActivity {
                 assertEquals(1, reply.proceeds); assertEquals(0, reply.cancels)
                 assertEquals("synthetic-user" to "not-a-real-password", reply.value)
@@ -73,6 +73,9 @@ class HttpAuthBrowserInstrumentedTest {
 
     private fun withBrowser(test: (ActivityScenario<MainActivity>, TrustedJuntaWebView) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
             lateinit var view: TrustedJuntaWebView
             scenario.onActivity { activity ->
                 view = TrustedJuntaWebView(activity)

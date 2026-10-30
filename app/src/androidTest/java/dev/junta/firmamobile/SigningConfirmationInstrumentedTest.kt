@@ -77,20 +77,23 @@ class SigningConfirmationInstrumentedTest {
 
             TestCertificateDependencies.install(repository, CertificateSession()).use {
                 ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
                     // The stored reference loads asynchronously; wait for the unlock form.
                     rule.waitUntil(timeoutMillis = 15_000) {
-                        rule.onAllNodes(hasContentDescription("Contraseña del certificado"))
+                        rule.onAllNodes(hasContentDescription(strings.getString(R.string.certificate_password)))
                             .fetchSemanticsNodes().isNotEmpty()
                     }
-                    rule.onNodeWithContentDescription("Contraseña del certificado")
+                    rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password))
                         .performScrollTo()
                         .performTextInput(TEST_PASSPHRASE)
-                    rule.onNodeWithText("Desbloquear certificado")
+                    rule.onNodeWithText(strings.getString(R.string.unlock_certificate))
                         .performScrollTo()
                         .performClick()
-                    waitForText("Certificado encontrado")
-                    rule.onNodeWithText("Continuar").performScrollTo().performClick()
-                    waitForText("SERVICIOS PÚBLICOS")
+                    waitForText(strings.getString(R.string.certificate_found))
+                    rule.onNodeWithText(strings.getString(R.string.continue_to_portal)).performScrollTo().performClick()
+                    waitForText(strings.getString(R.string.catalog_title))
                     openOvorionPortal()
 
                     waitForWebView(scenario)
@@ -110,10 +113,10 @@ class SigningConfirmationInstrumentedTest {
                     waitForWebViewTitle(scenario, SIGN_READY_TITLE)
                     invokeSyntheticSign(scenario)
                     waitForConfirmation(scenario)
-                    rule.onNodeWithText("Solicitud de firma").assertIsDisplayed()
-                    rule.onNodeWithText("Sitio: www.juntadeandalucia.es").assertIsDisplayed()
-                    rule.onNodeWithText("Firmar").assertIsDisplayed()
-                    rule.onNodeWithText("Cancelar").performClick()
+                    rule.onNodeWithText(strings.getString(R.string.signing_confirmation_title)).assertIsDisplayed()
+                    rule.onNodeWithText(strings.getString(R.string.signing_site, "www.juntadeandalucia.es")).assertIsDisplayed()
+                    rule.onNodeWithText(strings.getString(R.string.signing_confirm)).assertIsDisplayed()
+                    rule.onNodeWithText(strings.getString(R.string.cancel)).performClick()
 
                     rule.waitUntil(timeoutMillis = 15_000) {
                         var title: String? = null
@@ -151,14 +154,17 @@ class SigningConfirmationInstrumentedTest {
             )
             TestCertificateDependencies.install(repository, CertificateSession()).use {
                 ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                    waitForText("Explorar sedes sin desbloquear el certificado")
-                    rule.onNodeWithText("Explorar sedes sin desbloquear el certificado")
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
+                    waitForText(strings.getString(R.string.browse_without_certificate))
+                    rule.onNodeWithText(strings.getString(R.string.browse_without_certificate))
                         .performScrollTo().performClick()
-                    waitForText("SERVICIOS PÚBLICOS")
+                    waitForText(strings.getString(R.string.catalog_title))
                     // The QA smoke OPEN command deliberately requires an
                     // unlocked identity. Exercise the real catalog UI here.
                     rule.onNode(hasScrollToIndexAction()).performScrollToIndex(2)
-                    rule.onNodeWithText("Buscar organismo o servicio").performTextReplacement("Ovorion")
+                    rule.onNodeWithText(strings.getString(R.string.catalog_search_label)).performTextReplacement("Ovorion")
                     // Catalog search combines DataStore preferences with input
                     // asynchronously. Await the resolved state, not only the
                     // editable text; opening an empty transitional list races it.
@@ -267,17 +273,17 @@ class SigningConfirmationInstrumentedTest {
                         throw AssertionError("TLS consent missing after the original callback: $state", failure)
                     }
                     rule.onNodeWithTag("interactive-client-auth-unlock").assertIsDisplayed().performClick()
-                    rule.onNodeWithContentDescription("Contraseña del certificado")
+                    rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password))
                         .performScrollTo().performTextInput(TEST_PASSPHRASE)
-                    rule.onNodeWithText("Desbloquear certificado").performScrollTo().performClick()
-                    waitForText("Certificado encontrado")
+                    rule.onNodeWithText(strings.getString(R.string.unlock_certificate)).performScrollTo().performClick()
+                    waitForText(strings.getString(R.string.certificate_found))
                     scenario.onActivity { activity ->
                         assertTrue(original === findWebView(activity.window.decorView))
                         assertEquals("TLS_FIXTURE_READY", original?.title)
                         assertEquals(0, proceeded)
                         assertEquals(0, ignored)
                     }
-                    rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    rule.onNodeWithText(strings.getString(R.string.continue_to_portal)).performScrollTo().performClick()
                     rule.waitUntil(timeoutMillis = 5_000) {
                         rule.onAllNodes(hasTestTag("interactive-client-auth-confirm") and isEnabled())
                             .fetchSemanticsNodes().isNotEmpty()
@@ -310,14 +316,17 @@ class SigningConfirmationInstrumentedTest {
             )
             TestCertificateDependencies.install(repository, CertificateSession()).use {
                 ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                    waitForText("Explorar sedes sin desbloquear el certificado")
-                    rule.onNodeWithText("Explorar sedes sin desbloquear el certificado")
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
+                    waitForText(strings.getString(R.string.browse_without_certificate))
+                    rule.onNodeWithText(strings.getString(R.string.browse_without_certificate))
                         .performScrollTo().performClick()
-                    waitForText("SERVICIOS PÚBLICOS")
+                    waitForText(strings.getString(R.string.catalog_title))
                     // The QA smoke OPEN command deliberately requires an
                     // unlocked identity. Exercise the real catalog UI here.
                     rule.onNode(hasScrollToIndexAction()).performScrollToIndex(2)
-                    rule.onNodeWithText("Buscar organismo o servicio").performTextReplacement("Ovorion")
+                    rule.onNodeWithText(strings.getString(R.string.catalog_search_label)).performTextReplacement("Ovorion")
                     // Catalog search combines DataStore preferences with input
                     // asynchronously. Await the resolved state, not only the
                     // editable text; opening an empty transitional list races it.
@@ -412,15 +421,15 @@ class SigningConfirmationInstrumentedTest {
                         assertTrue(view.webViewClient.shouldOverrideUrlLoading(view, request))
                     }
                     rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed().performClick()
-                    rule.onNodeWithContentDescription("Contraseña del certificado")
+                    rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password))
                         .performScrollTo().performTextInput(TEST_PASSPHRASE)
-                    rule.onNodeWithText("Desbloquear certificado").performScrollTo().performClick()
-                    waitForText("Certificado encontrado")
+                    rule.onNodeWithText(strings.getString(R.string.unlock_certificate)).performScrollTo().performClick()
+                    waitForText(strings.getString(R.string.certificate_found))
                     scenario.onActivity { activity ->
                         assertTrue(original === findWebView(activity.window.decorView))
                         assertEquals("NATIVE_AFIRMA_READY", original?.title)
                     }
-                    rule.onNodeWithText("Continuar").performScrollTo().performClick()
+                    rule.onNodeWithText(strings.getString(R.string.continue_to_portal)).performScrollTo().performClick()
                     rule.onNodeWithTag("native-afirma-confirm").assertIsDisplayed()
                     // Explicit REVIEW cancellation now notifies storage. This
                     // lifecycle test intentionally exercises the purely local
@@ -460,20 +469,23 @@ class SigningConfirmationInstrumentedTest {
 
             TestCertificateDependencies.install(repository, CertificateSession()).use {
                 ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
                     // The password field is composed only after catalog startup completes.
                     rule.waitUntil(timeoutMillis = 15_000) {
-                        rule.onAllNodesWithContentDescription("Contraseña del certificado")
+                        rule.onAllNodesWithContentDescription(strings.getString(R.string.certificate_password))
                             .fetchSemanticsNodes().isNotEmpty()
                     }
-                    rule.onNodeWithContentDescription("Contraseña del certificado")
+                    rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password))
                         .performScrollTo()
                         .performTextInput(TEST_PASSPHRASE)
-                    rule.onNodeWithText("Desbloquear certificado")
+                    rule.onNodeWithText(strings.getString(R.string.unlock_certificate))
                         .performScrollTo()
                         .performClick()
-                    waitForText("Certificado encontrado")
-                    rule.onNodeWithText("Continuar").performScrollTo().performClick()
-                    waitForText("SERVICIOS PÚBLICOS")
+                    waitForText(strings.getString(R.string.certificate_found))
+                    rule.onNodeWithText(strings.getString(R.string.continue_to_portal)).performScrollTo().performClick()
+                    waitForText(strings.getString(R.string.catalog_title))
                     openOvorionPortal()
                     waitForWebView(scenario)
 
@@ -611,7 +623,7 @@ class SigningConfirmationInstrumentedTest {
         var signingState = "unknown"
         try {
             rule.waitUntil(timeoutMillis = 15_000) {
-                val dialogVisible = rule.onAllNodesWithText("Solicitud de firma")
+                val dialogVisible = rule.onAllNodesWithText(strings.getString(R.string.signing_confirmation_title))
                     .fetchSemanticsNodes().isNotEmpty()
                 scenario.onActivity { activity ->
                     val webView = findWebView(activity.window.decorView)
@@ -634,7 +646,7 @@ class SigningConfirmationInstrumentedTest {
                     "signingState=$signingState",
             )
         }
-        if (rule.onAllNodesWithText("Solicitud de firma").fetchSemanticsNodes().isEmpty()) {
+        if (rule.onAllNodesWithText(strings.getString(R.string.signing_confirmation_title)).fetchSemanticsNodes().isEmpty()) {
             fail(
                 "Native confirmation missing; title=$lastSafeTitle " +
                     "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView " +

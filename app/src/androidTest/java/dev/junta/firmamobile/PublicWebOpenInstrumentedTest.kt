@@ -46,17 +46,20 @@ class PublicWebOpenInstrumentedTest {
     }
 
     @Test fun theActualCatalogCanOpenAnUnlistedAddressWithoutSelectingACertificate() {
-        ActivityScenario.launch(MainActivity::class.java).use {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
             rule.waitUntil(timeoutMillis = 15_000) {
-                rule.onAllNodes(androidx.compose.ui.test.hasText("Explorar sedes sin desbloquear el certificado")).fetchSemanticsNodes().isNotEmpty()
+                rule.onAllNodes(androidx.compose.ui.test.hasText(strings.getString(R.string.browse_without_certificate))).fetchSemanticsNodes().isNotEmpty()
             }
-            rule.onNodeWithText("Explorar sedes sin desbloquear el certificado").performScrollTo().performClick()
+            rule.onNodeWithText(strings.getString(R.string.browse_without_certificate)).performScrollTo().performClick()
             rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("public-web-address"))
             rule.onNodeWithTag("public-web-address").performTextReplacement("https://unlisted.synthetic.example/form")
             rule.onNodeWithTag("public-web-open-confirm").assertIsEnabled().performClick()
             rule.onNodeWithTag("public-browsing-notice").assertDoesNotExist()
-            rule.onNodeWithContentDescription("Más opciones").performClick()
-            rule.onNodeWithText("Información del sitio").performClick()
+            rule.onNodeWithContentDescription(strings.getString(R.string.browser_action_more)).performClick()
+            rule.onNodeWithText(strings.getString(R.string.browser_site_information)).performClick()
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
             rule.onNodeWithTag("browser-site-information-close").performClick()
             rule.onNodeWithTag("public-web-open-dialog").assertDoesNotExist()
