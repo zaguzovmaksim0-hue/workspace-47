@@ -52,6 +52,9 @@ adb -e shell settings get system screen_off_timeout > "$state_dir/screen-off-tim
 adb -e shell settings get global stay_on_while_plugged_in > "$state_dir/stay-on.txt"
 capture_state ready
 
-# Never filter tests or mask the Gradle exit status. Diagnostics run on both
-# success and failure so a lost-focus regression can be investigated directly.
-./gradlew connectedQaAndroidTest --no-daemon --console=plain
+# Do not mask the Gradle exit status. The sole synthetic-run exclusion is the
+# separate manual-only credential-gated RealE2eInstrumentedTest, which is run
+# by scripts/ci/run-real-e2e.sh; all synthetic tests and real exit codes remain.
+# Diagnostics run on both success and failure so a lost-focus regression can be
+# investigated directly.
+./gradlew connectedQaAndroidTest -Pandroid.testInstrumentationRunnerArguments.notClass=dev.junta.firmamobile.RealE2eInstrumentedTest --no-daemon --console=plain
