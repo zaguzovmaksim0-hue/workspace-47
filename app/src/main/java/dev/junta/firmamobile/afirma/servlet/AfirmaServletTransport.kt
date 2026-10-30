@@ -1,6 +1,8 @@
 package dev.junta.firmamobile.afirma.servlet
 
 import dev.junta.firmamobile.network.PublicIpAddressPolicy
+import dev.junta.firmamobile.network.chainCompletingSslContext
+import dev.junta.firmamobile.network.chainCompletingTrustManager
 import java.io.IOException
 import java.net.InetAddress
 import java.net.Proxy
@@ -22,6 +24,8 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
 import okhttp3.Response
+
+internal const val AFIRMA_MAX_RESULT_CHARS = 6 * 1024 * 1024
 
 internal enum class AfirmaDeliveryResult {
     ACKNOWLEDGED,
@@ -64,7 +68,10 @@ internal object AfirmaEndpointPolicy {
  */
 internal class AfirmaServletTransport(
     private val dns: Dns = publicDns(),
-    private val clientBuilder: () -> OkHttpClient.Builder = { OkHttpClient.Builder() },
+    private val clientBuilder: () -> OkHttpClient.Builder = {
+        OkHttpClient.Builder()
+            .sslSocketFactory(chainCompletingSslContext.socketFactory, chainCompletingTrustManager)
+    },
 ) : AfirmaResultTransport, AfirmaRequestTransport {
     override suspend fun store(endpoint: URI, sessionId: String, result: String): AfirmaDeliveryResult {
         if (!AfirmaEndpointPolicy.accepts(endpoint) || !SESSION_ID.matches(sessionId) ||
@@ -229,7 +236,7 @@ internal class AfirmaServletTransport(
     private companion object {
         val SESSION_ID = Regex("[A-Za-z0-9_-]{1,128}")
         val RESERVED_QUERY_KEYS = setOf("op", "v", "id", "dat")
-        const val MAX_RESULT_CHARS = 6 * 1024 * 1024
+        const val MAX_RESULT_CHARS = AFIRMA_MAX_RESULT_CHARS
         const val MAX_ACK_BYTES = 256
         fun publicDns(): Dns = object : Dns {
             override fun lookup(hostname: String): List<InetAddress> {

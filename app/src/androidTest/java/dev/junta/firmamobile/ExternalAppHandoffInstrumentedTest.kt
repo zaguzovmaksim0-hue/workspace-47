@@ -118,10 +118,12 @@ class ExternalAppHandoffInstrumentedTest {
         instrumentation.addMonitor(monitor)
         try {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                var browseWithoutCertificate = ""
+                scenario.onActivity { browseWithoutCertificate = it.getString(R.string.browse_without_certificate) }
                 rule.waitUntil(timeoutMillis = 15_000) {
-                    rule.onAllNodes(androidx.compose.ui.test.hasText("Explorar sedes sin desbloquear el certificado")).fetchSemanticsNodes().isNotEmpty()
+                    rule.onAllNodes(androidx.compose.ui.test.hasText(browseWithoutCertificate)).fetchSemanticsNodes().isNotEmpty()
                 }
-                rule.onNodeWithText("Explorar sedes sin desbloquear el certificado").performScrollTo().performClick()
+                rule.onNodeWithText(browseWithoutCertificate).performScrollTo().performClick()
                 rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("public-web-address"))
                 rule.onNodeWithTag("public-web-address").performTextReplacement("https://external.synthetic.example/")
                 rule.onNodeWithTag("public-web-open-confirm").performClick()

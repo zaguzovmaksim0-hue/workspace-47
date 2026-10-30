@@ -42,7 +42,10 @@ class UniversalCatalogBrowserInstrumentedTest {
 
     private fun exercise(portalId: String, alias: Boolean) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            var target: URI? = null; var searchName = ""; var searchLabel = ""
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
+            var target: URI? = null; var searchName = ""
             scenario.onActivity { activity ->
                 val catalog = activity.resources.openRawResource(R.raw.public_portal_catalog_v1).bufferedReader().use {
                     PublicPortalCatalogParser.parse(it.readText())
@@ -54,15 +57,17 @@ class UniversalCatalogBrowserInstrumentedTest {
                 assertEquals(alias, metadata.launchUrl != null)
                 target = repository.resolveUniversalOpenTarget(item)!!.entryUrl
                 assertEquals(metadata.launchUrl ?: metadata.entryUrl, target)
-                searchName = metadata.displayName; searchLabel = activity.getString(R.string.catalog_search_label)
+                searchName = metadata.displayName
             }
             rule.waitUntil(timeoutMillis = 15_000) {
-                rule.onAllNodes(androidx.compose.ui.test.hasText("Explorar sedes sin desbloquear el certificado")).fetchSemanticsNodes().isNotEmpty()
+                rule.onAllNodes(androidx.compose.ui.test.hasText(strings.getString(R.string.browse_without_certificate))).fetchSemanticsNodes().isNotEmpty()
             }
-            rule.onNodeWithText("Explorar sedes sin desbloquear el certificado").performScrollTo().performClick()
+            rule.onNodeWithText(strings.getString(R.string.browse_without_certificate)).performScrollTo().performClick()
             rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-universal-afirma"))
             rule.onNodeWithTag("catalog-universal-afirma").assertIsDisplayed()
-            rule.onNodeWithText(searchLabel).performTextReplacement(searchName)
+            // The search field is a lazy header and may be composed out after scrolling to a card.
+            rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("public-web-address"))
+            rule.onNodeWithTag("public-web-address").performTextReplacement(searchName)
             // A reviewed profile exists in metadata, but is no longer another
             // visible primary action on every user-facing card.
             rule.onNodeWithTag("catalog-open-profile-$portalId").assertDoesNotExist()
@@ -73,8 +78,8 @@ class UniversalCatalogBrowserInstrumentedTest {
             }
             rule.onNodeWithTag("catalog-open-$portalId").performClick()
             rule.onNodeWithTag("public-browsing-notice").assertDoesNotExist()
-            rule.onNodeWithContentDescription("Más opciones").performClick()
-            rule.onNodeWithText("Información del sitio").performClick()
+            rule.onNodeWithContentDescription(strings.getString(R.string.browser_action_more)).performClick()
+            rule.onNodeWithText(strings.getString(R.string.browser_site_information)).performClick()
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
             rule.onNodeWithTag("browser-site-information-close").performClick()
             var current: WebView? = null

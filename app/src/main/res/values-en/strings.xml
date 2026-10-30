@@ -124,11 +124,6 @@
     <string name="unknown_value">unknown</string>
     <string name="catalog_title">PUBLIC SERVICES</string>
     <string name="catalog_subtitle">Find and open the public service or website you need.</string>
-    <string name="profile_scope_verified_only_title">Verified portals only</string>
-    <string name="profile_scope_verified_only_copy">Only compatibility profiles tested in a real-world scenario will be used. Other portals will open without a verified profile.</string>
-    <string name="profile_scope_restart_title">Restart the app</string>
-    <string name="profile_scope_restart_copy">The change will take effect after restarting. Any operation in progress will be canceled.</string>
-    <string name="profile_scope_restart_confirm">Restart</string>
     <string name="catalog_back_to_certificate">← Return to certificate</string>
     <string name="catalog_my_region_label">MY REGION</string>
     <string name="catalog_region_copy">Services for your region and those available throughout Spain are shown first.</string>
@@ -144,7 +139,6 @@
     <string name="catalog_open">Open</string>
     <string name="catalog_open_failed">No app was found to open this site.</string>
     <string name="catalog_choose_region">CHOOSE YOUR REGION</string>
-    <string name="catalog_region_search">Search regions</string>
     <string name="catalog_section_favorites">Favorites</string>
     <string name="catalog_section_favorites_copy">Your saved services for quick access.</string>
     <string name="catalog_section_recent">Recent</string>
@@ -359,4 +353,9 @@
         <item quantity="one">Batch signing (%1$d document)</item>
         <item quantity="other">Batch signing (%1$d documents)</item>
     </plurals>
+    <string name="catalog_search_or_address">Search for a portal or enter an address</string>
+    <string name="catalog_region_change">Change</string>
+    <string name="catalog_region_inline">%1$s · Change</string>
+    <string name="catalog_favorite_add_description">Add to favourites</string>
+    <string name="catalog_favorite_remove_description">Remove from favourites</string>
 </resources>

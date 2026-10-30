@@ -124,11 +124,6 @@
     <string name="unknown_value">descoñecido</string>
     <string name="catalog_title">SERVIZOS PÚBLICOS</string>
     <string name="catalog_subtitle">Atopa e abre a sede ou o servizo público que precisas.</string>
-    <string name="profile_scope_verified_only_title">Só portais verificados</string>
-    <string name="profile_scope_verified_only_copy">Só se usarán perfís de compatibilidade comprobados nun escenario real. Os demais portais abriranse sen perfil verificado.</string>
-    <string name="profile_scope_restart_title">Reiniciar a aplicación</string>
-    <string name="profile_scope_restart_copy">O cambio aplicarase ao reiniciar. Cancelarase calquera operación en curso.</string>
-    <string name="profile_scope_restart_confirm">Reiniciar</string>
     <string name="catalog_back_to_certificate">← Volver ao certificado</string>
     <string name="catalog_my_region_label">A MIÑA REXIÓN</string>
     <string name="catalog_region_copy">Amosamos primeiro os servizos da túa rexión e os dispoñibles en toda España.</string>
@@ -144,7 +139,6 @@
     <string name="catalog_open">Abrir</string>
     <string name="catalog_open_failed">Non se atopou unha aplicación para abrir este sitio.</string>
     <string name="catalog_choose_region">ESCOLLE A TÚA REXIÓN</string>
-    <string name="catalog_region_search">Buscar rexión</string>
     <string name="catalog_section_favorites">Favoritos</string>
     <string name="catalog_section_favorites_copy">Os teus servizos gardados para atopalos rapidamente.</string>
     <string name="catalog_section_recent">Recentes</string>
@@ -359,4 +353,9 @@
         <item quantity="one">Sinatura por lotes (%1$d documento)</item>
         <item quantity="other">Sinatura por lotes (%1$d documentos)</item>
     </plurals>
+    <string name="catalog_search_or_address">Buscar un portal ou escribir un enderezo</string>
+    <string name="catalog_region_change">Cambiar</string>
+    <string name="catalog_region_inline">%1$s · Cambiar</string>
+    <string name="catalog_favorite_add_description">Engadir a preferidos</string>
+    <string name="catalog_favorite_remove_description">Retirar de preferidos</string>
 </resources>

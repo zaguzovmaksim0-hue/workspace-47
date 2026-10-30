@@ -168,7 +168,7 @@ Latest completed isolated PR — catalog-generation deduplication (F-15B):
 - The unchanged profile catalog moved from Android `res/raw` to the canonical
   `config/site_profiles_v1.json`; its SHA-256 remains
   `a45cf2bbfe13d3492a963d0b8866c676ec13e5e95fac99e0cf2e0eeac568dc4c`.
-- Gradle emits the canonical JSON as `BuildConfig.SITE_PROFILE_CATALOG_JSON`;
+- Gradle copies the canonical JSON byte-for-byte into the classpath resource `dev/junta/firmamobile/profile/site_profiles_v1.json` and emits its SHA-256 as `BuildConfig.SITE_PROFILE_CATALOG_SHA256`; `SiteProfileCatalogResource` checks the hash before parsing;
   `BuiltInSiteProfiles` no longer contains a handwritten JSON body and the APK
   no longer packages a second raw profile copy.
 - The reviewed inventory now contains 182 records. Oficina Virtual and

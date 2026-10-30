@@ -45,8 +45,11 @@ class CertificatePickerIntentTest {
             Intents.init()
             try {
                 intending(matcher).respondWith(ActivityResult(Activity.RESULT_CANCELED, null))
-                ActivityScenario.launch(MainActivity::class.java).use {
-                    rule.onNodeWithText("Seleccionar certificado").performClick()
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
+                    rule.onNodeWithText(strings.getString(R.string.select_certificate)).performClick()
                     assertTrue(
                         "Expected ACTION_OPEN_DOCUMENT with the PKCS#12 MIME allowlist",
                         Intents.getIntents().any(matcher::matches),

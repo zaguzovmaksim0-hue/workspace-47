@@ -325,7 +325,12 @@ internal object AfirmaServletInvocationParser {
         readSignatureData(pdf, remote, format)
     }
 
-    private fun InvocationBuildState.validateLocalFormat(format: String, remote: Boolean, pdf: Boolean, xades: Boolean) {
+    private fun InvocationBuildState.validateLocalFormat(
+        format: String,
+        remote: Boolean,
+        pdf: Boolean,
+        xades: Boolean,
+    ) {
         if (!remote && pdfCoSign && !pdf && !format.equals("CAdES", true))
             unsupported("local_cosign_format_not_implemented")
         if (!remote && op == AfirmaServletOperation.COUNTERSIGN) unsupported("local_countersign_not_implemented")
@@ -496,7 +501,7 @@ internal object AfirmaServletInvocationParser {
     private const val MAX_URI = 1_048_576
     private const val MAX_PAYLOAD = 524_288
     private val NAME = Regex("[A-Za-z][A-Za-z0-9_-]{0,63}")
-    private val SESSION_ID = Regex("[A-Za-z0-9_-]{1,128}")
+    internal val SESSION_ID = Regex("[A-Za-z0-9_-]{1,128}")
     private val BASE64 = Regex("[A-Za-z0-9+/_-]*={0,2}")
     private val CONSENT_SUPPRESSION_FLAGS = setOf("headless", "silent", "autosign", "sticky", "stickycert",
         "resetsticky", "skipconsent", "suppressconsent")

@@ -43,6 +43,9 @@ class InteractiveClientAuthDialogInstrumentedTest {
     @Test fun readyPromptSeparatesTheRequestingServerFromTheOpenPage() {
         var confirmed = 0; var unlocked = 0
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
             scenario.onActivity { activity ->
                 activity.setContent {
                     InteractiveClientAuthDialog(
@@ -51,8 +54,8 @@ class InteractiveClientAuthDialogInstrumentedTest {
                     )
                 }
             }
-            rule.onNodeWithText("Servidor que solicita el certificado: auth.synthetic.example").assertIsDisplayed()
-            rule.onNodeWithText("Página abierta: https://portal.synthetic.example").assertIsDisplayed()
+            rule.onNodeWithText(strings.getString(R.string.interactive_tls_server, "auth.synthetic.example")).assertIsDisplayed()
+            rule.onNodeWithText(strings.getString(R.string.interactive_tls_page, "https://portal.synthetic.example")).assertIsDisplayed()
             rule.onNodeWithTag("interactive-client-auth-confirm").assertIsDisplayed().performClick()
             rule.runOnIdle { assertEquals(1, confirmed); assertEquals(0, unlocked) }
         }

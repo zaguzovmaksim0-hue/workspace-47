@@ -54,27 +54,30 @@ class CertificateSetupFlowTest {
 
         TestCertificateDependencies.install(repository, session).use {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                rule.onNodeWithContentDescription("Contraseña del certificado")
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
+                rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password))
                     .performScrollTo()
                     .assertIsDisplayed()
                 assertScreenshotsAllowed(scenario)
 
-                enterPassword("wrong-password")
+                enterPassword("wrong-password", strings)
                 waitForText(
-                    "La contraseña no es correcta o el archivo PKCS#12 no es válido.",
+                    strings.getString(R.string.error_password_or_file),
                 )
                 rule.onNodeWithText(
-                    "La contraseña no es correcta o el archivo PKCS#12 no es válido.",
+                    strings.getString(R.string.error_password_or_file),
                 ).performScrollTo().assertIsDisplayed()
                 rule.onNodeWithText("wrong-password").assertDoesNotExist()
                 assertScreenshotsAllowed(scenario)
 
-                enterPassword(TEST_PASSPHRASE)
-                waitForText("Certificado encontrado")
-                rule.onNodeWithText("Certificado encontrado")
+                enterPassword(TEST_PASSPHRASE, strings)
+                waitForText(strings.getString(R.string.certificate_found))
+                rule.onNodeWithText(strings.getString(R.string.certificate_found))
                     .performScrollTo()
                     .assertIsDisplayed()
-                rule.onNodeWithText("Titular: Persona de Prueba", substring = true)
+                rule.onNodeWithText(strings.getString(R.string.certificate_owner, "Persona de Prueba"), substring = true)
                     .performScrollTo()
                     .assertIsDisplayed()
                 rule.runOnIdle {
@@ -87,24 +90,24 @@ class CertificateSetupFlowTest {
                     check(session.state() is CertificateSessionState.Unlocked)
                 }
                 scenario.moveToState(Lifecycle.State.RESUMED)
-                waitForText("Certificado encontrado")
-                rule.onNodeWithContentDescription("Contraseña del certificado").assertDoesNotExist()
+                waitForText(strings.getString(R.string.certificate_found))
+                rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password)).assertDoesNotExist()
                 assertScreenshotsAllowed(scenario)
 
                 scenario.recreate()
-                waitForText("Certificado encontrado")
-                rule.onNodeWithContentDescription("Contraseña del certificado").assertDoesNotExist()
+                waitForText(strings.getString(R.string.certificate_found))
+                rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password)).assertDoesNotExist()
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Unlocked)
                 }
                 assertScreenshotsAllowed(scenario)
 
-                rule.onNodeWithContentDescription("Opciones del certificado")
+                rule.onNodeWithContentDescription(strings.getString(R.string.certificate_options))
                     .performScrollTo()
                     .performClick()
-                rule.onNodeWithText("Bloquear certificado")
+                rule.onNodeWithText(strings.getString(R.string.lock_certificate))
                     .performClick()
-                rule.onNodeWithContentDescription("Contraseña del certificado")
+                rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password))
                     .performScrollTo()
                     .assertIsDisplayed()
                 rule.runOnIdle {
@@ -115,11 +118,14 @@ class CertificateSetupFlowTest {
         }
     }
 
-    private fun enterPassword(password: String) {
-        rule.onNodeWithContentDescription("Contraseña del certificado")
+    private fun enterPassword(
+        password: String,
+        strings: android.content.res.Resources,
+    ) {
+        rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password))
             .performScrollTo()
             .performTextInput(password)
-        rule.onNodeWithText("Desbloquear certificado")
+        rule.onNodeWithText(strings.getString(R.string.unlock_certificate))
             .performScrollTo()
             .performClick()
     }

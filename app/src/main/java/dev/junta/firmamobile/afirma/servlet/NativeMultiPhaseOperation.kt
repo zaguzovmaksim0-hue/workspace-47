@@ -108,7 +108,11 @@ internal class NativeMultiPhaseOperation(
             val algorithm = checkNotNull(invocation.algorithm)
             val certificate = identity.certificate.encoded
             try {
-                val certEncoded = cipher?.encode(certificate) ?: AfirmaIntermediateCipher.encode(certificate, key)
+                val certEncoded = cipher?.encode(certificate) ?: if (remote.batch != null && remote.needCertificate) {
+                    AfirmaIntermediateCipher.encodeLast(certificate, key)
+                } else {
+                    AfirmaIntermediateCipher.encode(certificate, key)
+                }
                 val result: ByteArray
                 if (remote.localBatch) {
                     result = localBatch(payload, identity, ::checkOwner)
@@ -176,7 +180,11 @@ internal class NativeMultiPhaseOperation(
                 }
                 try {
                     checkOwner()
-                    val encoded = cipher?.encode(result) ?: AfirmaIntermediateCipher.encode(result, key)
+                    val encoded = cipher?.encode(result) ?: if (remote.batch == null || !remote.needCertificate) {
+                        AfirmaIntermediateCipher.encodeLast(result, key)
+                    } else {
+                        AfirmaIntermediateCipher.encode(result, key)
+                    }
                     val wire = if (remote.batch != null) encoded + if (remote.needCertificate) "|$certEncoded" else "" else "$certEncoded|$encoded"
                     val delivered = storage.store(endpoint, id, wire)
                     // POST may have saved individual signatures even when the
@@ -261,5 +269,12 @@ internal class NativeMultiPhaseOperation(
     private fun destination(uri: URI) = URI("https", null, uri.host, uri.port, uri.path, null, null).toASCIIString()
 }
 
-internal fun nativeOperation(invocation: AfirmaServletInvocation): PreparedAfirmaOperation =
-    if (invocation.remoteOptions != null) NativeMultiPhaseOperation(invocation) else NativeAfirmaOperation(invocation)
+internal fun nativeOperation(
+    invocation: AfirmaServletInvocation,
+    resultTransport: AfirmaResultTransport = AfirmaServletTransport(),
+    clock: Clock = Clock.systemUTC(),
+): PreparedAfirmaOperation = if (invocation.remoteOptions != null) {
+    NativeMultiPhaseOperation(invocation, storage = resultTransport, clock = clock)
+} else {
+    NativeAfirmaOperation(invocation, transport = resultTransport, clock = clock)
+}

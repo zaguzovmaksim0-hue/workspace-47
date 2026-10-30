@@ -86,7 +86,7 @@ internal class NativeAfirmaOperation(
                 currentCoroutineContext().ensureActive()
                 val certificate = identity.certificate.encoded
                 try {
-                    val certResult = snapshot.cipher?.encode(certificate) ?: AfirmaIntermediateCipher.encode(certificate, snapshot.key)
+                    val certResult = encodedCertificate(snapshot, certificate)
                     if (snapshot.operation == AfirmaServletOperation.SELECT_CERTIFICATE) certResult else {
                         val generated = snapshot.pades?.let { options ->
                             padesEngine.sign(snapshot.payload, identity, checkNotNull(snapshot.algorithm), options, snapshot.pdfCoSign)
@@ -102,7 +102,9 @@ internal class NativeAfirmaOperation(
                                 currentCoroutineContext().ensureActive()
                                 // Upstream consumer expects certificate first, signature second,
                                 // each independently encoded/encrypted, separated by a pipe.
-                                certResult + "|" + signature.withBytes { snapshot.cipher?.encode(it) ?: AfirmaIntermediateCipher.encode(it, snapshot.key) }
+                                certResult + "|" + signature.withBytes { data ->
+                                    encodedSignature(snapshot, data)
+                                }
                             }
                             is LocalSignatureResult.Failure -> error("Native signature validation failed")
                         }
@@ -142,6 +144,16 @@ internal class NativeAfirmaOperation(
         }
         pdfPreviews.values.forEach { it?.close() }
     }
+
+    private fun encodedCertificate(snapshot: Snapshot, certificate: ByteArray): String =
+        snapshot.cipher?.encode(certificate) ?: when (snapshot.operation) {
+            AfirmaServletOperation.SELECT_CERTIFICATE ->
+                AfirmaIntermediateCipher.encodeLast(certificate, snapshot.key)
+            else -> AfirmaIntermediateCipher.encode(certificate, snapshot.key)
+        }
+
+    private fun encodedSignature(snapshot: Snapshot, data: ByteArray): String =
+        snapshot.cipher?.encode(data) ?: AfirmaIntermediateCipher.encodeLast(data, snapshot.key)
 
     private class Snapshot(val operation: AfirmaServletOperation, val endpoint: URI, val sessionId: String,
         val key: String?, val algorithm: SigningAlgorithm?, val detached: Boolean, val payload: ByteArray,

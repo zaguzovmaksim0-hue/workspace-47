@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -129,6 +130,33 @@ class AfirmaDeferredResolverTest {
             operationFactory = { it.close(); job!!.cancel(); op }, parsingDispatcher = StandardTestDispatcher(testScheduler))
         job = launch { resolver.resolve(deferred()); fail("Canceled caller must not receive operation") }
         runCurrent(); assertEquals(1, op.closes)
+    }
+
+    @Test
+    fun throwingSuspendFactoryClosesInvocationAndPropagatesFailure() = runTest {
+        val request = deferred()
+        val response = wire(xml())
+        val failure = AfirmaRetrievalException(AfirmaRetrievalProblem.INVALID)
+        var actual: AfirmaServletInvocation? = null
+        val resolver = AfirmaDeferredResolver(
+            transport = AfirmaRequestTransport { _, _ -> AfirmaRetrievedBytes(response) },
+            operationFactory = { invocation ->
+                actual = invocation
+                yield()
+                throw failure
+            },
+            parsingDispatcher = StandardTestDispatcher(testScheduler),
+        )
+        try {
+            resolver.resolve(request)
+            fail("Factory failure must reach the caller")
+        } catch (e: AfirmaRetrievalException) {
+            assertSame(failure, e)
+        }
+        val invocation = checkNotNull(actual)
+        assertThrows(IllegalStateException::class.java) { invocation.payloadCopy() }
+        assertThrows(IllegalStateException::class.java) { request.begin() }
+        assertTrue(response.all { it == 0.toByte() })
     }
 
     @Test fun buffersTransferOnceAndCloseErasesOnlyStillOwnedBytes() {

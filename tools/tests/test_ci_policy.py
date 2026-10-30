@@ -175,13 +175,41 @@ class CiPolicyTest(unittest.TestCase):
         ):
             self.assertIn(required, source)
         harness = self.read(ROOT / "scripts/run-android-instrumentation-ci.sh")
-        # The full command moved to the checked emulator-only harness; it has
-        # not been removed, filtered or allowed to ignore its exit status.
-        self.assertIn("\n./gradlew connectedQaAndroidTest --no-daemon --console=plain\n", harness)
+        # The emulator-only harness runs every synthetic Android test while
+        # excluding exactly the manual-only credential-gated
+        # RealE2eInstrumentedTest. That credential-only E2E remains protected
+        # by scripts/ci/run-real-e2e.sh and is not run by ordinary CI.
+        expected_gradlew_line = (
+            "./gradlew connectedQaAndroidTest "
+            "-Pandroid.testInstrumentationRunnerArguments.notClass="
+            "dev.junta.firmamobile.RealE2eInstrumentedTest "
+            "--no-daemon --console=plain"
+        )
+        gradlew_lines = [
+            line for line in harness.splitlines()
+            if line.startswith("./gradlew connectedQaAndroidTest")
+        ]
+        self.assertEqual([expected_gradlew_line], gradlew_lines)
+        self.assertEqual(
+            1,
+            harness.count(
+                "-Pandroid.testInstrumentationRunnerArguments.notClass="
+                "dev.junta.firmamobile.RealE2eInstrumentedTest"
+            ),
+        )
+        for forbidden_filter in (
+            ".class=",
+            ".notPackage=",
+            ".annotation=",
+            ".size=",
+            "-Pandroid.testInstrumentationRunnerArguments.package=",
+            "|| true",
+            "@Ignore",
+        ):
+            self.assertNotIn(forbidden_filter, gradlew_lines[0])
         self.assertIn('[[ "${GITHUB_ACTIONS:-}" == "true" && "${CI:-}" == "true" ]]', harness)
         self.assertIn('getprop ro.kernel.qemu', harness)
         self.assertIn('exit "$status"', harness)
-        self.assertNotIn("testInstrumentationRunnerArguments", harness)
         self.assertIn("scripts/tests/android-instrumentation-harness.test.mjs", source)
         self.assertIn("android-emulator-state-${{ env.VERIFY_REF }}", source)
         self.assertIn("timeout-minutes:", source)

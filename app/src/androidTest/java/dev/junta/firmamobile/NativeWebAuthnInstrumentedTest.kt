@@ -68,10 +68,13 @@ class NativeWebAuthnInstrumentedTest {
     @Test fun enabledEngineIsNotPresentedAsCredentialProviderApproval() {
         var external = 0
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
             scenario.onActivity { it.setContent { WebAuthnStatusButton(WebAuthnEngineState.ENABLED_PROVIDER_AUTHORIZATION_UNKNOWN) { external++ } } }
             rule.onNodeWithTag("webauthn-status").performClick()
             rule.onNodeWithTag("webauthn-status-dialog").assertIsDisplayed()
-            rule.onNodeWithText("autorización del proveedor", substring = true).assertIsDisplayed()
+            rule.onNodeWithText(strings.getString(R.string.webauthn_provider_unknown), substring = true).assertIsDisplayed()
             rule.runOnIdle { assertEquals(0, external) }
             rule.onNodeWithTag("webauthn-open-browser").performClick()
             rule.runOnIdle { assertEquals(1, external) }
@@ -80,9 +83,12 @@ class NativeWebAuthnInstrumentedTest {
     @Test fun unsupportedEngineLeavesAnExplicitExternalBrowserOption() {
         var external = 0
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
             scenario.onActivity { it.setContent { WebAuthnStatusButton(WebAuthnEngineState.UNSUPPORTED) { external++ } } }
             rule.onNodeWithTag("webauthn-status").performClick()
-            rule.onNodeWithText("no anuncia soporte", substring = true).assertIsDisplayed()
+            rule.onNodeWithText(strings.getString(R.string.webauthn_unsupported), substring = true).assertIsDisplayed()
             rule.onNodeWithTag("webauthn-open-browser").performClick()
             rule.runOnIdle { assertEquals(1, external) }
         }

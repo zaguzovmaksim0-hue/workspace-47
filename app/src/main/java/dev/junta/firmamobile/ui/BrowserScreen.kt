@@ -30,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
@@ -61,9 +62,16 @@ import dev.junta.firmamobile.afirma.servlet.AfirmaConsentPhase
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletInvocationParser
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletParseResult
 import dev.junta.firmamobile.afirma.servlet.NativeAfirmaOperation
+import dev.junta.firmamobile.afirma.servlet.nativeOperation
 import dev.junta.firmamobile.afirma.servlet.AfirmaDeferredResolver
 import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalController
 import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalPrompt
+import dev.junta.firmamobile.afirma.servlet.AfirmaRequestTransport
+import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievedBytes
+import dev.junta.firmamobile.afirma.servlet.AfirmaRelayStore
+import dev.junta.firmamobile.afirma.servlet.AfirmaServletTransport
+import dev.junta.firmamobile.afirma.servlet.RelayRequestTransport
+import dev.junta.firmamobile.afirma.servlet.relayScopeFor
 import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
@@ -97,6 +105,8 @@ import dev.junta.firmamobile.browser.SiteClearResult
 import dev.junta.firmamobile.browser.SiteDataCleaner
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
 import dev.junta.firmamobile.browser.WebMessageBridge
+import dev.junta.firmamobile.browser.UniversalAfirmaRelayBridge
+import dev.junta.firmamobile.browser.prepareRelayResultTransport
 import dev.junta.firmamobile.browser.ValenciaCertificateSelectionBridgeAdapter
 import dev.junta.firmamobile.browser.XuntaCertificateSelectionBridgeAdapter
 import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
@@ -204,6 +214,9 @@ fun BrowserScreen(
     val webViewRef = remember { AtomicReference<WebView?>() }
     val bridgeAttachmentLease = remember {
         BrowserOwnedResourceLease<WebView, WebMessageBridgeAttachment>()
+    }
+    val relayBridgeAttachmentLease = remember {
+        BrowserOwnedResourceLease<WebView, AutoCloseable>()
     }
     val normalClientRef = remember { AtomicReference<JuntaWebViewClient?>() }
     val dedicatedClientRef = remember { AtomicReference<ClientAuthWebViewClient?>() }
@@ -368,10 +381,26 @@ fun BrowserScreen(
             (clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
 
     var nativeRetrievalPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaRetrievalPrompt?>(null) }
+    val afirmaRelayStore = remember { AfirmaRelayStore() }
     val nativeRetrieval = remember(selectedServiceId, validatedEntryUrl, nativeAfirma) {
         AfirmaRetrievalController<WebView>(
             scope = nativeAfirmaScope,
-            resolver = AfirmaDeferredResolver(),
+            resolver = AfirmaDeferredResolver(
+                transport = CurrentPageRelayRequestTransport(
+                    afirmaRelayStore,
+                    epoch = { navigationEpoch.longValue },
+                    pageUrl = { webViewRef.get()?.url ?: validatedEntryUrl },
+                ),
+                operationFactory = { invocation ->
+                    val epoch = navigationEpoch.longValue
+                    val url = webViewRef.get()?.url ?: validatedEntryUrl
+                    val scope = relayScopeFor(epoch, url)
+                    nativeOperation(
+                        invocation,
+                        prepareRelayResultTransport(afirmaRelayStore, scope, invocation),
+                    )
+                },
+            ),
             isCurrent = { owner, epoch -> webViewRef.get() === owner && navigationEpoch.longValue == epoch },
             canRespond = {
                 activePopup == null && !externalAfirmaActive() &&
@@ -388,6 +417,9 @@ fun BrowserScreen(
         )
     }
     DisposableEffect(nativeRetrieval) { onDispose { nativeRetrieval.close() } }
+    DisposableEffect(afirmaRelayStore) {
+        onDispose { nativeAfirmaScope.launch { afirmaRelayStore.invalidate() } }
+    }
     LaunchedEffect(nativeRetrieval, nativeRetrievalPrompt?.token, nativeRetrievalPrompt?.loading) {
         while (nativeRetrievalPrompt?.loading == true) { delay(1_000); nativeRetrieval.tick() }
     }
@@ -399,6 +431,7 @@ fun BrowserScreen(
         nativeFallback.invalidate()
         interactiveClientAuth.cancelPending()
         bridgeAttachmentLease.current()?.abandonMiniAppletRequests()
+        nativeAfirmaScope.launch { afirmaRelayStore.invalidate() }
         check(navigationEpoch.longValue != Long.MAX_VALUE)
         navigationEpoch.longValue++
         onNavigationEpochChanged(navigationEpoch.longValue)
@@ -506,6 +539,7 @@ fun BrowserScreen(
         }
         pendingNormalUrl.set(validatedEntryUrl)
         bridgeAttachmentLease.close()
+        relayBridgeAttachmentLease.close()
         advanceNavigationEpoch()
         onCancelSigning(SigningCancelReason.NAVIGATION, null)
         browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
@@ -751,6 +785,7 @@ fun BrowserScreen(
                 clientAuthGrant = null
                 pendingRequest = null
                 bridgeAttachmentLease.close()
+                relayBridgeAttachmentLease.close()
                 abandonClientAuth()
                 advanceNavigationEpoch()
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
@@ -833,6 +868,7 @@ fun BrowserScreen(
             globalDataClearLease.invalidate()
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeAttachmentLease.close()
+            relayBridgeAttachmentLease.close()
             // AndroidView.onRelease is the sole native-view owner. Disposing
             // Compose state must not also destroy an attached child WebView.
             webViewRef.getAndSet(null)?.let {
@@ -1249,23 +1285,70 @@ fun BrowserScreen(
                                         currentExternalAppRequest?.invoke(owner, target) == true
                                 },
                                 onNativeAfirmaInvocation = { owner, rawUri, page ->
-                                    val busy = externalAfirmaActive() || activePopup != null || pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+                                    val busy = externalAfirmaActive() || activePopup != null ||
+                                        pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
                                         pendingCertificateSelection != null || pendingRequest != null ||
-                                        interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending || clientAuthPreparing ||
+                                        interactivePrompt != null || nativeAfirma.hasPending ||
+                                        nativeFallback.hasPending || nativeRetrieval.hasPending ||
+                                        clientAuthPreparing ||
                                         currentSigningState !is SigningUiState.Idle
                                     if (busy) true else {
                                         when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
                                             is AfirmaServletParseResult.Accepted -> {
-                                                val operation = runCatching { dev.junta.firmamobile.afirma.servlet.nativeOperation(parsed.invocation) }.getOrElse {
-                                                    parsed.invocation.close()
-                                                    null
+                                                val epoch = navigationEpoch.longValue
+                                                val relayScope = relayScopeFor(epoch, page)
+                                                if (relayScope == null) {
+                                                    val operation = runCatching {
+                                                        dev.junta.firmamobile.afirma.servlet.nativeOperation(
+                                                            parsed.invocation,
+                                                        )
+                                                    }.getOrElse {
+                                                        parsed.invocation.close()
+                                                        null
+                                                    }
+                                                    if (operation == null) nativeFallback.offer(owner, epoch, null)
+                                                    else nativeAfirma.offer(owner, epoch, operation)
+                                                } else {
+                                                    nativeAfirmaScope.launch {
+                                                        val operation = runCatching {
+                                                            dev.junta.firmamobile.afirma.servlet.nativeOperation(
+                                                                parsed.invocation,
+                                                                prepareRelayResultTransport(
+                                                                    afirmaRelayStore,
+                                                                    relayScope,
+                                                                    parsed.invocation,
+                                                                ),
+                                                            )
+                                                        }.getOrElse {
+                                                            parsed.invocation.close()
+                                                            null
+                                                        }
+                                                        if (operation == null) {
+                                                            nativeFallback.offer(owner, epoch, null)
+                                                        } else {
+                                                            nativeAfirma.offer(owner, epoch, operation)
+                                                        }
+                                                    }
                                                 }
-                                                if (operation == null) nativeFallback.offer(owner, navigationEpoch.longValue, null)
-                                                else nativeAfirma.offer(owner, navigationEpoch.longValue, operation)
                                             }
-                                            is AfirmaServletParseResult.Deferred -> nativeRetrieval.offer(owner, navigationEpoch.longValue, parsed.invocation)
-                                            is AfirmaServletParseResult.Unsupported -> nativeFallback.offer(owner, navigationEpoch.longValue, rawUri)
-                                            is AfirmaServletParseResult.Invalid -> nativeFallback.offer(owner, navigationEpoch.longValue, null)
+                                            is AfirmaServletParseResult.Deferred ->
+                                                nativeRetrieval.offer(
+                                                    owner,
+                                                    navigationEpoch.longValue,
+                                                    parsed.invocation,
+                                                )
+                                            is AfirmaServletParseResult.Unsupported ->
+                                                nativeFallback.offer(
+                                                    owner,
+                                                    navigationEpoch.longValue,
+                                                    rawUri,
+                                                )
+                                            is AfirmaServletParseResult.Invalid ->
+                                                nativeFallback.offer(
+                                                    owner,
+                                                    navigationEpoch.longValue,
+                                                    null,
+                                                )
                                         }
                                         true
                                     }
@@ -1420,6 +1503,7 @@ fun BrowserScreen(
                             normalClientRef.set(client)
                             webView.webViewClient = client
                             if (selectedServiceId != null && profileRequiresWebMessageBridge(selectedProfile)) {
+                                relayBridgeAttachmentLease.close()
                                 val attachment = WebMessageBridge(
                                     profileId = selectedServiceId,
                                     logger = logger,
@@ -1493,8 +1577,19 @@ fun BrowserScreen(
                                 }
                             } else {
                                 bridgeAttachmentLease.close()
+                                relayBridgeAttachmentLease.close()
+                                if (selectedServiceId == null) {
+                                    val attachment = UniversalAfirmaRelayBridge(
+                                        scope = nativeAfirmaScope,
+                                        store = afirmaRelayStore,
+                                        currentEpoch = { navigationEpoch.longValue },
+                                    ).attach(webView)
+                                    relayBridgeAttachmentLease.bind(webView, attachment)
+                                }
                             }
                         } else {
+                            bridgeAttachmentLease.close()
+                            relayBridgeAttachmentLease.close()
                             normalClientRef.set(null)
                             onWebViewChanged(browserWebViewForSigning(webView, dedicated = true))
                             val handler = ClientAuthRequestHandler(
@@ -1614,6 +1709,7 @@ fun BrowserScreen(
                         .weight(1f),
                     onRelease = { webView ->
                         bridgeAttachmentLease.release(webView)
+                        relayBridgeAttachmentLease.release(webView)
                         inPlaceClientAuthHandlerRef.getAndSet(null)?.abandon()
                         cancelPendingInPlaceClientAuth()
                         if (dedicatedWebViewRef.compareAndSet(webView, null)) {
@@ -1821,6 +1917,7 @@ fun BrowserScreen(
                         beginDedicated = {
                             advanceNavigationEpoch()
                             bridgeAttachmentLease.close()
+                            relayBridgeAttachmentLease.close()
                             webViewRef.get()?.stopLoading()
                             beginClientAuthPreparation(
                                 ClientAuthGrant(
@@ -1913,5 +2010,23 @@ fun BrowserScreen(
             }
         }
     }
+    }
+}
+
+
+private class CurrentPageRelayRequestTransport(
+    private val store: AfirmaRelayStore,
+    private val epoch: () -> Long,
+    private val pageUrl: () -> String?,
+) : AfirmaRequestTransport {
+    override suspend fun retrieve(
+        endpoint: java.net.URI,
+        fileId: String,
+    ): AfirmaRetrievedBytes {
+        val relay = relayScopeFor(epoch(), pageUrl() ?: "")?.let {
+            RelayRequestTransport(store, it, AfirmaServletTransport())
+        }
+        return relay?.retrieve(endpoint, fileId)
+            ?: AfirmaServletTransport().retrieve(endpoint, fileId)
     }
 }

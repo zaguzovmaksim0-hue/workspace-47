@@ -84,10 +84,13 @@ class NativePdfCoSignInstrumentedTest {
             assertEquals("cosign", operation.details.operation)
             val prompt = AfirmaConsentPrompt(UUID.randomUUID(), operation.details, AfirmaConsentPhase.REVIEW, null, AfirmaConsentProblem.LOCKED)
             ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
                 scenario.onActivity { activity -> activity.setContent {
                     NativeAfirmaConsentDialog(prompt, onConfirm = { confirmed++ }, onUnlock = { unlocked++ }, onCancel = {}, onDismiss = {})
                 } }
-                rule.onNodeWithText("Añadir una firma al PDF ya firmado").assertIsDisplayed()
+                rule.onNodeWithText(strings.getString(R.string.native_afirma_pdf_cosign)).assertIsDisplayed()
                 rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed().performClick()
                 rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
                 rule.runOnIdle { assertEquals(1, unlocked); assertEquals(0, confirmed); assertEquals(0, sent) }
