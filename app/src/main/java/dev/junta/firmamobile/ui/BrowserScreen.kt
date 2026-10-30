@@ -67,14 +67,11 @@ import dev.junta.firmamobile.afirma.servlet.AfirmaDeferredResolver
 import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalController
 import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievalPrompt
 import dev.junta.firmamobile.afirma.servlet.AfirmaRequestTransport
-import dev.junta.firmamobile.afirma.servlet.AfirmaResultTransport
 import dev.junta.firmamobile.afirma.servlet.AfirmaRetrievedBytes
 import dev.junta.firmamobile.afirma.servlet.AfirmaRelayStore
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletTransport
 import dev.junta.firmamobile.afirma.servlet.RelayRequestTransport
-import dev.junta.firmamobile.afirma.servlet.RelayResultTransport
 import dev.junta.firmamobile.afirma.servlet.relayScopeFor
-import dev.junta.firmamobile.afirma.servlet.relayServletOrigin
 import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.BrowserSessionStatePolicy
 import dev.junta.firmamobile.browser.BrowserNavigationCallbacks
@@ -108,6 +105,8 @@ import dev.junta.firmamobile.browser.SiteClearResult
 import dev.junta.firmamobile.browser.SiteDataCleaner
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
 import dev.junta.firmamobile.browser.WebMessageBridge
+import dev.junta.firmamobile.browser.UniversalAfirmaRelayBridge
+import dev.junta.firmamobile.browser.prepareRelayResultTransport
 import dev.junta.firmamobile.browser.ValenciaCertificateSelectionBridgeAdapter
 import dev.junta.firmamobile.browser.XuntaCertificateSelectionBridgeAdapter
 import dev.junta.firmamobile.browser.WebMessageBridgeAttachment
@@ -215,6 +214,9 @@ fun BrowserScreen(
     val webViewRef = remember { AtomicReference<WebView?>() }
     val bridgeAttachmentLease = remember {
         BrowserOwnedResourceLease<WebView, WebMessageBridgeAttachment>()
+    }
+    val relayBridgeAttachmentLease = remember {
+        BrowserOwnedResourceLease<WebView, AutoCloseable>()
     }
     val normalClientRef = remember { AtomicReference<JuntaWebViewClient?>() }
     val dedicatedClientRef = remember { AtomicReference<ClientAuthWebViewClient?>() }
@@ -390,13 +392,12 @@ fun BrowserScreen(
                     pageUrl = { webViewRef.get()?.url ?: validatedEntryUrl },
                 ),
                 operationFactory = { invocation ->
+                    val epoch = navigationEpoch.longValue
+                    val url = webViewRef.get()?.url ?: validatedEntryUrl
+                    val scope = relayScopeFor(epoch, url)
                     nativeOperation(
                         invocation,
-                        relayResultTransportFor(
-                            afirmaRelayStore,
-                            navigationEpoch.longValue,
-                            webViewRef.get()?.url ?: validatedEntryUrl,
-                        ),
+                        prepareRelayResultTransport(afirmaRelayStore, scope, invocation),
                     )
                 },
             ),
@@ -538,6 +539,7 @@ fun BrowserScreen(
         }
         pendingNormalUrl.set(validatedEntryUrl)
         bridgeAttachmentLease.close()
+        relayBridgeAttachmentLease.close()
         advanceNavigationEpoch()
         onCancelSigning(SigningCancelReason.NAVIGATION, null)
         browserError = BrowserErrorCode.CLIENT_CERT_PREFERENCES
@@ -783,6 +785,7 @@ fun BrowserScreen(
                 clientAuthGrant = null
                 pendingRequest = null
                 bridgeAttachmentLease.close()
+                relayBridgeAttachmentLease.close()
                 abandonClientAuth()
                 advanceNavigationEpoch()
                 onCancelSigning(SigningCancelReason.NAVIGATION, null)
@@ -865,6 +868,7 @@ fun BrowserScreen(
             globalDataClearLease.invalidate()
             onCancelSigning(SigningCancelReason.BACKGROUND, null)
             bridgeAttachmentLease.close()
+            relayBridgeAttachmentLease.close()
             // AndroidView.onRelease is the sole native-view owner. Disposing
             // Compose state must not also destroy an attached child WebView.
             webViewRef.getAndSet(null)?.let {
@@ -1307,23 +1311,12 @@ fun BrowserScreen(
                                                 } else {
                                                     nativeAfirmaScope.launch {
                                                         val operation = runCatching {
-                                                            val servletOrigin = relayServletOrigin(
-                                                                parsed.invocation.storageUrl,
-                                                            )
-                                                            if (servletOrigin != null &&
-                                                                afirmaRelayStore.isBlocked(relayScope, servletOrigin)
-                                                            ) {
-                                                                afirmaRelayStore.expectResult(
-                                                                    relayScope,
-                                                                    parsed.invocation.sessionId,
-                                                                )
-                                                            }
                                                             dev.junta.firmamobile.afirma.servlet.nativeOperation(
                                                                 parsed.invocation,
-                                                                RelayResultTransport(
+                                                                prepareRelayResultTransport(
                                                                     afirmaRelayStore,
                                                                     relayScope,
-                                                                    AfirmaServletTransport(),
+                                                                    parsed.invocation,
                                                                 ),
                                                             )
                                                         }.getOrElse {
@@ -1510,6 +1503,7 @@ fun BrowserScreen(
                             normalClientRef.set(client)
                             webView.webViewClient = client
                             if (selectedServiceId != null && profileRequiresWebMessageBridge(selectedProfile)) {
+                                relayBridgeAttachmentLease.close()
                                 val attachment = WebMessageBridge(
                                     profileId = selectedServiceId,
                                     logger = logger,
@@ -1583,8 +1577,19 @@ fun BrowserScreen(
                                 }
                             } else {
                                 bridgeAttachmentLease.close()
+                                relayBridgeAttachmentLease.close()
+                                if (selectedServiceId == null) {
+                                    val attachment = UniversalAfirmaRelayBridge(
+                                        scope = nativeAfirmaScope,
+                                        store = afirmaRelayStore,
+                                        currentEpoch = { navigationEpoch.longValue },
+                                    ).attach(webView)
+                                    relayBridgeAttachmentLease.bind(webView, attachment)
+                                }
                             }
                         } else {
+                            bridgeAttachmentLease.close()
+                            relayBridgeAttachmentLease.close()
                             normalClientRef.set(null)
                             onWebViewChanged(browserWebViewForSigning(webView, dedicated = true))
                             val handler = ClientAuthRequestHandler(
@@ -1704,6 +1709,7 @@ fun BrowserScreen(
                         .weight(1f),
                     onRelease = { webView ->
                         bridgeAttachmentLease.release(webView)
+                        relayBridgeAttachmentLease.release(webView)
                         inPlaceClientAuthHandlerRef.getAndSet(null)?.abandon()
                         cancelPendingInPlaceClientAuth()
                         if (dedicatedWebViewRef.compareAndSet(webView, null)) {
@@ -1911,6 +1917,7 @@ fun BrowserScreen(
                         beginDedicated = {
                             advanceNavigationEpoch()
                             bridgeAttachmentLease.close()
+                            relayBridgeAttachmentLease.close()
                             webViewRef.get()?.stopLoading()
                             beginClientAuthPreparation(
                                 ClientAuthGrant(
@@ -2006,14 +2013,6 @@ fun BrowserScreen(
     }
 }
 
-
-private fun relayResultTransportFor(
-    store: AfirmaRelayStore,
-    epoch: Long,
-    pageUrl: String?,
-): AfirmaResultTransport = relayScopeFor(epoch, pageUrl ?: "")?.let {
-    RelayResultTransport(store, it, AfirmaServletTransport())
-} ?: AfirmaServletTransport()
 
 private class CurrentPageRelayRequestTransport(
     private val store: AfirmaRelayStore,
