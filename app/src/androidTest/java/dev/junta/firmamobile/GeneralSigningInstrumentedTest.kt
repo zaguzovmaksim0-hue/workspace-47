@@ -81,7 +81,7 @@ class GeneralSigningInstrumentedTest {
     }
 
     @Test fun unprofiledPageOffersLocalXadesWithoutAutomaticallyUsingACertificate() {
-        withBrowser { scenario, view ->
+        withBrowser { scenario, view, _ ->
             offer(scenario, view, "sign", base("XAdES", "synthetic".toByteArray()))
             rule.onNodeWithTag("native-afirma-details").assertDoesNotExist()
             rule.onNodeWithTag("native-afirma-details-toggle").performScrollTo().performClick()
@@ -93,7 +93,7 @@ class GeneralSigningInstrumentedTest {
     }
 
     @Test fun unprofiledBatchDisclosesEachServiceAndDelegatedPreDataBeforeUnlock() {
-        withBrowser { scenario, view ->
+        withBrowser { scenario, view, strings ->
             val batch = """{"algorithm":"SHA256withRSA","format":"XAdES","singlesigns":[{"id":"one","datareference":"YWJj"},{"id":"two","datareference":"ZGVm"}]}""".toByteArray()
             val fields = mapOf("id" to "BrowserBatch123", "stservlet" to "https://storage.synthetic.example/put", "dat" to b64(batch), "jsonbatch" to "true",
                 "batchpresignerurl" to "https://signer.synthetic.example/pre", "batchpostsignerurl" to "https://signer.synthetic.example/post")
@@ -108,7 +108,7 @@ class GeneralSigningInstrumentedTest {
     }
 
     @Test fun unprofiledTriphaseCountersignRemainsAnExplicitDelegatedOperation() {
-        withBrowser { scenario, view ->
+        withBrowser { scenario, view, strings ->
             offer(scenario, view, "countersign", base("XAdEStri", "service-document-reference".toByteArray()) + ("serverurl" to "https://signer.synthetic.example/tri"))
             rule.onNodeWithText(strings.getString(R.string.native_multiphase_service, "https://signer.synthetic.example/tri")).performScrollTo().assertIsDisplayed()
             rule.onNodeWithText(strings.getString(R.string.native_multiphase_countersign)).performScrollTo().assertIsDisplayed()
@@ -117,7 +117,9 @@ class GeneralSigningInstrumentedTest {
         }
     }
 
-    private fun withBrowser(test: (ActivityScenario<MainActivity>, WebView) -> Unit) {
+    private fun withBrowser(
+        test: (ActivityScenario<MainActivity>, WebView, android.content.res.Resources) -> Unit,
+    ) {
         val current = AtomicReference<WebView?>(); val ready = AtomicBoolean(false); val intercepted = AtomicBoolean(false)
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
 var activityContext: android.content.Context? = null
@@ -147,7 +149,7 @@ val strings = checkNotNull(activityContext).resources
                 scenario.onActivity { shown = current.get() === view && view.url == url && view.title == "MULTIPHASE_READY" && view.progress == 100 && view.hasWindowFocus() }
                 shown && ready.get() && intercepted.get()
             }
-            test(scenario, view)
+            test(scenario, view, strings)
         }
     }
     private fun offer(scenario: ActivityScenario<MainActivity>, view: WebView, op: String, fields: Map<String, String>) {

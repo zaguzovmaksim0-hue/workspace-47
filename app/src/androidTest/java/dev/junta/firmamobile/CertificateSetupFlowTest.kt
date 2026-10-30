@@ -62,7 +62,7 @@ val strings = checkNotNull(activityContext).resources
                     .assertIsDisplayed()
                 assertScreenshotsAllowed(scenario)
 
-                enterPassword("wrong-password")
+                enterPassword("wrong-password", strings)
                 waitForText(
                     strings.getString(R.string.error_password_or_file),
                 )
@@ -72,7 +72,7 @@ val strings = checkNotNull(activityContext).resources
                 rule.onNodeWithText("wrong-password").assertDoesNotExist()
                 assertScreenshotsAllowed(scenario)
 
-                enterPassword(TEST_PASSPHRASE)
+                enterPassword(TEST_PASSPHRASE, strings)
                 waitForText(strings.getString(R.string.certificate_found))
                 rule.onNodeWithText(strings.getString(R.string.certificate_found))
                     .performScrollTo()
@@ -118,7 +118,10 @@ val strings = checkNotNull(activityContext).resources
         }
     }
 
-    private fun enterPassword(password: String) {
+    private fun enterPassword(
+        password: String,
+        strings: android.content.res.Resources,
+    ) {
         rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password))
             .performScrollTo()
             .performTextInput(password)

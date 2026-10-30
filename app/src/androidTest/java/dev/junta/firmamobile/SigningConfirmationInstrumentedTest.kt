@@ -112,8 +112,12 @@ val strings = checkNotNull(activityContext).resources
 
                     waitForWebViewTitle(scenario, SIGN_READY_TITLE)
                     invokeSyntheticSign(scenario)
-                    waitForConfirmation(scenario)
-                    rule.onNodeWithText(strings.getString(R.string.signing_confirmation_title)).assertIsDisplayed()
+                    var confirmationTitle = ""
+                    scenario.onActivity { activity ->
+                        confirmationTitle = activity.getString(R.string.signing_confirmation_title)
+                    }
+                    waitForConfirmation(scenario, confirmationTitle)
+                    rule.onNodeWithText(confirmationTitle).assertIsDisplayed()
                     rule.onNodeWithText(strings.getString(R.string.signing_site, "www.juntadeandalucia.es")).assertIsDisplayed()
                     rule.onNodeWithText(strings.getString(R.string.signing_confirm)).assertIsDisplayed()
                     rule.onNodeWithText(strings.getString(R.string.cancel)).performClick()
@@ -616,14 +620,17 @@ val strings = checkNotNull(activityContext).resources
         assertEquals("\"INVOKED\"", result)
     }
 
-    private fun waitForConfirmation(scenario: ActivityScenario<MainActivity>) {
+    private fun waitForConfirmation(
+        scenario: ActivityScenario<MainActivity>,
+        confirmationTitle: String,
+    ) {
         var lastSafeTitle: String? = null
         var lastSafeOrigin: String? = null
         var activityTracksWebView = false
         var signingState = "unknown"
         try {
             rule.waitUntil(timeoutMillis = 15_000) {
-                val dialogVisible = rule.onAllNodesWithText(strings.getString(R.string.signing_confirmation_title))
+                val dialogVisible = rule.onAllNodesWithText(confirmationTitle)
                     .fetchSemanticsNodes().isNotEmpty()
                 scenario.onActivity { activity ->
                     val webView = findWebView(activity.window.decorView)
@@ -646,7 +653,7 @@ val strings = checkNotNull(activityContext).resources
                     "signingState=$signingState",
             )
         }
-        if (rule.onAllNodesWithText(strings.getString(R.string.signing_confirmation_title)).fetchSemanticsNodes().isEmpty()) {
+        if (rule.onAllNodesWithText(confirmationTitle).fetchSemanticsNodes().isEmpty()) {
             fail(
                 "Native confirmation missing; title=$lastSafeTitle " +
                     "origin=$lastSafeOrigin activityTracksWebView=$activityTracksWebView " +

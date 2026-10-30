@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class HttpAuthBrowserInstrumentedTest {
     @Test fun credentialsAreForwardedOnlyAfterTheExplicitDialogConfirmation() {
-        withBrowser { scenario, view ->
+        withBrowser { scenario, view, strings ->
             val reply = Reply()
             scenario.onActivity { assertTrue((view.webViewClient as HttpAuthWebViewClient).request(view, "auth.synthetic.example", "Synthetic area", reply)) }
             onView(withTagValue(`is`("http-auth-username"))).inRoot(isDialog()).perform(replaceText("synthetic-user"))
@@ -38,7 +38,7 @@ class HttpAuthBrowserInstrumentedTest {
     }
 
     @Test fun backgroundingCancelsWithoutForwardingTypedCredentials() {
-        withBrowser { scenario, view ->
+        withBrowser { scenario, view, _ ->
             val reply = Reply()
             scenario.onActivity { assertTrue((view.webViewClient as HttpAuthWebViewClient).request(view, "auth.synthetic.example", "", reply)) }
             onView(withTagValue(`is`("http-auth-password"))).inRoot(isDialog()).perform(replaceText("local-test-text"))
@@ -49,7 +49,7 @@ class HttpAuthBrowserInstrumentedTest {
     }
 
     @Test fun replacementClientAndNavigationCannotReuseTheOldPrompt() {
-        withBrowser { scenario, view ->
+        withBrowser { scenario, view, _ ->
             val reply = Reply()
             scenario.onActivity {
                 assertTrue((view.webViewClient as HttpAuthWebViewClient).request(view, "auth.synthetic.example", "", reply))
@@ -62,7 +62,7 @@ class HttpAuthBrowserInstrumentedTest {
     }
 
     @Test fun aDifferentHostCannotDisplayARequestInTheCurrentPageContext() {
-        withBrowser { scenario, view ->
+        withBrowser { scenario, view, _ ->
             val reply = Reply()
             scenario.onActivity {
                 assertFalse((view.webViewClient as HttpAuthWebViewClient).request(view, "other.synthetic.example", "", reply))
@@ -71,7 +71,9 @@ class HttpAuthBrowserInstrumentedTest {
         }
     }
 
-    private fun withBrowser(test: (ActivityScenario<MainActivity>, TrustedJuntaWebView) -> Unit) {
+    private fun withBrowser(
+        test: (ActivityScenario<MainActivity>, TrustedJuntaWebView, android.content.res.Resources) -> Unit,
+    ) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
 var activityContext: android.content.Context? = null
 scenario.onActivity { activityContext = it }
@@ -91,7 +93,7 @@ val strings = checkNotNull(activityContext).resources
                 if (!ready) Thread.sleep(25)
             }
             assertTrue("Local WebView did not become visible", ready)
-            try { test(scenario, view) }
+            try { test(scenario, view, strings) }
             finally { scenario.onActivity { view.destroy() } }
         }
     }
