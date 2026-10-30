@@ -206,7 +206,7 @@ class CiPolicyTest(unittest.TestCase):
             "|| true",
             "@Ignore",
         ):
-            self.assertNotIn(forbidden_filter, expected_gradlew_line)
+            self.assertNotIn(forbidden_filter, gradlew_lines[0])
         self.assertIn('[[ "${GITHUB_ACTIONS:-}" == "true" && "${CI:-}" == "true" ]]', harness)
         self.assertIn('getprop ro.kernel.qemu', harness)
         self.assertIn('exit "$status"', harness)
