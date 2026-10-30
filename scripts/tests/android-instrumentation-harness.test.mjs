@@ -45,10 +45,10 @@ test('refuses ordinary environments without invoking adb', () => run({ GITHUB_AC
 test('refuses physical devices before any state-changing command', () => run({ MOCK_QEMU: '0' }, ({ result, calls }) => {
   assert.equal(result.status, 65); assert.deepEqual(calls, [['-e', 'shell', 'getprop', 'ro.kernel.qemu']]);
 }));
-test('prepares only the emulator then runs the entire unchanged test command', () => run({}, ({ result, calls, env, state }) => {
+test('prepares emulator and runs all synthetic tests excluding only credential-gated real E2E', () => run({}, ({ result, calls, env, state }) => {
   assert.equal(result.status, 0, result.stderr);
   assert(calls.every(args => args[0] === '-e'));
-  assert.deepEqual(JSON.parse(readFileSync(env.GRADLE_ARGS, 'utf8')), ['connectedQaAndroidTest', '--no-daemon', '--console=plain']);
+  assert.deepEqual(JSON.parse(readFileSync(env.GRADLE_ARGS, 'utf8')), ['connectedQaAndroidTest', '-Pandroid.testInstrumentationRunnerArguments.notClass=dev.junta.firmamobile.RealE2eInstrumentedTest', '--no-daemon', '--console=plain']);
   assert.match(readFileSync(join(state, 'before-power.txt'), 'utf8'), /Asleep/);
   assert.match(readFileSync(join(state, 'ready-power.txt'), 'utf8'), /Awake/);
   assert.match(readFileSync(join(state, 'after-power.txt'), 'utf8'), /Awake/);
