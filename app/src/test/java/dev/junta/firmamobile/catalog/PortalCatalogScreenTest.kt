@@ -1,28 +1,35 @@
 package dev.junta.firmamobile.catalog
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import dev.junta.firmamobile.testing.createComposeRule
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.Density
 import dev.junta.firmamobile.profile.BuildTrustPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
@@ -102,14 +109,16 @@ class PortalCatalogScreenTest {
             val locale = LocalConfiguration.current.locales[0]
             expected = prefix + checkNotNull(portal.lastVerifiedOn)
                 .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
-            JuntaFirmaTheme { CatalogPortalCard(portal, false, {}, {}) }
+            JuntaFirmaTheme { CatalogPortalCard(portal, false, {}, {}, {}) }
         }
         rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}").assertIsDisplayed()
+        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}").assertCountEquals(1)
+        rule.onAllNodesWithText(expected).assertCountEquals(1)
         rule.onNodeWithText(expected).assertIsDisplayed()
     }
 
     private fun setVerificationCard(portal: PortalCatalogItem) {
-        rule.setContent { JuntaFirmaTheme { CatalogPortalCard(portal, false, {}, {}) } }
+        rule.setContent { JuntaFirmaTheme { CatalogPortalCard(portal, false, {}, {}, {}) } }
     }
 
     @Test
@@ -128,37 +137,6 @@ class PortalCatalogScreenTest {
     }
 
     @Test
-    fun `verified only switch confirms once and cancel leaves the persisted value unchanged`() {
-        var persistedVerifiedOnly = false
-        val requestedValues = mutableListOf<Boolean>()
-        setCatalogContent(
-            state = stateFor(),
-            verifiedOnly = persistedVerifiedOnly,
-            onVerifiedOnlyChange = {
-                requestedValues += it
-                persistedVerifiedOnly = it
-            },
-        )
-
-        val switch = rule.onNodeWithTag("profile-scope-verified-only")
-        switch.assertIsOff().performClick()
-        rule.onNodeWithText("Reiniciar la aplicación").assertIsDisplayed()
-        rule.onNodeWithText("Cancelar").performClick()
-        switch.assertIsOff()
-        rule.runOnIdle {
-            assertFalse(persistedVerifiedOnly)
-            assertTrue(requestedValues.isEmpty())
-        }
-
-        switch.performClick()
-        rule.onNodeWithText("Reiniciar").performClick()
-        rule.runOnIdle {
-            assertEquals(listOf(true), requestedValues)
-            assertTrue(persistedVerifiedOnly)
-        }
-    }
-
-    @Test
     fun `consumer card hides every developer status and still opens`() {
         var opened: PortalCatalogItem? = null
         val state = stateFor(searchText = "UNED")
@@ -166,9 +144,9 @@ class PortalCatalogScreenTest {
 
         setCatalogContent(state = state, onOpenPortal = { opened = it })
 
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(uned.displayName))
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-open-${uned.portalId.value}"))
         rule.onNodeWithText(uned.displayName).assertIsDisplayed()
-        rule.onNodeWithText("Abrir sitio").performClick()
+        rule.onNodeWithTag("catalog-open-${uned.portalId.value}").assertIsEnabled().performClick()
         rule.onAllNodesWithText("E2E", substring = true).assertCountEquals(0)
         rule.onAllNodesWithText("CATÁLOGO LOCAL", substring = true).assertCountEquals(0)
         rule.onAllNodesWithText("IMPLEMENTADO", substring = true).assertCountEquals(0)
@@ -202,8 +180,10 @@ class PortalCatalogScreenTest {
 
         setCatalogContent(state = state, onOpenPortal = { opened = it })
 
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(externalOnly.displayName))
-        rule.onNodeWithTag("catalog-open-${externalOnly.portalId.value}").performClick()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(
+            hasTestTag("catalog-open-${externalOnly.portalId.value}"),
+        )
+        rule.onNodeWithTag("catalog-open-${externalOnly.portalId.value}").assertIsEnabled().performClick()
         rule.runOnIdle {
             assertNotNull(opened)
             assertFalse(externalOnly.isEnabled)
@@ -220,9 +200,12 @@ class PortalCatalogScreenTest {
             onSelectRegion = { selected = it },
         )
 
-        rule.onNodeWithText("Cambiar región").performClick()
+        rule.onNodeWithText(
+            org.robolectric.RuntimeEnvironment.getApplication()
+                .getString(dev.junta.firmamobile.R.string.catalog_region_change),
+        ).performClick()
         rule.onNodeWithText("ELIGE TU REGIÓN").assertIsDisplayed()
-        rule.onNodeWithText("Buscar región").performTextInput("aragon")
+        rule.onNodeWithText("Buscar región").assertDoesNotExist()
         rule.onNodeWithText("Aragón").performClick()
 
         rule.runOnIdle { assertEquals(PortalRegionCode.ARAGON, selected) }
@@ -278,7 +261,7 @@ class PortalCatalogScreenTest {
 
     @Test
     @Config(qualifiers = "es-rES-w600dp-h2000dp")
-    fun `regional catalog starts fully collapsed`() {
+    fun `regional catalog shows selected region and collapses national`() {
         val andalusia = repository.portals().first { it.regionCode == PortalRegionCode.ANDALUSIA }
         val national = repository.portals().first { it.regionCode == PortalRegionCode.SPAIN }
         val state = PortalCatalogUiState(
@@ -298,7 +281,7 @@ class PortalCatalogScreenTest {
 
         setCatalogContent(state = state)
 
-        rule.onNodeWithText(andalusia.displayName).assertDoesNotExist()
+        rule.onNodeWithText(andalusia.displayName).assertIsDisplayed()
         rule.onNodeWithText(national.displayName).assertDoesNotExist()
     }
 
@@ -347,7 +330,10 @@ class PortalCatalogScreenTest {
 
         rule.runOnIdle { assertEquals(0, requests) }
         rule.onNodeWithText("Usar mi ubicación").assertDoesNotExist()
-        rule.onNodeWithText("Cambiar región").performClick()
+        rule.onNodeWithText(
+            org.robolectric.RuntimeEnvironment.getApplication()
+                .getString(dev.junta.firmamobile.R.string.catalog_region_change),
+        ).performClick()
         rule.onNodeWithText("Usar mi ubicación").performClick()
         rule.runOnIdle { assertEquals(1, requests) }
     }
@@ -406,8 +392,6 @@ class PortalCatalogScreenTest {
                         onOpenPortal = {},
                         onBackToCertificate = {},
                         onUserMessageShown = {},
-                        verifiedOnly = false,
-                        onVerifiedOnlyChange = {},
                     )
                 }
             }
@@ -427,53 +411,576 @@ class PortalCatalogScreenTest {
     }
 
     @Test
-    @Config(qualifiers = "es-rES-w600dp-h2000dp")
-    fun auditVerifiedOnlyHidesUnverifiedCardsAndEmptySections() {
-        val verified = repository.portals().first { it.supportStatus == PortalSupportStatus.VERIFIED_E2E }
-        val unverified = repository.portals().first { it.supportStatus != PortalSupportStatus.VERIFIED_E2E }
+    fun `search by name filters catalog without an address open button`() {
+        var opened: java.net.URI? = null
+        val state = stateFor(searchText = "UNED")
+        setCatalogContent(state = state, onOpenPublicWeb = { opened = it })
+
+        rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
+        rule.onNodeWithTag("profile-scope-verified-only").assertDoesNotExist()
+        rule.runOnIdle { assertEquals(null, opened) }
+    }
+
+    @Test
+    fun `address input shows open site and opens the same public web destination`() {
+        var opened: java.net.URI? = null
+        setCatalogContent(state = stateFor(), onOpenPublicWeb = { opened = it })
+
+        rule.onNodeWithTag("public-web-address").performTextInput("portal.example")
+        rule.onNodeWithTag("public-web-open-confirm").assertIsDisplayed().performClick()
+        rule.runOnIdle { assertEquals(java.net.URI("https://portal.example"), opened) }
+    }
+
+    @Test
+    fun `long address remains visible and opens the same destination`() {
+        var opened: java.net.URI? = null
+        var searched = ""
+        val longAddress = "https://portal.example/" + "a".repeat(280)
+        setCatalogContent(
+            state = stateFor(),
+            onOpenPublicWeb = { opened = it },
+            onSearchTextChange = { searched = it },
+        )
+
+        rule.onNodeWithTag("public-web-address").performTextInput(longAddress)
+        rule.onNodeWithTag("public-web-address").assertTextContains(longAddress)
+        rule.onNodeWithTag("public-web-open-confirm").assertIsDisplayed().performClick()
+        rule.runOnIdle {
+            assertEquals(java.net.URI(longAddress), opened)
+            assertEquals("", searched)
+        }
+    }
+
+    @Test
+    fun `address field shows the current search text`() {
+        setCatalogContent(state = stateFor(searchText = "valencia"))
+
+        rule.onNodeWithTag("public-web-address").assertTextContains("valencia")
+    }
+
+    @Test
+    fun `address draft survives scrolling the catalog list`() {
         val state = PortalCatalogUiState(
-            searchText = "audit",
+            searchText = "",
+            selectedRegion = PortalRegionCode.ANDALUSIA,
             sections = listOf(
-                PortalCatalogSection(PortalCatalogSectionKind.FAVORITES, listOf(unverified, verified)),
-                PortalCatalogSection(PortalCatalogSectionKind.RECENT, listOf(unverified)),
+                PortalCatalogSection(
+                    PortalCatalogSectionKind.SELECTED_REGION,
+                    repository.portals(),
+                    PortalRegionCode.ANDALUSIA,
+                ),
             ),
         )
-        setCatalogContent(state = state, verifiedOnly = true)
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(verified.displayName))
-        rule.onNodeWithText(verified.displayName).assertIsDisplayed()
-        rule.onNodeWithText(unverified.displayName).assertDoesNotExist()
-        rule.onNodeWithText("Recientes").assertDoesNotExist()
-        rule.onNodeWithText("2 servicios").assertDoesNotExist()
+        setCatalogContent(state = state, onOpenPublicWeb = {})
+
+        rule.onNodeWithTag("public-web-address").performTextInput("portal.example")
+        val lastPortal = state.sections.single().items.last()
+        rule.onNode(hasScrollToIndexAction()).performScrollToNode(
+            hasTestTag("catalog-open-${lastPortal.portalId.value}"),
+        )
+        rule.onNodeWithTag("public-web-address").assertIsNotDisplayed()
+
+        rule.onNode(hasScrollToIndexAction()).performScrollToIndex(0)
+        rule.onNode(hasScrollToIndexAction())
+            .performScrollToNode(hasTestTag("public-web-address"))
+        rule.onNodeWithTag("public-web-address").assertTextContains("portal.example")
+        rule.onNodeWithTag("public-web-open-confirm").assertIsDisplayed()
+    }
+
+    @Test
+    fun `address field restores a short url search text`() {
+        setCatalogContent(state = stateFor(searchText = "https://portal.example/path"))
+
+        rule.onNodeWithTag("public-web-address")
+            .assertTextContains("https://portal.example/path")
+    }
+
+    @Test
+    fun `address field restores a bare host search text`() {
+        setCatalogContent(state = stateFor(searchText = "portal.example"))
+
+        rule.onNodeWithTag("public-web-address").assertTextContains("portal.example")
+    }
+
+    @Test
+    fun `external search text change replaces the visible address draft`() {
+        var state by mutableStateOf(stateFor(searchText = "valencia"))
+        rule.setContent {
+            JuntaFirmaTheme {
+                PortalCatalogScreen(
+                    state = state,
+                    onSearchTextChange = {},
+                    onSelectRegion = {},
+                    onUseLocation = {},
+                    onOpenLocationSettings = {},
+                    onOpenAppSettings = {},
+                    onDismissLocationMessage = {},
+                    onToggleFavorite = {},
+                    onOpenPortal = {},
+                    onBackToCertificate = {},
+                    onUserMessageShown = {},
+                )
+            }
+        }
+
+        rule.onNodeWithTag("public-web-address").assertTextContains("valencia")
+        rule.runOnIdle { state = stateFor(searchText = "madrid") }
+
+        rule.onNodeWithTag("public-web-address").assertTextContains("madrid")
+        val addressNode = rule.onNodeWithTag("public-web-address").fetchSemanticsNode()
+        assertEquals("madrid", addressNode.config[SemanticsProperties.EditableText].text)
+    }
+
+    @Test
+    fun `external search reset clears the visible address draft`() {
+        var state by mutableStateOf(stateFor(searchText = "valencia"))
+        rule.setContent {
+            JuntaFirmaTheme {
+                PortalCatalogScreen(
+                    state = state,
+                    onSearchTextChange = {},
+                    onSelectRegion = {},
+                    onUseLocation = {},
+                    onOpenLocationSettings = {},
+                    onOpenAppSettings = {},
+                    onDismissLocationMessage = {},
+                    onToggleFavorite = {},
+                    onOpenPortal = {},
+                    onBackToCertificate = {},
+                    onUserMessageShown = {},
+                )
+            }
+        }
+
+        rule.onNodeWithTag("public-web-address").assertTextContains("valencia")
+        rule.runOnIdle { state = stateFor(searchText = "") }
+
+        rule.onNodeWithTag("catalog-address-paste").assertIsDisplayed()
+        val clearedAddressNode = rule.onNodeWithTag("public-web-address").fetchSemanticsNode()
+        assertEquals("", clearedAddressNode.config[SemanticsProperties.EditableText].text)
+    }
+
+    @Test
+    fun `favorite star on card toggles favorite with content description`() {
+        val portal = repository.portals().first()
+        val favorites = mutableListOf<PortalId>()
+        val state = PortalCatalogUiState(
+            searchText = "favorite star",
+            sections = listOf(
+                PortalCatalogSection(PortalCatalogSectionKind.NATIONAL, listOf(portal)),
+            ),
+        )
+        setCatalogContent(state = state, onToggleFavorite = { favorites += it })
+
+        val label = org.robolectric.RuntimeEnvironment.getApplication()
+            .getString(dev.junta.firmamobile.R.string.catalog_favorite_add)
+        rule.onAllNodesWithTag("catalog-favorite-${portal.portalId.value}").assertCountEquals(1)
+        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}").assertCountEquals(1)
+        val verifiedCount = if (portal.supportStatus == PortalSupportStatus.VERIFIED_E2E &&
+            portal.lastVerifiedOn != null) 1 else 0
+        rule.onAllNodesWithTag("catalog-verified-on-${portal.portalId.value}").assertCountEquals(verifiedCount)
+        rule.onNodeWithContentDescription(label).assertIsDisplayed().performClick()
+        rule.runOnIdle { assertEquals(listOf(portal.portalId), favorites) }
     }
 
     @Test
     @Config(qualifiers = "es-rES-w600dp-h2000dp")
-    fun auditUnfilteredCatalogKeepsVerifiedAndUnverifiedCards() {
-        val verified = repository.portals().first { it.supportStatus == PortalSupportStatus.VERIFIED_E2E }
-        val unverified = repository.portals().first { it.supportStatus != PortalSupportStatus.VERIFIED_E2E }
-        setCatalogContent(state = PortalCatalogUiState(
-            searchText = "audit",
-            sections = listOf(PortalCatalogSection(
-                PortalCatalogSectionKind.FAVORITES, listOf(unverified, verified),
-            )),
-        ), verifiedOnly = false)
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(unverified.displayName))
-        rule.onNodeWithText(unverified.displayName).assertIsDisplayed()
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(verified.displayName))
-        rule.onNodeWithText(verified.displayName).assertIsDisplayed()
+    fun `searching expands every matching section`() {
+        val state = stateFor(searchText = "a", selectedRegion = PortalRegionCode.ANDALUSIA)
+        setCatalogContent(state = state)
+
+        val items = state.sections.flatMap { it.items }
+        assertTrue(items.isNotEmpty())
+        for (item in items.take(3)) {
+            rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(item.displayName))
+            rule.onNodeWithText(item.displayName).assertIsDisplayed()
+        }
+    }
+
+
+    @Test
+    fun `delayed search echo keeps two sequential local edits`() {
+        var state by mutableStateOf(stateFor())
+        var searched = ""
+        setMutableCatalogContent(state = { state }, onSearchTextChange = { searched = it })
+
+        val field = rule.onNodeWithTag("public-web-address")
+        field.performTextInput("m")
+        field.performTextInput("a")
+        rule.runOnIdle { assertEquals("ma", catalogAddressEditableText()) }
+
+        rule.runOnIdle { state = stateFor(searchText = "m") }
+        rule.runOnIdle { assertEquals("ma", catalogAddressEditableText()) }
+
+        rule.runOnIdle { state = stateFor(searchText = "ma") }
+        rule.runOnIdle { assertEquals("ma", catalogAddressEditableText()) }
+
+        rule.runOnIdle { state = stateFor(searchText = "madrid") }
+        rule.runOnIdle { assertEquals("madrid", catalogAddressEditableText()) }
+
+        rule.runOnIdle { state = stateFor(searchText = "") }
+        rule.runOnIdle {
+            assertEquals("", catalogAddressEditableText())
+            assertEquals("ma", searched)
+        }
     }
 
     @Test
-    fun auditVerifiedOnlyShowsEmptyStateForUnverifiedSearchResults() {
-        val emptyTitle = org.robolectric.RuntimeEnvironment.getApplication()
-            .getString(dev.junta.firmamobile.R.string.catalog_empty_title)
-        val state = stateFor(searchText = "UNED")
-        assertTrue(state.sections.flatMap { it.items }.isNotEmpty())
-        assertTrue(state.sections.flatMap { it.items }.none { it.supportStatus == PortalSupportStatus.VERIFIED_E2E })
-        setCatalogContent(state = state, verifiedOnly = true)
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText(emptyTitle))
-        rule.onNodeWithText(emptyTitle).assertIsDisplayed()
+    fun `delayed search echo preserves a long address draft`() {
+        var state by mutableStateOf(stateFor())
+        val searched = mutableListOf<String>()
+        val longAddress = "https://portal.example/path?token=" + "a".repeat(200)
+        setMutableCatalogContent(state = { state }, onSearchTextChange = { searched += it })
+
+        val field = rule.onNodeWithTag("public-web-address")
+        field.performTextInput("m")
+        field.performTextReplacement(longAddress)
+        rule.runOnIdle {
+            assertEquals(longAddress, catalogAddressEditableText())
+            assertEquals(listOf("m", ""), searched)
+        }
+
+        rule.runOnIdle { state = stateFor(searchText = "m") }
+        rule.runOnIdle { assertEquals(longAddress, catalogAddressEditableText()) }
+
+        rule.runOnIdle { state = stateFor(searchText = "madrid") }
+        rule.runOnIdle { assertEquals("madrid", catalogAddressEditableText()) }
     }
+
+    @Test
+    fun `truncated initial url search text is visible but not openable`() {
+        var opened: java.net.URI? = null
+        val fullUrl = "https://portal.example/path?token=" + "a".repeat(200)
+        setCatalogContent(
+            state = stateFor(searchText = fullUrl.take(160)),
+            onOpenPublicWeb = { opened = it },
+        )
+
+        rule.onNodeWithTag("public-web-address")
+            .assertTextContains(fullUrl.take(160))
+        rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
+        rule.runOnIdle { assertEquals(null, opened) }
+    }
+
+    @Test
+    fun `address draft is not persisted as catalog search text`() {
+        var state by mutableStateOf(stateFor())
+        var visible by mutableStateOf(true)
+        var searched = ""
+        rule.setContent {
+            JuntaFirmaTheme {
+                if (visible) {
+                    PortalCatalogScreen(
+                        state = state,
+                        onSearchTextChange = { searched = it },
+                        onSelectRegion = {},
+                        onUseLocation = {},
+                        onOpenLocationSettings = {},
+                        onOpenAppSettings = {},
+                        onDismissLocationMessage = {},
+                        onToggleFavorite = {},
+                        onOpenPortal = {},
+                        onBackToCertificate = {},
+                        onUserMessageShown = {},
+                    )
+                }
+            }
+        }
+
+        rule.onNodeWithTag("public-web-address")
+            .performTextInput("portal.example/private?token=one")
+        rule.runOnIdle {
+            assertEquals("portal.example/private?token=one", catalogAddressEditableText())
+            assertEquals("", searched)
+        }
+
+        rule.runOnIdle { visible = false }
+        rule.runOnIdle { visible = true }
+        rule.runOnIdle { assertEquals("", catalogAddressEditableText()) }
+        rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
+    }
+
+    @Test
+    fun `replacing active search with an address clears the filter and keeps the draft`() {
+        var state by mutableStateOf(stateFor(searchText = "valencia"))
+        val searched = mutableListOf<String>()
+        setMutableCatalogContent(state = { state }, onSearchTextChange = { searched += it })
+
+        val address = "https://portal.example/private?token=one"
+        rule.onNodeWithTag("public-web-address").performTextReplacement(address)
+        rule.runOnIdle {
+            assertEquals(address, catalogAddressEditableText())
+            assertTrue("" in searched)
+        }
+
+        rule.runOnIdle { state = stateFor(searchText = "") }
+        rule.runOnIdle { assertEquals(address, catalogAddressEditableText()) }
+    }
+
+    @Test
+    fun `pasting an address after active search clears the filter and keeps the draft`() {
+        var state by mutableStateOf(stateFor(searchText = "valencia"))
+        val searched = mutableListOf<String>()
+        var opened: java.net.URI? = null
+        setMutableCatalogContent(
+            state = { state },
+            onSearchTextChange = { searched += it },
+            onOpenPublicWeb = { opened = it },
+        )
+
+        val address = "https://portal.example/paste?token=one"
+        val clipboard = org.robolectric.RuntimeEnvironment.getApplication()
+            .getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("catalog", address))
+        // The paste action is available only for an empty field. Clearing the
+        // active search first is itself the search-to-empty transition under test.
+        rule.onNodeWithTag("public-web-address").performTextReplacement("")
+        rule.onNodeWithTag("catalog-address-paste").performClick()
+        rule.runOnIdle {
+            assertEquals(address, catalogAddressEditableText())
+            assertTrue("" in searched)
+            assertEquals(null, opened)
+        }
+
+        rule.runOnIdle { state = stateFor(searchText = "") }
+        rule.runOnIdle {
+            assertEquals(address, catalogAddressEditableText())
+            assertTrue("" in searched)
+        }
+    }
+
+    @Test
+    fun `gradually entering an address after search clears the filter and keeps the draft`() {
+        var state by mutableStateOf(stateFor(searchText = "valencia"))
+        val searched = mutableListOf<String>()
+        var opened: java.net.URI? = null
+        setMutableCatalogContent(
+            state = { state },
+            onSearchTextChange = { searched += it },
+            onOpenPublicWeb = { opened = it },
+        )
+
+        val address = "https://portal.example/gradual"
+        val field = rule.onNodeWithTag("public-web-address")
+        field.performTextReplacement("")
+        field.performTextInput("https://portal")
+        field.performTextInput(".example/gradual")
+        rule.runOnIdle {
+            assertEquals(address, catalogAddressEditableText())
+            assertTrue("" in searched)
+        }
+
+        rule.onNodeWithTag("public-web-open-confirm").assertIsDisplayed().performClick()
+        rule.runOnIdle { assertEquals(java.net.URI(address), opened) }
+
+        rule.runOnIdle { state = stateFor(searchText = "") }
+        rule.runOnIdle {
+            assertEquals(address, catalogAddressEditableText())
+            assertTrue("" in searched)
+        }
+    }
+
+    @Test
+    fun `externally truncated url search text is visible but not openable`() {
+        var state by mutableStateOf(stateFor(searchText = "valencia"))
+        var opened: java.net.URI? = null
+        setMutableCatalogContent(
+            state = { state },
+            onSearchTextChange = {},
+            onOpenPublicWeb = { opened = it },
+        )
+
+        val fullUrl = "https://portal.example/path?token=" + "a".repeat(200)
+        rule.runOnIdle { state = stateFor(searchText = fullUrl.take(160)) }
+
+        rule.onNodeWithTag("public-web-address")
+            .assertTextContains(fullUrl.take(160))
+        rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
+        rule.runOnIdle { assertEquals(null, opened) }
+    }
+
+    @Test
+    fun `fully typed 160 character address remains openable`() {
+        var opened: java.net.URI? = null
+        setCatalogContent(state = stateFor(), onOpenPublicWeb = { opened = it })
+
+        val prefix = "https://portal.example/"
+        val address = prefix + "a".repeat(160 - prefix.length)
+        rule.onNodeWithTag("public-web-address").performTextInput(address)
+        rule.onNodeWithTag("public-web-open-confirm").assertIsDisplayed().performClick()
+        rule.runOnIdle { assertEquals(java.net.URI(address), opened) }
+    }
+
+    @Test
+    fun `stale echo beyond pending buffer does not replace newer local draft`() {
+        var state by mutableStateOf(stateFor())
+        setMutableCatalogContent(state = { state }, onSearchTextChange = {})
+
+        val field = rule.onNodeWithTag("public-web-address")
+        repeat(40) { field.performTextInput("x") }
+        val latest = "x".repeat(40)
+        rule.runOnIdle { assertEquals(latest, catalogAddressEditableText()) }
+
+        rule.runOnIdle { state = stateFor(searchText = "x") }
+        rule.runOnIdle { assertEquals(latest, catalogAddressEditableText()) }
+
+        rule.runOnIdle { state = stateFor(searchText = latest) }
+        rule.runOnIdle { assertEquals(latest, catalogAddressEditableText()) }
+    }
+
+    @Test
+    fun `external search recovery works after pending buffer overflows`() {
+        var state by mutableStateOf(stateFor())
+        setMutableCatalogContent(state = { state }, onSearchTextChange = {})
+
+        val field = rule.onNodeWithTag("public-web-address")
+        repeat(40) { field.performTextInput("x") }
+        val latest = "x".repeat(40)
+        rule.runOnIdle { assertEquals(latest, catalogAddressEditableText()) }
+
+        rule.runOnIdle { state = stateFor(searchText = "madrid") }
+        rule.runOnIdle { assertEquals("madrid", catalogAddressEditableText()) }
+
+        rule.runOnIdle { state = stateFor(searchText = "") }
+        rule.runOnIdle {
+            assertEquals("", catalogAddressEditableText())
+            rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `clearing an external bare host search text clears the view model filter`() {
+        var state by mutableStateOf(stateFor(searchText = "portal.example"))
+        val searched = mutableListOf<String>()
+        var opened: java.net.URI? = null
+        setMutableCatalogContent(
+            state = { state },
+            onSearchTextChange = { searched += it },
+            onOpenPublicWeb = { opened = it },
+        )
+
+        rule.onNodeWithTag("public-web-address").assertTextContains("portal.example")
+        rule.onNodeWithTag("catalog-address-clear").performClick()
+        rule.runOnIdle {
+            assertEquals(listOf(""), searched)
+            assertEquals(null, opened)
+        }
+
+        rule.runOnIdle { state = stateFor(searchText = "") }
+        rule.runOnIdle {
+            assertEquals("", catalogAddressEditableText())
+            rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `clearing an external url search text clears the view model filter`() {
+        var state by mutableStateOf(stateFor(searchText = "https://portal.example/path"))
+        val searched = mutableListOf<String>()
+        var opened: java.net.URI? = null
+        setMutableCatalogContent(
+            state = { state },
+            onSearchTextChange = { searched += it },
+            onOpenPublicWeb = { opened = it },
+        )
+
+        rule.onNodeWithTag("public-web-address")
+            .assertTextContains("https://portal.example/path")
+        rule.onNodeWithTag("catalog-address-clear").performClick()
+        rule.runOnIdle {
+            assertEquals(listOf(""), searched)
+            assertEquals(null, opened)
+        }
+
+        rule.runOnIdle { state = stateFor(searchText = "") }
+        rule.runOnIdle {
+            assertEquals("", catalogAddressEditableText())
+            rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `clearing a locally entered address does not persist it as search text`() {
+        var state by mutableStateOf(stateFor())
+        val searched = mutableListOf<String>()
+        var opened: java.net.URI? = null
+        setMutableCatalogContent(
+            state = { state },
+            onSearchTextChange = { searched += it },
+            onOpenPublicWeb = { opened = it },
+        )
+
+        val address = "https://portal.example/private?token=one"
+        rule.onNodeWithTag("public-web-address").performTextInput(address)
+        rule.onNodeWithTag("catalog-address-clear").performClick()
+        rule.runOnIdle {
+            assertEquals("", catalogAddressEditableText())
+            assertTrue(address !in searched)
+            assertEquals(null, opened)
+        }
+
+        rule.runOnIdle { state = stateFor(searchText = "") }
+        rule.runOnIdle {
+            assertEquals("", catalogAddressEditableText())
+            rule.onNodeWithTag("catalog-address-paste").assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `clearing an active search clears the view model filter without opening`() {
+        var state by mutableStateOf(stateFor(searchText = "valencia"))
+        val searched = mutableListOf<String>()
+        var opened: java.net.URI? = null
+        setMutableCatalogContent(
+            state = { state },
+            onSearchTextChange = { searched += it },
+            onOpenPublicWeb = { opened = it },
+        )
+
+        rule.onNodeWithTag("public-web-address").assertTextContains("valencia")
+        rule.onNodeWithTag("catalog-address-clear").performClick()
+        rule.runOnIdle {
+            assertEquals(listOf(""), searched)
+            assertEquals(null, opened)
+        }
+
+        rule.runOnIdle { state = stateFor(searchText = "") }
+        rule.runOnIdle {
+            assertEquals("", catalogAddressEditableText())
+            rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
+        }
+    }
+
+    private fun setMutableCatalogContent(
+        state: () -> PortalCatalogUiState,
+        onSearchTextChange: (String) -> Unit,
+        onOpenPublicWeb: ((java.net.URI) -> Unit)? = null,
+    ) {
+        rule.setContent {
+            JuntaFirmaTheme {
+                PortalCatalogScreen(
+                    state = state(),
+                    onSearchTextChange = onSearchTextChange,
+                    onSelectRegion = {},
+                    onUseLocation = {},
+                    onOpenLocationSettings = {},
+                    onOpenAppSettings = {},
+                    onDismissLocationMessage = {},
+                    onToggleFavorite = {},
+                    onOpenPortal = {},
+                    onBackToCertificate = {},
+                    onUserMessageShown = {},
+                    onOpenPublicWeb = onOpenPublicWeb,
+                )
+            }
+        }
+    }
+
+    private fun catalogAddressEditableText(): String =
+        rule.onNodeWithTag("public-web-address")
+            .fetchSemanticsNode()
+            .config[SemanticsProperties.EditableText]
+            .text
 
     private fun stateFor(
         searchText: String = "",
@@ -506,30 +1013,30 @@ class PortalCatalogScreenTest {
 
     private fun setCatalogContent(
         state: PortalCatalogUiState,
-        verifiedOnly: Boolean = false,
-        onVerifiedOnlyChange: (Boolean) -> Unit = {},
+        onSearchTextChange: (String) -> Unit = {},
         onSelectRegion: (PortalRegionCode) -> Unit = {},
         onUseLocation: () -> Unit = {},
         onOpenLocationSettings: () -> Unit = {},
         onOpenPortal: (PortalCatalogItem) -> Unit = {},
         onBackToCertificate: () -> Unit = {},
+        onToggleFavorite: (PortalId) -> Unit = {},
+        onOpenPublicWeb: ((java.net.URI) -> Unit)? = null,
     ) {
         rule.setContent {
             JuntaFirmaTheme {
                 PortalCatalogScreen(
                     state = state,
-                    onSearchTextChange = {},
+                    onSearchTextChange = onSearchTextChange,
                     onSelectRegion = onSelectRegion,
                     onUseLocation = onUseLocation,
                     onOpenLocationSettings = onOpenLocationSettings,
                     onOpenAppSettings = {},
                     onDismissLocationMessage = {},
-                    onToggleFavorite = {},
+                    onToggleFavorite = onToggleFavorite,
                     onOpenPortal = onOpenPortal,
                     onBackToCertificate = onBackToCertificate,
                     onUserMessageShown = {},
-                    verifiedOnly = verifiedOnly,
-                    onVerifiedOnlyChange = onVerifiedOnlyChange,
+                    onOpenPublicWeb = onOpenPublicWeb,
                 )
             }
         }

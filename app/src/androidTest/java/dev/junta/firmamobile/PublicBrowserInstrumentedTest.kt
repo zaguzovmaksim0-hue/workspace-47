@@ -50,10 +50,13 @@ class PublicBrowserInstrumentedTest {
     @Test fun actualPublicBrowserKeepsNativeCertificateConsentButNoAutomaticKey() {
         val current = AtomicReference<WebView?>()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
             render(scenario, current)
             rule.onNodeWithTag("public-browsing-notice").assertDoesNotExist()
-            rule.onNodeWithContentDescription("Más opciones").performClick()
-            rule.onNodeWithText("Información del sitio").performClick()
+            rule.onNodeWithContentDescription(strings.getString(R.string.browser_action_more)).performClick()
+            rule.onNodeWithText(strings.getString(R.string.browser_site_information)).performClick()
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
             rule.onNodeWithTag("browser-site-information-close").performClick()
             val request = CertificateRequest()
@@ -77,6 +80,9 @@ class PublicBrowserInstrumentedTest {
     @Test fun actualPublicBrowserAcceptsSupportedAutoFirmaRequestWithoutAProfileAndDoesNotSign() {
         val current = AtomicReference<WebView?>()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
             render(scenario, current)
             val view = checkNotNull(current.get())
             val invocation = Uri.parse("afirma://sign?id=PublicSynthetic123&stservlet=https%3A%2F%2Fstorage.synthetic.example%2Fput&format=CAdES&algorithm=SHA256withRSA&dat=c3ludGhldGlj")
@@ -106,6 +112,9 @@ class PublicBrowserInstrumentedTest {
     @Test fun actualPublicBrowserOffersPdfSigningWithoutAnExistingSiteProfile() {
         val current = AtomicReference<WebView?>()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
             render(scenario, current)
             val view = checkNotNull(current.get())
             val invocation = Uri.parse("afirma://sign?id=PublicPdf123&stservlet=https%3A%2F%2Fstorage.synthetic.example%2Fput&format=PAdES&algorithm=SHA256withRSA&dat=" + java.util.Base64.getUrlEncoder().encodeToString(nativeInstrumentedPdf()))
@@ -138,6 +147,9 @@ class PublicBrowserInstrumentedTest {
     @Test fun actualPublicBrowserOffersCanonicalPdfCoSignWithoutProfileAuthority() {
         val current = AtomicReference<WebView?>()
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
             render(scenario, current)
             val view = checkNotNull(current.get())
             // This case exercises request-to-consent only; validity of prior
@@ -155,7 +167,7 @@ class PublicBrowserInstrumentedTest {
             }
             awaitConsent("native-afirma-unlock", scenario, current) { "native callback invoked once" }
             rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed()
-            rule.onNodeWithText("Añadir una firma al PDF ya firmado").assertIsDisplayed()
+            rule.onNodeWithText(strings.getString(R.string.native_afirma_pdf_cosign)).assertIsDisplayed()
             rule.onNodeWithTag("native-afirma-confirm").assertDoesNotExist()
             // Lifecycle interruption is local; do not invoke server-notifying
             // cancellation against a real storage endpoint in this test.

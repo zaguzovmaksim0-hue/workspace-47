@@ -67,7 +67,8 @@ class JuntaFirmaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        RuntimeProfileScope.configure(ProfileScopePreferences(this).verifiedOnly())
+        ProfileScopePreferences(this).resetVerifiedOnly()
+        RuntimeProfileScope.configure(false)
         PDFBoxResourceLoader.init(this)
         sanitizedLogger = ApplicationSanitizedLoggerFactory.create(
             filesDirectory = filesDir,

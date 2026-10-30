@@ -13,11 +13,10 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import dev.junta.firmamobile.testing.createComposeRule
-import androidx.compose.ui.test.onChildren
-import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -47,7 +46,11 @@ import org.robolectric.annotation.SQLiteMode
 @Config(qualifiers = "es-rES-w400dp-h1200dp")
 class CatalogSimplicityTest {
     @get:Rule val rule = createComposeRule()
-    private val repo by lazy { PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, loadBundledPublicPortalCatalog()) }
+    private val repo by lazy {
+        PortalCatalogRepository(
+            BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, loadBundledPublicPortalCatalog(),
+        )
+    }
     private val portal by lazy { repo.portals().first { it.isEnabled } }
     private val opened = mutableListOf<PortalId>(); private val compatibility = mutableListOf<PortalId>()
     private val favorites = mutableListOf<PortalId>(); private var locations = 0
@@ -56,11 +59,16 @@ class CatalogSimplicityTest {
     @Test fun eachCardShowsExactlyOneOpenSiteActionAndDoesNotSelectCompatibility() {
         showOne()
         scrollToCard()
-        rule.onNodeWithTag(cardTag(), useUnmergedTree = true).onChildren().filter(hasClickAction()).assertCountEquals(1)
+        rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag(cardTag())), useUnmergedTree = true)
+            .assertCountEquals(2)
         rule.onNodeWithTag("catalog-open-profile-${portal.portalId.value}").assertDoesNotExist()
         rule.onNodeWithTag("catalog-option-favorite").assertDoesNotExist()
         rule.onNodeWithTag("catalog-open-${portal.portalId.value}").performClick()
-        rule.runOnIdle { assertEquals(listOf(portal.portalId), opened); assertTrue(compatibility.isEmpty()); assertTrue(favorites.isEmpty()) }
+        rule.runOnIdle {
+            assertEquals(listOf(portal.portalId), opened)
+            assertTrue(compatibility.isEmpty())
+            assertTrue(favorites.isEmpty())
+        }
     }
 
     @Test fun longPressOffersExplicitCompatibilityWithoutOpeningOrSigningAutomatically() {
@@ -85,7 +93,7 @@ class CatalogSimplicityTest {
     @Test fun geolocationIsHiddenUntilTheRegionPickerAndStillNeedsAnExplicitTap() {
         showOne()
         rule.onNodeWithText("Usar mi ubicación").assertDoesNotExist()
-        rule.onNodeWithText("Cambiar región").performClick()
+        rule.onNodeWithText(text(dev.junta.firmamobile.R.string.catalog_region_change)).performClick()
         rule.runOnIdle { assertEquals(0, locations) }
         rule.onNodeWithText("Usar mi ubicación").performClick()
         rule.runOnIdle { assertEquals(1, locations) }
@@ -104,8 +112,12 @@ class CatalogSimplicityTest {
         state.value = PortalCatalogUiState(searchText = "synthetic visible list", sections = listOf(
             PortalCatalogSection(PortalCatalogSectionKind.NATIONAL, repo.portals())))
         show()
-        val cards = SemanticsMatcher("catalog card") { it.config.contains(SemanticsProperties.TestTag) && it.config[SemanticsProperties.TestTag].startsWith("catalog-card-") }
-        rule.onNodeWithTag("catalog-list").performScrollToNode(hasTestTag("catalog-open-${repo.portals().last().portalId.value}"))
+        val cards = SemanticsMatcher("catalog card") {
+            it.config.contains(SemanticsProperties.TestTag) &&
+                it.config[SemanticsProperties.TestTag].startsWith("catalog-card-")
+        }
+        val lastPortalTag = "catalog-open-${repo.portals().last().portalId.value}"
+        rule.onNodeWithTag("catalog-list").performScrollToNode(hasTestTag(lastPortalTag))
         val composed = rule.onAllNodes(cards, useUnmergedTree = true).fetchSemanticsNodes().size
         assertTrue("183 catalog rows must remain lazy; composed=$composed", composed in 1..24)
     }
@@ -116,7 +128,7 @@ class CatalogSimplicityTest {
                 val density = LocalDensity.current
                 CompositionLocalProvider(LocalDensity provides Density(density.density, 1.8f)) {
                     Box(Modifier.width(280.dp).verticalScroll(rememberScrollState())) {
-                        CatalogPortalCard(portal, false, { opened += it.portalId }, {})
+                        CatalogPortalCard(portal, false, { opened += it.portalId }, {}, {})
                     }
                 }
             }
@@ -125,15 +137,23 @@ class CatalogSimplicityTest {
         rule.runOnIdle { assertEquals(listOf(portal.portalId), opened) }
     }
 
+    private fun text(resource: Int) =
+        org.robolectric.RuntimeEnvironment.getApplication().getString(resource)
+
     private fun cardTag() = "catalog-card-${portal.portalId.value}"
     private fun scrollToCard() = rule.onNodeWithTag("catalog-list").performScrollToNode(hasTestTag(cardTag()))
-    private fun oneState() = PortalCatalogUiState(searchText = "synthetic one item", sections = listOf(PortalCatalogSection(PortalCatalogSectionKind.NATIONAL, listOf(portal))))
+    private fun oneState() = PortalCatalogUiState(
+        searchText = "synthetic one item",
+        sections = listOf(
+            PortalCatalogSection(PortalCatalogSectionKind.NATIONAL, listOf(portal)),
+        ),
+    )
     private fun showOne() { state.value = oneState(); show() }
     private fun show() {
         rule.setContent {
             JuntaFirmaTheme {
                 PortalCatalogScreen(state.value, {}, {}, { locations++ }, {}, {}, {}, { favorites += it },
-                    { opened += it.portalId }, {}, {}, false, {},
+                    { opened += it.portalId }, {}, {},
                     onOpenCompatibilityPortal = { compatibility += it.portalId })
             }
         }

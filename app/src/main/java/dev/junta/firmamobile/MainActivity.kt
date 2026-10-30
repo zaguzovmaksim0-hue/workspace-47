@@ -50,7 +50,6 @@ import dev.junta.firmamobile.network.TunnelRouteObserver
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.Capability
 import dev.junta.firmamobile.profile.ProfileId
-import dev.junta.firmamobile.profile.ProfileScopePreferences
 import dev.junta.firmamobile.profile.ProtocolOperation
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.SigningCancelReason
@@ -76,24 +75,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private class AppRestarter(private val activity: MainActivity) {
-        fun restart() {
-            activity.startActivity(
-                Intent.makeRestartActivityTask(
-                    ComponentName(activity, MainActivity::class.java),
-                ),
-            )
-            Runtime.getRuntime().exit(0)
-        }
-    }
-
     private class PendingExternalApp(
         val token: UUID,
         val sourceHost: String,
         val target: dev.junta.firmamobile.browser.ExternalAppLink,
     )
     private var pendingExternalApp by mutableStateOf<PendingExternalApp?>(null)
-    private val profileScopePreferences by lazy { ProfileScopePreferences(applicationContext) }
     private val externalAppConsent by lazy {
         dev.junta.firmamobile.browser.ExternalAppConsentLease<WebView>(
             isCurrent = { view, epoch -> view === currentWebView && epoch == currentNavigationEpoch },
@@ -424,12 +411,6 @@ class MainActivity : ComponentActivity() {
                     composable(AppNavigationRoutes.CATALOG) {
                         PortalCatalogScreen(
                             state = catalogState.value,
-                            verifiedOnly = profileScopePreferences.verifiedOnly(),
-                            onVerifiedOnlyChange = { requestedValue ->
-                                if (profileScopePreferences.setVerifiedOnly(requestedValue)) {
-                                    AppRestarter(this@MainActivity).restart()
-                                }
-                            },
                             onSearchTextChange = catalogViewModel::updateSearchText,
                             onSelectRegion = catalogViewModel::selectRegion,
                             onUseLocation = {

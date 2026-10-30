@@ -21,17 +21,20 @@ class AppLaunchTest {
     fun showsRequiredFirstRunCopy() {
         TestCertificateDependencies.install().use {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
                 // Catalog startup is asynchronous and is not a Compose idling resource.
                 rule.waitUntil(timeoutMillis = 15_000) {
-                    runCatching { rule.onNodeWithText("Firma Mobile").assertIsDisplayed() }.isSuccess
+                    runCatching { rule.onNodeWithText(strings.getString(R.string.app_name)).assertIsDisplayed() }.isSuccess
                 }
-                rule.onNodeWithText("Firma Mobile").assertIsDisplayed()
-                rule.onNodeWithText("Cliente no oficial para uso personal").assertIsDisplayed()
-                rule.onNodeWithText("Certificado digital").assertIsDisplayed()
-                rule.onNodeWithText("Selecciona tu archivo .p12 o .pfx.").assertIsDisplayed()
-                rule.onNodeWithText("El archivo y la contraseña no se enviarán a terceros.")
+                rule.onNodeWithText(strings.getString(R.string.app_name)).assertIsDisplayed()
+                rule.onNodeWithText(strings.getString(R.string.unofficial_disclosure)).assertIsDisplayed()
+                rule.onNodeWithText(strings.getString(R.string.certificate_title)).assertIsDisplayed()
+                rule.onNodeWithText(strings.getString(R.string.certificate_copy)).assertIsDisplayed()
+                rule.onNodeWithText(strings.getString(R.string.privacy_copy))
                     .assertIsDisplayed()
-                rule.onNodeWithText("Seleccionar certificado").assertIsDisplayed()
+                rule.onNodeWithText(strings.getString(R.string.select_certificate)).assertIsDisplayed()
                 scenario.onActivity { activity ->
                     check(activity.window.attributes.flags and FLAG_SECURE == 0)
                     check(

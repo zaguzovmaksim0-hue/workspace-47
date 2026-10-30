@@ -23,9 +23,12 @@ class VisualReferenceInstrumentedTest {
     @Test
     fun capturesSafeFirstRunReferenceScreen() {
         TestCertificateDependencies.install().use {
-            ActivityScenario.launch(MainActivity::class.java).use {
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+var activityContext: android.content.Context? = null
+scenario.onActivity { activityContext = it }
+val strings = checkNotNull(activityContext).resources
                 rule.onNodeWithText("Firma Mobile").assertIsDisplayed()
-                rule.onNodeWithText("Seleccionar certificado").assertIsDisplayed()
+                rule.onNodeWithText(strings.getString(R.string.select_certificate)).assertIsDisplayed()
                 rule.onNodeWithText("Inicio").assertDoesNotExist()
                 rule.onNodeWithText("Historial").assertDoesNotExist()
                 rule.onNodeWithText("Ajustes").assertDoesNotExist()

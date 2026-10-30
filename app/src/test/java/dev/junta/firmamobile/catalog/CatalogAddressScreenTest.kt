@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import dev.junta.firmamobile.testing.createComposeRule
@@ -58,27 +57,21 @@ class CatalogAddressScreenTest {
     private val visible = mutableStateOf(true)
     private var portalOpens = 0
 
-    @Test fun addressIsInlineAboveCatalogSearchWithoutAnExtraOpeningDialog() {
+    @Test fun searchFieldReplacesSeparateAddressCardWithoutAnOpeningDialog() {
         showCatalog()
         rule.onNodeWithTag("public-web-address").assertIsDisplayed()
-        rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
-        rule.onNodeWithTag("catalog-search-field").assertIsDisplayed()
+        rule.onNodeWithTag("public-web-address").assertExists()
+        rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
         rule.onNodeWithTag("public-web-open-dialog").assertDoesNotExist()
         rule.onNodeWithTag("catalog-open-public-web").assertDoesNotExist()
-        val address = rule.onNodeWithTag("catalog-address-card").fetchSemanticsNode().boundsInRoot
-        val search = rule.onNodeWithTag("catalog-search-field").fetchSemanticsNode().boundsInRoot
-        assertTrue(address.bottom <= search.top)
-        assertTrue(opened.isEmpty())
+        rule.runOnIdle { assertTrue(opened.isEmpty()) }
     }
 
     @Test fun keyboardOpensABareDomainOnceAndRetainsExactRequestComponents() {
         showCatalog()
         val raw = "portal.example/a%2Fb?token=not-logged+x&v=%252F#section"
         rule.onNodeWithTag("public-web-address").performTextReplacement(raw)
-        rule.onNodeWithTag("catalog-address-host", useUnmergedTree = true).assertTextContains("Destino: portal.example")
         rule.onNodeWithTag("public-web-address").performImeAction()
-        rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
-        rule.onNodeWithTag("public-web-address").assertIsNotEnabled()
         rule.runOnIdle { assertEquals(listOf(URI("https://$raw")), opened); assertEquals(0, portalOpens) }
     }
 
@@ -99,7 +92,7 @@ class CatalogAddressScreenTest {
         clipboard.setPrimaryClip(ClipData.newPlainText("synthetic", "portal.example/pasted?state=one%2Ftwo"))
         showCatalog()
         rule.onNodeWithTag("public-web-address").assertTextContains("")
-        rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
+        rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
         rule.onNodeWithTag("catalog-address-paste").performClick()
         rule.onNodeWithTag("public-web-address").assertTextContains("portal.example/pasted?state=one%2Ftwo")
         rule.runOnIdle { assertTrue(opened.isEmpty()) }
@@ -112,31 +105,13 @@ class CatalogAddressScreenTest {
         clipboard().setPrimaryClip(ClipData.newRawUri("synthetic", Uri.parse("content://unreachable.synthetic.example/secret")))
         rule.onNodeWithTag("catalog-address-paste").performClick()
         rule.onNodeWithTag("catalog-address-error", useUnmergedTree = true).assertIsDisplayed()
-        rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
+        rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
         clipboard().setPrimaryClip(ClipData.newPlainText("synthetic", "https://portal.example/" + "a".repeat(9000)))
         rule.onNodeWithTag("catalog-address-paste").performClick()
-        rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
+        rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
         rule.onNodeWithTag("catalog-address-clear").performClick()
         rule.onNodeWithTag("catalog-address-error", useUnmergedTree = true).assertDoesNotExist()
         rule.runOnIdle { assertTrue(opened.isEmpty()) }
-    }
-
-    @Test fun scrollAndClearSearchKeepTheAddressDraftAndReturnButtonReachesIt() {
-        val repository = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, loadBundledPublicPortalCatalog())
-        val items = repository.portals().take(8)
-        ui.value = PortalCatalogUiState(sections = listOf(PortalCatalogSection(PortalCatalogSectionKind.NATIONAL, items)))
-        showCatalog()
-        rule.onNodeWithTag("public-web-address").performTextReplacement("retained.example/form")
-        rule.onNodeWithTag("catalog-search-field").performTextReplacement("search query")
-        rule.onNodeWithTag("catalog-search-clear").performClick()
-        // Clearing a search restores the catalog's normal collapsed sections.
-        // Expand the real section before testing its scroll/return behavior.
-        rule.onNodeWithText("Servicios estatales").performClick()
-        rule.onNodeWithTag("catalog-list").performScrollToNode(hasTestTag("catalog-open-${items.last().portalId.value}"))
-        rule.onNodeWithTag("catalog-return-to-address").assertIsDisplayed().performClick()
-        rule.waitForIdle()
-        rule.onNodeWithTag("public-web-address").assertIsDisplayed().assertTextContains("retained.example/form")
-        rule.runOnIdle { assertEquals("", ui.value.searchText); assertTrue(opened.isEmpty()) }
     }
 
     @Test fun leavingCatalogDropsTheTransientAddressRatherThanSavingAUrl() {
@@ -144,8 +119,7 @@ class CatalogAddressScreenTest {
         rule.onNodeWithTag("public-web-address").performTextReplacement("portal.example/private?token=one")
         rule.runOnIdle { visible.value = false }
         rule.runOnIdle { visible.value = true }
-        rule.onNodeWithTag("public-web-open-confirm").assertIsNotEnabled()
-        rule.onNodeWithTag("catalog-address-host", useUnmergedTree = true).assertDoesNotExist()
+        rule.onNodeWithTag("public-web-open-confirm").assertDoesNotExist()
         rule.runOnIdle { assertTrue(opened.isEmpty()) }
     }
 
@@ -182,8 +156,8 @@ class CatalogAddressScreenTest {
                     state = ui.value, onSearchTextChange = { ui.value = ui.value.copy(searchText = it) },
                     onSelectRegion = {}, onUseLocation = {}, onOpenLocationSettings = {}, onOpenAppSettings = {},
                     onDismissLocationMessage = {}, onToggleFavorite = {}, onOpenPortal = { portalOpens++ },
-                    onBackToCertificate = {}, onUserMessageShown = {}, verifiedOnly = false,
-                    onVerifiedOnlyChange = {}, onOpenPublicWeb = { opened += it },
+                    onBackToCertificate = {}, onUserMessageShown = {},
+                    onOpenPublicWeb = { opened += it },
                 )
             }
         }

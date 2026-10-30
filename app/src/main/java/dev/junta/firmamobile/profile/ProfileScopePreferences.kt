@@ -13,6 +13,10 @@ class ProfileScopePreferences(context: Context) {
     fun setVerifiedOnly(verifiedOnly: Boolean): Boolean =
         preferences.edit().putBoolean(VERIFIED_ONLY_KEY, verifiedOnly).commit()
 
+    /** One-time startup migration: the catalog no longer exposes this setting. */
+    fun resetVerifiedOnly(): Boolean =
+        if (verifiedOnly()) setVerifiedOnly(false) else false
+
     private companion object {
         const val PREFERENCES_NAME = "profile_scope_v1"
         const val VERIFIED_ONLY_KEY = "verified_only"

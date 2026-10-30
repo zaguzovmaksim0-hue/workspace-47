@@ -38,8 +38,10 @@ class AfirmaServerCancellationInstrumentedTest {
         var confirmed = 0; var unlocked = 0; var canceled = 0; var dismissed = 0
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             lateinit var notice: String
+            lateinit var cancelNotify: String
             scenario.onActivity { activity ->
                 notice = activity.getString(R.string.native_afirma_cancel_notice)
+                cancelNotify = activity.getString(R.string.native_afirma_cancel_notify)
                 activity.setContent {
                     NativeAfirmaConsentDialog(
                         prompt(AfirmaConsentPhase.REVIEW, AfirmaConsentProblem.LOCKED),
@@ -52,7 +54,7 @@ class AfirmaServerCancellationInstrumentedTest {
             rule.onNodeWithTag("native-afirma-unlock").assertIsDisplayed()
             rule.onNodeWithText(notice).performScrollTo().assertIsDisplayed()
             rule.onNodeWithTag("native-afirma-cancel")
-                .assertIsDisplayed().assertTextEquals("Cancelar y avisar al servidor").performClick()
+                .assertIsDisplayed().assertTextEquals(cancelNotify).performClick()
             rule.runOnIdle {
                 assertEquals(1, canceled)
                 assertEquals(0, confirmed)
@@ -67,9 +69,11 @@ class AfirmaServerCancellationInstrumentedTest {
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             lateinit var progress: String
             lateinit var warning: String
+            lateinit var cancelStop: String
             scenario.onActivity { activity ->
                 progress = activity.getString(R.string.native_afirma_cancel_progress)
                 warning = activity.getString(R.string.native_afirma_cancel_stop_warning)
+                cancelStop = activity.getString(R.string.native_afirma_cancel_stop)
                 activity.setContent {
                     NativeAfirmaConsentDialog(
                         prompt(AfirmaConsentPhase.CANCELLING),
@@ -84,7 +88,7 @@ class AfirmaServerCancellationInstrumentedTest {
             rule.onNodeWithText(progress).performScrollTo().assertIsDisplayed()
             rule.onNodeWithText(warning).performScrollTo().assertIsDisplayed()
             rule.onNodeWithTag("native-afirma-stop-cancel")
-                .assertIsDisplayed().assertTextEquals("Detener la espera").performClick()
+                .assertIsDisplayed().assertTextEquals(cancelStop).performClick()
             rule.runOnIdle {
                 assertEquals(1, stopped)
                 assertEquals(0, confirmed)
@@ -136,7 +140,9 @@ class AfirmaServerCancellationInstrumentedTest {
         val current = mutableStateOf(prompt(AfirmaConsentPhase.REVIEW))
         var confirmed = 0; var unlocked = 0; var canceled = 0; var dismissed = 0
         ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
+            lateinit var cancelNotify: String
             scenario.onActivity { activity ->
+                cancelNotify = activity.getString(R.string.native_afirma_cancel_notify)
                 activity.setContent {
                     NativeAfirmaConsentDialog(
                         current.value,
@@ -162,7 +168,7 @@ class AfirmaServerCancellationInstrumentedTest {
                     assertEquals(0, unlocked)
                 }
                 rule.onNodeWithTag("native-afirma-cancel")
-                    .assertTextEquals("Cancelar y avisar al servidor").performClick()
+                    .assertTextEquals(cancelNotify).performClick()
                 assertNoSigningActions()
                 rule.onNodeWithTag("native-afirma-cancel").assertDoesNotExist()
                 rule.onNodeWithTag("native-afirma-stop-cancel").assertIsDisplayed()
