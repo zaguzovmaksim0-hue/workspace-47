@@ -39,7 +39,6 @@ import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.StoredCertificateReference
-import dev.junta.firmamobile.signing.SigningCoordinator
 import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 import java.io.InputStream
@@ -168,7 +167,7 @@ val strings = checkNotNull(activityContext).resources
                     // The QA smoke OPEN command deliberately requires an
                     // unlocked identity. Exercise the real catalog UI here.
                     rule.onNode(hasScrollToIndexAction()).performScrollToIndex(2)
-                    rule.onNodeWithText(strings.getString(R.string.catalog_search_label)).performTextReplacement("Ovorion")
+                    rule.onNodeWithTag("public-web-address").performTextReplacement("Ovorion")
                     // Catalog search combines DataStore preferences with input
                     // asynchronously. Await the resolved state, not only the
                     // editable text; opening an empty transitional list races it.
@@ -330,7 +329,7 @@ val strings = checkNotNull(activityContext).resources
                     // The QA smoke OPEN command deliberately requires an
                     // unlocked identity. Exercise the real catalog UI here.
                     rule.onNode(hasScrollToIndexAction()).performScrollToIndex(2)
-                    rule.onNodeWithText(strings.getString(R.string.catalog_search_label)).performTextReplacement("Ovorion")
+                    rule.onNodeWithTag("public-web-address").performTextReplacement("Ovorion")
                     // Catalog search combines DataStore preferences with input
                     // asynchronously. Await the resolved state, not only the
                     // editable text; opening an empty transitional list races it.
@@ -639,10 +638,10 @@ val strings = checkNotNull(activityContext).resources
                     val field = MainActivity::class.java.getDeclaredField("currentWebView")
                         .apply { isAccessible = true }
                     activityTracksWebView = field.get(activity) === webView
-                    val coordinatorField = MainActivity::class.java.getDeclaredField("signingCoordinator")
+                    val signingField = MainActivity::class.java.getDeclaredField("signing")
                         .apply { isAccessible = true }
-                    signingState = (coordinatorField.get(activity) as SigningCoordinator)
-                        .state.value.javaClass.simpleName
+                    signingState = (signingField.get(activity) as? SigningOrchestrator)
+                        ?.ordinaryState?.value?.javaClass?.simpleName ?: "not-initialized"
                 }
                 dialogVisible || lastSafeTitle in TERMINAL_TITLES
             }

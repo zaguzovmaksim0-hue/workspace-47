@@ -45,7 +45,7 @@ class UniversalCatalogBrowserInstrumentedTest {
 var activityContext: android.content.Context? = null
 scenario.onActivity { activityContext = it }
 val strings = checkNotNull(activityContext).resources
-            var target: URI? = null; var searchName = ""; var searchLabel = ""
+            var target: URI? = null; var searchName = ""
             scenario.onActivity { activity ->
                 val catalog = activity.resources.openRawResource(R.raw.public_portal_catalog_v1).bufferedReader().use {
                     PublicPortalCatalogParser.parse(it.readText())
@@ -57,7 +57,7 @@ val strings = checkNotNull(activityContext).resources
                 assertEquals(alias, metadata.launchUrl != null)
                 target = repository.resolveUniversalOpenTarget(item)!!.entryUrl
                 assertEquals(metadata.launchUrl ?: metadata.entryUrl, target)
-                searchName = metadata.displayName; searchLabel = activity.getString(R.string.catalog_search_label)
+                searchName = metadata.displayName
             }
             rule.waitUntil(timeoutMillis = 15_000) {
                 rule.onAllNodes(androidx.compose.ui.test.hasText(strings.getString(R.string.browse_without_certificate))).fetchSemanticsNodes().isNotEmpty()
@@ -65,7 +65,7 @@ val strings = checkNotNull(activityContext).resources
             rule.onNodeWithText(strings.getString(R.string.browse_without_certificate)).performScrollTo().performClick()
             rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasTestTag("catalog-universal-afirma"))
             rule.onNodeWithTag("catalog-universal-afirma").assertIsDisplayed()
-            rule.onNodeWithText(searchLabel).performTextReplacement(searchName)
+            rule.onNodeWithTag("public-web-address").performTextReplacement(searchName)
             // A reviewed profile exists in metadata, but is no longer another
             // visible primary action on every user-facing card.
             rule.onNodeWithTag("catalog-open-profile-$portalId").assertDoesNotExist()
