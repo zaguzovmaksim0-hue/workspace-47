@@ -206,7 +206,12 @@ class CiPolicyTest(unittest.TestCase):
             "|| true",
             "@Ignore",
         ):
-            self.assertNotIn(forbidden_filter, expected_gradlew_line)
+            self.assertNotIn(forbidden_filter, gradlew_lines[0])
+        synthetic_annotation_filter_line = expected_gradlew_line.replace(
+            "-Pandroid.testInstrumentationRunnerArguments.notClass=",
+            "-Pandroid.testInstrumentationRunnerArguments.annotation=",
+        )
+        self.assertIn(".annotation=", synthetic_annotation_filter_line)
         self.assertIn('[[ "${GITHUB_ACTIONS:-}" == "true" && "${CI:-}" == "true" ]]', harness)
         self.assertIn('getprop ro.kernel.qemu', harness)
         self.assertIn('exit "$status"', harness)
