@@ -415,15 +415,19 @@ class JuntaNavigationPolicy(
         }
     }
 
-    private const val httpsPort = 443
+    private companion object {
+        const val IMPLICIT_URI_PORT = -1
+        const val DEFAULT_HTTPS_PORT = 443
+    }
 
     private fun publicHttpsOrigin(rawUrl: String?): TrustedOrigin? {
         val uri = rawUrl?.let { runCatching { Uri.parse(it) }.getOrNull() }
         val host = uri?.host?.lowercase(Locale.ROOT)
-        val port = uri?.port?.takeIf { it == httpsPort }
+        val explicitPort = uri?.port ?: IMPLICIT_URI_PORT
+        val hasAllowedPort = explicitPort == IMPLICIT_URI_PORT || explicitPort == DEFAULT_HTTPS_PORT
         val isPublicHttps = uri != null && !uri.isOpaque && uri.encodedUserInfo == null &&
-            uri.scheme.equals("https", ignoreCase = true) && host != null && port != null
-        return if (isPublicHttps) TrustedOrigin("https", checkNotNull(host), httpsPort) else null
+            uri.scheme.equals("https", ignoreCase = true) && host != null && hasAllowedPort
+        return if (isPublicHttps) TrustedOrigin("https", checkNotNull(host), DEFAULT_HTTPS_PORT) else null
     }
 
     private fun isSafeExternalHttpsUrl(uri: Uri): Boolean =

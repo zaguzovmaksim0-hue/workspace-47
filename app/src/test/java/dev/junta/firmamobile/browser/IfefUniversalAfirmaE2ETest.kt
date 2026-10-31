@@ -54,17 +54,19 @@ class IfefUniversalAfirmaE2ETest {
         val invocation = (parsed as AfirmaServletParseResult.Accepted).invocation
 
         val identity = nonExportableSyntheticIdentity()
-        var uploads = 0
+        var authorizationCount = 0
+        var storeCount = 0
         var uploadedEndpoint: URI? = null
         var uploadedResult: String? = null
         val operation = NativeAfirmaOperation(invocation, AfirmaResultTransport { endpoint, _, result ->
-            uploads++
+            storeCount++
             uploadedEndpoint = endpoint
             uploadedResult = result
             AfirmaDeliveryResult.ACKNOWLEDGED
         })
-        assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.execute(identity.identity) { uploads++ })
-        assertEquals(1, uploads)
+        assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.execute(identity.identity) { authorizationCount++ })
+        assertEquals(1, authorizationCount)
+        assertEquals(1, storeCount)
         assertEquals(URI(storage), uploadedEndpoint)
         val wire = checkNotNull(uploadedResult)
         assertEquals(2, wire.split('|').size)
@@ -78,15 +80,17 @@ class IfefUniversalAfirmaE2ETest {
             checkNotNull(NativeAfirmaNavigation.extract(intentUri())), page,
         ) as AfirmaServletParseResult.Accepted
         val identity = nonExportableSyntheticIdentity()
-        var uploads = 0
+        var authorizationCount = 0
+        var storeCount = 0
         var result: String? = null
         val operation = NativeAfirmaOperation(parsed.invocation, AfirmaResultTransport { _, _, value ->
-            uploads++
+            storeCount++
             result = value
             AfirmaDeliveryResult.ACKNOWLEDGED
         })
-        assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.notifyCancellation { uploads++ })
-        assertEquals(1, uploads)
+        assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.notifyCancellation { authorizationCount++ })
+        assertEquals(1, authorizationCount)
+        assertEquals(1, storeCount)
         assertEquals("CANCEL", result)
         operation.close()
     }

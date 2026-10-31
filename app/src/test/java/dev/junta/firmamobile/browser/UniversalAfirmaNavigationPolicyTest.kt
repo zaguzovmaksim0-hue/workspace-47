@@ -59,6 +59,28 @@ class UniversalAfirmaNavigationPolicyTest {
     }
 
     @Test
+    fun implicitDefaultHttpsPortIsAcceptedForUniversalAfirma() {
+        val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
+        val decision = policy.decide(raw, page)
+        assertTrue(decision is NavigationDecision.HandleAfirma)
+        val request = (decision as NavigationDecision.HandleAfirma).request
+        assertEquals(raw, request.rawUri)
+        assertEquals("portal.synthetic.example", request.origin.host)
+        assertEquals(443, request.origin.port)
+    }
+
+    @Test
+    fun explicitDefaultHttpsPortIsAcceptedAndRawUriIsPreserved() {
+        val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
+        val decision = policy.decide(raw, "https://portal.synthetic.example:443/form")
+        assertTrue(decision is NavigationDecision.HandleAfirma)
+        val request = (decision as NavigationDecision.HandleAfirma).request
+        assertEquals(raw, request.rawUri)
+        assertEquals("portal.synthetic.example", request.origin.host)
+        assertEquals(443, request.origin.port)
+    }
+
+    @Test
     fun nonHttpsPageCannotObtainUniversalAfirmaHandling() {
         val decision = policy.decide(
             "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj",
