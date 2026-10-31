@@ -431,14 +431,13 @@ fun BrowserScreen(
         val isCurrentOwner = owner === webViewRef.get()
         val isForeground = owner.hasWindowFocus() && owner.isShown &&
             lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
-        if (!isCurrentOwner || !isForeground) return false
         val busy = externalAfirmaActive() || activePopup != null ||
             pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
             pendingCertificateSelection != null || pendingRequest != null ||
             interactivePrompt != null || nativeAfirma.hasPending ||
             nativeFallback.hasPending || nativeRetrieval.hasPending ||
             clientAuthPreparing || currentSigningState !is SigningUiState.Idle
-        if (busy) return false
+        if (!isCurrentOwner || !isForeground || busy) return false
         when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
             is AfirmaServletParseResult.Accepted -> {
                 val epoch = navigationEpoch.longValue

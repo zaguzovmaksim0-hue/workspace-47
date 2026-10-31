@@ -10,6 +10,39 @@ import dev.junta.firmamobile.afirma.servlet.AfirmaEndpointPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
 import java.util.Locale
 
+private const val PERCENT_SINGLE_CHARACTER_STEP = 1
+private const val PERCENT_SEQUENCE_LENGTH = 3
+private const val PERCENT_HEX_RADIX = 16
+
+    // A portal page and its standard AutoFirma storage/retrieval services may
+    // use different public HTTPS origins (for example, IFEF). Admission is
+    // protocol-shaped, not same-origin; the native parser and explicit consent
+    // still validate the complete request and display the upload destination.
+private fun isStrictPublicHttpsEndpoint(rawUrl: String): Boolean {
+        val uri = runCatching { java.net.URI(rawUrl) }.getOrNull() ?: return false
+        return AfirmaEndpointPolicy.accepts(uri)
+    }
+
+private fun hasValidPercentEncoding(value: String): Boolean {
+        var index = 0
+        while (index < value.length) {
+            if (value[index] != '%') {
+                index += PERCENT_SINGLE_CHARACTER_STEP
+                continue
+            }
+            if (!hasHexDigitsAt(value, index + 1)) return false
+            index += PERCENT_SEQUENCE_LENGTH
+        }
+        return true
+    }
+
+private fun hasHexDigitsAt(value: String, startIndex: Int): Boolean {
+        if (startIndex + 1 >= value.length) return false
+        return value[startIndex].digitToIntOrNull(PERCENT_HEX_RADIX) != null &&
+            value[startIndex + 1].digitToIntOrNull(PERCENT_HEX_RADIX) != null
+    }
+
+
 class UniversalAfirmaUriParser {
     fun parse(rawUri: String, origin: TrustedOrigin): AfirmaParseResult {
         if (rawUri.length > MAX_URI_CHARS) return AfirmaParseResult.Failure(AfirmaParseErrorCode.URI_TOO_LARGE)
@@ -18,23 +51,25 @@ class UniversalAfirmaUriParser {
 
     private fun parseUri(rawUri: String, origin: TrustedOrigin): AfirmaParseResult {
         val uri = runCatching { Uri.parse(rawUri) }.getOrNull()
-            ?: return AfirmaParseResult.Failure(AfirmaParseErrorCode.INVALID_URI)
-        if (hasUnsupportedUriShape(uri)) return AfirmaParseResult.Failure(AfirmaParseErrorCode.INVALID_URI)
-        return parseOperation(uri, rawUri, origin)
+        val isInvalidUri = uri == null || hasUnsupportedUriShape(uri)
+        return if (isInvalidUri) {
+            AfirmaParseResult.Failure(AfirmaParseErrorCode.INVALID_URI)
+        } else {
+            parseOperation(checkNotNull(uri), rawUri, origin)
+        }
     }
 
     private fun parseOperation(uri: Uri, rawUri: String, origin: TrustedOrigin): AfirmaParseResult {
         val operation = resolveSupportedOperation(uri)
             ?: return AfirmaParseResult.Failure(AfirmaParseErrorCode.UNSUPPORTED_OPERATION)
         return when (val parsed = parseParameters(uri.encodedQuery)) {
-            is ParameterParseResult.Success -> parseValidatedOperation(operation, rawUri, parsed.parameters, origin)
+            is ParameterParseResult.Success -> parseValidatedOperation(operation, parsed.parameters, origin)
             is ParameterParseResult.Failure -> AfirmaParseResult.Failure(parsed.code)
         }
     }
 
     private fun parseValidatedOperation(
         operation: AfirmaOperation,
-        rawUri: String,
         parameters: Map<String, List<AfirmaParameter>>,
         origin: TrustedOrigin,
     ): AfirmaParseResult {
@@ -58,7 +93,6 @@ class UniversalAfirmaUriParser {
 
     private fun validateParameters(
         operation: AfirmaOperation,
-        rawUri: String,
         parameters: Map<String, List<AfirmaParameter>>,
     ): AfirmaParseErrorCode? = when {
         CRITICAL_PARAMETERS.any { parameters[it].orEmpty().size > 1 } ->
@@ -91,13 +125,14 @@ class UniversalAfirmaUriParser {
         if (segments.size > MAX_PARAMETERS) {
             return ParameterParseResult.Failure(AfirmaParseErrorCode.TOO_MANY_PARAMETERS)
         }
-        val parameters = linkedMapOf<String, MutableList<AfirmaParameter>>()
-        for (segment in segments) {
-            val parameter = parseParameter(segment)
-                ?: return ParameterParseResult.Failure(AfirmaParseErrorCode.INVALID_PARAMETER)
-            parameters.getOrPut(parameter.first) { mutableListOf() } += parameter.second
+        val parsedParameters = segments.map(::parseParameter)
+        return if (parsedParameters.all { it != null }) {
+            val parameters = parsedParameters.filterNotNull()
+                .groupBy({ it.first }, { it.second })
+            ParameterParseResult.Success(parameters)
+        } else {
+            ParameterParseResult.Failure(AfirmaParseErrorCode.INVALID_PARAMETER)
         }
-        return ParameterParseResult.Success(parameters.mapValues { it.value.toList() })
     }
 
     private fun parseParameter(segment: String): Pair<String, AfirmaParameter>? {
@@ -115,34 +150,6 @@ class UniversalAfirmaUriParser {
         }
     }
 
-    // A portal page and its standard AutoFirma storage/retrieval services may
-    // use different public HTTPS origins (for example, IFEF). Admission is
-    // protocol-shaped, not same-origin; the native parser and explicit consent
-    // still validate the complete request and display the upload destination.
-    private fun isStrictPublicHttpsEndpoint(rawUrl: String): Boolean {
-        val uri = runCatching { java.net.URI(rawUrl) }.getOrNull() ?: return false
-        return AfirmaEndpointPolicy.accepts(uri)
-    }
-
-    private fun hasValidPercentEncoding(value: String): Boolean {
-        var index = 0
-        while (index < value.length) {
-            if (value[index] != '%') {
-                index += SINGLE_CHARACTER_STEP
-                continue
-            }
-            if (!hasHexDigitsAt(value, index + 1)) return false
-            index += PERCENT_SEQUENCE_LENGTH
-        }
-        return true
-    }
-
-    private fun hasHexDigitsAt(value: String, startIndex: Int): Boolean {
-        if (startIndex + 1 >= value.length) return false
-        return value[startIndex].digitToIntOrNull(HEX_RADIX) != null &&
-            value[startIndex + 1].digitToIntOrNull(HEX_RADIX) != null
-    }
-
     private sealed interface ParameterParseResult {
         data class Success(val parameters: Map<String, List<AfirmaParameter>>) : ParameterParseResult
         data class Failure(val code: AfirmaParseErrorCode) : ParameterParseResult
@@ -152,9 +159,6 @@ class UniversalAfirmaUriParser {
         const val MAX_URI_CHARS = 1024 * 1024
         const val MAX_PARAMETERS = 64
         const val AFIRMA_SCHEME = "afirma"
-        const val SINGLE_CHARACTER_STEP = 1
-        const val PERCENT_SEQUENCE_LENGTH = 3
-        const val HEX_RADIX = 16
         val PARAMETER_NAME = Regex("[a-z][a-z0-9_-]{0,63}")
         val REQUIRED_SIGN_PARAMETERS = setOf("algorithm", "format")
         val CALLBACK_PARAMETERS = setOf("serverurl", "rtservlet", "stservlet")
