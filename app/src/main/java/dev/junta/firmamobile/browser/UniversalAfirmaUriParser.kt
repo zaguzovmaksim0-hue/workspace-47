@@ -76,7 +76,7 @@ class UniversalAfirmaUriParser {
         origin: TrustedOrigin,
     ): AfirmaParseResult {
         val error = validateParameters(operation, parameters) ?:
-            validateCallbacks(parameters, origin)
+            validateCallbacks(parameters)
         return error?.let { AfirmaParseResult.Failure(it) }
             ?: AfirmaParseResult.Success(AfirmaRequest(rawUri, origin, operation, parameters))
     }
@@ -108,7 +108,6 @@ class UniversalAfirmaUriParser {
 
     private fun validateCallbacks(
         parameters: Map<String, List<AfirmaParameter>>,
-        origin: TrustedOrigin,
     ): AfirmaParseErrorCode? {
         val unsafeCallback = CALLBACK_PARAMETERS.any { name ->
             parameters[name].orEmpty().any { parameter ->
