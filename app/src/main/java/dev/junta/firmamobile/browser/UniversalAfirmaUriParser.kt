@@ -14,37 +14,40 @@ private const val PERCENT_SINGLE_CHARACTER_STEP = 1
 private const val PERCENT_SEQUENCE_LENGTH = 3
 private const val PERCENT_HEX_RADIX = 16
 
-    // A portal page and its standard AutoFirma storage/retrieval services may
-    // use different public HTTPS origins (for example, IFEF). Admission is
-    // protocol-shaped, not same-origin; the native parser and explicit consent
-    // still validate the complete request and display the upload destination.
+// A portal page and its standard AutoFirma storage/retrieval services may
+// use different public HTTPS origins (for example, IFEF). Admission is
+// protocol-shaped, not same-origin; the native parser and explicit consent
+// still validate the complete request and display the upload destination.
+private val UNIVERSAL_AFIRMA_ENDPOINT_HOSTS = setOf(
+    "portaldelcontribuyente.cadiz.es",
+)
+
 private fun isAllowedUniversalEndpoint(rawUrl: String, origin: TrustedOrigin): Boolean {
-        val uri = runCatching { java.net.URI(rawUrl) }.getOrNull() ?: return false
-        if (!AfirmaEndpointPolicy.accepts(uri)) return false
-        val host = uri.host?.lowercase(java.util.Locale.ROOT) ?: return false
-        return host == origin.host.lowercase(java.util.Locale.ROOT) ||
-            host in UNIVERSAL_AFIRMA_ENDPOINT_HOSTS
-    }
+    val uri = runCatching { java.net.URI(rawUrl) }.getOrNull()
+    val host = uri?.host?.lowercase(Locale.ROOT)
+    return uri != null && host != null &&
+        AfirmaEndpointPolicy.accepts(uri) &&
+        (host == origin.host.lowercase(Locale.ROOT) || host in UNIVERSAL_AFIRMA_ENDPOINT_HOSTS)
+}
 
 private fun hasValidPercentEncoding(value: String): Boolean {
-        var index = 0
-        while (index < value.length) {
-            if (value[index] != '%') {
-                index += PERCENT_SINGLE_CHARACTER_STEP
-                continue
-            }
-            if (!hasHexDigitsAt(value, index + 1)) return false
-            index += PERCENT_SEQUENCE_LENGTH
+    var index = 0
+    while (index < value.length) {
+        if (value[index] != '%') {
+            index += PERCENT_SINGLE_CHARACTER_STEP
+            continue
         }
-        return true
+        if (!hasHexDigitsAt(value, index + 1)) return false
+        index += PERCENT_SEQUENCE_LENGTH
     }
+    return true
+}
 
 private fun hasHexDigitsAt(value: String, startIndex: Int): Boolean {
-        if (startIndex + 1 >= value.length) return false
-        return value[startIndex].digitToIntOrNull(PERCENT_HEX_RADIX) != null &&
-            value[startIndex + 1].digitToIntOrNull(PERCENT_HEX_RADIX) != null
-    }
-
+    if (startIndex + 1 >= value.length) return false
+    return value[startIndex].digitToIntOrNull(PERCENT_HEX_RADIX) != null &&
+        value[startIndex + 1].digitToIntOrNull(PERCENT_HEX_RADIX) != null
+}
 
 class UniversalAfirmaUriParser {
     fun parse(rawUri: String, origin: TrustedOrigin): AfirmaParseResult {
