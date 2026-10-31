@@ -12,6 +12,9 @@ import dev.junta.firmamobile.network.TrustedOrigin
 private const val PERCENT_SINGLE_CHARACTER_STEP = 1
 private const val PERCENT_SEQUENCE_LENGTH = 3
 private const val PERCENT_HEX_RADIX = 16
+private val PARAMETER_NAME = Regex("[a-z][a-z0-9_-]{0,63}")
+private const val RETRIEVAL_HTTPS_PORT = 443
+private val RETRIEVAL_HTTPS_PORTS = setOf(-1, RETRIEVAL_HTTPS_PORT)
 
 // A portal page may use a separate public HTTPS AutoFirma storage/retrieval
 // service. Syntax-level admission is deliberately generic, but remains
@@ -35,6 +38,35 @@ private fun hasValidPercentEncoding(value: String): Boolean {
         index += PERCENT_SEQUENCE_LENGTH
     }
     return true
+}
+
+private fun hasSafeRetrievalTransport(endpoint: java.net.URI): Boolean =
+    endpoint.scheme.equals("https", true) &&
+        endpoint.rawUserInfo == null &&
+        endpoint.rawFragment == null
+
+private fun hasAllowedRetrievalPort(endpoint: java.net.URI): Boolean =
+    endpoint.port in RETRIEVAL_HTTPS_PORTS
+
+private fun isAllowedRetrievalHost(endpoint: java.net.URI, origin: TrustedOrigin): Boolean {
+    val host = endpoint.host?.lowercase(java.util.Locale.ROOT) ?: return false
+    return host == origin.host.lowercase(java.util.Locale.ROOT) ||
+        host == OFFICIAL_AFIRMA_RETRIEVAL_HOST
+}
+
+private fun parseParameter(segment: String): Pair<String, AfirmaParameter>? {
+    val separator = segment.indexOf('=')
+    val encodedName = if (separator == -1) segment else segment.substring(0, separator)
+    val encodedValue = if (separator == -1) "" else segment.substring(separator + 1)
+    val name = encodedName.takeIf { hasValidPercentEncoding(it) }
+        ?.let { runCatching { Uri.decode(it).lowercase(java.util.Locale.ROOT) }.getOrNull() }
+    val value = encodedValue.takeIf { hasValidPercentEncoding(it) }
+        ?.let { runCatching { Uri.decode(it) }.getOrNull() }
+    return if (name != null && value != null && PARAMETER_NAME.matches(name)) {
+        name to AfirmaParameter(encodedValue = encodedValue, decodedValue = value)
+    } else {
+        null
+    }
 }
 
 private fun hasHexDigitsAt(value: String, startIndex: Int): Boolean {
@@ -124,13 +156,10 @@ class UniversalAfirmaUriParser {
     // execute subsequent protocol configuration. Keep it bound to the visible
     // page origin, except for the official public AutoFirma retrieval service.
     private fun isAllowedRetrievalEndpoint(endpoint: java.net.URI?, origin: TrustedOrigin): Boolean {
-        endpoint ?: return false
-        if (!endpoint.scheme.equals("https", true) || endpoint.rawUserInfo != null ||
-            endpoint.rawFragment != null || endpoint.port !in setOf(-1, 443)
-        ) return false
-        val host = endpoint.host?.lowercase(java.util.Locale.ROOT) ?: return false
-        return host == origin.host.lowercase(java.util.Locale.ROOT) ||
-            host == OFFICIAL_AFIRMA_RETRIEVAL_HOST
+        if (endpoint == null) return false
+        return hasSafeRetrievalTransport(endpoint) &&
+            hasAllowedRetrievalPort(endpoint) &&
+            isAllowedRetrievalHost(endpoint, origin)
     }
 
     private fun parseParameters(encodedQuery: String?): ParameterParseResult = when {
@@ -149,21 +178,6 @@ class UniversalAfirmaUriParser {
         }
     }
 
-    private fun parseParameter(segment: String): Pair<String, AfirmaParameter>? {
-        val separator = segment.indexOf('=')
-        val encodedName = if (separator == -1) segment else segment.substring(0, separator)
-        val encodedValue = if (separator == -1) "" else segment.substring(separator + 1)
-        val name = encodedName.takeIf { hasValidPercentEncoding(it) }
-            ?.let { runCatching { Uri.decode(it).lowercase(java.util.Locale.ROOT) }.getOrNull() }
-        val value = encodedValue.takeIf { hasValidPercentEncoding(it) }
-            ?.let { runCatching { Uri.decode(it) }.getOrNull() }
-        return if (name != null && value != null && PARAMETER_NAME.matches(name)) {
-            name to AfirmaParameter(encodedValue = encodedValue, decodedValue = value)
-        } else {
-            null
-        }
-    }
-
     private sealed interface ParameterParseResult {
         data class Success(val parameters: Map<String, List<AfirmaParameter>>) : ParameterParseResult
         data class Failure(val code: AfirmaParseErrorCode) : ParameterParseResult
@@ -173,7 +187,6 @@ class UniversalAfirmaUriParser {
         const val MAX_URI_CHARS = 1024 * 1024
         const val MAX_PARAMETERS = 64
         const val AFIRMA_SCHEME = "afirma"
-        val PARAMETER_NAME = Regex("[a-z][a-z0-9_-]{0,63}")
         val REQUIRED_SIGN_PARAMETERS = setOf("algorithm", "format")
         val CALLBACK_PARAMETERS = setOf("serverurl", "rtservlet", "stservlet")
         const val RETRIEVAL_CALLBACK_PARAMETER = "rtservlet"
