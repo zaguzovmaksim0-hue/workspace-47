@@ -9,6 +9,8 @@ import dev.junta.firmamobile.afirma.servlet.NativeAfirmaOperation
 import dev.junta.firmamobile.signing.nonExportableSyntheticIdentity
 import java.net.URI
 import java.net.URLEncoder
+import java.time.Clock
+import java.time.ZoneOffset
 import java.util.Base64
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -67,12 +69,16 @@ class IfefUniversalAfirmaE2ETest {
         var storeCount = 0
         var uploadedEndpoint: URI? = null
         var uploadedResult: String? = null
-        val operation = NativeAfirmaOperation(invocation, AfirmaResultTransport { endpoint, _, result ->
-            storeCount++
-            uploadedEndpoint = endpoint
-            uploadedResult = result
-            AfirmaDeliveryResult.ACKNOWLEDGED
-        })
+        val operation = NativeAfirmaOperation(
+            invocation,
+            AfirmaResultTransport { endpoint, _, result ->
+                storeCount++
+                uploadedEndpoint = endpoint
+                uploadedResult = result
+                AfirmaDeliveryResult.ACKNOWLEDGED
+            },
+            clock = Clock.fixed(identity.identity.summary.validFrom.plusSeconds(60), ZoneOffset.UTC),
+        )
         assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.execute(identity.identity) { authorizationCount++ })
         assertEquals(1, authorizationCount)
         assertEquals(1, storeCount)
