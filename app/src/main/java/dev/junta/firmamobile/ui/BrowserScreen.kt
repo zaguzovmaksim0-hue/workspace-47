@@ -238,15 +238,18 @@ fun BrowserScreen(
         activePopup = null
         popupLease.release(popup.token)
         popup.transport.cancel()
-        webViewRef.get()?.visibility = android.view.View.VISIBLE
+        setBrowserPopupOwnerVisibility(webViewRef.get(), popupOpen = false)
         if (restoreOwner) {
             onWebViewChanged(webViewRef.get())
             onNavigationEpochChanged(navigationEpoch.longValue)
         }
     }
     LaunchedEffect(activePopup?.token) {
-        val popup = activePopup ?: return@LaunchedEffect
-        webViewRef.get()?.visibility = android.view.View.INVISIBLE
+        val popup = activePopup
+        // An entry-URL/profile change can reset the remembered popup without
+        // calling closePopup. Always restore the parent when no popup remains.
+        setBrowserPopupOwnerVisibility(webViewRef.get(), popupOpen = popup != null)
+        if (popup == null) return@LaunchedEffect
         delay(15_000)
         if (activePopup === popup && !popup.transport.attached) closePopup(popup.token)
     }
