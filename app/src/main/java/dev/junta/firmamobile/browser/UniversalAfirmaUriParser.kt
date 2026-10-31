@@ -9,11 +9,6 @@ import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.network.TrustedOrigin
 import java.util.Locale
 
-/**
- * Strict parser for standard AutoFirma requests from an unprofiled public HTTPS page.
- * Callback endpoints must belong to the exact visible page origin; no broad host trust
- * and no WebSocket/desktop legacy transport is admitted.
- */
 class UniversalAfirmaUriParser {
     fun parse(rawUri: String, origin: TrustedOrigin): AfirmaParseResult {
         if (rawUri.length > MAX_URI_CHARS) {
@@ -22,50 +17,67 @@ class UniversalAfirmaUriParser {
         val uri = runCatching { Uri.parse(rawUri) }.getOrElse {
             return AfirmaParseResult.Failure(AfirmaParseErrorCode.INVALID_URI)
         }
-        if (!uri.scheme.equals(AFIRMA_SCHEME, ignoreCase = true) || uri.isOpaque ||
-            uri.encodedUserInfo != null || uri.port != -1 || uri.fragment != null
-        ) {
+        if (hasUnsupportedUriShape(uri)) {
             return AfirmaParseResult.Failure(AfirmaParseErrorCode.INVALID_URI)
         }
-        val operation = AfirmaOperation.entries.firstOrNull {
-            it.wireName.equals(uri.host, ignoreCase = true)
-        } ?: return AfirmaParseResult.Failure(AfirmaParseErrorCode.UNSUPPORTED_OPERATION)
-        if (operation == AfirmaOperation.WEBSOCKET) {
-            return AfirmaParseResult.Failure(AfirmaParseErrorCode.UNSUPPORTED_OPERATION)
-        }
+        val operation = resolveSupportedOperation(uri)
+            ?: return AfirmaParseResult.Failure(AfirmaParseErrorCode.UNSUPPORTED_OPERATION)
         val parameters = when (val parsed = parseParameters(uri.encodedQuery)) {
             is ParameterParseResult.Success -> parsed.parameters
             is ParameterParseResult.Failure -> return AfirmaParseResult.Failure(parsed.code)
         }
-        CRITICAL_PARAMETERS.forEach { name ->
-            if (parameters[name].orEmpty().size > 1) {
-                return AfirmaParseResult.Failure(
-                    AfirmaParseErrorCode.DUPLICATE_CRITICAL_PARAMETER,
-                )
-            }
+        validateParameters(operation, parameters)?.let { code ->
+            return AfirmaParseResult.Failure(code)
         }
-        if (operation == AfirmaOperation.SIGN &&
-            REQUIRED_SIGN_PARAMETERS.any {
-                parameters[it]?.singleOrNull()?.decodedValue.isNullOrBlank()
-            }
-        ) {
-            return AfirmaParseResult.Failure(AfirmaParseErrorCode.MISSING_REQUIRED_PARAMETER)
-        }
-        CALLBACK_PARAMETERS.forEach { name ->
-            parameters[name].orEmpty().forEach { parameter ->
-                if (!isSameOriginHttpsCallback(parameter.decodedValue, origin)) {
-                    return AfirmaParseResult.Failure(AfirmaParseErrorCode.UNSAFE_CALLBACK_URL)
-                }
-            }
+        validateCallbacks(parameters, origin)?.let { code ->
+            return AfirmaParseResult.Failure(code)
         }
         return AfirmaParseResult.Success(
-            AfirmaRequest(
-                rawUri = rawUri,
-                origin = origin,
-                operation = operation,
-                parameters = parameters,
-            ),
+            AfirmaRequest(rawUri, origin, operation, parameters),
         )
+    }
+
+    private fun hasUnsupportedUriShape(uri: Uri): Boolean {
+        val unsupportedScheme = !uri.scheme.equals(AFIRMA_SCHEME, ignoreCase = true)
+        val unsupportedPort = uri.port != -1
+        return unsupportedScheme || uri.isOpaque ||
+            uri.encodedUserInfo != null || unsupportedPort || uri.fragment != null
+    }
+
+    private fun resolveSupportedOperation(uri: Uri): AfirmaOperation? {
+        val operation = AfirmaOperation.entries.firstOrNull {
+            it.wireName.equals(uri.host, ignoreCase = true)
+        }
+        return operation?.takeUnless { it == AfirmaOperation.WEBSOCKET }
+    }
+
+    private fun validateParameters(
+        operation: AfirmaOperation,
+        parameters: Map<String, List<AfirmaParameter>>,
+    ): AfirmaParseErrorCode? {
+        val duplicate = CRITICAL_PARAMETERS.firstOrNull { name ->
+            parameters[name].orEmpty().size > 1
+        }
+        if (duplicate != null) {
+            return AfirmaParseErrorCode.DUPLICATE_CRITICAL_PARAMETER
+        }
+        if (operation != AfirmaOperation.SIGN) return null
+        val missing = REQUIRED_SIGN_PARAMETERS.any { name ->
+            parameters[name]?.singleOrNull()?.decodedValue.isNullOrBlank()
+        }
+        return if (missing) AfirmaParseErrorCode.MISSING_REQUIRED_PARAMETER else null
+    }
+
+    private fun validateCallbacks(
+        parameters: Map<String, List<AfirmaParameter>>,
+        origin: TrustedOrigin,
+    ): AfirmaParseErrorCode? {
+        val unsafeCallback = CALLBACK_PARAMETERS.any { name ->
+            parameters[name].orEmpty().any { parameter ->
+                !isSameOriginHttpsCallback(parameter.decodedValue, origin)
+            }
+        }
+        return if (unsafeCallback) AfirmaParseErrorCode.UNSAFE_CALLBACK_URL else null
     }
 
     private fun parseParameters(encodedQuery: String?): ParameterParseResult {
@@ -76,60 +88,61 @@ class UniversalAfirmaUriParser {
         }
         val parameters = linkedMapOf<String, MutableList<AfirmaParameter>>()
         for (segment in segments) {
-            if (segment.isEmpty()) {
-                return ParameterParseResult.Failure(AfirmaParseErrorCode.INVALID_PARAMETER)
-            }
-            val separator = segment.indexOf('=')
-            val encodedName = if (separator == -1) segment else segment.substring(0, separator)
-            val encodedValue = if (separator == -1) "" else segment.substring(separator + 1)
-            if (!hasValidPercentEncoding(encodedName) || !hasValidPercentEncoding(encodedValue)) {
-                return ParameterParseResult.Failure(AfirmaParseErrorCode.MALFORMED_ENCODING)
-            }
-            val name = runCatching {
-                Uri.decode(encodedName).lowercase(Locale.ROOT)
-            }.getOrElse {
-                return ParameterParseResult.Failure(AfirmaParseErrorCode.MALFORMED_ENCODING)
-            }
-            if (!PARAMETER_NAME.matches(name)) {
-                return ParameterParseResult.Failure(AfirmaParseErrorCode.INVALID_PARAMETER)
-            }
-            val value = runCatching { Uri.decode(encodedValue) }.getOrElse {
-                return ParameterParseResult.Failure(AfirmaParseErrorCode.MALFORMED_ENCODING)
-            }
-            parameters.getOrPut(name) { mutableListOf() } +=
-                AfirmaParameter(encodedValue = encodedValue, decodedValue = value)
+            val parameter = parseParameter(segment) ?: return ParameterParseResult.Failure(
+                AfirmaParseErrorCode.INVALID_PARAMETER,
+            )
+            parameters.getOrPut(parameter.first) { mutableListOf() } += parameter.second
         }
         return ParameterParseResult.Success(parameters.mapValues { it.value.toList() })
     }
 
+    private fun parseParameter(segment: String): Pair<String, AfirmaParameter>? {
+        if (segment.isEmpty()) return null
+        val separator = segment.indexOf('=')
+        val encodedName = if (separator == -1) segment else segment.substring(0, separator)
+        val encodedValue = if (separator == -1) "" else segment.substring(separator + 1)
+        if (!hasValidPercentEncoding(encodedName) || !hasValidPercentEncoding(encodedValue)) {
+            return null
+        }
+        val name = runCatching {
+            Uri.decode(encodedName).lowercase(Locale.ROOT)
+        }.getOrNull() ?: return null
+        if (!PARAMETER_NAME.matches(name)) return null
+        val value = runCatching { Uri.decode(encodedValue) }.getOrNull() ?: return null
+        return name to AfirmaParameter(encodedValue = encodedValue, decodedValue = value)
+    }
+
     private fun isSameOriginHttpsCallback(rawUrl: String, origin: TrustedOrigin): Boolean {
         val uri = runCatching { Uri.parse(rawUrl) }.getOrNull() ?: return false
-        if (uri.isOpaque || uri.encodedUserInfo != null || uri.fragment != null ||
-            !uri.scheme.equals("https", ignoreCase = true)
-        ) {
-            return false
-        }
+        if (hasUnsupportedCallbackShape(uri)) return false
         val host = uri.host?.lowercase(Locale.ROOT) ?: return false
         val port = runCatching { uri.port.takeIf { it != -1 } ?: 443 }.getOrNull() ?: return false
         return host == origin.host && port == origin.port
     }
 
+    private fun hasUnsupportedCallbackShape(uri: Uri): Boolean {
+        val unsupportedScheme = !uri.scheme.equals("https", ignoreCase = true)
+        return uri.isOpaque || uri.encodedUserInfo != null ||
+            uri.fragment != null || unsupportedScheme
+    }
+
     private fun hasValidPercentEncoding(value: String): Boolean {
         var index = 0
         while (index < value.length) {
-            if (value[index] == '%') {
-                if (index + 2 >= value.length ||
-                    value[index + 1].digitToIntOrNull(16) == null ||
-                    value[index + 2].digitToIntOrNull(16) == null
-                ) {
-                    return false
-                }
-                index += 3
-            } else {
+            if (value[index] != '%') {
                 index += 1
+                continue
             }
+            if (!hasHexDigitsAt(value, index + 1)) return false
+            index += 3
         }
         return true
+    }
+
+    private fun hasHexDigitsAt(value: String, startIndex: Int): Boolean {
+        if (startIndex + 1 >= value.length) return false
+        return value[startIndex].digitToIntOrNull(16) != null &&
+            value[startIndex + 1].digitToIntOrNull(16) != null
     }
 
     private sealed interface ParameterParseResult {
