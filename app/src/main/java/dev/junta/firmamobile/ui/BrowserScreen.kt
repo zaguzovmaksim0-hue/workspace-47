@@ -1957,7 +1957,7 @@ fun BrowserScreen(
     activePopup?.let { popup ->
         key(popup.token) {
             androidx.compose.material3.Surface(Modifier.fillMaxSize().testTag("browser-popup-window")) {
-                Column(Modifier.fillMaxSize()) {
+                Column(Modifier.fillMaxSize().browserPopupSafeInsets(BrowserWindowInsetsPolicy.current())) {
                     BrowserPopupHeader { closePopup(popup.token) }
                     Box(Modifier.fillMaxWidth().weight(1f)) {
                         BrowserScreen(

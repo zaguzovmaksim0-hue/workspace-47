@@ -568,6 +568,37 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun mainDocumentCertificateFailureIsVisibleAndNeverBypassesTls() {
+        val url = "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do?utm_source=chatgpt.com"
+        client.onPageStarted(webView, url, null)
+        callbacks.events.clear()
+        val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
+        val cert = android.net.http.SslCertificate("CN=synthetic.invalid", "CN=synthetic.invalid", "", "")
+        val error = SslError(SslError.SSL_UNTRUSTED, cert, url)
+
+        client.onReceivedSslError(webView, handler, error)
+
+        assertTrue(shadowOf(handler).wasCancelCalled())
+        assertFalse(shadowOf(handler).wasProceedCalled())
+        assertEquals(listOf("error:SSL_ERROR"), callbacks.events)
+    }
+
+    @Test
+    fun subresourceCertificateFailureDoesNotReplaceMainDocument() {
+        val url = "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do"
+        client.onPageStarted(webView, url, null)
+        callbacks.events.clear()
+        val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
+        val cert = android.net.http.SslCertificate("CN=synthetic.invalid", "CN=synthetic.invalid", "", "")
+        client.onReceivedSslError(webView, handler,
+            SslError(SslError.SSL_UNTRUSTED, cert, "https://sedeelectronica.ifef.es/static/banner.png"))
+
+        assertTrue(shadowOf(handler).wasCancelCalled())
+        assertFalse(shadowOf(handler).wasProceedCalled())
+        assertTrue(callbacks.events.isEmpty())
+    }
+
+    @Test
     fun sslErrorsAlwaysCancelWithoutUnownedApplicationError() {
         val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
         val sslError = Shadow.newInstanceOf(SslError::class.java)

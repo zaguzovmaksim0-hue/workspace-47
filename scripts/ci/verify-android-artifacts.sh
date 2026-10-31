@@ -44,7 +44,7 @@ fi
 rm -f "$manifest_report"
 
 optimized_badging=$("$AAPT2" dump badging "$OPTIMIZED_APK")
-grep -Fq "versionName='0.2.12'" <<<"$optimized_badging"
+grep -Fq "versionName='0.2.13'" <<<"$optimized_badging"
 grep -Fq "application-label:'Firma Mobile'" <<<"$optimized_badging"
 
 optimized_manifest=$(mktemp)

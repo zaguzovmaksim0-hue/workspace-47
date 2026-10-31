@@ -468,7 +468,13 @@ class JuntaWebViewClient(
         handler.cancel()
         if (isCurrentWebView(view)) {
             logger.recordBrowserEvent(DiagnosticEventCode.SSL_ERROR_CANCELLED)
-            onInteractiveClientAuthSslError(view, runCatching { error.url }.getOrNull())
+            val failedUrl = runCatching { error.url }.getOrNull()
+            onInteractiveClientAuthSslError(view, failedUrl)
+            // Only the observed main document owns the visible page error. A TLS
+            // failure in an iframe, image or another resource must not replace it.
+            if (failedUrl != null && failedUrl == observedTopLevelUrl.get()) {
+                callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
+            }
         }
     }
 
