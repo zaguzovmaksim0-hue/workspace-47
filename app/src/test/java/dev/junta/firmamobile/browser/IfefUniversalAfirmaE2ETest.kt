@@ -31,7 +31,7 @@ class IfefUniversalAfirmaE2ETest {
             "algorithm" to "SHA256withRSA",
             "dat" to Base64.getEncoder().encodeToString("synthetic-ifef-payload".toByteArray()),
             "properties" to Base64.getEncoder().encodeToString(
-                "policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true".toByteArray(),
+                "headless=true\nfilters=nonexpired:true;authCert:true".toByteArray(),
             ),
         ) + extra
         val query = values.entries.joinToString("&") {
