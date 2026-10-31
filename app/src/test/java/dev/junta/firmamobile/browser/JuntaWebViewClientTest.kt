@@ -869,6 +869,43 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun blankFinishedDocumentFailsClosedWithRetryableError() {
+        val recordingWebView = RecordingJavascriptWebView(context, result = "\"blank\"")
+        val blankCallbacks = RecordingBrowserCallbacks()
+        val blankClient = JuntaWebViewClient(
+            callbacks = blankCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+        )
+
+        blankClient.onPageFinished(recordingWebView, "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do")
+
+        assertEquals(1, recordingWebView.evaluatedScripts.size)
+        assertEquals(
+            listOf(
+                "url:https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do",
+                "error:BLANK_DOCUMENT",
+            ),
+            blankCallbacks.events,
+        )
+    }
+
+    @Test
+    fun finishedDocumentWithVisibleContentDoesNotReportBlankDocument() {
+        val recordingWebView = RecordingJavascriptWebView(context, result = "\"content\"")
+        val contentCallbacks = RecordingBrowserCallbacks()
+        val contentClient = JuntaWebViewClient(
+            callbacks = contentCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+        )
+
+        contentClient.onPageFinished(recordingWebView, "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do")
+
+        assertTrue(contentCallbacks.events.none { it == "error:BLANK_DOCUMENT" })
+    }
+
+    @Test
     fun ofvirtualPageFinishInjectsMenuCompatibilityWithoutTouchingPortalData() {
         val recordingWebView = RecordingJavascriptWebView(context)
         val ofvirtualClient = JuntaWebViewClient(
@@ -880,7 +917,7 @@ class JuntaWebViewClientTest {
 
         ofvirtualClient.onPageFinished(recordingWebView, OFVIRTUAL_PAGE)
 
-        val script = recordingWebView.evaluatedScripts.single()
+        val script = recordingWebView.evaluatedScripts.first { it.contains("classList.toggle('show'") }
         assertTrue(script.contains("MenÃº"))
         assertTrue(script.contains("Menú"))
         assertTrue(script.contains("data-toggle=\"collapse\""))
@@ -1649,12 +1686,15 @@ class JuntaWebViewClientTest {
         override fun getRequestHeaders(): Map<String, String> = emptyMap()
     }
 
-    private class RecordingJavascriptWebView(context: Context) : WebView(context) {
+    private class RecordingJavascriptWebView(
+        context: Context,
+        private val result: String = "null",
+    ) : WebView(context) {
         val evaluatedScripts = mutableListOf<String>()
 
         override fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?) {
             evaluatedScripts += script
-            resultCallback?.onReceiveValue("null")
+            resultCallback?.onReceiveValue(result)
         }
     }
 

@@ -25,13 +25,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w480dp-h800dp")
-@ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class BrowserPopupInsetsTest {

@@ -85,6 +85,7 @@
     <string name="browser_delete_all_data_failed">No se pudieron borrar todos los datos web.</string>
     <string name="browser_retry">Reintentar</string>
     <string name="browser_compatibility_error">Este WebView no ofrece el bridge seguro requerido. La firma permanece deshabilitada.</string>
+    <string name="browser_blank_document_error">La página se cargó, pero no devolvió contenido visible. Vuelve a intentarlo o ábrela en un navegador externo.</string>
     <string name="browser_load_error">No se pudo cargar el portal de forma segura.</string>
     <string name="browser_client_cert_preferences_error">No se pudo preparar una sesión nueva de certificado. Vuelve a iniciar el acceso.</string>
     <string name="browser_client_cert_preferences_clearing">Preparando una sesión nueva de certificado…</string>
