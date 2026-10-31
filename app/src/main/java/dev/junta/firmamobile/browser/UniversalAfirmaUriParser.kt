@@ -116,19 +116,19 @@ class UniversalAfirmaUriParser {
         return if (unsafeCallback) AfirmaParseErrorCode.UNSAFE_CALLBACK_URL else null
     }
 
-    private fun parseParameters(encodedQuery: String?): ParameterParseResult {
-        if (encodedQuery.isNullOrEmpty()) return ParameterParseResult.Success(emptyMap())
-        val segments = encodedQuery.split('&')
-        if (segments.size > MAX_PARAMETERS) {
-            return ParameterParseResult.Failure(AfirmaParseErrorCode.TOO_MANY_PARAMETERS)
-        }
-        val parsedParameters = segments.map(::parseParameter)
-        return if (parsedParameters.all { it != null }) {
-            val parameters = parsedParameters.filterNotNull()
-                .groupBy({ it.first }, { it.second })
-            ParameterParseResult.Success(parameters)
-        } else {
-            ParameterParseResult.Failure(AfirmaParseErrorCode.INVALID_PARAMETER)
+    private fun parseParameters(encodedQuery: String?): ParameterParseResult = when {
+        encodedQuery.isNullOrEmpty() -> ParameterParseResult.Success(emptyMap())
+        encodedQuery.split('&').size > MAX_PARAMETERS ->
+            ParameterParseResult.Failure(AfirmaParseErrorCode.TOO_MANY_PARAMETERS)
+        else -> {
+            val parsedParameters = encodedQuery.split('&').map(::parseParameter)
+            if (parsedParameters.all { it != null }) {
+                val parameters = parsedParameters.filterNotNull()
+                    .groupBy({ it.first }, { it.second })
+                ParameterParseResult.Success(parameters)
+            } else {
+                ParameterParseResult.Failure(AfirmaParseErrorCode.INVALID_PARAMETER)
+            }
         }
     }
 
