@@ -85,7 +85,7 @@ class IfefUniversalAfirmaE2ETest {
         assertEquals(URI(storage), uploadedEndpoint)
         val wire = checkNotNull(uploadedResult)
         assertEquals(2, wire.split('|').size)
-        assertEquals(URI(storage), operation.details.destination)
+        assertEquals(storage, operation.details.destination)
         operation.close()
     }
 
