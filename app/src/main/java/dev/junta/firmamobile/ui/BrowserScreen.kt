@@ -1347,7 +1347,6 @@ fun BrowserScreen(
                                 },
                                 onNativeAfirmaInvocation = { owner, rawUri, page ->
                                     offerPublicNativeAfirma(owner, rawUri, page)
-                                    true
                                 },
                                 onInteractiveClientAuthSslError = { owner, failedUrl ->
                                     interactiveClientAuth.onServerTlsError(owner, navigationEpoch.longValue, failedUrl)
