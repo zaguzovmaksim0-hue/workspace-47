@@ -14,10 +14,19 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.ConscryptMode
+import org.robolectric.annotation.GraphicsMode
+import org.robolectric.annotation.SQLiteMode
 
 /** Synthetic IFEF-shaped flow: public page origin, separate public HTTPS
  * storage/retrieval origin, explicit authorization and native CAdES result.
  * No real IFEF server, token, user data or certificate is used. */
+@RunWith(RobolectricTestRunner::class)
+@ConscryptMode(ConscryptMode.Mode.OFF)
+@GraphicsMode(GraphicsMode.Mode.LEGACY)
+@SQLiteMode(SQLiteMode.Mode.LEGACY)
 class IfefUniversalAfirmaE2ETest {
     private val page = "https://sedeelectronica.ifef.es/sede/formulario"
     private val storage = "https://portaldelcontribuyente.cadiz.es/portal-afirma-signature-storage/StorageService"
