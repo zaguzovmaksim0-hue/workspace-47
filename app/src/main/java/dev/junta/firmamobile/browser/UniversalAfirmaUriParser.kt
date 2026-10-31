@@ -6,6 +6,7 @@ import dev.junta.firmamobile.afirma.AfirmaParameter
 import dev.junta.firmamobile.afirma.AfirmaParseErrorCode
 import dev.junta.firmamobile.afirma.AfirmaParseResult
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.afirma.servlet.AfirmaEndpointPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
 import java.util.Locale
 
@@ -74,7 +75,7 @@ class UniversalAfirmaUriParser {
     ): AfirmaParseErrorCode? {
         val unsafeCallback = CALLBACK_PARAMETERS.any { name ->
             parameters[name].orEmpty().any { parameter ->
-                !isSameOriginHttpsCallback(parameter.decodedValue, origin)
+                !isStrictPublicHttpsEndpoint(parameter.decodedValue)
             }
         }
         return if (unsafeCallback) AfirmaParseErrorCode.UNSAFE_CALLBACK_URL else null
@@ -112,18 +113,13 @@ class UniversalAfirmaUriParser {
         return name to AfirmaParameter(encodedValue = encodedValue, decodedValue = value)
     }
 
-    private fun isSameOriginHttpsCallback(rawUrl: String, origin: TrustedOrigin): Boolean {
-        val uri = runCatching { Uri.parse(rawUrl) }.getOrNull() ?: return false
-        if (hasUnsupportedCallbackShape(uri)) return false
-        val host = uri.host?.lowercase(Locale.ROOT) ?: return false
-        val port = runCatching { uri.port.takeIf { it != -1 } ?: 443 }.getOrNull() ?: return false
-        return host == origin.host && port == origin.port
-    }
-
-    private fun hasUnsupportedCallbackShape(uri: Uri): Boolean {
-        val unsupportedScheme = !uri.scheme.equals("https", ignoreCase = true)
-        return uri.isOpaque || uri.encodedUserInfo != null ||
-            uri.fragment != null || unsupportedScheme
+    // A portal page and its standard AutoFirma storage/retrieval services may
+    // use different public HTTPS origins (for example, IFEF). Admission is
+    // protocol-shaped, not same-origin; the native parser and explicit consent
+    // still validate the complete request and display the upload destination.
+    private fun isStrictPublicHttpsEndpoint(rawUrl: String): Boolean {
+        val uri = runCatching { java.net.URI(rawUrl) }.getOrNull() ?: return false
+        return AfirmaEndpointPolicy.accepts(uri)
     }
 
     private fun hasValidPercentEncoding(value: String): Boolean {
