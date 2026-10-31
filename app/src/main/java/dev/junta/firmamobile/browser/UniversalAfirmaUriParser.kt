@@ -76,7 +76,7 @@ class UniversalAfirmaUriParser {
         origin: TrustedOrigin,
     ): AfirmaParseResult {
         val error = validateParameters(operation, parameters) ?:
-            validateCallbacks(parameters)
+            validateCallbacks(parameters, origin)
         return error?.let { AfirmaParseResult.Failure(it) }
             ?: AfirmaParseResult.Success(AfirmaRequest(rawUri, origin, operation, parameters))
     }
@@ -108,13 +108,29 @@ class UniversalAfirmaUriParser {
 
     private fun validateCallbacks(
         parameters: Map<String, List<AfirmaParameter>>,
+        origin: TrustedOrigin,
     ): AfirmaParseErrorCode? {
         val unsafeCallback = CALLBACK_PARAMETERS.any { name ->
             parameters[name].orEmpty().any { parameter ->
-                !isAllowedUniversalEndpoint(parameter.decodedValue)
+                val endpoint = runCatching { java.net.URI(parameter.decodedValue) }.getOrNull()
+                !isAllowedUniversalEndpoint(parameter.decodedValue) ||
+                    (name == RETRIEVAL_CALLBACK_PARAMETER && !isAllowedRetrievalEndpoint(endpoint, origin))
             }
         }
         return if (unsafeCallback) AfirmaParseErrorCode.UNSAFE_CALLBACK_URL else null
+    }
+
+    // Retrieval is the only callback that can cause AutoFirma to fetch and
+    // execute subsequent protocol configuration. Keep it bound to the visible
+    // page origin, except for the official public AutoFirma retrieval service.
+    private fun isAllowedRetrievalEndpoint(endpoint: java.net.URI?, origin: TrustedOrigin): Boolean {
+        endpoint ?: return false
+        if (!endpoint.scheme.equals("https", true) || endpoint.rawUserInfo != null ||
+            endpoint.rawFragment != null || endpoint.port !in setOf(-1, 443)
+        ) return false
+        val host = endpoint.host?.lowercase(java.util.Locale.ROOT) ?: return false
+        return host == origin.host.lowercase(java.util.Locale.ROOT) ||
+            host == OFFICIAL_AFIRMA_RETRIEVAL_HOST
     }
 
     private fun parseParameters(encodedQuery: String?): ParameterParseResult = when {
@@ -160,6 +176,8 @@ class UniversalAfirmaUriParser {
         val PARAMETER_NAME = Regex("[a-z][a-z0-9_-]{0,63}")
         val REQUIRED_SIGN_PARAMETERS = setOf("algorithm", "format")
         val CALLBACK_PARAMETERS = setOf("serverurl", "rtservlet", "stservlet")
+        const val RETRIEVAL_CALLBACK_PARAMETER = "rtservlet"
+        const val OFFICIAL_AFIRMA_RETRIEVAL_HOST = "afirma.redsara.es"
         val CRITICAL_PARAMETERS = setOf(
             "dat", "algorithm", "format", "properties", "serverurl", "rtservlet",
             "stservlet", "id", "key", "fileid", "cop", "deskey", "cipherkey",

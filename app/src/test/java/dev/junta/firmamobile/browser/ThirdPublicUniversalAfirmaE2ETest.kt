@@ -37,7 +37,7 @@ import org.robolectric.annotation.SQLiteMode
 class ThirdPublicUniversalAfirmaE2ETest {
     private val page = "https://portal.third-public.example/form"
     private val storage = "https://signature.third-public.example/StorageService"
-    private val retrieval = "https://signature.third-public.example/RetrievalService"
+    private val retrieval = "https://portal.third-public.example/RetrievalService"
 
     @Test
     fun universalThirdPublicRawAfirmaUriSignsOnceAfterExplicitAuthorization() = runBlocking {
