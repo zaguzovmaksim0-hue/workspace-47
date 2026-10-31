@@ -15,19 +15,14 @@ private const val PERCENT_SEQUENCE_LENGTH = 3
 private const val PERCENT_HEX_RADIX = 16
 
 // A portal page and its standard AutoFirma storage/retrieval services may
-// use different public HTTPS origins (for example, IFEF). Admission is
-// protocol-shaped, not same-origin; the native parser and explicit consent
-// still validate the complete request and display the upload destination.
-private val UNIVERSAL_AFIRMA_ENDPOINT_HOSTS = setOf(
-    "portaldelcontribuyente.cadiz.es",
-)
-
+// use different public HTTPS origins. Admission is protocol-shaped, not
+// same-origin: AfirmaEndpointPolicy rejects non-HTTPS, malformed, local and
+// non-public endpoints, while transport-level DNS validation blocks private
+// addresses. The native parser and explicit consent still validate the full
+// request and display the upload destination.
 private fun isAllowedUniversalEndpoint(rawUrl: String, origin: TrustedOrigin): Boolean {
     val uri = runCatching { java.net.URI(rawUrl) }.getOrNull()
-    val host = uri?.host?.lowercase(Locale.ROOT)
-    return uri != null && host != null &&
-        AfirmaEndpointPolicy.accepts(uri) &&
-        (host == origin.host.lowercase(Locale.ROOT) || host in UNIVERSAL_AFIRMA_ENDPOINT_HOSTS)
+    return uri != null && AfirmaEndpointPolicy.accepts(uri)
 }
 
 private fun hasValidPercentEncoding(value: String): Boolean {

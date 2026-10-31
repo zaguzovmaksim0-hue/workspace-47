@@ -81,6 +81,39 @@ class UniversalAfirmaNavigationPolicyTest {
     }
 
     @Test
+    fun crossOriginPublicSignerEndpointIsAcceptedWithoutHostCatalog() {
+        val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj" +
+            "&rtservlet=https%3A%2F%2Fafirma.redsara.es%2Fafirma-signature-storage%2FStorageService"
+        val decision = policy.decide(raw, page)
+        assertTrue("Expected universal AutoFirma handling: $decision", decision is NavigationDecision.HandleAfirma)
+    }
+
+    @Test
+    fun privateNetworkSignerEndpointRemainsBlocked() {
+        for (endpoint in listOf(
+            "https://10.0.0.8/StorageService",
+            "https://192.168.1.8/StorageService",
+        )) {
+            val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj" +
+                "&rtservlet=" + java.net.URLEncoder.encode(endpoint, "UTF-8")
+            assertEquals(
+                NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI),
+                policy.decide(raw, page),
+            )
+        }
+    }
+
+    @Test
+    fun localhostSignerEndpointRemainsBlocked() {
+        val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj" +
+            "&rtservlet=https%3A%2F%2Flocalhost%2FStorageService"
+        assertEquals(
+            NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI),
+            policy.decide(raw, page),
+        )
+    }
+
+    @Test
     fun nonHttpsPageCannotObtainUniversalAfirmaHandling() {
         val decision = policy.decide(
             "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj",
