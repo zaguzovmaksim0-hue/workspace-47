@@ -63,13 +63,15 @@ class UniversalAfirmaUriParser {
         val operation = resolveSupportedOperation(uri)
             ?: return AfirmaParseResult.Failure(AfirmaParseErrorCode.UNSUPPORTED_OPERATION)
         return when (val parsed = parseParameters(uri.encodedQuery)) {
-            is ParameterParseResult.Success -> parseValidatedOperation(operation, parsed.parameters, origin)
+            is ParameterParseResult.Success ->
+                parseValidatedOperation(operation, rawUri, parsed.parameters, origin)
             is ParameterParseResult.Failure -> AfirmaParseResult.Failure(parsed.code)
         }
     }
 
     private fun parseValidatedOperation(
         operation: AfirmaOperation,
+        rawUri: String,
         parameters: Map<String, List<AfirmaParameter>>,
         origin: TrustedOrigin,
     ): AfirmaParseResult {
@@ -114,14 +116,9 @@ class UniversalAfirmaUriParser {
         return if (unsafeCallback) AfirmaParseErrorCode.UNSAFE_CALLBACK_URL else null
     }
 
-    private fun parseParameters(encodedQuery: String?): ParameterParseResult =
-        if (encodedQuery.isNullOrEmpty()) {
-            ParameterParseResult.Success(emptyMap())
-        } else {
-            parseSegments(encodedQuery.split('&'))
-        }
-
-    private fun parseSegments(segments: List<String>): ParameterParseResult {
+    private fun parseParameters(encodedQuery: String?): ParameterParseResult {
+        if (encodedQuery.isNullOrEmpty()) return ParameterParseResult.Success(emptyMap())
+        val segments = encodedQuery.split('&')
         if (segments.size > MAX_PARAMETERS) {
             return ParameterParseResult.Failure(AfirmaParseErrorCode.TOO_MANY_PARAMETERS)
         }
