@@ -44,7 +44,7 @@ class IfefUniversalAfirmaE2ETest {
     fun publicIfefIntentReachesTheNativeSigningPipelineWithoutAProfile() = runBlocking {
         val raw = intentUri()
         val decision = JuntaNavigationPolicy(null).decide(raw, page)
-        assertTrue(decision is NavigationDecision.HandleAfirma)
+        assertTrue("Universal AutoFirma decision: $decision", decision is NavigationDecision.HandleAfirma)
         assertEquals(AfirmaOperation.SIGN, (decision as NavigationDecision.HandleAfirma).request.operation)
 
         val extracted = NativeAfirmaNavigation.extract(raw)

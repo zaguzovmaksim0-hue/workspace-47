@@ -18,9 +18,12 @@ private const val PERCENT_HEX_RADIX = 16
     // use different public HTTPS origins (for example, IFEF). Admission is
     // protocol-shaped, not same-origin; the native parser and explicit consent
     // still validate the complete request and display the upload destination.
-private fun isStrictPublicHttpsEndpoint(rawUrl: String): Boolean {
+private fun isAllowedUniversalEndpoint(rawUrl: String, origin: TrustedOrigin): Boolean {
         val uri = runCatching { java.net.URI(rawUrl) }.getOrNull() ?: return false
-        return AfirmaEndpointPolicy.accepts(uri)
+        if (!AfirmaEndpointPolicy.accepts(uri)) return false
+        val host = uri.host?.lowercase(java.util.Locale.ROOT) ?: return false
+        return host == origin.host.lowercase(java.util.Locale.ROOT) ||
+            host in UNIVERSAL_AFIRMA_ENDPOINT_HOSTS
     }
 
 private fun hasValidPercentEncoding(value: String): Boolean {
@@ -75,7 +78,8 @@ class UniversalAfirmaUriParser {
         parameters: Map<String, List<AfirmaParameter>>,
         origin: TrustedOrigin,
     ): AfirmaParseResult {
-        val error = validateParameters(operation, parameters) ?: validateCallbacks(parameters)
+        val error = validateParameters(operation, parameters) ?:
+            validateCallbacks(parameters, origin)
         return error?.let { AfirmaParseResult.Failure(it) }
             ?: AfirmaParseResult.Success(AfirmaRequest(rawUri, origin, operation, parameters))
     }
@@ -107,10 +111,11 @@ class UniversalAfirmaUriParser {
 
     private fun validateCallbacks(
         parameters: Map<String, List<AfirmaParameter>>,
+        origin: TrustedOrigin,
     ): AfirmaParseErrorCode? {
         val unsafeCallback = CALLBACK_PARAMETERS.any { name ->
             parameters[name].orEmpty().any { parameter ->
-                !isStrictPublicHttpsEndpoint(parameter.decodedValue)
+                !isAllowedUniversalEndpoint(parameter.decodedValue, origin)
             }
         }
         return if (unsafeCallback) AfirmaParseErrorCode.UNSAFE_CALLBACK_URL else null
