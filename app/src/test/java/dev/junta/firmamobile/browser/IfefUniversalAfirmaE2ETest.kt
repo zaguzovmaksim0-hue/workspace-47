@@ -57,7 +57,7 @@ class IfefUniversalAfirmaE2ETest {
         assertEquals(AfirmaOperation.SIGN, (decision as NavigationDecision.HandleAfirma).request.operation)
 
         val extracted = NativeAfirmaNavigation.extract(raw)
-        assertEquals("afirma://sign?" + raw.substringAfter("intent://").substringBefore("#Intent"), extracted)
+        assertEquals("afirma://" + raw.substringAfter("intent://").substringBefore("#Intent"), extracted)
         val parsed = AfirmaServletInvocationParser.parse(checkNotNull(extracted), page)
         assertTrue(parsed.toString(), parsed is AfirmaServletParseResult.Accepted)
         val invocation = (parsed as AfirmaServletParseResult.Accepted).invocation
