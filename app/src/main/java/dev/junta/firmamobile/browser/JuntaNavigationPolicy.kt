@@ -415,11 +415,6 @@ class JuntaNavigationPolicy(
         }
     }
 
-    private companion object {
-        const val IMPLICIT_URI_PORT = -1
-        const val DEFAULT_HTTPS_PORT = 443
-    }
-
     private fun publicHttpsOrigin(rawUrl: String?): TrustedOrigin? {
         val uri = rawUrl?.let { runCatching { Uri.parse(it) }.getOrNull() }
         val host = uri?.host?.lowercase(Locale.ROOT)
@@ -455,6 +450,8 @@ class JuntaNavigationPolicy(
     }
 
     companion object {
+        private const val IMPLICIT_URI_PORT = -1
+        private const val DEFAULT_HTTPS_PORT = 443
         internal const val AUTOFIRMA_PACKAGE = "es.gob.afirma"
         private val SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID = ProfileId("seguridad-social-sede-autofirma")
         private const val SEGURIDAD_SOCIAL_HOST = "sede.seg-social.gob.es"
