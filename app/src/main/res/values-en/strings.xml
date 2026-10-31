@@ -85,6 +85,7 @@
     <string name="browser_delete_all_data_failed">Could not clear all web data.</string>
     <string name="browser_retry">Retry</string>
     <string name="browser_compatibility_error">This WebView does not provide the required secure bridge. Signing remains disabled.</string>
+    <string name="browser_blank_document_error">The page loaded, but no visible content appeared. Try again or open it in an external browser.</string>
     <string name="browser_load_error">Could not load the portal securely.</string>
     <string name="browser_client_cert_preferences_error">Could not prepare a new certificate session. Start the sign-in process again.</string>
     <string name="browser_client_cert_preferences_clearing">Preparing a new certificate session…</string>
