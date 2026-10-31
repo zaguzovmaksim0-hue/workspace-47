@@ -10,7 +10,7 @@
          validated to a system-trusted root. Restore this missing chain link
          for this exact host without weakening certificate validation elsewhere. -->
     <domain-config cleartextTrafficPermitted="false">
-        <domain>sedeelectronica.ifef.es</domain>
+        <domain includeSubdomains="false">sedeelectronica.ifef.es</domain>
         <trust-anchors>
             <certificates src="system" />
             <certificates src="@raw/ifef_sslcom_tls_issuing_rsa_ca_r1" />

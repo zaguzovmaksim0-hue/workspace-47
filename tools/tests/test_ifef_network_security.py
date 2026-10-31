@@ -27,7 +27,7 @@ class IfefNetworkSecurityConfigTest(unittest.TestCase):
         domain_config, = self.root.findall("domain-config")
         domain, = domain_config.findall("domain")
         self.assertEqual(domain.text, "sedeelectronica.ifef.es")
-        self.assertNotEqual(domain.get("includeSubdomains"), "true")
+        self.assertEqual(domain.get("includeSubdomains"), "false")
         self.assertEqual(domain_config.get("cleartextTrafficPermitted"), "false")
         self.assertEqual([x.get("src") for x in domain_config.findall("trust-anchors/certificates")], [
             "system", "@raw/ifef_sslcom_tls_issuing_rsa_ca_r1",
