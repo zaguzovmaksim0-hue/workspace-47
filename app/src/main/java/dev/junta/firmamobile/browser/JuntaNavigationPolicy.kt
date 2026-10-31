@@ -6,6 +6,7 @@ import dev.junta.firmamobile.afirma.AfirmaParseResult
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.afirma.AfirmaUriParser
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
@@ -42,6 +43,7 @@ class JuntaNavigationPolicy(
     private val selectedProfileId: ProfileId?,
     private val registry: SiteProfileRegistry = BuiltInSiteProfiles.runtimeRegistry,
     private val afirmaUriParser: AfirmaUriParser = AfirmaUriParser(),
+    private val universalAfirmaUriParser: UniversalAfirmaUriParser = UniversalAfirmaUriParser(),
 ) {
     init {
         require(selectedProfileId == null || registry.profile(selectedProfileId) != null) {
@@ -188,7 +190,9 @@ class JuntaNavigationPolicy(
     }
 
     private fun decideAfirma(rawUrl: String, currentPageUrl: String?): NavigationDecision {
-        val selectedProfileId = selectedProfileId ?: return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
+        if (selectedProfileId == null) {
+            return decideUniversalAfirma(rawUrl, currentPageUrl)
+        }
         val origin = currentPageUrl?.let { current ->
             try {
                 JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)
@@ -339,7 +343,12 @@ class JuntaNavigationPolicy(
     }
 
     private fun decideIntent(rawUrl: String, currentPageUrl: String?): NavigationDecision {
-        val selectedProfileId = selectedProfileId ?: return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
+        if (selectedProfileId == null) {
+            val extracted = NativeAfirmaNavigation.extract(rawUrl) ?: return NavigationDecision.Block(
+                NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT,
+            )
+            return decideUniversalAfirma(extracted, currentPageUrl)
+        }
         val trustedOrigin = currentPageUrl?.let { current ->
             try {
                 JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)
@@ -392,6 +401,31 @@ class JuntaNavigationPolicy(
             }
         }
         return NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT)
+    }
+
+    private fun decideUniversalAfirma(rawUrl: String, currentPageUrl: String?): NavigationDecision {
+        val origin = publicHttpsOrigin(currentPageUrl) ?: return NavigationDecision.Block(
+            NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN,
+        )
+        return when (val result = universalAfirmaUriParser.parse(rawUrl, origin)) {
+            is dev.junta.firmamobile.afirma.AfirmaParseResult.Success ->
+                NavigationDecision.HandleAfirma(result.request)
+            is dev.junta.firmamobile.afirma.AfirmaParseResult.Failure ->
+                NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI)
+        }
+    }
+
+    private fun publicHttpsOrigin(rawUrl: String?): TrustedOrigin? {
+        val uri = rawUrl?.let { runCatching { Uri.parse(it) }.getOrNull() } ?: return null
+        if (uri.isOpaque || uri.encodedUserInfo != null ||
+            !uri.scheme.equals("https", ignoreCase = true)
+        ) {
+            return null
+        }
+        val host = uri.host?.lowercase(Locale.ROOT) ?: return null
+        val port = runCatching { uri.port.takeIf { it != -1 } ?: 443 }.getOrNull() ?: return null
+        if (port != 443) return null
+        return TrustedOrigin("https", host, 443)
     }
 
     private fun isSafeExternalHttpsUrl(uri: Uri): Boolean =
