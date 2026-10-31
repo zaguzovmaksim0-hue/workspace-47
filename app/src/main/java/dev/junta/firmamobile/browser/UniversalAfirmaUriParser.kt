@@ -14,7 +14,7 @@ import java.util.Locale
  * Callback endpoints must belong to the exact visible page origin; no broad host trust
  * and no WebSocket/desktop legacy transport is admitted.
  */
-internal class UniversalAfirmaUriParser {
+class UniversalAfirmaUriParser {
     fun parse(rawUri: String, origin: TrustedOrigin): AfirmaParseResult {
         if (rawUri.length > MAX_URI_CHARS) {
             return AfirmaParseResult.Failure(AfirmaParseErrorCode.URI_TOO_LARGE)
