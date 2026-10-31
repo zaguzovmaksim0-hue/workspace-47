@@ -415,17 +415,15 @@ class JuntaNavigationPolicy(
         }
     }
 
+    private const val HTTPS_PORT = 443
+
     private fun publicHttpsOrigin(rawUrl: String?): TrustedOrigin? {
-        val uri = rawUrl?.let { runCatching { Uri.parse(it) }.getOrNull() } ?: return null
-        if (uri.isOpaque || uri.encodedUserInfo != null ||
-            !uri.scheme.equals("https", ignoreCase = true)
-        ) {
-            return null
-        }
-        val host = uri.host?.lowercase(Locale.ROOT) ?: return null
-        val port = runCatching { uri.port.takeIf { it != -1 } ?: 443 }.getOrNull() ?: return null
-        if (port != 443) return null
-        return TrustedOrigin("https", host, 443)
+        val uri = rawUrl?.let { runCatching { Uri.parse(it) }.getOrNull() }
+        val host = uri?.host?.lowercase(Locale.ROOT)
+        val port = uri?.port?.takeIf { it == HTTPS_PORT }
+        val isPublicHttps = uri != null && !uri.isOpaque && uri.encodedUserInfo == null &&
+            uri.scheme.equals("https", ignoreCase = true) && host != null && port != null
+        return if (isPublicHttps) TrustedOrigin("https", checkNotNull(host), HTTPS_PORT) else null
     }
 
     private fun isSafeExternalHttpsUrl(uri: Uri): Boolean =

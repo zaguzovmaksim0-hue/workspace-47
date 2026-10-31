@@ -428,11 +428,10 @@ fun BrowserScreen(
     }
 
     fun offerPublicNativeAfirma(owner: WebView, rawUri: String, page: String): Boolean {
-        if (owner !== webViewRef.get() || !owner.hasWindowFocus() || !owner.isShown ||
-            !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
-        ) {
-            return false
-        }
+        val isCurrentOwner = owner === webViewRef.get()
+        val isForeground = owner.hasWindowFocus() && owner.isShown &&
+            lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        if (!isCurrentOwner || !isForeground) return false
         val busy = externalAfirmaActive() || activePopup != null ||
             pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
             pendingCertificateSelection != null || pendingRequest != null ||
@@ -761,7 +760,7 @@ fun BrowserScreen(
         val owner = webViewRef.get()
         val page = owner?.url
         val handledByPublicNativePath = selectedServiceId == null && owner != null && page != null &&
-            isSamePageOrigin(page, request.origin) &&
+            dev.junta.firmamobile.network.JuntaOriginPolicy.originFor(Uri.parse(page)) == request.origin &&
             offerPublicNativeAfirma(owner, request.rawUri, page)
         if (!handledByPublicNativePath) {
             val busy = externalAfirmaActive() || activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending ||
@@ -771,14 +770,6 @@ fun BrowserScreen(
             if (!busy) pendingRequest = request
         }
     }
-    private fun isSamePageOrigin(page: String, origin: TrustedOrigin): Boolean {
-        val uri = runCatching { java.net.URI(page) }.getOrNull() ?: return false
-        val port = uri.port.takeIf { it != -1 } ?: if (uri.scheme.equals("https", ignoreCase = true)) 443 else -1
-        return uri.scheme.equals(origin.scheme, ignoreCase = true) &&
-            uri.host?.lowercase(java.util.Locale.ROOT) == origin.host.lowercase(java.util.Locale.ROOT) &&
-            port == origin.port
-    }
-
     // The broadest local ownership check, shared so an external afirma delivery is refused while any of it holds.
     val portalBusyNow: () -> Boolean = {
         activePopup != null || certificatePanelVisible || pendingInPlaceClientAuth != null ||
