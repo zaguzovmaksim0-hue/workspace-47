@@ -15,6 +15,7 @@ private const val PERCENT_HEX_RADIX = 16
 private val PARAMETER_NAME = Regex("[a-z][a-z0-9_-]{0,63}")
 private const val RETRIEVAL_HTTPS_PORT = 443
 private val RETRIEVAL_HTTPS_PORTS = setOf(-1, RETRIEVAL_HTTPS_PORT)
+private const val OFFICIAL_AFIRMA_RETRIEVAL_HOST = "afirma.redsara.es"
 
 // A portal page may use a separate public HTTPS AutoFirma storage/retrieval
 // service. Syntax-level admission is deliberately generic, but remains
@@ -190,7 +191,6 @@ class UniversalAfirmaUriParser {
         val REQUIRED_SIGN_PARAMETERS = setOf("algorithm", "format")
         val CALLBACK_PARAMETERS = setOf("serverurl", "rtservlet", "stservlet")
         const val RETRIEVAL_CALLBACK_PARAMETER = "rtservlet"
-        const val OFFICIAL_AFIRMA_RETRIEVAL_HOST = "afirma.redsara.es"
         val CRITICAL_PARAMETERS = setOf(
             "dat", "algorithm", "format", "properties", "serverurl", "rtservlet",
             "stservlet", "id", "key", "fileid", "cop", "deskey", "cipherkey",
