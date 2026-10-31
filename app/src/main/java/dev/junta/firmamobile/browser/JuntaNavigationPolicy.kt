@@ -416,13 +416,13 @@ class JuntaNavigationPolicy(
     }
 
     private fun publicHttpsOrigin(rawUrl: String?): TrustedOrigin? {
-        val uri = rawUrl?.let { runCatching { Uri.parse(it) }.getOrNull() }
+        // The source page must be a publicly resolvable HTTPS origin. This is
+        // separate from destination endpoint validation: a public page cannot
+        // authorize a private signer endpoint, and a public endpoint cannot
+        // make a loopback/intranet source page trusted.
+        val uri = rawUrl?.let { runCatching { PublicBrowserAddress.parse(it) }.getOrNull() }
         val host = uri?.host?.lowercase(Locale.ROOT)
-        val explicitPort = uri?.port ?: IMPLICIT_URI_PORT
-        val hasAllowedPort = explicitPort == IMPLICIT_URI_PORT || explicitPort == DEFAULT_HTTPS_PORT
-        val isPublicHttps = uri != null && !uri.isOpaque && uri.encodedUserInfo == null &&
-            uri.scheme.equals("https", ignoreCase = true) && host != null && hasAllowedPort
-        return if (isPublicHttps) TrustedOrigin("https", checkNotNull(host), DEFAULT_HTTPS_PORT) else null
+        return host?.let { TrustedOrigin("https", it, DEFAULT_HTTPS_PORT) }
     }
 
     private fun isSafeExternalHttpsUrl(uri: Uri): Boolean =
@@ -450,7 +450,6 @@ class JuntaNavigationPolicy(
     }
 
     companion object {
-        private const val IMPLICIT_URI_PORT = -1
         private const val DEFAULT_HTTPS_PORT = 443
         internal const val AUTOFIRMA_PACKAGE = "es.gob.afirma"
         private val SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID = ProfileId("seguridad-social-sede-autofirma")

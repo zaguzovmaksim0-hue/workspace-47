@@ -114,6 +114,25 @@ class UniversalAfirmaNavigationPolicyTest {
     }
 
     @Test
+    fun localAndPrivateSourcePagesCannotObtainUniversalAfirmaHandling() {
+        val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
+        for (source in listOf(
+            "https://localhost/form",
+            "https://127.0.0.1/form",
+            "https://192.168.1.1/form",
+            "https://10.0.0.8/form",
+            "https://host.local/form",
+            "https://printer/form",
+        )) {
+            assertEquals(
+                "Accepted untrusted source: $source",
+                NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN),
+                policy.decide(raw, source),
+            )
+        }
+    }
+
+    @Test
     fun nonHttpsPageCannotObtainUniversalAfirmaHandling() {
         val decision = policy.decide(
             "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj",
