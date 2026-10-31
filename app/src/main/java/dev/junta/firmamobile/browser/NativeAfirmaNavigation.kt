@@ -20,8 +20,9 @@ internal object NativeAfirmaNavigation {
             else -> return null
         }
         val uri = runCatching { URI(candidate) }.getOrNull() ?: return null
+        val hasAllowedPath = uri.rawPath == null || uri.rawPath in setOf("", "/")
         if (!uri.scheme.equals("afirma", true) || uri.isOpaque || uri.rawUserInfo != null ||
-            uri.port != -1 || uri.rawFragment != null || uri.rawPath !in setOf("", "/") ||
+            uri.port != -1 || uri.rawFragment != null || !hasAllowedPath ||
             uri.host?.lowercase(java.util.Locale.ROOT) !in setOf("sign", "cosign", "countersign", "batch", "selectcert")
         ) return null
         return candidate
