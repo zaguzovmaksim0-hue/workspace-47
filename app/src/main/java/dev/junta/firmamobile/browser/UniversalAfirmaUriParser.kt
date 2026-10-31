@@ -20,7 +20,7 @@ private const val PERCENT_HEX_RADIX = 16
 // non-public endpoints, while transport-level DNS validation blocks private
 // addresses. The native parser and explicit consent still validate the full
 // request and display the upload destination.
-private fun isAllowedUniversalEndpoint(rawUrl: String, origin: TrustedOrigin): Boolean {
+private fun isAllowedUniversalEndpoint(rawUrl: String): Boolean {
     val uri = runCatching { java.net.URI(rawUrl) }.getOrNull()
     return uri != null && AfirmaEndpointPolicy.accepts(uri)
 }
@@ -77,7 +77,7 @@ class UniversalAfirmaUriParser {
         origin: TrustedOrigin,
     ): AfirmaParseResult {
         val error = validateParameters(operation, parameters) ?:
-            validateCallbacks(parameters, origin)
+            validateCallbacks(parameters)
         return error?.let { AfirmaParseResult.Failure(it) }
             ?: AfirmaParseResult.Success(AfirmaRequest(rawUri, origin, operation, parameters))
     }
@@ -109,11 +109,10 @@ class UniversalAfirmaUriParser {
 
     private fun validateCallbacks(
         parameters: Map<String, List<AfirmaParameter>>,
-        origin: TrustedOrigin,
     ): AfirmaParseErrorCode? {
         val unsafeCallback = CALLBACK_PARAMETERS.any { name ->
             parameters[name].orEmpty().any { parameter ->
-                !isAllowedUniversalEndpoint(parameter.decodedValue, origin)
+                !isAllowedUniversalEndpoint(parameter.decodedValue)
             }
         }
         return if (unsafeCallback) AfirmaParseErrorCode.UNSAFE_CALLBACK_URL else null
