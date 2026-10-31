@@ -13,6 +13,10 @@ import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
 
+@RunWith(RobolectricTestRunner::class)
+@ConscryptMode(ConscryptMode.Mode.OFF)
+@GraphicsMode(GraphicsMode.Mode.LEGACY)
+@SQLiteMode(SQLiteMode.Mode.LEGACY)
 class PublicBrowserSessionTest {
     private val registry = BuiltInSiteProfiles.qaRegistry
     private val known = ProfileId("junta-andalucia")
