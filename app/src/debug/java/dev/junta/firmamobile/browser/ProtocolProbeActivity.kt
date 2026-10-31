@@ -162,7 +162,7 @@ class ProtocolProbeActivity : ComponentActivity() {
             return
         }
         if (!intent.getBooleanExtra(EXTRA_SKIP_INITIAL_LOAD, false)) {
-            webView.loadUrl(JuntaOriginPolicy.START_URL)
+            webView.loadUrl(safeDiagnosticTargetUrl(intent) ?: JuntaOriginPolicy.START_URL)
         }
     }
 
@@ -229,6 +229,19 @@ class ProtocolProbeActivity : ComponentActivity() {
         const val PROBE_BRIDGE_NAME = "JuntaFirmaProbe"
         const val EXTRA_SKIP_INITIAL_LOAD =
             "dev.junta.firmamobile.debug.SKIP_PROTOCOL_PROBE_INITIAL_LOAD"
+        const val EXTRA_TARGET_URL =
+            "dev.junta.firmamobile.debug.PROTOCOL_PROBE_TARGET_URL"
+
+        /** Debug-only: accepts one explicit HTTPS URL for isolated runtime diagnosis. */
+        private fun safeDiagnosticTargetUrl(intent: android.content.Intent): String? {
+            val raw = intent.getStringExtra(EXTRA_TARGET_URL) ?: return null
+            if (raw.isBlank() || raw.length > 8_192 || raw.any { it.isISOControl() }) return null
+            val uri = runCatching { java.net.URI(raw) }.getOrNull() ?: return null
+            if (uri.isOpaque || !uri.scheme.equals("https", ignoreCase = true)) return null
+            if (uri.host.isNullOrBlank() || uri.userInfo != null) return null
+            if (uri.port != -1 && uri.port != 443) return null
+            return uri.toASCIIString()
+        }
         private const val STATUS_STARTING = "Preparando observación segura…"
         private const val STATUS_WAITING = "Esperando una llamada MiniApplet…"
         private const val STATUS_INCOMPATIBLE = "WebView incompatible con observación segura."

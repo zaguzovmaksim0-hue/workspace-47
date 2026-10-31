@@ -82,9 +82,21 @@ class PublicBrowserSessionTest {
         }
         assertTrue(policy.decide("http://identity.synthetic.example/login", page) is NavigationDecision.Block)
         assertTrue(policy.decide("file:///private", page) is NavigationDecision.Block)
-        // Actual native AutoFirma uses its separately owned/confirmed callback,
-        // not a fabricated grant to the legacy per-profile scheme handler.
-        assertEquals(NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN),
+        // A public HTTPS page may use the universal AutoFirma bridge, but this
+        // incomplete sign request lacks the required algorithm and format
+        // parameters. The parser must reject it as an invalid AutoFirma URI;
+        // it must not receive signing privileges or the legacy per-profile
+        // UNTRUSTED_AFIRMA_ORIGIN result.
+        assertEquals(NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI),
             policy.decide("afirma://sign?dat=c3ludGhldGlj", page))
+    }
+
+    @Test fun unprofiledUniversalAfirmaRejectsCrossOriginCallback() {
+        val policy = JuntaNavigationPolicy(null, registry)
+        val page = "https://unprofiled.synthetic.example/"
+        val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj" +
+            "&rtservlet=https%3A%2F%2Fattacker.synthetic.example%2Fcallback"
+        assertEquals(NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI),
+            policy.decide(raw, page))
     }
 }

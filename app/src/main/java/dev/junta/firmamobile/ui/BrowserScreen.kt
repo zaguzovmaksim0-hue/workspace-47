@@ -238,15 +238,18 @@ fun BrowserScreen(
         activePopup = null
         popupLease.release(popup.token)
         popup.transport.cancel()
-        webViewRef.get()?.visibility = android.view.View.VISIBLE
+        setBrowserPopupOwnerVisibility(webViewRef.get(), popupOpen = false)
         if (restoreOwner) {
             onWebViewChanged(webViewRef.get())
             onNavigationEpochChanged(navigationEpoch.longValue)
         }
     }
     LaunchedEffect(activePopup?.token) {
-        val popup = activePopup ?: return@LaunchedEffect
-        webViewRef.get()?.visibility = android.view.View.INVISIBLE
+        val popup = activePopup
+        // An entry-URL/profile change can reset the remembered popup without
+        // calling closePopup. Always restore the parent when no popup remains.
+        setBrowserPopupOwnerVisibility(webViewRef.get(), popupOpen = popup != null)
+        if (popup == null) return@LaunchedEffect
         delay(15_000)
         if (activePopup === popup && !popup.transport.attached) closePopup(popup.token)
     }
@@ -422,6 +425,57 @@ fun BrowserScreen(
     }
     LaunchedEffect(nativeRetrieval, nativeRetrievalPrompt?.token, nativeRetrievalPrompt?.loading) {
         while (nativeRetrievalPrompt?.loading == true) { delay(1_000); nativeRetrieval.tick() }
+    }
+
+    fun offerPublicNativeAfirma(owner: WebView, rawUri: String, page: String): Boolean {
+        val isCurrentOwner = owner === webViewRef.get()
+        val isForeground = owner.hasWindowFocus() && owner.isShown &&
+            lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        val busy = externalAfirmaActive() || activePopup != null ||
+            pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
+            pendingCertificateSelection != null || pendingRequest != null ||
+            interactivePrompt != null || nativeAfirma.hasPending ||
+            nativeFallback.hasPending || nativeRetrieval.hasPending ||
+            clientAuthPreparing || currentSigningState !is SigningUiState.Idle
+        if (!isCurrentOwner || !isForeground || busy) return false
+        when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
+            is AfirmaServletParseResult.Accepted -> {
+                val epoch = navigationEpoch.longValue
+                val relayScope = relayScopeFor(epoch, page)
+                if (relayScope == null) {
+                    val operation = runCatching {
+                        dev.junta.firmamobile.afirma.servlet.nativeOperation(parsed.invocation)
+                    }.getOrElse {
+                        parsed.invocation.close()
+                        null
+                    }
+                    if (operation == null) nativeFallback.offer(owner, epoch, null)
+                    else nativeAfirma.offer(owner, epoch, operation)
+                } else {
+                    nativeAfirmaScope.launch {
+                        val operation = runCatching {
+                            dev.junta.firmamobile.afirma.servlet.nativeOperation(
+                                parsed.invocation,
+                                prepareRelayResultTransport(afirmaRelayStore, relayScope, parsed.invocation),
+                            )
+                        }.getOrElse {
+                            parsed.invocation.close()
+                            null
+                        }
+                        if (operation == null) nativeFallback.offer(owner, epoch, null)
+                        else nativeAfirma.offer(owner, epoch, operation)
+                    }
+                }
+            }
+            is AfirmaServletParseResult.Deferred -> nativeRetrieval.offer(
+                owner,
+                navigationEpoch.longValue,
+                parsed.invocation,
+            )
+            is AfirmaServletParseResult.Unsupported -> nativeFallback.offer(owner, navigationEpoch.longValue, rawUri)
+            is AfirmaServletParseResult.Invalid -> nativeFallback.offer(owner, navigationEpoch.longValue, null)
+        }
+        return true
     }
 
     fun advanceNavigationEpoch() {
@@ -702,11 +756,18 @@ fun BrowserScreen(
     val handleAfirmaRequest: (AfirmaRequest) -> Unit = { request ->
         // URI notifications have no per-call reply channel. A second observer
         // must not replace consent or consume a concurrently loaded request.
-        val busy = externalAfirmaActive() || activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending ||
-            pendingRequest != null || pendingCertificateSelection != null || pendingInPlaceClientAuth != null ||
-            pendingClientAuthTarget != null || interactivePrompt != null || clientAuthPreparing ||
-            currentSigningState !is SigningUiState.Idle
-        if (!busy) pendingRequest = request
+        val owner = webViewRef.get()
+        val page = owner?.url
+        val handledByPublicNativePath = selectedServiceId == null && owner != null && page != null &&
+            dev.junta.firmamobile.network.JuntaOriginPolicy.originFor(Uri.parse(page)) == request.origin &&
+            offerPublicNativeAfirma(owner, request.rawUri, page)
+        if (!handledByPublicNativePath) {
+            val busy = externalAfirmaActive() || activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending ||
+                pendingRequest != null || pendingCertificateSelection != null || pendingInPlaceClientAuth != null ||
+                pendingClientAuthTarget != null || interactivePrompt != null || clientAuthPreparing ||
+                currentSigningState !is SigningUiState.Idle
+            if (!busy) pendingRequest = request
+        }
     }
     // The broadest local ownership check, shared so an external afirma delivery is refused while any of it holds.
     val portalBusyNow: () -> Boolean = {
@@ -1285,73 +1346,8 @@ fun BrowserScreen(
                                         currentExternalAppRequest?.invoke(owner, target) == true
                                 },
                                 onNativeAfirmaInvocation = { owner, rawUri, page ->
-                                    val busy = externalAfirmaActive() || activePopup != null ||
-                                        pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
-                                        pendingCertificateSelection != null || pendingRequest != null ||
-                                        interactivePrompt != null || nativeAfirma.hasPending ||
-                                        nativeFallback.hasPending || nativeRetrieval.hasPending ||
-                                        clientAuthPreparing ||
-                                        currentSigningState !is SigningUiState.Idle
-                                    if (busy) true else {
-                                        when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
-                                            is AfirmaServletParseResult.Accepted -> {
-                                                val epoch = navigationEpoch.longValue
-                                                val relayScope = relayScopeFor(epoch, page)
-                                                if (relayScope == null) {
-                                                    val operation = runCatching {
-                                                        dev.junta.firmamobile.afirma.servlet.nativeOperation(
-                                                            parsed.invocation,
-                                                        )
-                                                    }.getOrElse {
-                                                        parsed.invocation.close()
-                                                        null
-                                                    }
-                                                    if (operation == null) nativeFallback.offer(owner, epoch, null)
-                                                    else nativeAfirma.offer(owner, epoch, operation)
-                                                } else {
-                                                    nativeAfirmaScope.launch {
-                                                        val operation = runCatching {
-                                                            dev.junta.firmamobile.afirma.servlet.nativeOperation(
-                                                                parsed.invocation,
-                                                                prepareRelayResultTransport(
-                                                                    afirmaRelayStore,
-                                                                    relayScope,
-                                                                    parsed.invocation,
-                                                                ),
-                                                            )
-                                                        }.getOrElse {
-                                                            parsed.invocation.close()
-                                                            null
-                                                        }
-                                                        if (operation == null) {
-                                                            nativeFallback.offer(owner, epoch, null)
-                                                        } else {
-                                                            nativeAfirma.offer(owner, epoch, operation)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            is AfirmaServletParseResult.Deferred ->
-                                                nativeRetrieval.offer(
-                                                    owner,
-                                                    navigationEpoch.longValue,
-                                                    parsed.invocation,
-                                                )
-                                            is AfirmaServletParseResult.Unsupported ->
-                                                nativeFallback.offer(
-                                                    owner,
-                                                    navigationEpoch.longValue,
-                                                    rawUri,
-                                                )
-                                            is AfirmaServletParseResult.Invalid ->
-                                                nativeFallback.offer(
-                                                    owner,
-                                                    navigationEpoch.longValue,
-                                                    null,
-                                                )
-                                        }
-                                        true
-                                    }
+                                    offerPublicNativeAfirma(owner, rawUri, page)
+                                    true
                                 },
                                 onInteractiveClientAuthSslError = { owner, failedUrl ->
                                     interactiveClientAuth.onServerTlsError(owner, navigationEpoch.longValue, failedUrl)
@@ -1957,7 +1953,7 @@ fun BrowserScreen(
     activePopup?.let { popup ->
         key(popup.token) {
             androidx.compose.material3.Surface(Modifier.fillMaxSize().testTag("browser-popup-window")) {
-                Column(Modifier.fillMaxSize()) {
+                Column(Modifier.fillMaxSize().browserPopupSafeInsets(BrowserWindowInsetsPolicy.current())) {
                     BrowserPopupHeader { closePopup(popup.token) }
                     Box(Modifier.fillMaxWidth().weight(1f)) {
                         BrowserScreen(
