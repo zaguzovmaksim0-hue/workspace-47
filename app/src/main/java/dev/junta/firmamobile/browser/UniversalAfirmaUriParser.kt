@@ -8,29 +8,20 @@ import dev.junta.firmamobile.afirma.AfirmaParseResult
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.afirma.servlet.AfirmaEndpointPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
-import java.util.Locale
 
 private const val PERCENT_SINGLE_CHARACTER_STEP = 1
 private const val PERCENT_SEQUENCE_LENGTH = 3
 private const val PERCENT_HEX_RADIX = 16
 
-// A portal page and its standard AutoFirma storage/retrieval services may
-// use a different public HTTPS origin only when that endpoint host is an
-// explicitly reviewed public AutoFirma service. AfirmaEndpointPolicy still
-// rejects non-HTTPS, malformed, local and non-public endpoints; transport-level
-// DNS validation blocks private addresses. Explicit consent still validates the
-// full request and displays the upload destination.
-private val UNIVERSAL_AFIRMA_ENDPOINT_HOSTS = setOf(
-    "portaldelcontribuyente.cadiz.es",
-    "afirma.redsara.es",
-)
-
-private fun isAllowedUniversalEndpoint(rawUrl: String, origin: TrustedOrigin): Boolean {
+// A portal page may use a separate public HTTPS AutoFirma storage/retrieval
+// service. Syntax-level admission is deliberately generic, but remains
+// fail-closed: AfirmaEndpointPolicy rejects non-HTTPS, malformed, local and
+// non-public-shaped endpoints. The transport independently validates resolved
+// DNS addresses, disables redirects/retries, and explicit consent displays the
+// destination before any upload.
+private fun isAllowedUniversalEndpoint(rawUrl: String): Boolean {
     val uri = runCatching { java.net.URI(rawUrl) }.getOrNull()
-    val host = uri?.host?.lowercase(Locale.ROOT)
-    return uri != null && host != null &&
-        AfirmaEndpointPolicy.accepts(uri) &&
-        (host == origin.host.lowercase(Locale.ROOT) || host in UNIVERSAL_AFIRMA_ENDPOINT_HOSTS)
+    return uri != null && AfirmaEndpointPolicy.accepts(uri)
 }
 
 private fun hasValidPercentEncoding(value: String): Boolean {
@@ -121,7 +112,7 @@ class UniversalAfirmaUriParser {
     ): AfirmaParseErrorCode? {
         val unsafeCallback = CALLBACK_PARAMETERS.any { name ->
             parameters[name].orEmpty().any { parameter ->
-                !isAllowedUniversalEndpoint(parameter.decodedValue, origin)
+                !isAllowedUniversalEndpoint(parameter.decodedValue)
             }
         }
         return if (unsafeCallback) AfirmaParseErrorCode.UNSAFE_CALLBACK_URL else null
@@ -148,7 +139,7 @@ class UniversalAfirmaUriParser {
         val encodedName = if (separator == -1) segment else segment.substring(0, separator)
         val encodedValue = if (separator == -1) "" else segment.substring(separator + 1)
         val name = encodedName.takeIf { hasValidPercentEncoding(it) }
-            ?.let { runCatching { Uri.decode(it).lowercase(Locale.ROOT) }.getOrNull() }
+            ?.let { runCatching { Uri.decode(it).lowercase(java.util.Locale.ROOT) }.getOrNull() }
         val value = encodedValue.takeIf { hasValidPercentEncoding(it) }
             ?.let { runCatching { Uri.decode(it) }.getOrNull() }
         return if (name != null && value != null && PARAMETER_NAME.matches(name)) {
