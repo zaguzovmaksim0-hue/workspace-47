@@ -422,13 +422,27 @@ class JuntaWebViewClient(
 
     private fun detectBlankDocument(view: WebView) {
         runCatching {
+            val navigationEpoch = currentNavigationEpoch()
+            val finishedUrl = observedTopLevelUrl.get()
             view.evaluateJavascript(BLANK_DOCUMENT_PROBE) { result ->
-                if (result?.removeSurrounding("\"", "\"") == BLANK_DOCUMENT_RESULT && isCurrentWebView(view)) {
+                if (isCurrentBlankProbeResult(view, result, navigationEpoch, finishedUrl)) {
                     logger.recordBrowserEvent(DiagnosticEventCode.NETWORK_ERROR)
                     callbacks.onBrowserError(BrowserErrorCode.BLANK_DOCUMENT)
                 }
             }
         }
+    }
+
+    private fun isCurrentBlankProbeResult(
+        view: WebView,
+        result: String?,
+        navigationEpoch: Long,
+        finishedUrl: String?,
+    ): Boolean {
+        val isBlankDocument = result?.removeSurrounding("\"", "\"") == BLANK_DOCUMENT_RESULT
+        val isSameNavigation = currentNavigationEpoch() == navigationEpoch &&
+            observedTopLevelUrl.get() == finishedUrl
+        return isBlankDocument && isCurrentWebView(view) && isSameNavigation
     }
 
     override fun shouldInterceptRequest(
