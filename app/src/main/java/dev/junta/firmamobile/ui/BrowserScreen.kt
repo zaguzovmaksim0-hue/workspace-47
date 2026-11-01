@@ -95,6 +95,7 @@ import dev.junta.firmamobile.browser.ClientAuthWebViewClient
 import dev.junta.firmamobile.browser.EuskadiClientAuthPostBridgeAdapter
 import dev.junta.firmamobile.browser.JuntaNavigationPolicy
 import dev.junta.firmamobile.browser.JuntaWebViewClient
+import dev.junta.firmamobile.browser.IfefSessionWarmupController
 import dev.junta.firmamobile.browser.MiniAppletBridgeMode
 import dev.junta.firmamobile.browser.MiniAppletBridgeRequest
 import dev.junta.firmamobile.browser.MelillaBatchBridgeRequest
@@ -257,6 +258,12 @@ fun BrowserScreen(
         onDispose { closePopup(restoreOwner = false); popupLease.invalidate() }
     }
 
+    val ifefWarmupController = remember {
+        IfefSessionWarmupController(
+            scheduleTimeout = { action -> mainHandler.postDelayed(action, WARMUP_TIMEOUT_MS) },
+            loadTarget = { target -> webViewRef.get()?.loadUrl(target) },
+        )
+    }
     val navigationPolicy = remember(selectedServiceId) {
         JuntaNavigationPolicy(selectedServiceId)
     }
@@ -856,6 +863,7 @@ fun BrowserScreen(
             }
 
             override fun onTopLevelNavigationStarted(url: String) {
+                ifefWarmupController.onNavigationStarted(url, navigationEpoch.longValue)
                 val inPlaceHandler = inPlaceClientAuthHandlerRef.get()
                 val continuingConfirmedClientAuth =
                     inPlaceHandler?.hasProceeded() == true && inPlaceHandler.isAuthFlowUrl(url)
@@ -888,6 +896,8 @@ fun BrowserScreen(
             }
 
             override fun onTopLevelPageFinished(url: String) {
+                ifefWarmupController.onPageFinished(url, navigationEpoch.longValue)
+
                 val handler = inPlaceClientAuthHandlerRef.get() ?: return
                 if (handler.hasProceeded() && !handler.isAuthFlowUrl(url)) {
                     finishConfirmedInPlaceClientAuthAfterNavigation(handler)
@@ -1691,10 +1701,11 @@ fun BrowserScreen(
                             }
                         } else if (tlsGrant == null) {
                             val requestedUrl = pendingNormalUrl.getAndSet(null)
-                            if (requestedUrl != null) {
-                                webView.loadUrl(requestedUrl)
-                            } else {
-                                webView.loadUrl(validatedEntryUrl)
+                            val entryTarget = requestedUrl ?: validatedEntryUrl
+                            val warmedByIfef = ifefWarmupController
+                                .startIfEligible(entryTarget, navigationEpoch.longValue)
+                            if (!warmedByIfef) {
+                                webView.loadUrl(entryTarget)
                             }
                         }
                     }
@@ -2008,6 +2019,8 @@ fun BrowserScreen(
     }
 }
 
+
+private const val WARMUP_TIMEOUT_MS = 8_000L
 
 private class CurrentPageRelayRequestTransport(
     private val store: AfirmaRelayStore,
