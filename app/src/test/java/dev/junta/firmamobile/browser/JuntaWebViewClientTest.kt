@@ -974,6 +974,76 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun staleBlankProbeAfterEpochChangeIsDiscarded() {
+        var epoch = 1L
+        val recordingWebView = RecordingJavascriptWebView(
+            context,
+            result = "\"blank\"",
+            autoDeliverResult = false,
+        )
+        val staleCallbacks = RecordingBrowserCallbacks()
+        val staleClient = JuntaWebViewClient(
+            callbacks = staleCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+            currentNavigationEpoch = { epoch },
+        )
+
+        staleClient.onPageFinished(
+            recordingWebView,
+            "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do",
+        )
+        epoch = 2L
+        recordingWebView.deliverResult("\"blank\"")
+
+        assertFalse(staleCallbacks.events.any { it == "error:BLANK_DOCUMENT" })
+    }
+
+    @Test
+    fun staleBlankProbeAfterTopLevelUrlChangeIsDiscarded() {
+        val firstUrl = "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do"
+        val secondUrl = "https://www.juntadeandalucia.es/servicios/procedencia"
+        val recordingWebView = RecordingJavascriptWebView(
+            context,
+            result = "\"blank\"",
+            autoDeliverResult = false,
+        )
+        val staleCallbacks = RecordingBrowserCallbacks()
+        val staleClient = JuntaWebViewClient(
+            callbacks = staleCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+        )
+
+        staleClient.onPageFinished(recordingWebView, firstUrl)
+        staleClient.onPageStarted(recordingWebView, secondUrl, null)
+        recordingWebView.deliverResult("\"blank\"")
+
+        assertFalse(staleCallbacks.events.any { it == "error:BLANK_DOCUMENT" })
+    }
+
+    @Test
+    fun currentBlankProbeWithSameEpochAndUrlReportsErrorOnce() {
+        val url = "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do"
+        val recordingWebView = RecordingJavascriptWebView(
+            context,
+            result = "\"blank\"",
+            autoDeliverResult = false,
+        )
+        val currentCallbacks = RecordingBrowserCallbacks()
+        val currentClient = JuntaWebViewClient(
+            callbacks = currentCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+        )
+
+        currentClient.onPageFinished(recordingWebView, url)
+        recordingWebView.deliverResult("\"blank\"")
+
+        assertEquals(1, currentCallbacks.events.count { it == "error:BLANK_DOCUMENT" })
+    }
+
+    @Test
     fun finishedDocumentWithVisibleContentDoesNotReportBlankDocument() {
         val recordingWebView = RecordingJavascriptWebView(context, result = "\"content\"")
         val contentCallbacks = RecordingBrowserCallbacks()
@@ -1772,12 +1842,23 @@ class JuntaWebViewClientTest {
     private class RecordingJavascriptWebView(
         context: Context,
         private val result: String = "null",
+        private val autoDeliverResult: Boolean = true,
     ) : WebView(context) {
         val evaluatedScripts = mutableListOf<String>()
+        private var pendingResultCallback: ValueCallback<String>? = null
 
         override fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?) {
             evaluatedScripts += script
-            resultCallback?.onReceiveValue(result)
+            pendingResultCallback = resultCallback
+            if (autoDeliverResult) {
+                resultCallback?.onReceiveValue(result)
+            }
+        }
+
+        fun deliverResult(value: String) {
+            val callback = pendingResultCallback
+            pendingResultCallback = null
+            callback?.onReceiveValue(value)
         }
     }
 
