@@ -32,6 +32,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.ui.JuntaElevatedPanel
+import dev.junta.firmamobile.ui.JuntaPrimaryButton
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
@@ -54,22 +56,26 @@ internal fun CatalogPortalCard(
     modifier: Modifier = Modifier,
 ) {
     val optionsLabel = stringResource(R.string.catalog_site_options)
-    val shape = CutCornerShape(8.dp)
-    Column(
-        modifier = modifier.fillMaxWidth().background(JuntaPaperElevated, shape)
-            .border(1.dp, JuntaHairline, shape).padding(horizontal = 13.dp, vertical = 10.dp)
-            .testTag("catalog-card-${portal.portalId.value}")
-            .pointerInput(portal.portalId, onOptions) { detectTapGestures(onLongPress = { onOptions(portal) }) }
-            .semantics { customActions = listOf(CustomAccessibilityAction(optionsLabel) { onOptions(portal); true }) },
-        verticalArrangement = Arrangement.spacedBy(5.dp),
+    JuntaElevatedPanel(
+        modifier = modifier
+            .pointerInput(portal.portalId, onOptions) {
+                detectTapGestures(onLongPress = { onOptions(portal) })
+            }
+            .semantics {
+                customActions = listOf(
+                    CustomAccessibilityAction(optionsLabel) { onOptions(portal); true },
+                )
+            },
+        testTag = "catalog-card-${portal.portalId.value}",
     ) {
         CatalogPortalHeading(portal, isFavorite, onToggleFavorite)
         CatalogPortalStatusBadge(portal)
-        Button(onClick = { onOpen(portal) }, enabled = portal.canOpen, shape = shape,
-            colors = ButtonDefaults.buttonColors(containerColor = JuntaTeal, contentColor = JuntaPaperElevated),
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("catalog-open-${portal.portalId.value}")) {
-            Text(stringResource(R.string.catalog_open_site))
-        }
+        JuntaPrimaryButton(
+            text = stringResource(R.string.catalog_open_site),
+            onClick = { onOpen(portal) },
+            enabled = portal.canOpen,
+            modifier = Modifier.testTag("catalog-open-${portal.portalId.value}"),
+        )
     }
 }
 
@@ -108,6 +114,8 @@ private fun CatalogPortalHeading(
 private fun CatalogPortalStatusBadge(portal: PortalCatalogItem) {
     val verifiedOn = portal.lastVerifiedOn?.takeIf { portal.supportStatus == PortalSupportStatus.VERIFIED_E2E }
     val verified = verifiedOn != null
+    val showUnverified = portal.supportStatus == PortalSupportStatus.IMPLEMENTED_NOT_E2E
+    if (!verified && !showUnverified) return
     val label = if (verifiedOn != null) {
         val locale = LocalConfiguration.current.locales[0]
         val date = verifiedOn.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
@@ -120,11 +128,15 @@ private fun CatalogPortalStatusBadge(portal: PortalCatalogItem) {
         color = if (verified) JuntaTeal else JuntaPaper,
         contentColor = if (verified) JuntaPaperElevated else JuntaInk,
         border = if (verified) null else BorderStroke(1.dp, JuntaHairline),
-        modifier = Modifier.fillMaxWidth().testTag("catalog-status-${portal.portalId.value}"),
+        modifier = Modifier.testTag("catalog-status-${portal.portalId.value}"),
     ) {
-        Text(label, style = MaterialTheme.typography.labelSmall,
-            maxLines = 2, overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                .then(if (verified) Modifier.testTag("catalog-verified-on-${portal.portalId.value}") else Modifier))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                .then(if (verified) Modifier.testTag("catalog-verified-on-${portal.portalId.value}") else Modifier),
+        )
     }
 }

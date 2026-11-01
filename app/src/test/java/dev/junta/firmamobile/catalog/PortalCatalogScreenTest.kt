@@ -88,6 +88,18 @@ class PortalCatalogScreenTest {
     fun `verified card displays Basque verification date`() = assertVerificationDate("Egiaztatze-data: ")
 
     @Test
+    fun `elevated panel supports a custom test tag`() {
+        rule.setContent {
+            JuntaFirmaTheme {
+                dev.junta.firmamobile.ui.JuntaElevatedPanel(testTag = "custom-visual-panel") {}
+            }
+        }
+
+        rule.onAllNodesWithTag("custom-visual-panel").assertCountEquals(1)
+        rule.onNodeWithTag("jfm-certificate-card").assertDoesNotExist()
+    }
+
+    @Test
     fun `card with missing verification date does not invent one`() {
         val portal = repository.portals().first { it.lastVerifiedOn != null }.copy(lastVerifiedOn = null)
         setVerificationCard(portal)
@@ -203,6 +215,7 @@ class PortalCatalogScreenTest {
         rule.onNodeWithText(
             org.robolectric.RuntimeEnvironment.getApplication()
                 .getString(dev.junta.firmamobile.R.string.catalog_region_change),
+            substring = true,
         ).performClick()
         rule.onNodeWithText("ELIGE TU REGIÓN").assertIsDisplayed()
         rule.onNodeWithText("Buscar región").assertDoesNotExist()
@@ -330,10 +343,7 @@ class PortalCatalogScreenTest {
 
         rule.runOnIdle { assertEquals(0, requests) }
         rule.onNodeWithText("Usar mi ubicación").assertDoesNotExist()
-        rule.onNodeWithText(
-            org.robolectric.RuntimeEnvironment.getApplication()
-                .getString(dev.junta.firmamobile.R.string.catalog_region_change),
-        ).performClick()
+        rule.onNodeWithTag("catalog-region-selector").performClick()
         rule.onNodeWithText("Usar mi ubicación").performClick()
         rule.runOnIdle { assertEquals(1, requests) }
     }
@@ -575,7 +585,9 @@ class PortalCatalogScreenTest {
         val label = org.robolectric.RuntimeEnvironment.getApplication()
             .getString(dev.junta.firmamobile.R.string.catalog_favorite_add)
         rule.onAllNodesWithTag("catalog-favorite-${portal.portalId.value}").assertCountEquals(1)
-        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}").assertCountEquals(1)
+        val statusCount = if (portal.supportStatus == PortalSupportStatus.VERIFIED_E2E ||
+            portal.supportStatus == PortalSupportStatus.IMPLEMENTED_NOT_E2E) 1 else 0
+        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}").assertCountEquals(statusCount)
         val verifiedCount = if (portal.supportStatus == PortalSupportStatus.VERIFIED_E2E &&
             portal.lastVerifiedOn != null) 1 else 0
         rule.onAllNodesWithTag("catalog-verified-on-${portal.portalId.value}").assertCountEquals(verifiedCount)

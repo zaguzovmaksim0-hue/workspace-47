@@ -32,6 +32,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.ui.JuntaElevatedPanel
+import dev.junta.firmamobile.ui.JuntaPrimaryButton
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
 import dev.junta.firmamobile.ui.theme.JuntaPaperElevated
@@ -49,12 +51,11 @@ internal fun CatalogAddressCard(
     modifier: Modifier = Modifier,
 ) {
     val shape = CutCornerShape(8.dp)
-    Column(
-        modifier = modifier.fillMaxWidth().background(JuntaPaperElevated, shape)
-            .border(1.dp, JuntaHairline, shape).padding(horizontal = 14.dp, vertical = 10.dp)
-            .testTag("catalog-address-card"),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    JuntaElevatedPanel(
+        modifier = modifier,
+        testTag = "catalog-address-card",
     ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(stringResource(R.string.catalog_address_title), color = JuntaTealDark,
             style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
         Text(stringResource(R.string.catalog_address_hint), color = JuntaMutedInk,
@@ -101,16 +102,18 @@ internal fun CatalogAddressCard(
             },
         )
         AddressOpenButton(state, onSubmit, Modifier.fillMaxWidth())
+        }
     }
 }
 
 @Composable
 private fun AddressOpenButton(state: CatalogAddressInput, onSubmit: () -> Unit, modifier: Modifier) {
-    Button(onClick = onSubmit, enabled = state.canSubmit,
-        colors = ButtonDefaults.buttonColors(containerColor = JuntaTeal, contentColor = JuntaPaperElevated),
-        modifier = modifier.heightIn(min = 48.dp).testTag("public-web-open-confirm"), shape = CutCornerShape(8.dp)) {
-        Text(stringResource(if (state.opening) R.string.catalog_address_opening else R.string.catalog_open_site))
-    }
+    JuntaPrimaryButton(
+        text = stringResource(if (state.opening) R.string.catalog_address_opening else R.string.catalog_open_site),
+        onClick = onSubmit,
+        enabled = state.canSubmit,
+        modifier = modifier.testTag("public-web-open-confirm"),
+    )
 }
 
 /** Access is only called by the explicit paste action. Never coerce content

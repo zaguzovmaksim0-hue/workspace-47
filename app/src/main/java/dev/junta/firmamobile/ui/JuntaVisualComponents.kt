@@ -146,16 +146,18 @@ private fun JuntaDoubleRule() {
     }
 }
 
+@Suppress("FunctionNaming")
 @Composable
 internal fun JuntaElevatedPanel(
     modifier: Modifier = Modifier,
+    testTag: String = "jfm-certificate-card",
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(end = 6.dp, bottom = 7.dp)
-            .testTag("jfm-certificate-card"),
+            .testTag(testTag),
     ) {
         Box(
             modifier = Modifier
@@ -174,6 +176,7 @@ internal fun JuntaElevatedPanel(
     }
 }
 
+@Suppress("FunctionNaming")
 @Composable
 internal fun JuntaPrimaryButton(
     text: String,
@@ -232,17 +235,20 @@ internal fun JuntaPrimaryButton(
     }
 }
 
+@Suppress("FunctionNaming")
 @Composable
 internal fun JuntaOutlinedAction(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 44.dp),
+            .heightIn(min = 48.dp),
         shape = JuntaButtonShape,
         border = BorderStroke(1.5.dp, JuntaInk),
         colors = ButtonDefaults.outlinedButtonColors(
