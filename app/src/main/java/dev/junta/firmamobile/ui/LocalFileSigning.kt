@@ -171,9 +171,11 @@ private fun localFileSigningLifetime(controller: LocalFileSigningController, unl
 
 @Composable
 private fun localFileSigningButton(unlocked: Boolean, pickerPending: Boolean, onOpen: () -> Unit) {
-    TextButton(enabled = unlocked && !pickerPending, onClick = onOpen) {
-        Text(stringResource(R.string.local_signing_title))
-    }
+    JuntaOutlinedAction(
+        text = stringResource(R.string.local_signing_title),
+        onClick = onOpen,
+        enabled = unlocked && !pickerPending,
+    )
     if (!unlocked) Text(stringResource(R.string.local_signing_unlock))
 }
 

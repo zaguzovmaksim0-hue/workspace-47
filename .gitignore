@@ -33,3 +33,6 @@ qa-credentials.json
 
 # Verified local distribution output
 /dist/
+
+# Local Gradle lock directory
+.gradle-lock/

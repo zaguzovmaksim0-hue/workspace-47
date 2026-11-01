@@ -107,12 +107,11 @@ fun AppRoot(
             CertificateStateBanner(state)
             localFileSigningEntry(state is CertificateUiState.Unlocked)
             if (state !is CertificateUiState.Unlocked) {
-                androidx.compose.material3.TextButton(
+                JuntaOutlinedAction(
+                    text = stringResource(R.string.browse_without_certificate),
                     onClick = onContinue,
-                    modifier = Modifier.fillMaxWidth().testTag("browse-without-certificate"),
-                ) {
-                    Text(stringResource(R.string.browse_without_certificate))
-                }
+                    modifier = Modifier.testTag("browse-without-certificate"),
+                )
             }
             certificateReminderSettings()
             androidx.compose.material3.TextButton(
