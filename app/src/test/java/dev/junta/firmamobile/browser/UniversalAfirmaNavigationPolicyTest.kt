@@ -1,8 +1,6 @@
 package dev.junta.firmamobile.browser
 
-import dev.junta.firmamobile.afirma.AfirmaOperation
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -17,19 +15,17 @@ class UniversalAfirmaNavigationPolicyTest {
     private val page = "https://portal.synthetic.example/form"
 
     @Test
-    fun publicHttpsAfirmaSignIsHandledWithoutAProfile() {
+    fun publicHttpsAfirmaSignCannotGrantProfileSigningAuthority() {
         val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
         val decision = policy.decide(raw, page)
-        assertEquals(NavigationDecision.HandleAfirma::class, decision::class)
-        assertEquals(AfirmaOperation.SIGN, (decision as NavigationDecision.HandleAfirma).request.operation)
+        assertEquals(NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME), decision)
     }
 
     @Test
-    fun publicHttpsAutoFirmaIntentIsHandledWithoutAProfile() {
+    fun publicHttpsAutoFirmaIntentCannotGrantProfileSigningAuthority() {
         val raw = "intent://sign?algorithm=SHA256withRSA&format=PAdEStri&dat=c3ludGhldGlj#Intent;scheme=afirma;package=es.gob.afirma;end"
         val decision = policy.decide(raw, page)
-        assertTrue(decision is NavigationDecision.HandleAfirma)
-        assertEquals(AfirmaOperation.SIGN, (decision as NavigationDecision.HandleAfirma).request.operation)
+        assertEquals(NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME), decision)
     }
 
     @Test
@@ -59,33 +55,25 @@ class UniversalAfirmaNavigationPolicyTest {
     }
 
     @Test
-    fun implicitDefaultHttpsPortIsAcceptedForUniversalAfirma() {
+    fun implicitDefaultHttpsPortStillRequiresNativeBridge() {
         val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
         val decision = policy.decide(raw, page)
-        assertTrue(decision is NavigationDecision.HandleAfirma)
-        val request = (decision as NavigationDecision.HandleAfirma).request
-        assertEquals(raw, request.rawUri)
-        assertEquals("portal.synthetic.example", request.origin.host)
-        assertEquals(443, request.origin.port)
+        assertEquals(NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME), decision)
     }
 
     @Test
-    fun explicitDefaultHttpsPortIsAcceptedAndRawUriIsPreserved() {
+    fun explicitDefaultHttpsPortStillRequiresNativeBridge() {
         val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
         val decision = policy.decide(raw, "https://portal.synthetic.example:443/form")
-        assertTrue(decision is NavigationDecision.HandleAfirma)
-        val request = (decision as NavigationDecision.HandleAfirma).request
-        assertEquals(raw, request.rawUri)
-        assertEquals("portal.synthetic.example", request.origin.host)
-        assertEquals(443, request.origin.port)
+        assertEquals(NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME), decision)
     }
 
     @Test
-    fun crossOriginPublicSignerEndpointIsAcceptedWithoutHostCatalog() {
+    fun crossOriginPublicSignerEndpointStillRequiresNativeBridge() {
         val raw = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj" +
             "&rtservlet=https%3A%2F%2Fafirma.redsara.es%2Fafirma-signature-storage%2FStorageService"
         val decision = policy.decide(raw, page)
-        assertTrue("Expected universal AutoFirma handling: $decision", decision is NavigationDecision.HandleAfirma)
+        assertEquals(NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME), decision)
     }
 
     @Test

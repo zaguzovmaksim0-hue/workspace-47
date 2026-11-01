@@ -407,9 +407,11 @@ class JuntaNavigationPolicy(
         val origin = publicHttpsOrigin(currentPageUrl) ?: return NavigationDecision.Block(
             NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN,
         )
-        return when (val result = universalAfirmaUriParser.parse(rawUrl, origin)) {
+        // Universal signing is accepted only by the main-frame GET native
+        // bridge. Never fall back to the profile-based signing authority.
+        return when (universalAfirmaUriParser.parse(rawUrl, origin)) {
             is dev.junta.firmamobile.afirma.AfirmaParseResult.Success ->
-                NavigationDecision.HandleAfirma(result.request)
+                NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME)
             is dev.junta.firmamobile.afirma.AfirmaParseResult.Failure ->
                 NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI)
         }

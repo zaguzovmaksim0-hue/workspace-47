@@ -1,6 +1,5 @@
 package dev.junta.firmamobile.browser
 
-import dev.junta.firmamobile.afirma.AfirmaOperation
 import dev.junta.firmamobile.afirma.servlet.AfirmaDeliveryResult
 import dev.junta.firmamobile.afirma.servlet.AfirmaResultTransport
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletInvocationParser
@@ -53,8 +52,7 @@ class IfefUniversalAfirmaE2ETest {
     fun publicIfefIntentReachesTheNativeSigningPipelineWithoutAProfile() = runBlocking {
         val raw = intentUri()
         val decision = JuntaNavigationPolicy(null).decide(raw, page)
-        assertTrue("Universal AutoFirma decision: $decision", decision is NavigationDecision.HandleAfirma)
-        assertEquals(AfirmaOperation.SIGN, (decision as NavigationDecision.HandleAfirma).request.operation)
+        assertEquals(NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME), decision)
 
         val extracted = NativeAfirmaNavigation.extract(raw)
         assertEquals("afirma://" + raw.substringAfter("intent://").substringBefore("#Intent"), extracted)

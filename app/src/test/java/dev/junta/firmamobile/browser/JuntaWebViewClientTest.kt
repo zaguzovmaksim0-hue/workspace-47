@@ -59,6 +59,89 @@ class JuntaWebViewClientTest {
     )
 
     @Test
+    fun profilelessMainFramePostCannotFallBackToProfileSigning() {
+        var nativeCalls = 0
+        val universalClient = profilelessClient { _, _, _ -> nativeCalls++; false }
+        for (target in universalAfirmaTargets()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+            assertEquals(0, nativeCalls)
+            assertFalse(callbacks.events.any { it.startsWith("afirma:") })
+            assertTrue(callbacks.events.last().startsWith("blocked:"))
+        }
+    }
+
+    @Test
+    fun profilelessRejectedGetCannotFallBackToProfileSigning() {
+        var nativeCalls = 0
+        val universalClient = profilelessClient { _, _, _ -> nativeCalls++; false }
+        for ((index, target) in universalAfirmaTargets().withIndex()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target)))
+            assertEquals(index + 1, nativeCalls)
+            assertFalse(callbacks.events.any { it.startsWith("afirma:") })
+            assertTrue(callbacks.events.last().startsWith("blocked:"))
+        }
+    }
+
+    @Test
+    fun profilelessIframeAndStaleViewCannotInvokeEitherSigningPath() {
+        var nativeCalls = 0
+        var active = true
+        val universalClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(null),
+            currentPageUrl = { "https://portal.synthetic.example/form" },
+            isActiveWebView = { active },
+            onNativeAfirmaInvocation = { _, _, _ -> nativeCalls++; true },
+        )
+        for (target in universalAfirmaTargets()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
+        }
+        active = false
+        for (target in universalAfirmaTargets()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target)))
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+        }
+        assertEquals(0, nativeCalls)
+        assertTrue(callbacks.events.isEmpty())
+    }
+
+    @Test
+    fun profilelessAcceptedGetInvokesOnlyNativeSigningExactlyOnce() {
+        val nativeCalls = mutableListOf<Triple<WebView, String, String>>()
+        val universalClient = profilelessClient { view, raw, page ->
+            nativeCalls += Triple(view, raw, page)
+            true
+        }
+        for ((index, target) in universalAfirmaTargets().withIndex()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target)))
+            assertEquals(index + 1, nativeCalls.size)
+            assertSame(webView, nativeCalls.last().first)
+            assertEquals(universalAfirmaTargets().first(), nativeCalls.last().second)
+            assertEquals("https://portal.synthetic.example/form", nativeCalls.last().third)
+            assertTrue(callbacks.events.isEmpty())
+        }
+    }
+
+    private fun profilelessClient(
+        invoke: (WebView, String, String) -> Boolean,
+    ) = JuntaWebViewClient(
+        callbacks = callbacks,
+        logger = logger,
+        navigationPolicy = JuntaNavigationPolicy(null),
+        currentPageUrl = { "https://portal.synthetic.example/form" },
+        onNativeAfirmaInvocation = invoke,
+    )
+
+    private fun universalAfirmaTargets(): List<String> {
+        val query = "sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
+        return listOf(
+            "afirma://$query",
+            "intent://$query#Intent;scheme=afirma;package=es.gob.afirma;end",
+        )
+    }
+
+    @Test
     fun allowedNavigationReturnsFalseWithoutCallingLoadUrlOrCallbacks() {
         val overridden = client.shouldOverrideUrlLoading(
             webView,
