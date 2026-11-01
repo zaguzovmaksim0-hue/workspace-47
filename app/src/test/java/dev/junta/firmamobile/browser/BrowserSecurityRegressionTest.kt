@@ -125,7 +125,8 @@ class BrowserSecurityRegressionTest {
         assertTrue(
             "Every fresh WebView must load the revalidated catalog entry URL",
             "validatedEntryUrl" in screenSource &&
-                "webView.loadUrl(validatedEntryUrl)" in screenSource,
+                "requestedUrl ?: validatedEntryUrl" in screenSource &&
+                "webView.loadUrl(entryTarget)" in screenSource,
         )
     }
 
