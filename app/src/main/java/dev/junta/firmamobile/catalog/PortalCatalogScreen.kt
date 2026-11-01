@@ -2,6 +2,7 @@ package dev.junta.firmamobile.catalog
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -50,9 +51,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -68,6 +71,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.ui.JuntaElevatedPanel
+import dev.junta.firmamobile.ui.JuntaPrimaryButton
+import dev.junta.firmamobile.ui.theme.JuntaDisplayFont
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
@@ -104,6 +110,7 @@ fun PortalCatalogScreen(
     CatalogUserMessageEffect(state.userMessage, snackbarHostState, onUserMessageShown)
 
     Box(modifier = Modifier.fillMaxSize().background(JuntaPaper)) {
+        CatalogBackgroundArt()
         CatalogScreenContent(
             state = state,
             onSearchTextChange = onSearchTextChange,
@@ -989,15 +996,23 @@ private fun CatalogAddressErrorText(error: CatalogAddressInput.Error?) {
 
 @Suppress("FunctionNaming")
 @Composable
+private fun CatalogBackgroundArt() {
+    Image(
+        painter = painterResource(R.drawable.jfm_home_background),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier.fillMaxSize().testTag("jfm-catalog-background"),
+    )
+}
+
+@Suppress("FunctionNaming")
+@Composable
 private fun CatalogOpenAddressButton(onClick: () -> Unit) {
-    Button(
+    JuntaPrimaryButton(
+        text = stringResource(R.string.catalog_open_site),
         onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = JuntaTeal, contentColor = JuntaPaperElevated),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("public-web-open-confirm"),
-        shape = CatalogShape,
-    ) {
-        Text(stringResource(R.string.catalog_open_site))
-    }
+        modifier = Modifier.testTag("public-web-open-confirm"),
+    )
 }
 
 @Suppress("FunctionNaming")
@@ -1033,9 +1048,13 @@ private fun CatalogHeader(onBackToCertificate: () -> Unit) {
 @Composable
 private fun RegionSelectorCard(selectedRegion: PortalRegionCode, onChangeRegion: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(role = Role.Button, onClick = onChangeRegion)
+            .testTag("catalog-region-selector")
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
             text = stringResource(R.string.catalog_region_inline, selectedRegion.localizedName()),
@@ -1045,9 +1064,11 @@ private fun RegionSelectorCard(selectedRegion: PortalRegionCode, onChangeRegion:
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = onChangeRegion, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.catalog_region_change))
-        }
+        Text(
+            text = stringResource(R.string.catalog_region_change),
+            color = JuntaTealDark,
+            style = MaterialTheme.typography.labelLarge,
+        )
     }
 }
 
@@ -1079,7 +1100,11 @@ private fun CatalogSectionHeader(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(section.localizedTitle(), color = JuntaTealDark, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    section.localizedTitle(),
+                    color = JuntaTealDark,
+                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = JuntaDisplayFont),
+                )
                 Text(section.localizedDescription(), color = JuntaMutedInk, style = MaterialTheme.typography.bodySmall)
                 val serviceCount = section.items.size
                 Text(
