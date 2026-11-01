@@ -140,6 +140,8 @@ internal fun browserNotice(
     compatibilityError -> stringResource(R.string.browser_compatibility_error)
     browserError == BrowserErrorCode.CLIENT_CERT_PREFERENCES ->
         stringResource(R.string.browser_client_cert_preferences_error)
+    browserError == BrowserErrorCode.BLANK_DOCUMENT ->
+        stringResource(R.string.browser_blank_document_error)
     browserError != null -> stringResource(R.string.browser_load_error)
     blockedReason == NavigationBlockReason.PLAY_STORE_FALLBACK ->
         stringResource(R.string.browser_play_store_blocked)

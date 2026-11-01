@@ -1,6 +1,10 @@
 // BrowserPopupHeader.kt
 package dev.junta.firmamobile.ui
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -45,3 +49,7 @@ internal fun BrowserPopupHeader(onClose: () -> Unit) {
         }
     }
 }
+
+/** The popup container owns top/cutout insets; descendants consume them once. */
+internal fun Modifier.browserPopupSafeInsets(insets: WindowInsets): Modifier =
+    windowInsetsPadding(insets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))

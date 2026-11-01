@@ -59,6 +59,89 @@ class JuntaWebViewClientTest {
     )
 
     @Test
+    fun profilelessMainFramePostCannotFallBackToProfileSigning() {
+        var nativeCalls = 0
+        val universalClient = profilelessClient { _, _, _ -> nativeCalls++; false }
+        for (target in universalAfirmaTargets()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+            assertEquals(0, nativeCalls)
+            assertFalse(callbacks.events.any { it.startsWith("afirma:") })
+            assertTrue(callbacks.events.last().startsWith("blocked:"))
+        }
+    }
+
+    @Test
+    fun profilelessRejectedGetCannotFallBackToProfileSigning() {
+        var nativeCalls = 0
+        val universalClient = profilelessClient { _, _, _ -> nativeCalls++; false }
+        for ((index, target) in universalAfirmaTargets().withIndex()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target)))
+            assertEquals(index + 1, nativeCalls)
+            assertFalse(callbacks.events.any { it.startsWith("afirma:") })
+            assertTrue(callbacks.events.last().startsWith("blocked:"))
+        }
+    }
+
+    @Test
+    fun profilelessIframeAndStaleViewCannotInvokeEitherSigningPath() {
+        var nativeCalls = 0
+        var active = true
+        val universalClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(null),
+            currentPageUrl = { "https://portal.synthetic.example/form" },
+            isActiveWebView = { active },
+            onNativeAfirmaInvocation = { _, _, _ -> nativeCalls++; true },
+        )
+        for (target in universalAfirmaTargets()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
+        }
+        active = false
+        for (target in universalAfirmaTargets()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target)))
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+        }
+        assertEquals(0, nativeCalls)
+        assertTrue(callbacks.events.isEmpty())
+    }
+
+    @Test
+    fun profilelessAcceptedGetInvokesOnlyNativeSigningExactlyOnce() {
+        val nativeCalls = mutableListOf<Triple<WebView, String, String>>()
+        val universalClient = profilelessClient { view, raw, page ->
+            nativeCalls += Triple(view, raw, page)
+            true
+        }
+        for ((index, target) in universalAfirmaTargets().withIndex()) {
+            assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target)))
+            assertEquals(index + 1, nativeCalls.size)
+            assertSame(webView, nativeCalls.last().first)
+            assertEquals(universalAfirmaTargets().first(), nativeCalls.last().second)
+            assertEquals("https://portal.synthetic.example/form", nativeCalls.last().third)
+            assertTrue(callbacks.events.isEmpty())
+        }
+    }
+
+    private fun profilelessClient(
+        invoke: (WebView, String, String) -> Boolean,
+    ) = JuntaWebViewClient(
+        callbacks = callbacks,
+        logger = logger,
+        navigationPolicy = JuntaNavigationPolicy(null),
+        currentPageUrl = { "https://portal.synthetic.example/form" },
+        onNativeAfirmaInvocation = invoke,
+    )
+
+    private fun universalAfirmaTargets(): List<String> {
+        val query = "sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
+        return listOf(
+            "afirma://$query",
+            "intent://$query#Intent;scheme=afirma;package=es.gob.afirma;end",
+        )
+    }
+
+    @Test
     fun allowedNavigationReturnsFalseWithoutCallingLoadUrlOrCallbacks() {
         val overridden = client.shouldOverrideUrlLoading(
             webView,
@@ -568,6 +651,37 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun mainDocumentCertificateFailureIsVisibleAndNeverBypassesTls() {
+        val url = "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do?utm_source=chatgpt.com"
+        client.onPageStarted(webView, url, null)
+        callbacks.events.clear()
+        val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
+        val cert = android.net.http.SslCertificate("CN=synthetic.invalid", "CN=synthetic.invalid", "", "")
+        val error = SslError(SslError.SSL_UNTRUSTED, cert, url)
+
+        client.onReceivedSslError(webView, handler, error)
+
+        assertTrue(shadowOf(handler).wasCancelCalled())
+        assertFalse(shadowOf(handler).wasProceedCalled())
+        assertEquals(listOf("error:SSL_ERROR"), callbacks.events)
+    }
+
+    @Test
+    fun subresourceCertificateFailureDoesNotReplaceMainDocument() {
+        val url = "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do"
+        client.onPageStarted(webView, url, null)
+        callbacks.events.clear()
+        val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
+        val cert = android.net.http.SslCertificate("CN=synthetic.invalid", "CN=synthetic.invalid", "", "")
+        client.onReceivedSslError(webView, handler,
+            SslError(SslError.SSL_UNTRUSTED, cert, "https://sedeelectronica.ifef.es/static/banner.png"))
+
+        assertTrue(shadowOf(handler).wasCancelCalled())
+        assertFalse(shadowOf(handler).wasProceedCalled())
+        assertTrue(callbacks.events.isEmpty())
+    }
+
+    @Test
     fun sslErrorsAlwaysCancelWithoutUnownedApplicationError() {
         val handler = Shadow.newInstanceOf(SslErrorHandler::class.java)
         val sslError = Shadow.newInstanceOf(SslError::class.java)
@@ -838,6 +952,43 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun blankFinishedDocumentFailsClosedWithRetryableError() {
+        val recordingWebView = RecordingJavascriptWebView(context, result = "\"blank\"")
+        val blankCallbacks = RecordingBrowserCallbacks()
+        val blankClient = JuntaWebViewClient(
+            callbacks = blankCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+        )
+
+        blankClient.onPageFinished(recordingWebView, "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do")
+
+        assertEquals(1, recordingWebView.evaluatedScripts.size)
+        assertEquals(
+            listOf(
+                "url:https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do",
+                "error:BLANK_DOCUMENT",
+            ),
+            blankCallbacks.events,
+        )
+    }
+
+    @Test
+    fun finishedDocumentWithVisibleContentDoesNotReportBlankDocument() {
+        val recordingWebView = RecordingJavascriptWebView(context, result = "\"content\"")
+        val contentCallbacks = RecordingBrowserCallbacks()
+        val contentClient = JuntaWebViewClient(
+            callbacks = contentCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(ProfileId("junta-andalucia")),
+        )
+
+        contentClient.onPageFinished(recordingWebView, "https://sedeelectronica.ifef.es/portalCiudadano/sede/buscador.do")
+
+        assertTrue(contentCallbacks.events.none { it == "error:BLANK_DOCUMENT" })
+    }
+
+    @Test
     fun ofvirtualPageFinishInjectsMenuCompatibilityWithoutTouchingPortalData() {
         val recordingWebView = RecordingJavascriptWebView(context)
         val ofvirtualClient = JuntaWebViewClient(
@@ -849,7 +1000,7 @@ class JuntaWebViewClientTest {
 
         ofvirtualClient.onPageFinished(recordingWebView, OFVIRTUAL_PAGE)
 
-        val script = recordingWebView.evaluatedScripts.single()
+        val script = recordingWebView.evaluatedScripts.first { it.contains("classList.toggle('show'") }
         assertTrue(script.contains("MenÃº"))
         assertTrue(script.contains("Menú"))
         assertTrue(script.contains("data-toggle=\"collapse\""))
@@ -1618,12 +1769,15 @@ class JuntaWebViewClientTest {
         override fun getRequestHeaders(): Map<String, String> = emptyMap()
     }
 
-    private class RecordingJavascriptWebView(context: Context) : WebView(context) {
+    private class RecordingJavascriptWebView(
+        context: Context,
+        private val result: String = "null",
+    ) : WebView(context) {
         val evaluatedScripts = mutableListOf<String>()
 
         override fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?) {
             evaluatedScripts += script
-            resultCallback?.onReceiveValue("null")
+            resultCallback?.onReceiveValue(result)
         }
     }
 

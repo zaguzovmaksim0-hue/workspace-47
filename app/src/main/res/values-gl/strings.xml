@@ -85,6 +85,7 @@
     <string name="browser_delete_all_data_failed">Non se puideron borrar todos os datos web.</string>
     <string name="browser_retry">Tentar de novo</string>
     <string name="browser_compatibility_error">Este WebView non ofrece a ponte segura requirida. A sinatura permanece desactivada.</string>
+    <string name="browser_blank_document_error">A páxina cargouse, pero non mostrou contido visible. Téntao de novo ou ábrea nun navegador externo.</string>
     <string name="browser_load_error">Non se puido cargar o portal de forma segura.</string>
     <string name="browser_client_cert_preferences_error">Non se puido preparar unha sesión nova de certificado. Volve iniciar o acceso.</string>
     <string name="browser_client_cert_preferences_clearing">Preparando unha sesión nova de certificado…</string>

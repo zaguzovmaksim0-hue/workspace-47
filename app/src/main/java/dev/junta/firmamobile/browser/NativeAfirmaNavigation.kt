@@ -20,10 +20,27 @@ internal object NativeAfirmaNavigation {
             else -> return null
         }
         val uri = runCatching { URI(candidate) }.getOrNull() ?: return null
-        if (!uri.scheme.equals("afirma", true) || uri.isOpaque || uri.rawUserInfo != null ||
-            uri.port != -1 || uri.rawFragment != null || uri.rawPath !in setOf("", "/") ||
-            uri.host?.lowercase(java.util.Locale.ROOT) !in setOf("sign", "cosign", "countersign", "batch", "selectcert")
-        ) return null
+        if (!hasAllowedAfirmaShape(uri) || !hasAllowedAfirmaOperation(uri)) return null
         return candidate
     }
+
+    private fun hasAllowedAfirmaShape(uri: java.net.URI): Boolean =
+        hasAllowedAfirmaScheme(uri) && hasAllowedAfirmaAddress(uri)
+
+    private fun hasAllowedAfirmaScheme(uri: java.net.URI): Boolean =
+        uri.scheme.equals("afirma", true) && !uri.isOpaque
+
+    private fun hasAllowedAfirmaAddress(uri: java.net.URI): Boolean =
+        uri.rawUserInfo == null && uri.port == -1 && uri.rawFragment == null
+
+    private fun hasAllowedAfirmaOperation(uri: java.net.URI): Boolean =
+        hasAllowedAfirmaPath(uri) &&
+            uri.host?.lowercase(java.util.Locale.ROOT) in ALLOWED_AFIRMA_OPERATIONS
+
+    private fun hasAllowedAfirmaPath(uri: java.net.URI): Boolean =
+        uri.rawPath == null || uri.rawPath in setOf("", "/")
+
+    private val ALLOWED_AFIRMA_OPERATIONS = setOf(
+        "sign", "cosign", "countersign", "batch", "selectcert",
+    )
 }

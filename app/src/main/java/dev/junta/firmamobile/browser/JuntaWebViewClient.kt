@@ -33,6 +33,7 @@ enum class BrowserErrorCode {
     RENDER_PROCESS_GONE,
     SAFE_BROWSING,
     CLIENT_CERT_PREFERENCES,
+    BLANK_DOCUMENT,
 }
 
 interface BrowserNavigationCallbacks {
@@ -416,6 +417,18 @@ class JuntaWebViewClient(
         callbacks.onTopLevelUrlChanged(url)
         callbacks.onTopLevelPageFinished(url)
         OfvirtualPageCompatibility.apply(view, url)
+        detectBlankDocument(view)
+    }
+
+    private fun detectBlankDocument(view: WebView) {
+        runCatching {
+            view.evaluateJavascript(BLANK_DOCUMENT_PROBE) { result ->
+                if (result?.removeSurrounding("\"", "\"") == BLANK_DOCUMENT_RESULT && isCurrentWebView(view)) {
+                    logger.recordBrowserEvent(DiagnosticEventCode.NETWORK_ERROR)
+                    callbacks.onBrowserError(BrowserErrorCode.BLANK_DOCUMENT)
+                }
+            }
+        }
     }
 
     override fun shouldInterceptRequest(
@@ -468,7 +481,13 @@ class JuntaWebViewClient(
         handler.cancel()
         if (isCurrentWebView(view)) {
             logger.recordBrowserEvent(DiagnosticEventCode.SSL_ERROR_CANCELLED)
-            onInteractiveClientAuthSslError(view, runCatching { error.url }.getOrNull())
+            val failedUrl = runCatching { error.url }.getOrNull()
+            onInteractiveClientAuthSslError(view, failedUrl)
+            // Only the observed main document owns the visible page error. A TLS
+            // failure in an iframe, image or another resource must not replace it.
+            if (failedUrl != null && failedUrl == observedTopLevelUrl.get()) {
+                callbacks.onBrowserError(BrowserErrorCode.SSL_ERROR)
+            }
         }
     }
 
@@ -598,6 +617,22 @@ class JuntaWebViewClient(
     private companion object {
         const val HTTP_ERROR_START = 400
         const val CHROMIUM_CONNECTION_TIMED_OUT = "net::ERR_CONNECTION_TIMED_OUT"
+        const val BLANK_DOCUMENT_RESULT = "blank"
+        val BLANK_DOCUMENT_PROBE = """
+            (() => {
+              const body = document.body;
+              if (!body) return 'blank';
+              const text = (body.innerText || '').trim();
+              if (text.length > 0) return 'content';
+              const visible = Array.from(body.querySelectorAll('*')).some((element) => {
+                const rect = element.getBoundingClientRect();
+                const style = getComputedStyle(element);
+                return rect.width > 0 && rect.height > 0 &&
+                  style.display !== 'none' && style.visibility !== 'hidden';
+              });
+              return visible ? 'content' : 'blank';
+            })()
+        """.trimIndent()
         const val UNKNOWN_METHOD = "UNKNOWN"
         const val GET_METHOD = "GET"
         val CONFIRMED_IN_PLACE_TRANSITIONS = setOf(

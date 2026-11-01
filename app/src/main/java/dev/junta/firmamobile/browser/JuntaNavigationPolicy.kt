@@ -6,6 +6,7 @@ import dev.junta.firmamobile.afirma.AfirmaParseResult
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.afirma.AfirmaUriParser
 import dev.junta.firmamobile.network.JuntaOriginPolicy
+import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
@@ -42,6 +43,7 @@ class JuntaNavigationPolicy(
     private val selectedProfileId: ProfileId?,
     private val registry: SiteProfileRegistry = BuiltInSiteProfiles.runtimeRegistry,
     private val afirmaUriParser: AfirmaUriParser = AfirmaUriParser(),
+    private val universalAfirmaUriParser: UniversalAfirmaUriParser = UniversalAfirmaUriParser(),
 ) {
     init {
         require(selectedProfileId == null || registry.profile(selectedProfileId) != null) {
@@ -188,7 +190,9 @@ class JuntaNavigationPolicy(
     }
 
     private fun decideAfirma(rawUrl: String, currentPageUrl: String?): NavigationDecision {
-        val selectedProfileId = selectedProfileId ?: return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
+        if (selectedProfileId == null) {
+            return decideUniversalAfirma(rawUrl, currentPageUrl)
+        }
         val origin = currentPageUrl?.let { current ->
             try {
                 JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)
@@ -339,7 +343,12 @@ class JuntaNavigationPolicy(
     }
 
     private fun decideIntent(rawUrl: String, currentPageUrl: String?): NavigationDecision {
-        val selectedProfileId = selectedProfileId ?: return NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN)
+        if (selectedProfileId == null) {
+            val extracted = NativeAfirmaNavigation.extract(rawUrl) ?: return NavigationDecision.Block(
+                NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT,
+            )
+            return decideUniversalAfirma(extracted, currentPageUrl)
+        }
         val trustedOrigin = currentPageUrl?.let { current ->
             try {
                 JuntaOriginPolicy.signingOriginFor(Uri.parse(current), selectedProfileId)
@@ -394,6 +403,30 @@ class JuntaNavigationPolicy(
         return NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_EXTERNAL_INTENT)
     }
 
+    private fun decideUniversalAfirma(rawUrl: String, currentPageUrl: String?): NavigationDecision {
+        val origin = publicHttpsOrigin(currentPageUrl) ?: return NavigationDecision.Block(
+            NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN,
+        )
+        // Universal signing is accepted only by the main-frame GET native
+        // bridge. Never fall back to the profile-based signing authority.
+        return when (universalAfirmaUriParser.parse(rawUrl, origin)) {
+            is dev.junta.firmamobile.afirma.AfirmaParseResult.Success ->
+                NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME)
+            is dev.junta.firmamobile.afirma.AfirmaParseResult.Failure ->
+                NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI)
+        }
+    }
+
+    private fun publicHttpsOrigin(rawUrl: String?): TrustedOrigin? {
+        // The source page must be a publicly resolvable HTTPS origin. This is
+        // separate from destination endpoint validation: a public page cannot
+        // authorize a private signer endpoint, and a public endpoint cannot
+        // make a loopback/intranet source page trusted.
+        val uri = rawUrl?.let { runCatching { PublicBrowserAddress.parse(it) }.getOrNull() }
+        val host = uri?.host?.lowercase(Locale.ROOT)
+        return host?.let { TrustedOrigin("https", it, DEFAULT_HTTPS_PORT) }
+    }
+
     private fun isSafeExternalHttpsUrl(uri: Uri): Boolean =
         !uri.isOpaque &&
             uri.encodedUserInfo == null &&
@@ -419,6 +452,7 @@ class JuntaNavigationPolicy(
     }
 
     companion object {
+        private const val DEFAULT_HTTPS_PORT = 443
         internal const val AUTOFIRMA_PACKAGE = "es.gob.afirma"
         private val SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID = ProfileId("seguridad-social-sede-autofirma")
         private const val SEGURIDAD_SOCIAL_HOST = "sede.seg-social.gob.es"

@@ -85,6 +85,7 @@
     <string name="browser_delete_all_data_failed">Ezin izan dira web-datu guztiak ezabatu.</string>
     <string name="browser_retry">Saiatu berriro</string>
     <string name="browser_compatibility_error">WebView honek ez du behar den zubi segurua eskaintzen. Sinadurak desgaituta jarraitzen du.</string>
+    <string name="browser_blank_document_error">Orria kargatu da, baina ez du eduki ikusgarririk erakutsi. Saiatu berriro edo ireki kanpoko nabigatzaile batean.</string>
     <string name="browser_load_error">Ezin izan da ataria modu seguruan kargatu.</string>
     <string name="browser_client_cert_preferences_error">Ezin izan da ziurtagiriaren saio berri bat prestatu. Hasi berriro sarbidea.</string>
     <string name="browser_client_cert_preferences_clearing">Ziurtagiriaren saio berri bat prestatzen…</string>

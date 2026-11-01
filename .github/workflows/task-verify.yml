@@ -75,3 +75,11 @@ jobs:
           IFS=',' read -ra names <<< "$TESTS"
           for n in "${names[@]}"; do [ -n "$n" ] && args+=(--tests "*$n*"); done
           ./gradlew :app:testReleaseUnitTest -x verifyReleaseSigning --no-daemon --console=plain "${args[@]}"
+      - name: Retain release unit-test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: task-verify-release-unit-results-${{ github.sha }}
+          path: app/build/test-results/testReleaseUnitTest/
+          if-no-files-found: warn
+          retention-days: 3
