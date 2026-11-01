@@ -896,12 +896,7 @@ fun BrowserScreen(
             }
 
             override fun onTopLevelPageFinished(url: String) {
-                val warmupTarget = ifefWarmupController
-                    .onPageFinished(url, navigationEpoch.longValue)
-                if (warmupTarget != null) {
-                    webViewRef.get()?.loadUrl(warmupTarget)
-                    return
-                }
+                ifefWarmupController.onPageFinished(url, navigationEpoch.longValue)
 
                 val handler = inPlaceClientAuthHandlerRef.get() ?: return
                 if (handler.hasProceeded() && !handler.isAuthFlowUrl(url)) {
@@ -1707,9 +1702,11 @@ fun BrowserScreen(
                         } else if (tlsGrant == null) {
                             val requestedUrl = pendingNormalUrl.getAndSet(null)
                             val entryTarget = requestedUrl ?: validatedEntryUrl
-                            val warmupUrl = ifefWarmupController
+                            val warmedByIfef = ifefWarmupController
                                 .startIfEligible(entryTarget, navigationEpoch.longValue)
-                            webView.loadUrl(warmupUrl ?: entryTarget)
+                            if (!warmedByIfef) {
+                                webView.loadUrl(entryTarget)
+                            }
                         }
                     }
                     },

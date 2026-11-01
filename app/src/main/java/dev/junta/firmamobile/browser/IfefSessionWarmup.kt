@@ -32,75 +32,74 @@ object IfefSessionWarmup {
             uri.path != ENTIDADES_PATH &&
             !hasEntityContext
     }
+
+    internal fun isWarmupChainUrl(url: String): Boolean {
+        val uri = runCatching { URI(url) }.getOrNull() ?: return false
+        return uri.scheme.equals("https", ignoreCase = true) &&
+            uri.host.equals(IFEF_HOST, ignoreCase = true) &&
+            (uri.path.isNullOrEmpty() || uri.path == "/" || uri.path == ENTIDADES_PATH)
+    }
 }
 
 /**
- * Coordinates one optional IFEF warm-up per browser session. It fails open:
- * timeout or a changed navigation epoch loads the original target directly.
+ * Coordinates one optional IFEF warm-up per browser session.
+ *
+ * The controller owns every navigation performed for the warm-up flow. The
+ * root page may redirect to `entidades.do`; both starts advance the browser
+ * epoch, so completion is identified by the pending warm-up state and the
+ * resulting IFEF URL rather than by one fixed epoch. Timeout fails open by
+ * loading the original target once, unless the warm-up was cancelled first.
  */
 class IfefSessionWarmupController(
     private val scheduleTimeout: (() -> Unit) -> Unit,
     private val loadTarget: (String) -> Unit,
 ) {
     private var pendingTarget: String? = null
-    private var pendingEpoch: Long = -1L
 
     var warmed: Boolean = false
         private set
 
-    fun startIfEligible(targetUrl: String, navigationEpoch: Long): String? {
-        val warmupUrl = IfefSessionWarmup.WARMUP_URL
+    @Suppress("UnusedParameter")
+    fun startIfEligible(targetUrl: String, navigationEpoch: Long): Boolean {
         val isEligible = !warmed &&
             pendingTarget == null &&
             IfefSessionWarmup.shouldWarmUp(targetUrl, alreadyWarmed = warmed)
 
         if (isEligible) {
             pendingTarget = targetUrl
-            pendingEpoch = navigationEpoch
-            scheduleTimeout { onTimeout(navigationEpoch) }
-            loadTarget(warmupUrl)
+            scheduleTimeout { onTimeout() }
+            loadTarget(IfefSessionWarmup.WARMUP_URL)
         }
-        return warmupUrl.takeIf { isEligible }
+        return isEligible
     }
 
-    fun onPageFinished(finishedUrl: String, navigationEpoch: Long): String? {
-        val target = pendingTarget
-        val isWarmupCompletion = target != null &&
-            navigationEpoch == pendingEpoch &&
-            finishedUrl == IfefSessionWarmup.WARMUP_URL
-
-        if (isWarmupCompletion) {
-            warmed = true
-            pendingTarget = null
-            loadTarget(target)
-        }
-        return target.takeIf { isWarmupCompletion }
-    }
-
+    @Suppress("UnusedParameter")
     fun onNavigationStarted(startedUrl: String, navigationEpoch: Long) {
-        val uri = runCatching { URI(startedUrl) }.getOrNull()
-        val isSameHttpsHost = uri != null &&
-            uri.scheme.equals("https", ignoreCase = true) &&
-            uri.host.equals(IfefSessionWarmup.IFEF_HOST, ignoreCase = true)
-
         if (pendingTarget != null &&
-            (navigationEpoch != pendingEpoch || !isSameHttpsHost)
+            !IfefSessionWarmup.isWarmupChainUrl(startedUrl)
         ) {
             clear()
         }
     }
 
-    private fun onTimeout(navigationEpoch: Long) {
-        val target = pendingTarget
-        if (target != null && navigationEpoch == pendingEpoch) {
-            warmed = true
-            pendingTarget = null
-            loadTarget(target)
-        }
+    @Suppress("UnusedParameter")
+    fun onPageFinished(finishedUrl: String, navigationEpoch: Long) {
+        val target = pendingTarget ?: return
+        if (!IfefSessionWarmup.isWarmupChainUrl(finishedUrl)) return
+
+        warmed = true
+        clear()
+        loadTarget(target)
+    }
+
+    private fun onTimeout() {
+        val target = pendingTarget ?: return
+        warmed = true
+        clear()
+        loadTarget(target)
     }
 
     private fun clear() {
         pendingTarget = null
-        pendingEpoch = -1L
     }
 }
