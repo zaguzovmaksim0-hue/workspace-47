@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -52,7 +53,7 @@ class LegalInformationDialogTest {
         rule.onNodeWithText(title).assertIsDisplayed()
         rule.onNodeWithTag("legal-document-text").assertIsDisplayed()
 
-        rule.onNodeWithText(context.getString(R.string.legal_back)).performClick()
+        rule.onNodeWithContentDescription(context.getString(R.string.legal_back)).performClick()
         waitForText(title)
         rule.onNodeWithTag("legal-document-text").assertDoesNotExist()
     }
@@ -81,17 +82,18 @@ class LegalInformationDialogTest {
         rule.onNodeWithText(opening, substring = true).assertIsDisplayed()
         rule.onNodeWithTag("legal-document-text").assertIsDisplayed()
 
-        rule.onNodeWithText(context.getString(R.string.legal_back)).performClick()
+        rule.onNodeWithContentDescription(context.getString(R.string.legal_back)).performClick()
         waitForText(title)
         rule.onNodeWithTag("legal-document-text").assertDoesNotExist()
-        rule.onNodeWithTag("legal-compatibility-feedback").assertDoesNotExist()
+        rule.onNodeWithText(context.getString(R.string.legal_privacy)).assertDoesNotExist()
         rule.onNodeWithText(context.getString(R.string.legal_licenses)).assertIsDisplayed()
         rule.runOnIdle { assertEquals(0, dismissals) }
 
-        rule.onNodeWithText(context.getString(R.string.legal_back)).performClick()
-        rule.onNodeWithTag("legal-compatibility-feedback").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithContentDescription(context.getString(R.string.legal_back)).performClick()
+        rule.onNodeWithText(context.getString(R.string.legal_privacy)).performScrollTo().assertIsDisplayed()
+        rule.onNodeWithContentDescription(context.getString(R.string.legal_back)).assertDoesNotExist()
         rule.runOnIdle { assertEquals(0, dismissals) }
-        rule.onNodeWithText(context.getString(R.string.legal_back)).performClick()
+        rule.onNodeWithContentDescription(context.getString(R.string.close)).performClick()
         rule.runOnIdle { assertEquals(10, dismissals) }
     }
 
@@ -116,25 +118,25 @@ class LegalInformationDialogTest {
         waitForText(error)
         rule.onNodeWithTag("legal-document-text").assertIsDisplayed()
         rule.onNodeWithText("Synthetic legal assets unavailable").assertDoesNotExist()
-        rule.onNodeWithText(context.getString(R.string.legal_back)).performClick()
-        rule.onNodeWithTag("legal-compatibility-feedback").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithContentDescription(context.getString(R.string.legal_back)).performClick()
+        rule.onNodeWithText(context.getString(R.string.legal_privacy)).performScrollTo().assertIsDisplayed()
         rule.onNodeWithText(error).assertDoesNotExist()
 
         // An unreadable index produces the empty-catalog UI, not a stuck loading indicator.
         rule.onNodeWithText(context.getString(R.string.legal_licenses)).performScrollTo().performClick()
         waitForText(error)
         rule.onNodeWithTag("legal-document-text").assertDoesNotExist()
-        rule.onNodeWithTag("legal-compatibility-feedback").assertDoesNotExist()
-        rule.onNodeWithText(context.getString(R.string.legal_back)).performClick()
-        rule.onNodeWithTag("legal-compatibility-feedback").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText(context.getString(R.string.legal_privacy)).assertDoesNotExist()
+        rule.onNodeWithContentDescription(context.getString(R.string.legal_back)).performClick()
+        rule.onNodeWithText(context.getString(R.string.legal_privacy)).performScrollTo().assertIsDisplayed()
         rule.runOnIdle { assertEquals(0, dismissals) }
 
         rule.runOnIdle { assetContext.value = context }
         rule.onNodeWithText(context.getString(R.string.legal_privacy)).performScrollTo().performClick()
         waitForText(privacyOpening)
         rule.onNodeWithText(error).assertDoesNotExist()
-        rule.onNodeWithText(context.getString(R.string.legal_back)).performClick()
-        rule.onNodeWithTag("legal-compatibility-feedback").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithContentDescription(context.getString(R.string.legal_back)).performClick()
+        rule.onNodeWithText(context.getString(R.string.legal_privacy)).performScrollTo().assertIsDisplayed()
         rule.runOnIdle { assertEquals(0, dismissals) }
     }
 

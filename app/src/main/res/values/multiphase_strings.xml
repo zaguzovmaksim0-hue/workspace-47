@@ -6,13 +6,6 @@
     <string name="native_multiphase_cosign">Añadir firma al documento</string>
     <string name="native_multiphase_countersign">Contrafirma mediante el servicio</string>
     <string name="native_multiphase_batch">Firma por lotes</string>
-    <string name="webauthn_status_label">Passkeys / WebAuthn</string>
-    <string name="webauthn_unsupported">Este WebView no anuncia soporte nativo de WebAuthn. Puedes continuar en el navegador externo.</string>
-    <string name="webauthn_configuration_failed">No se pudo activar el motor WebAuthn. La navegación normal continúa disponible.</string>
-    <string name="webauthn_provider_unknown">Motor WebAuthn nativo activado para navegador. La autorización del proveedor de credenciales para esta aplicación todavía no está confirmada; algunas passkeys pueden no estar disponibles.</string>
-    <string name="webauthn_no_success_claim">Activar el motor no equivale a completar un acceso ni a recibir aprobación de Google Password Manager. No se imita el origen de la web mediante JavaScript.</string>
-    <string name="webauthn_external_browser">Continuar en navegador externo</string>
-    <string name="webauthn_close">Cerrar</string>
     <string name="native_multiphase_result">El servicio devolvió un resultado. No acredita por sí solo la aceptación del trámite.</string>
     <string name="native_multiphase_batch_result">Documentos: %1$d; resultado positivo: %2$d; otros resultados: %3$d.</string>
 </resources>

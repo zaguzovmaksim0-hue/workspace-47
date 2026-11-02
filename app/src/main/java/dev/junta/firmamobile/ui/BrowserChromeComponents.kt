@@ -1,9 +1,7 @@
 package dev.junta.firmamobile.ui
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -44,9 +42,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.junta.firmamobile.R
-import dev.junta.firmamobile.ui.theme.JuntaDisplayFont
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
@@ -225,25 +221,19 @@ internal fun BrowserServiceIdentity(
     ) {
         Text(
             text = profileName,
-            color = JuntaTealDark,
-            fontFamily = JuntaDisplayFont,
-            fontSize = 20.sp,
-            lineHeight = 22.sp,
-            letterSpacing = 0.45.sp,
-            maxLines = 1,
+            color = JuntaInk,
+            style = MaterialTheme.typography.titleMedium,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.testTag(BROWSER_PROFILE_TITLE_TAG),
         )
         Text(
             text = stringResource(R.string.browser_host_and_trust, host, trustLabel),
             color = JuntaMutedInk,
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontSize = 12.sp,
-                lineHeight = 16.sp,
-            ),
-            maxLines = 1,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.testTag(BROWSER_PROFILE_STATUS_TAG),
+            modifier = Modifier.padding(top = 2.dp).testTag(BROWSER_PROFILE_STATUS_TAG),
         )
     }
 }
@@ -263,47 +253,48 @@ internal fun BrowserOverflowMenu(
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
-        modifier = Modifier
-            .widthIn(min = 232.dp, max = 280.dp)
-            .background(JuntaPaperElevated, BrowserMenuShape)
-            .border(1.5.dp, JuntaInk, BrowserMenuShape),
+        modifier = Modifier.widthIn(min = 232.dp, max = 280.dp),
+        shape = BrowserMenuShape,
+        containerColor = JuntaPaperElevated,
+        tonalElevation = 0.dp,
+        shadowElevation = 6.dp,
     ) {
         onShowSiteInformation?.let { show ->
             BrowserMenuItem(
-                iconRes = R.drawable.ic_browser_info,
+                iconRes = R.drawable.ic_ui_info,
                 text = stringResource(R.string.browser_site_information),
                 onClick = show,
             )
         }
         onOpenInBrowser?.let { open ->
             BrowserMenuItem(
-                iconRes = R.drawable.ic_browser_home,
+                iconRes = R.drawable.ic_ui_open_in_new,
                 text = stringResource(R.string.browser_open_external),
                 onClick = open,
             )
         }
         BrowserMenuItem(
-            iconRes = R.drawable.ic_browser_change_certificate,
+            iconRes = R.drawable.ic_ui_certificate,
             text = stringResource(R.string.browser_change_certificate),
             onClick = onChangeCertificate,
         )
         BrowserMenuItem(
-            iconRes = R.drawable.ic_browser_lock,
+            iconRes = R.drawable.ic_ui_lock,
             text = stringResource(R.string.browser_lock_certificate),
             onClick = onLockCertificate,
         )
         BrowserMenuItem(
-            iconRes = R.drawable.ic_browser_logout,
+            iconRes = R.drawable.ic_ui_delete,
             text = stringResource(R.string.browser_clear_current_site),
             onClick = onClearCurrentSiteRequested,
         )
         BrowserMenuItem(
-            iconRes = R.drawable.ic_browser_logout,
+            iconRes = R.drawable.ic_ui_logout,
             text = stringResource(R.string.browser_clear_session),
             onClick = onClearSessionRequested,
         )
         BrowserMenuItem(
-            iconRes = R.drawable.ic_browser_logout,
+            iconRes = R.drawable.ic_ui_delete,
             text = stringResource(R.string.browser_delete_all_data),
             contentColor = MaterialTheme.colorScheme.error,
             onClick = onDeleteAllBrowserDataRequested,
@@ -350,8 +341,8 @@ internal fun BrowserCertificateStrip(
     Surface(
         color = JuntaPaperElevated,
         contentColor = JuntaInk,
-        border = BorderStroke(1.5.dp, JuntaTeal),
         shape = BrowserCertificateShape,
+        shadowElevation = 8.dp,
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(windowInsets),
@@ -373,11 +364,8 @@ internal fun BrowserCertificateStrip(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(if (certificateAvailable) R.string.browser_certificate_active else R.string.certificate_title),
-                    color = JuntaTealDark,
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 14.sp,
-                        lineHeight = 18.sp,
-                    ),
+                    color = JuntaInk,
+                    style = MaterialTheme.typography.titleSmall,
                     maxLines = 1,
                 )
                 Text(
@@ -420,7 +408,6 @@ internal fun BrowserNoticeBanner(
         color = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
         shape = JuntaPanelShape,
-        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.error),
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 6.dp)
@@ -481,16 +468,11 @@ private fun BrowserChromeIconButton(
     }
 }
 
-private val BrowserMenuShape = CutCornerShape(
-    topStart = 7.dp,
-    topEnd = 4.dp,
-    bottomEnd = 7.dp,
-    bottomStart = 4.dp,
-)
+private val BrowserMenuShape = RoundedCornerShape(14.dp)
 
-private val BrowserCertificateShape = CutCornerShape(
-    topStart = 5.dp,
-    topEnd = 4.dp,
+private val BrowserCertificateShape = RoundedCornerShape(
+    topStart = 20.dp,
+    topEnd = 20.dp,
     bottomEnd = 0.dp,
     bottomStart = 0.dp,
 )

@@ -10,21 +10,28 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedSecureTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -42,7 +49,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.testTag
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.history.InMemoryOperationJournal
@@ -53,6 +59,7 @@ import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
 import dev.junta.firmamobile.ui.theme.JuntaPaper
+import dev.junta.firmamobile.ui.theme.JuntaPaperElevated
 import dev.junta.firmamobile.ui.theme.JuntaTeal
 import java.time.Instant
 import java.time.ZoneId
@@ -88,12 +95,12 @@ fun AppRoot(
                 .verticalScroll(rememberScrollState())
                 .safeDrawingPadding()
                 .imePadding()
-                .padding(horizontal = 20.dp, vertical = 10.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.Top,
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             JuntaBrandHeader()
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             CertificatePanel(
                 state = state,
                 onSelectCertificate = onSelectCertificate,
@@ -105,24 +112,49 @@ fun AppRoot(
             )
             Spacer(modifier = Modifier.height(12.dp))
             CertificateStateBanner(state)
-            localFileSigningEntry(state is CertificateUiState.Unlocked)
             if (state !is CertificateUiState.Unlocked) {
+                Spacer(modifier = Modifier.height(12.dp))
                 JuntaOutlinedAction(
                     text = stringResource(R.string.browse_without_certificate),
                     onClick = onContinue,
                     modifier = Modifier.testTag("browse-without-certificate"),
+                    iconRes = R.drawable.ic_ui_globe,
                 )
             }
-            certificateReminderSettings()
-            androidx.compose.material3.TextButton(
-                onClick = { legalInformationVisible = true },
-                modifier = Modifier.fillMaxWidth().testTag("open-legal-information"),
-            ) {
-                Text(stringResource(R.string.legal_information))
-            }
-            verificationJournalHome(verificationJournal)
-            Spacer(modifier = Modifier.height(4.dp))
+            HomeToolSections(
+                unlocked = state is CertificateUiState.Unlocked,
+                journal = verificationJournal,
+                onOpenLegalInformation = { legalInformationVisible = true },
+            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+}
+
+/** Grouped secondary destinations: tools first, then settings and legal information. */
+@Suppress("FunctionNaming") // Compose UI naming convention.
+@Composable
+private fun HomeToolSections(
+    unlocked: Boolean,
+    journal: InMemoryOperationJournal,
+    onOpenLegalInformation: () -> Unit,
+) {
+    JuntaSectionLabel(stringResource(R.string.home_tools_title))
+    JuntaListPanel {
+        localFileSigningEntry(unlocked)
+        JuntaListDivider()
+        verificationJournalHome(journal)
+    }
+    JuntaSectionLabel(stringResource(R.string.home_settings_title))
+    JuntaListPanel {
+        certificateReminderSettings()
+        JuntaListDivider()
+        JuntaToolRow(
+            iconRes = R.drawable.ic_ui_info,
+            title = stringResource(R.string.legal_information),
+            onClick = onOpenLegalInformation,
+            modifier = Modifier.testTag("open-legal-information"),
+        )
     }
 }
 
@@ -137,61 +169,10 @@ private fun CertificatePanel(
     onContinue: () -> Unit,
 ) {
     JuntaElevatedPanel {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_jfm_document),
-                contentDescription = null,
-                tint = androidx.compose.ui.graphics.Color.Unspecified,
-                modifier = Modifier.size(width = 42.dp, height = 48.dp),
-            )
-            Text(
-                text = stringResource(R.string.certificate_title),
-                color = JuntaTeal,
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.weight(1f).semantics { heading() },
-            )
-            if (state is CertificateUiState.Unlocked) {
-                var expanded by remember(state.reference.uri) { mutableStateOf(false) }
-                Box {
-                    androidx.compose.material3.IconButton(
-                        onClick = { expanded = true },
-                        modifier = Modifier.size(48.dp),
-                    ) {
-                        Icon(painterResource(R.drawable.ic_browser_more),
-                            contentDescription = stringResource(R.string.certificate_options), tint = JuntaTeal)
-                    }
-                    androidx.compose.material3.DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        androidx.compose.material3.DropdownMenuItem(
-                            text = { Text(stringResource(R.string.lock_certificate)) },
-                            onClick = { expanded = false; onLock() },
-                        )
-                    }
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-        Column(modifier = Modifier.padding(start = 56.dp)) {
-            Text(
-                text = stringResource(R.string.certificate_copy),
-                color = JuntaInk,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontSize = 14.sp,
-                    lineHeight = 19.sp,
-                ),
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.privacy_copy),
-                color = JuntaMutedInk,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-        Spacer(modifier = Modifier.height(12.dp))
+        CertificatePanelHeader(state = state, onLock = onLock)
+        Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider(color = JuntaHairline, thickness = 1.dp)
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         when (state) {
             CertificateUiState.LoadingReference -> LoadingCertificate()
@@ -219,6 +200,94 @@ private fun CertificatePanel(
             )
         }
         savedCertificatesSection(state)
+    }
+}
+
+@Suppress("FunctionNaming") // Compose UI naming convention.
+@Composable
+private fun CertificatePanelHeader(state: CertificateUiState, onLock: () -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_ui_certificate),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.certificate_title),
+                color = JuntaInk,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.semantics { heading() },
+            )
+            if (state is CertificateUiState.NoCertificate) {
+                Text(
+                    text = stringResource(R.string.certificate_copy),
+                    color = JuntaMutedInk,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+        if (state is CertificateUiState.Unlocked) CertificateOptionsMenu(state, onLock)
+    }
+    Spacer(modifier = Modifier.height(12.dp))
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_ui_lock),
+            contentDescription = null,
+            tint = JuntaMutedInk,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            text = stringResource(R.string.privacy_copy),
+            color = JuntaMutedInk,
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}
+
+@Suppress("FunctionNaming") // Compose UI naming convention.
+@Composable
+private fun CertificateOptionsMenu(state: CertificateUiState.Unlocked, onLock: () -> Unit) {
+    var expanded by remember(state.reference.uri) { mutableStateOf(false) }
+    Box {
+        IconButton(
+            onClick = { expanded = true },
+            modifier = Modifier.size(48.dp),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_browser_more),
+                contentDescription = stringResource(R.string.certificate_options),
+                tint = JuntaMutedInk,
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = JuntaFieldShape,
+            containerColor = JuntaPaperElevated,
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.lock_certificate)) },
+                leadingIcon = {
+                    Icon(painterResource(R.drawable.ic_ui_lock), contentDescription = null)
+                },
+                onClick = { expanded = false; onLock() },
+            )
+        }
     }
 }
 
@@ -253,8 +322,12 @@ private fun NoCertificate(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.testTag("selected-keystore-certificate"),
         )
-        Text(stringResource(R.string.saved_keystore_locked), color = JuntaMutedInk)
-        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            stringResource(R.string.saved_keystore_locked),
+            color = JuntaMutedInk,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
     }
     JuntaPrimaryButton(
         text = stringResource(R.string.select_certificate),
@@ -273,26 +346,33 @@ private fun LockedCertificate(
 ) {
     LockedCertificateHeading(state)
     var retention by remember(state.reference.uri) { mutableStateOf(CertificateUnlockRetention.FIFTEEN_MINUTES) }
-    CertificateUnlockRetentionSelector(retention, !state.revocationPending) { retention = it }
-    SavedCertificateUnlockAction(onRestoreSavedUnlock, !state.revocationPending)
     val passwordState = remember(state.reference.uri) { TextFieldState() }
     DisposableEffect(passwordState) {
         onDispose { passwordState.clearText() }
     }
     if (state.revocationPending) {
-        Text(stringResource(R.string.certificate_revoking), modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        Text(
+            stringResource(R.string.certificate_revoking),
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        )
         Spacer(modifier = Modifier.height(8.dp))
     }
     val passwordLabel = stringResource(R.string.certificate_password)
     OutlinedSecureTextField(
         state = passwordState,
         label = { Text(passwordLabel) },
-        shape = JuntaPanelShape,
+        shape = JuntaFieldShape,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = JuntaTeal,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .semantics { contentDescription = passwordLabel },
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(10.dp))
+    CertificateUnlockRetentionSelector(retention, !state.revocationPending) { retention = it }
+    Spacer(modifier = Modifier.height(12.dp))
     JuntaPrimaryButton(
         text = stringResource(R.string.unlock_certificate),
         onClick = {
@@ -304,16 +384,9 @@ private fun LockedCertificate(
         },
         enabled = passwordState.text.isNotEmpty() && !state.revocationPending,
     )
-    Spacer(modifier = Modifier.height(6.dp))
-    JuntaOutlinedAction(
-        text = stringResource(R.string.choose_another_certificate),
-        onClick = onSelectCertificate,
-    )
-    Spacer(modifier = Modifier.height(6.dp))
-    JuntaOutlinedAction(
-        text = stringResource(R.string.forget_certificate),
-        onClick = onForget,
-    )
+    SavedCertificateUnlockAction(onRestoreSavedUnlock, !state.revocationPending)
+    Spacer(modifier = Modifier.height(12.dp))
+    CertificateSecondaryActions(onSelectCertificate = onSelectCertificate, onForget = onForget)
 }
 
 // Compose UI entry points use PascalCase by convention.
@@ -336,7 +409,32 @@ private fun LockedCertificateHeading(state: CertificateUiState.Locked) {
         Spacer(modifier = Modifier.height(12.dp))
         CertificateError(it)
     }
-    Spacer(modifier = Modifier.height(10.dp))
+    Spacer(modifier = Modifier.height(14.dp))
+}
+
+/** Change or remove the current file; removal is styled as the quieter, destructive choice. */
+@Suppress("FunctionNaming") // Compose UI naming convention.
+@Composable
+private fun CertificateSecondaryActions(onSelectCertificate: () -> Unit, onForget: () -> Unit) {
+    JuntaOutlinedAction(
+        text = stringResource(R.string.choose_another_certificate),
+        onClick = onSelectCertificate,
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    TextButton(
+        onClick = onForget,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp),
+        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+            contentColor = MaterialTheme.colorScheme.error,
+        ),
+    ) {
+        Text(
+            text = stringResource(R.string.forget_certificate),
+            style = MaterialTheme.typography.labelLarge,
+        )
+    }
 }
 
 @Composable
@@ -346,17 +444,17 @@ private fun UnlockingCertificate(state: CertificateUiState.Unlocking) {
         color = JuntaInk,
         style = MaterialTheme.typography.titleMedium,
     )
-    Spacer(modifier = Modifier.height(10.dp))
+    Spacer(modifier = Modifier.height(12.dp))
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CircularProgressIndicator(
             color = JuntaTeal,
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier.size(24.dp),
             strokeWidth = 3.dp,
         )
-        Text(text = stringResource(R.string.certificate_unlocking))
+        Text(text = stringResource(R.string.certificate_unlocking), color = JuntaMutedInk)
     }
 }
 
@@ -367,33 +465,42 @@ private fun UnlockedCertificate(
     onSelectCertificate: () -> Unit,
     onForget: () -> Unit,
 ) {
-    Text(
-        text = stringResource(R.string.certificate_found),
-        color = JuntaTeal,
-        style = MaterialTheme.typography.titleMedium,
-    )
-    Spacer(modifier = Modifier.height(8.dp))
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_ui_check_circle),
+            contentDescription = null,
+            tint = JuntaTeal,
+            modifier = Modifier.size(22.dp),
+        )
+        Text(
+            text = stringResource(R.string.certificate_found),
+            color = JuntaTeal,
+            style = MaterialTheme.typography.titleMedium,
+        )
+    }
+    Spacer(modifier = Modifier.height(10.dp))
     CertificateSummaryDetails(state.summary)
-    Spacer(modifier = Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(16.dp))
     JuntaPrimaryButton(
         text = stringResource(R.string.continue_to_portal),
         onClick = onContinue,
     )
-    Spacer(modifier = Modifier.height(6.dp))
-    JuntaOutlinedAction(
-        text = stringResource(R.string.choose_another_certificate),
-        onClick = onSelectCertificate,
-    )
-    Spacer(modifier = Modifier.height(6.dp))
-    JuntaOutlinedAction(
-        text = stringResource(R.string.forget_certificate),
-        onClick = onForget,
-    )
+    Spacer(modifier = Modifier.height(8.dp))
+    CertificateSecondaryActions(onSelectCertificate = onSelectCertificate, onForget = onForget)
 }
 
 @Composable
 private fun CertificateSummaryDetails(summary: CertificateSummary) {
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         Text(
             text = stringResource(R.string.certificate_owner, certificateDisplayNameText(summary.ownerName)),
             color = JuntaInk,
@@ -413,8 +520,11 @@ private fun CertificateSummaryDetails(summary: CertificateSummary) {
             color = JuntaInk,
             style = MaterialTheme.typography.bodyMedium,
         )
-        CertificateExpirationNotice(validUntil = summary.validUntil)
     }
+    CertificateExpirationNotice(
+        validUntil = summary.validUntil,
+        modifier = Modifier.padding(top = 8.dp),
+    )
 }
 
 @Composable

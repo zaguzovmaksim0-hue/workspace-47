@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.ui.offlineverification
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,6 +18,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.history.LocalOutcome
+import dev.junta.firmamobile.ui.JuntaFieldShape
 
 @Suppress("FunctionNaming") // Unit-returning Compose UI follows the framework naming convention.
 @Composable
@@ -49,9 +51,10 @@ internal fun OfflineVerificationDialog(
         title = { Text(stringResource(R.string.signature_verification_title)) },
         text = { OfflineVerificationContent(state, controller, onPickCms, onPickOriginal) },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = controller::verify,
                 enabled = state.canVerify,
+                shape = JuntaFieldShape,
                 modifier = Modifier.testTag("offline-verification-verify"),
             ) { Text(stringResource(R.string.offline_verification_verify)) }
         },

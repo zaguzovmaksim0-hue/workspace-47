@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_tools_title">Ferramentas</string>
+    <string name="home_settings_title">Axustes e información</string>
+    <string name="legal_version_value">Versión %1$s</string>
+    <string name="offline_verification_intro">Comproba neste dispositivo, sen conexión, se un PDF ou unha sinatura CMS se modificou despois de asinarse.</string>
+    <string name="more_information_show">Máis información</string>
+    <string name="more_information_hide">Agochar información</string>
+</resources>

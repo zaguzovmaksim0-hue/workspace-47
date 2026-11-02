@@ -84,7 +84,7 @@
     <string name="browser_delete_all_data_success">All app web data was cleared.</string>
     <string name="browser_delete_all_data_failed">Could not clear all web data.</string>
     <string name="browser_retry">Retry</string>
-    <string name="browser_compatibility_error">This WebView does not provide the required secure bridge. Signing remains disabled.</string>
+    <string name="browser_compatibility_error">This phone\'s system browser cannot sign securely. Update Android System WebView from Google Play to enable signing.</string>
     <string name="browser_blank_document_error">The page loaded, but no visible content appeared. Try again or open it in an external browser.</string>
     <string name="browser_load_error">Could not load the portal securely.</string>
     <string name="browser_client_cert_preferences_error">Could not prepare a new certificate session. Start the sign-in process again.</string>
@@ -123,10 +123,10 @@
     <string name="signing_failed_title">Could not complete signing</string>
     <string name="signing_closed_error_code">Code: %1$s</string>
     <string name="unknown_value">unknown</string>
-    <string name="catalog_title">PUBLIC SERVICES</string>
+    <string name="catalog_title">Public services</string>
     <string name="catalog_subtitle">Find and open the public service or website you need.</string>
-    <string name="catalog_back_to_certificate">← Return to certificate</string>
-    <string name="catalog_my_region_label">MY REGION</string>
+    <string name="catalog_back_to_certificate">Return to certificate</string>
+    <string name="catalog_my_region_label">My region</string>
     <string name="catalog_region_copy">Services for your region and those available throughout Spain are shown first.</string>
     <string name="catalog_change_region">Change region</string>
     <string name="catalog_use_location">Use my location</string>
@@ -139,17 +139,12 @@
     <string name="catalog_favorite_saved">Saved</string>
     <string name="catalog_open">Open</string>
     <string name="catalog_open_failed">No app was found to open this site.</string>
-    <string name="catalog_choose_region">CHOOSE YOUR REGION</string>
+    <string name="catalog_choose_region">Choose your region</string>
     <string name="catalog_section_favorites">Favorites</string>
-    <string name="catalog_section_favorites_copy">Your saved services for quick access.</string>
     <string name="catalog_section_recent">Recent</string>
-    <string name="catalog_section_recent_copy">The most recent services you have opened.</string>
     <string name="catalog_section_selected_region">In %1$s</string>
-    <string name="catalog_section_region_copy">Public services for this territory.</string>
     <string name="catalog_section_spain">National services</string>
-    <string name="catalog_section_spain_copy">National agencies and services available from any region.</string>
     <string name="catalog_section_other_regions">Other territories of Spain</string>
-    <string name="catalog_section_other_regions_copy">Public services in other communities and territories.</string>
     <plurals name="catalog_section_service_count">
         <item quantity="one">%1$d service</item>
         <item quantity="other">%1$d services</item>
@@ -265,7 +260,7 @@
     <string name="native_afirma_cancel_not_sent">The operation has been canceled only on this device. No notification has been sent to the server.</string>
     <string name="native_afirma_cancel_rejected">The storage server did not accept the cancellation notification. Check the procedure status on the website.</string>
     <string name="native_afirma_cancel_uncertain">It is not known whether the storage server received the cancellation notification. Check the procedure status on the website before repeating the operation. The notification will not be sent again automatically.</string>
-    <string name="public_browsing_title">Browser without a specific profile</string>
+    <string name="public_browsing_title">General browsing</string>
     <string name="public_browsing_explanation">You can browse this website. Using the certificate or AutoFirma requires separate confirmation; compatibility with all procedures is not guaranteed.</string>
     <string name="public_browsing_open">Open website</string>
     <string name="public_browsing_clear_copy">An attempt will be made to clear data for the displayed site, and the certificate will be locked. The app will indicate if Android does not allow all cookies for that site to be cleared. Signing out on the server is not guaranteed.</string>
@@ -295,7 +290,6 @@
     <string name="legal_about">Version information</string>
     <string name="legal_back">Back</string>
     <string name="legal_load_error">Could not load the local document. Consult the documentation in the official project repository.</string>
-    <string name="compatibility_unverified_short">Signing compatibility not confirmed</string>
     <string name="compatibility_unverified_operation">Compatibility for this operation has not been confirmed in a real-world scenario. Check the result and the portal receipt before repeating it.</string>
     <string name="compatibility_operation_notice">Compatibility depends on the portal and the operation. Some features have not been verified in real-world scenarios; always check the result issued by the organization.</string>
     <string name="certificate_retention_label">Unlock period: %1$s</string>
@@ -354,9 +348,8 @@
         <item quantity="one">Batch signing (%1$d document)</item>
         <item quantity="other">Batch signing (%1$d documents)</item>
     </plurals>
-    <string name="catalog_search_or_address">Search for a portal or enter an address</string>
+    <string name="catalog_search_or_address">Search services or addresses</string>
     <string name="catalog_region_change">Change</string>
-    <string name="catalog_region_inline">%1$s · Change</string>
     <string name="catalog_favorite_add_description">Add to favourites</string>
     <string name="catalog_favorite_remove_description">Remove from favourites</string>
 </resources>

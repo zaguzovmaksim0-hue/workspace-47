@@ -84,7 +84,7 @@
     <string name="browser_delete_all_data_success">Aplikazioaren web-datu guztiak ezabatu dira.</string>
     <string name="browser_delete_all_data_failed">Ezin izan dira web-datu guztiak ezabatu.</string>
     <string name="browser_retry">Saiatu berriro</string>
-    <string name="browser_compatibility_error">WebView honek ez du behar den zubi segurua eskaintzen. Sinadurak desgaituta jarraitzen du.</string>
+    <string name="browser_compatibility_error">Telefono honetako sistemaren nabigatzaileak ezin du modu seguruan sinatu. Eguneratu Android System WebView Google Play-tik sinatu ahal izateko.</string>
     <string name="browser_blank_document_error">Orria kargatu da, baina ez du eduki ikusgarririk erakutsi. Saiatu berriro edo ireki kanpoko nabigatzaile batean.</string>
     <string name="browser_load_error">Ezin izan da ataria modu seguruan kargatu.</string>
     <string name="browser_client_cert_preferences_error">Ezin izan da ziurtagiriaren saio berri bat prestatu. Hasi berriro sarbidea.</string>
@@ -123,10 +123,10 @@
     <string name="signing_failed_title">Ezin izan da sinadura osatu</string>
     <string name="signing_closed_error_code">Kodea: %1$s</string>
     <string name="unknown_value">ezezaguna</string>
-    <string name="catalog_title">ZERBITZU PUBLIKOAK</string>
+    <string name="catalog_title">Zerbitzu publikoak</string>
     <string name="catalog_subtitle">Bilatu eta ireki behar duzun egoitza edo zerbitzu publikoa.</string>
-    <string name="catalog_back_to_certificate">← Itzuli ziurtagirira</string>
-    <string name="catalog_my_region_label">NIRE ESKUALDEA</string>
+    <string name="catalog_back_to_certificate">Itzuli ziurtagirira</string>
+    <string name="catalog_my_region_label">Nire eskualdea</string>
     <string name="catalog_region_copy">Zure eskualdeko zerbitzuak eta Espainia osoan erabilgarri daudenak erakusten ditugu lehenik.</string>
     <string name="catalog_change_region">Aldatu eskualdea</string>
     <string name="catalog_use_location">Erabili nire kokapena</string>
@@ -139,17 +139,12 @@
     <string name="catalog_favorite_saved">Gordeta</string>
     <string name="catalog_open">Ireki</string>
     <string name="catalog_open_failed">Ez da gune hau irekitzeko aplikaziorik aurkitu.</string>
-    <string name="catalog_choose_region">HAUTATU ZURE ESKUALDEA</string>
+    <string name="catalog_choose_region">Hautatu zure eskualdea</string>
     <string name="catalog_section_favorites">Gogokoak</string>
-    <string name="catalog_section_favorites_copy">Azkar aurkitzeko gordetako zure zerbitzuak.</string>
     <string name="catalog_section_recent">Azkenak</string>
-    <string name="catalog_section_recent_copy">Ireki dituzun azken zerbitzuak.</string>
     <string name="catalog_section_selected_region">Eskualdea: %1$s</string>
-    <string name="catalog_section_region_copy">Lurralde honetako zerbitzu publikoak.</string>
     <string name="catalog_section_spain">Estatuko zerbitzuak</string>
-    <string name="catalog_section_spain_copy">Edozein eskualdetatik erabilgarri dauden Estatuko erakundeak eta zerbitzuak.</string>
     <string name="catalog_section_other_regions">Espainiako beste lurraldeak</string>
-    <string name="catalog_section_other_regions_copy">Beste erkidego eta lurraldeetako zerbitzu publikoak.</string>
     <plurals name="catalog_section_service_count">
         <item quantity="one">%1$d zerbitzu</item>
         <item quantity="other">%1$d zerbitzu</item>
@@ -265,7 +260,7 @@
     <string name="native_afirma_cancel_not_sent">Eragiketa gailu honetan soilik utzi da bertan behera. Ez da jakinarazpenik bidali zerbitzariari.</string>
     <string name="native_afirma_cancel_rejected">Biltegiratze-zerbitzariak ez du onartu bertan behera uztearen jakinarazpena. Egiaztatu izapidearen egoera webgunean.</string>
     <string name="native_afirma_cancel_uncertain">Ez dakigu biltegiratze-zerbitzariak bertan behera uztearen jakinarazpena jaso duen. Egiaztatu izapidearen egoera webgunean eragiketa errepikatu aurretik. Jakinarazpena ez da automatikoki berriro bidaliko.</string>
-    <string name="public_browsing_title">Profil espezifikorik gabeko nabigatzailea</string>
+    <string name="public_browsing_title">Nabigazio orokorra</string>
     <string name="public_browsing_explanation">Webgune honetan nabiga dezakezu. Ziurtagiria edo AutoFirma erabiltzeko aparteko baieztapena behar da; ez da izapide guztien bateragarritasuna bermatzen.</string>
     <string name="public_browsing_open">Ireki webgunea</string>
     <string name="public_browsing_clear_copy">Erakutsitako gunearen datuak ezabatzen saiatuko da aplikazioa, eta ziurtagiria blokeatuko da. Aplikazioak adieraziko du Android-ek ez badu uzten gune horretako cookie guztiak ezabatzen. Ez da bermatzen zerbitzariko saioa ixtea.</string>
@@ -295,7 +290,6 @@
     <string name="legal_about">Bertsioaren informazioa</string>
     <string name="legal_back">Itzuli</string>
     <string name="legal_load_error">Ezin izan da dokumentu lokala kargatu. Kontsultatu proiektuaren biltegi ofizialeko dokumentazioa.</string>
-    <string name="compatibility_unverified_short">Sinaduraren bateragarritasuna ez dago baieztatuta</string>
     <string name="compatibility_unverified_operation">Eragiketa honen bateragarritasuna ez dago benetako egoera batean baieztatuta. Egiaztatu emaitza eta atariko frogagiria errepikatu aurretik.</string>
     <string name="compatibility_operation_notice">Bateragarritasuna atariaren eta eragiketaren araberakoa da. Funtzio batzuk ez dira benetako egoeretan egiaztatu; egiaztatu beti erakundeak emandako emaitza.</string>
     <string name="certificate_retention_label">Desblokeatuta egoteko epea: %1$s</string>
@@ -354,9 +348,8 @@
         <item quantity="one">Lote-sinadura (%1$d dokumentu)</item>
         <item quantity="other">Lote-sinadura (%1$d dokumentu)</item>
     </plurals>
-    <string name="catalog_search_or_address">Bilatu ataria edo idatzi helbidea</string>
+    <string name="catalog_search_or_address">Bilatu zerbitzua edo helbidea</string>
     <string name="catalog_region_change">Aldatu</string>
-    <string name="catalog_region_inline">%1$s · Aldatu</string>
     <string name="catalog_favorite_add_description">Gehitu gogokoetara</string>
     <string name="catalog_favorite_remove_description">Kendu gogokoetatik</string>
 </resources>

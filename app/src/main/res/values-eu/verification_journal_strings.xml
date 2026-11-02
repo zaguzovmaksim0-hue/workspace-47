@@ -8,7 +8,7 @@
     <string name="verification_journal_provider_warning">Hornitzailearen errore batek kanpoko fitxategi partziala utz dezake. Uzteak ezin ditu jada idatzitako byteak desegin.</string>
     <string name="verification_journal_empty">Oraindik ez dago egiaztapenik saio honetan.</string>
     <string name="verification_journal_clear">Ezabatu egunkaria</string>
-    <string name="verification_journal_export">Esportatu JSON instantanea</string>
+    <string name="verification_journal_export">Esportatu egunkaria (JSON)</string>
     <string name="verification_journal_close">Itxi</string>
     <string name="verification_journal_kind_verify">Tokiko CMS/PDF egiaztapena</string>
     <string name="verification_journal_completed">Osatua (tokiko osotasuna soilik)</string>
@@ -16,8 +16,8 @@
     <string name="verification_journal_failed">Huts eginda</string>
     <string name="verification_journal_row">%1$d zk. · %2$s · %3$s · %4$s</string>
     <string name="verification_journal_choosing">Aukeratu JSON helburua edo utzi.</string>
-    <string name="verification_journal_writing">Instantanea esportatzen…</string>
-    <string name="verification_journal_exported">Instantanea esportatu da.</string>
+    <string name="verification_journal_writing">Egunkaria esportatzen…</string>
+    <string name="verification_journal_exported">Egunkaria esportatu da.</string>
     <string name="verification_journal_export_cancelled">Esportazioa utzi da.</string>
     <string name="verification_journal_export_failed">Ezin izan da esportatu. Kanpoko fitxategi partziala gera daiteke.</string>
 </resources>

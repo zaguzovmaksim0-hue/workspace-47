@@ -9,9 +9,10 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "app/src/main/java/dev/junta/firmamobile/ui/BrowserChromeComponents.kt"
 BASELINE = ROOT / "config/detekt/baseline.xml"
-# Byte contracts are pinned to accepted main 54bf22e51225622ba4b9252cd781f8168958b8b3.
-PREFIX_SHA256 = "e8ef3f9053e6838baa887e1d1c52f4e5fcbca4f69dae6d09b6629c068f4dca7d"
-SUFFIX_SHA256 = "1c1250752cfafe2c6dc4107c679824266ba490a5a5e40d18a418c5705f5b3882"
+# Byte contracts were pinned to accepted main 54bf22e51225622ba4b9252cd781f8168958b8b3 and re-pinned
+# for the 0.2.18 visual refresh, which restyles only the imports and the components after the toolbar.
+PREFIX_SHA256 = "d507c0fda60fe44afc1e575ce8209fe84de0e4e2b997f77857b62230ec6c6672"
+SUFFIX_SHA256 = "2d2fd7be5ea8decc2b8816505ef46fcb5d49cc10669ba845cacd459b9001bcc9"
 TOOLBAR_BASELINE_IDS_SHA256 = "9ca0193c52e0b4cf91c6d0be793d7f0df36f816a068a0abcb6c00261f6a0d06a"
 OWNER = "IndustrialBrowserTopBar"
 HELPERS = ("browserToolbarSurface", "browserToolbarControls")

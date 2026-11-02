@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -46,10 +45,12 @@ internal fun certificateReminderSettings() {
         scope.launch { settings.save(granted, denied = !granted) }
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { settings.refresh() } }
-    TextButton(
+    JuntaToolRow(
+        iconRes = R.drawable.ic_ui_bell,
+        title = stringResource(R.string.certificate_reminder_settings),
         onClick = { visible = true },
-        modifier = Modifier.fillMaxWidth().testTag("open-certificate-reminder-settings"),
-    ) { Text(stringResource(R.string.certificate_reminder_settings)) }
+        modifier = Modifier.testTag("open-certificate-reminder-settings"),
+    )
     if (visible) certificateReminderSettingsDialog(
         state = settings.state,
         onToggle = { enabled ->

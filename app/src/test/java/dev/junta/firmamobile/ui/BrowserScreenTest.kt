@@ -12,7 +12,6 @@ import dev.junta.firmamobile.testing.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -219,7 +218,6 @@ class BrowserScreenTest {
                     certificateOwner = "Persona de Prueba",
                     currentUrl = url.value,
                     publicBrowsing = true,
-                    webAuthnState = dev.junta.firmamobile.browser.WebAuthnEngineState.UNSUPPORTED,
                     browserInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
                     onBack = { events += "back" }, onHome = { events += "home" },
                     onReload = { events += "reload" }, onChangeCertificate = {},
@@ -236,7 +234,7 @@ class BrowserScreenTest {
             rule.onNodeWithText("Información del sitio").performClick()
             rule.onNodeWithTag("browser-site-information").assertIsDisplayed()
             rule.onNodeWithTag("public-browsing-notice").assertIsDisplayed()
-            rule.onNodeWithTag("webauthn-status").performScrollTo().assertIsDisplayed()
+            rule.onNodeWithTag("webauthn-status").assertDoesNotExist()
             rule.onNodeWithTag("browser-site-information-close").performClick()
             rule.onNodeWithTag("browser-site-information").assertDoesNotExist()
             rule.onNodeWithText("contenido-web").assertIsDisplayed()
