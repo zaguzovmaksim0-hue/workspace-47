@@ -96,4 +96,45 @@ class NativePadesOptionsTest {
             for (value in secrets + listOf("reason=", "location=", "contact=")) assertFalse(text.contains(value))
         }
     }
+
+    @Test fun firmaAgeExpandsOnlyThroughThePolicyAwareParser() {
+        val age = mapOf("expPolicy" to "FirmaAGE")
+        assertNull(NativePadesOptions.parse(age))
+        val variants = listOf(age, age + ("signatureSubFilter" to "ETSI.CAdES.detached"), age + ("mode" to "implicit"))
+        for (properties in variants) {
+            val options = checkNotNull(NativePadesOptions.parseWithPolicy(properties))
+            assertEquals("ETSI.CAdES.detached", options.subFilter)
+            assertEquals("2.16.724.1.3.1.1.2.1.9", options.policy?.identifier)
+            assertEquals("SHA-1", options.policy?.hashAlgorithm)
+            assertTrue(options.toString().contains("policyPresent=true"))
+        }
+        assertTrue(NativePadesOptions().toString().contains("policyPresent=false"))
+    }
+
+    @Test fun policyNamesThatAutoFirmaRefusesForPdfAreRejected() {
+        val refused = listOf(
+            mapOf("expPolicy" to "FirmaAGE", "signatureSubFilter" to "adbe.pkcs7.detached"),
+            mapOf("expPolicy" to "FirmaAGE18"), mapOf("expPolicy" to "firmaage"), mapOf("expPolicy" to ""),
+            mapOf("expPolicy" to "FirmaAGE", "signatureSubFilter" to "adbe.pkcs7.sha1"),
+        )
+        for (properties in refused) assertNull(properties.toString(), NativePadesOptions.parseWithPolicy(properties))
+    }
+
+    @Test fun completeExplicitPoliciesAreSignedForBothSubfilters() {
+        val policy = mapOf(
+            "policyIdentifier" to "urn:oid:1.3.6.1.4.1.55555.47.1",
+            "policyIdentifierHashAlgorithm" to "http://www.w3.org/2001/04/xmlenc#sha256",
+            "policyIdentifierHash" to java.util.Base64.getEncoder().encodeToString(ByteArray(32) { 3 }),
+        )
+        for (filter in listOf("ETSI.CAdES.detached", "adbe.pkcs7.detached")) {
+            val options = checkNotNull(NativePadesOptions.parseWithPolicy(policy + ("signatureSubFilter" to filter)))
+            assertEquals(filter, options.subFilter)
+            assertEquals("1.3.6.1.4.1.55555.47.1", options.policy?.identifier)
+            assertEquals("SHA-256", options.policy?.hashAlgorithm)
+        }
+        assertNull(NativePadesOptions.parse(policy))
+        for (key in policy.keys) assertNull(key, NativePadesOptions.parseWithPolicy(policy - key))
+        assertEquals(NativePadesOptions(reason = "r"), NativePadesOptions.parseWithPolicy(mapOf("signReason" to "r")))
+        assertNull(NativePadesOptions.parseWithPolicy(mapOf("tsaURL" to "https://tsa.example")))
+    }
 }

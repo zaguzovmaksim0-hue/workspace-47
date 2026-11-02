@@ -122,6 +122,32 @@ class NativePadesEngineTest {
         result.signature.use { it.withBytes { bytes -> assertNotNull(CMSSignedData(bytes).signerInfos.signers.single().signedAttributes[CMSAttributes.signingTime]) } }
     }
 
+    @Test fun policyOptionsAreSignedIntoTheCmsAndBoundByVerification() {
+        val identity = freshSyntheticIdentity()
+        val clock = Clock.fixed(identity.certificate.notBefore.toInstant().plusSeconds(60), ZoneOffset.UTC)
+        val engine = NativePadesEngine(clock = clock)
+        val input = nativePadesFixture()
+        val options = checkNotNull(NativePadesOptions.parseWithPolicy(mapOf("expPolicy" to "FirmaAGE")))
+        val policy = checkNotNull(options.policy)
+        val signed = sign(engine, input, identity, SigningAlgorithm.SHA256_WITH_RSA, options)
+        try {
+            assertTrue(engine.verify(signed, input, identity.certificate, SigningAlgorithm.SHA256_WITH_RSA, options))
+            assertFalse(engine.verify(signed, input, identity.certificate, SigningAlgorithm.SHA256_WITH_RSA, NativePadesOptions()))
+            PDDocument.load(signed).use { pdf ->
+                val signature = pdf.signatureDictionaries.single()
+                val cmsBytes = ASN1InputStream(signature.contents).use { it.readObject().encoded }
+                val content = CMSProcessableByteArray(signature.getSignedContent(signed))
+                val signer = CMSSignedData(content, cmsBytes).signerInfos.signers.single()
+                assertTrue(NativeCadesPolicy.matches(signer.signedAttributes, policy))
+                assertFalse(NativeCadesPolicy.matches(signer.signedAttributes, null))
+                assertNull(signer.signedAttributes[CMSAttributes.signingTime])
+            }
+        } finally { signed.fill(0) }
+        val plain = sign(engine, input, identity)
+        try { assertFalse(engine.verify(plain, input, identity.certificate, SigningAlgorithm.SHA256_WITH_RSA, options)) }
+        finally { plain.fill(0) }
+    }
+
     private fun sign(engine: NativePadesEngine, input: ByteArray, identity: dev.junta.firmamobile.certificate.UnlockedIdentity,
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA256_WITH_RSA, options: NativePadesOptions = NativePadesOptions()): ByteArray {
         val result = engine.sign(input, identity, algorithm, options)

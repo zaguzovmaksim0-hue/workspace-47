@@ -56,8 +56,10 @@ internal class NativeAfirmaOperation(
                 } else null,
                 requiresExactCertificate = invocation.requiresExactCertificate,
                 providedDigestAlgorithm = invocation.precalculatedHash?.digestName,
-                signaturePolicySummary = invocation.cadesPolicy?.let { "${it.identifier} · ${it.hashAlgorithm} · " +
-                    java.util.Base64.getEncoder().encodeToString(it.hashCopy()) },
+                signaturePolicySummary = (invocation.cadesPolicy ?: invocation.padesOptions?.policy)?.let {
+                    "${it.identifier} · ${it.hashAlgorithm} · " +
+                        java.util.Base64.getEncoder().encodeToString(it.hashCopy())
+                },
             )
         } finally { payload.fill(0) }
     }

@@ -98,6 +98,44 @@ class NativePadesRequestTest {
         assertEquals(1, fetches); operation.close()
     }
 
+    @Test fun firmaAgePdfRequestSignsPadesWithTheExpandedAgePolicy() = runBlocking<Unit> {
+        val id = nonExportableSyntheticIdentity(); val input = nativePadesFixture()
+        val clock = Clock.fixed(id.identity.certificate.notBefore.toInstant().plusSeconds(60), ZoneOffset.UTC)
+        val properties = "expPolicy=FirmaAGE\nsignatureSubFilter=ETSI.CAdES.detached"
+        val invocation = (parse(input, properties = properties) as AfirmaServletParseResult.Accepted).invocation
+        val options = checkNotNull(invocation.padesOptions)
+        assertEquals("2.16.724.1.3.1.1.2.1.9", options.policy?.identifier); assertNull(invocation.cadesPolicy)
+        var wire: String? = null
+        val operation = NativeAfirmaOperation(invocation, AfirmaResultTransport { _, _, value ->
+            wire = value; AfirmaDeliveryResult.ACKNOWLEDGED
+        }, clock = clock)
+        try {
+            assertTrue(operation.details.signaturePolicySummary!!.startsWith("2.16.724.1.3.1.1.2.1.9 · SHA-1 · "))
+            assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.execute(id.identity) {})
+            val pdf = decodeLastPiece(wire!!.split('|')[1], null)
+            try {
+                val engine = NativePadesEngine(clock = clock)
+                assertTrue(engine.verify(pdf, input, id.identity.certificate, SigningAlgorithm.SHA256_WITH_RSA, options))
+                assertFalse(engine.verify(pdf, input, id.identity.certificate, SigningAlgorithm.SHA256_WITH_RSA))
+            } finally { pdf.fill(0) }
+        } finally { operation.close() }
+    }
+
+    @Test fun pdfPolicyConflictsAndUnknownNamesAreRejectedWhileExplicitPoliciesAreAccepted() {
+        val pdf = nativePadesFixture()
+        val refused = listOf("expPolicy=FirmaAGE\nsignatureSubFilter=adbe.pkcs7.detached", "expPolicy=FirmaAGE18", "expPolicy=firmaage")
+        for (properties in refused) {
+            assertTrue(properties, parse(pdf, properties = properties) is AfirmaServletParseResult.Unsupported)
+        }
+        val hash = Base64.getEncoder().encodeToString(ByteArray(20) { 9 })
+        val explicit = "policyIdentifier=1.3.6.1.4.1.55555.47.2\npolicyIdentifierHashAlgorithm=SHA-1\npolicyIdentifierHash=$hash"
+        val accepted = parse(pdf, properties = explicit)
+        assertTrue(accepted.toString(), accepted is AfirmaServletParseResult.Accepted)
+        (accepted as AfirmaServletParseResult.Accepted).invocation.use {
+            assertEquals("1.3.6.1.4.1.55555.47.2", it.padesOptions?.policy?.identifier); assertNull(it.cadesPolicy)
+        }
+    }
+
     private fun fields(pdf: ByteArray, format: String = "PAdES") = linkedMapOf("id" to "Pdf-123", "stservlet" to "https://storage.example/put", "format" to format, "algorithm" to "SHA256withRSA", "dat" to Base64.getEncoder().encodeToString(pdf))
     private fun parse(pdf: ByteArray, format: String = "PAdES", properties: String = "", key: String? = null): AfirmaServletParseResult {
         val values = fields(pdf, format)
