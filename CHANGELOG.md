@@ -1,8 +1,37 @@
 # Historial de cambios
 
-## 0.2.11
+Cada versión es una actualización en desarrollo: consulta el resultado de CI del commit antes de instalar su APK. Los APK del canal diario se firman con la clave persistente `CN=Firma Mobile Daily APK` (SHA-256 `f1bcad77c90bab402ac9671b0ac6c034cc1d916d4561f65e480740021e5d6971`); consulta [la firma del APK y la migración desde otras firmas](docs/instalacion.md#firma-del-apk-y-actualizaciones).
 
-Actualización en desarrollo; consulta el resultado de CI del commit antes de instalar su APK.
+## 0.2.17 (19) — 2026-11-02
+
+- AutoFirma: `expPolicy` ampliado para las firmas locales CAdES y PAdES (#564).
+
+## 0.2.16 (18) — 2026-11-02
+
+- Navegador: precalentamiento de la sesión de IFEF antes de abrir enlaces directos en frío, tolerante a su redirección y a los cambios de navegación (#561).
+
+## 0.2.15 (17) — 2026-11-01
+
+- Estilo visual unificado del catálogo y la pantalla de inicio (#559).
+- La comprobación de documento en blanco se vincula a la navegación actual (#558).
+
+## 0.2.14 (16) — 2026-11-01
+
+- AutoFirma universal en sitios HTTPS públicos y correcciones para IFEF (#556).
+- La 0.2.13 (15) no llegó a `main`: el código de versión pasó de 14 a 16.
+
+## 0.2.12 (14) — 2026-10-30
+
+- Catálogo con búsqueda primero y campo de dirección inteligente (#552), filtro de secciones verificadas (#504) y fecha de la última verificación de cada portal (#413).
+- AutoFirma: relay para servlets AutoScript bloqueados por CSP (#548–#551), filtros de certificado `nonexpired`, `authcert` y cualificado (#547) y relleno del último fragmento del resultado DES (#545).
+- Certificados: catálogo de certificados guardados (#455, #463, #465, #466, #503), elección de entrada en archivos PKCS#12 con varias claves (#479, #480), identidades EC P-256/P-384 para firmar archivos locales, con rechazo seguro en portales (#474, #476, #477), e importador verificado a AndroidKeyStore/StrongBox (#443).
+- Verificación local de firmas PDF existentes (#451), XAdES `.xsig` (#539) y CMS con exportación SAF (#399, #422); vista previa local del PDF en el consentimiento PAdES (#411).
+- Red: cadenas de servidor completadas con intermedios incluidos, como FNMT ACCOMP (#546).
+- Recursos en inglés, catalán, gallego y euskera (#387) y más textos localizados (#410, #471, #505).
+- Perfiles de portal con orígenes y contratos TLS fijados, y catálogo de perfiles versionado (esquema v2) empaquetado como recurso comprobado (#509–#531, #533, #540, #544).
+- APK diario firmado con una clave persistente y fijada, solo después de CI y seguridad verdes en `main`.
+
+## 0.2.11 (13)
 
 - Nombre visible unificado como **Firma Mobile**, tanto dentro de la aplicación como bajo el icono.
 - Versión visible sin el sufijo `optimized`; se conservan el código de versión y el identificador del paquete.

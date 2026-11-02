@@ -4,7 +4,7 @@
 
 Firma Mobile es un proyecto experimental e independiente, no la aplicación oficial AutoFirma. Utiliza únicamente un APK proporcionado por el mantenedor y comprobado para el commit correspondiente. No existe en este documento una promesa de disponibilidad en Google Play ni de una publicación binaria estable.
 
-Para actualizar una instalación existente, el paquete y la firma deben coincidir. No desinstales la aplicación ni borres sus datos si quieres conservar la configuración. Si Android rechaza la actualización por una firma diferente, detente y comprueba el origen del APK; no desactives las protecciones del sistema.
+Para actualizar una instalación existente, el paquete y la firma deben coincidir. No desinstales la aplicación ni borres sus datos si quieres conservar la configuración. Si Android rechaza la actualización por una firma diferente, detente y comprueba el origen del APK; no desactives las protecciones del sistema. Consulta [Firma del APK y actualizaciones](#firma-del-apk-y-actualizaciones).
 
 ## Uso básico
 
@@ -18,10 +18,38 @@ Bloquear el certificado no elimina el archivo, no lo revoca ante su emisor y no 
 
 ## Variantes y actualizaciones
 
-La versión visible de uso diario es **0.2.11**. `optimized` es una denominación interna de compilación; incluye perfiles experimentales, utiliza transporte directo y no habilita los controles de depuración. El paquete permanece `dev.junta.firmamobile`.
+La versión visible de uso diario es **0.2.17**. `optimized` es una denominación interna de compilación; incluye perfiles experimentales, utiliza transporte directo y no habilita los controles de depuración. El paquete permanece `dev.junta.firmamobile`.
 
-El APK para este canal se obtiene con **Actions → Signed daily APK → Run workflow → main**, después de que CI y seguridad estén verdes para ese commit. El artefacto `firmamobile-daily-…` contiene `firmamobile-daily.apk`, su SHA-256, el commit y el informe público del certificado. La firma permanente se verifica contra `config/signing/daily-cert-sha256.txt`. Los APK `optimized` de CI sin este paso siguen siendo artefactos de prueba con firma debug, no actualizaciones de este canal.
-
-Al cambiar desde una firma anterior a este nuevo canal puede ser necesario reinstalar una sola vez. Desinstalar elimina los datos locales y la configuración: conserva antes el archivo original de tu certificado y su contraseña fuera de la aplicación. No borres una instalación hasta tener verificado el nuevo APK. Las futuras actualizaciones de este canal deben conservar la misma clave y el mismo paquete.
+El APK para este canal se obtiene con **Actions → Signed daily APK → Run workflow → main**, después de que CI y seguridad estén verdes para ese commit. El artefacto `firmamobile-daily-<commit>` contiene `firmamobile-daily.apk`, su suma SHA-256 (`SHA256SUMS`), el commit (`COMMIT.txt`) y el informe público del certificado (`daily-certificate.txt`); GitHub lo conserva 14 días. La firma permanente se verifica contra `config/signing/daily-cert-sha256.txt`. Los APK `optimized` de CI sin este paso siguen siendo artefactos de prueba con firma debug, no actualizaciones de este canal.
 
 Una compilación de desarrollo no debe confundirse con una distribución pública `release`, que exige su propia configuración de firma y revisión de obligaciones de terceros. Consulta [la política de seguridad](../SECURITY.md) y [la configuración de firma](release-signing.md).
+
+## Firma del APK y actualizaciones
+
+Todos los APK del canal diario se firman con la misma clave persistente:
+
+- certificado: `CN=Firma Mobile Daily APK`;
+- SHA-256: `f1bcad77c90bab402ac9671b0ac6c034cc1d916d4561f65e480740021e5d6971`;
+- SHA-1: `3ebac06c7bf4a5f1cadccb205335f1f0ee830e0b`.
+
+Antes de instalar, comprueba la suma y la huella con `apksigner` (incluido en el Android SDK; en Termux, `pkg install apksigner`):
+
+```bash
+sha256sum -c SHA256SUMS
+apksigner verify --print-certs firmamobile-daily.apk | grep 'SHA-256'
+```
+
+Todas las líneas `SHA-256 digest` deben mostrar exactamente la huella anterior. Si no coincide, no instales el APK.
+
+### «El paquete entra en conflicto con un paquete existente»
+
+Si Android muestra ese aviso (o uno similar), o `adb`/`pm` devuelven `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, la aplicación instalada está firmada con otra clave: por ejemplo, la antigua clave local `CN=Firma Mobile, OU=Release` (SHA-256 `b5d187690ee2a17d8c0812ac24139ee480280f780118ce2aefb6121ff05550dd`) o una clave de depuración. Android no permite actualizarla y la aplicación no admite copias de seguridad del sistema, así que sus datos no pueden trasladarse. Migración, una sola vez:
+
+1. Guarda fuera de la aplicación el archivo `.p12`/`.pfx` de tu certificado y su contraseña.
+2. Descarga el APK diario y comprueba su suma y su huella.
+3. Desinstala Firma Mobile (Ajustes → Aplicaciones → Firma Mobile → Desinstalar). Se borran los certificados importados, las referencias guardadas, la región y el resto de datos locales.
+4. Instala `firmamobile-daily.apk`, ábrelo e importa de nuevo el certificado.
+
+A partir de ahí, cada APK diario más reciente se instala como actualización normal, sin perder datos. Android sigue rechazando un APK con un `versionCode` inferior al instalado.
+
+La clave privada no está en el repositorio ni en los artefactos. Dónde se guarda, cómo restaurarla en GitHub y cómo rotarla se explica en [la referencia de firma del APK](daily-apk-signing.md) (en inglés).

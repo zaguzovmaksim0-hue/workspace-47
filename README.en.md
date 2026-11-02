@@ -11,21 +11,33 @@ The project is experimental. Compatibility is recorded per exact profile and ope
 ## Getting started
 
 - [Installation and first steps (Spanish)](docs/instalacion.md)
-- [Version 0.2.11 changes](CHANGELOG.md)
+- [APK signing, verification and migration](docs/daily-apk-signing.md)
+- [Version 0.2.17 changes](CHANGELOG.md)
 - [Technical documentation](docs/README.md)
 - [Security policy](SECURITY.md)
 - [Privacy policy (Spanish)](docs/privacidad.md)
 - [Contributing](CONTRIBUTING.md)
 
-The visible name is **Firma Mobile** and the daily-use version is **0.2.11**.
+The visible name is **Firma Mobile** and the daily-use version is **0.2.17**.
 The Android application ID remains `dev.junta.firmamobile` for update continuity.
 The internal `optimized` build-type name is not part of the visible version.
+
+## Daily APK and signing key
+
+Daily-use APKs are built by the **Signed daily APK** GitHub Actions workflow on `main`, only after CI and security passed on that exact commit, and are always signed with the same persistent key:
+
+- certificate `CN=Firma Mobile Daily APK`;
+- SHA-256 `f1bcad77c90bab402ac9671b0ac6c034cc1d916d4561f65e480740021e5d6971`, pinned in `config/signing/daily-cert-sha256.txt`.
+
+The private key is not in the repository or in any artifact: the maintainer holds it, and GitHub keeps a write-only copy as `daily-signing` environment secrets. If Android reports that the package conflicts with an existing package, the installed app was signed with another key (for example the legacy `CN=Firma Mobile, OU=Release` key) and must be uninstalled once, which erases its data. See [daily APK signing](docs/daily-apk-signing.md) for fingerprints, verification, migration, key custody and rotation.
 
 ## Certificates and privacy
 
 Certificate and password processing stays local. Each manual unlock selects a
-session lifetime of 15 minutes (the default), one hour or 24 hours. On API 28+
-an encrypted cache can restore the certificate without extending that deadline.
+session lifetime of 15 minutes (the default), one hour or 24 hours. On API 30+
+(Android 11+) an encrypted cache can restore the certificate without extending
+that deadline; restoring it requires native biometric/PIN confirmation per
+operation, and Android 8–10 keep the session in memory only.
 The certificate menu's lock action ends the local session early; it does not
 delete the original file, revoke the certificate or guarantee logout from an
 already authenticated portal. This cache is not a claim that the private key
@@ -79,7 +91,7 @@ Typical development checks:
 ./gradlew assembleOptimized
 ```
 
-Release builds intentionally require private signing configuration and must not fall back to a committed debug key. See [release signing](docs/release-signing.md), `keystore.properties.example` and `app/build.gradle.kts`. Ordinary CI uses disposable test signing material, not the permanent distribution key.
+Release builds intentionally require private signing configuration and must not fall back to a committed debug key. See [release signing](docs/release-signing.md), `keystore.properties.example` and `app/build.gradle.kts`. Ordinary CI uses disposable test signing material, not the permanent distribution key. Daily-channel APKs are the tested `optimized` payload re-signed with the persistent daily key by the `Signed daily APK` workflow; see [daily APK signing](docs/daily-apk-signing.md).
 
 Python inventory/catalog tooling is under `tools/`; the QA relay is under `ws024-relay/`.
 

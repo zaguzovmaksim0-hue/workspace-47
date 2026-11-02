@@ -12,7 +12,7 @@
 - [Guía de contribución](../CONTRIBUTING.md).
 - [Política de verificación](agents/github-actions-verification.md): pruebas, lint y compilaciones en GitHub Actions; el emulador se ejecuta en la programación nocturna de la rama predeterminada o mediante activación manual explícita, no en PR/push ordinarios.
 - [Plan de pruebas](test-plan.md) y [muestras sintéticas](test-fixtures.md).
-- [Configuración de firma](release-signing.md).
+- [Configuración de firma](release-signing.md) y [claves y firma del APK diario](daily-apk-signing.md): huellas, dónde está la clave, verificación, migración y rotación.
 - [Modelo de seguridad](../SECURITY.md) y [procedencia](provenance.md).
 
 ## Producto y evidencias

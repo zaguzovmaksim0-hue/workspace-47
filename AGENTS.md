@@ -14,6 +14,10 @@ Agents may use narrowly scoped local tests during implementation when they short
 
 Codex Cloud and `w47-cloud` are not the default path and are not an automatic fallback. Use them only when the operator explicitly requests that environment for a specific task. If GitHub Actions is unavailable, diagnose/report the blocker instead of silently moving the full gate to the phone or Codex Cloud.
 
+## APK signing
+
+Daily-use APKs come only from the `Signed daily APK` workflow and carry the pinned daily key; see `docs/daily-apk-signing.md`. Do not install APKs signed with the legacy release key, a debug key or a new key on the maintainer's devices: Android then refuses later updates, and the only fix is uninstalling, which erases app data. Never print, commit or upload keystores, `credentials.json` or signing passwords.
+
 ## Agent metadata
 
 GitHub is the issue tracker. Domain documentation is single-context. The current branch/PR lifecycle is defined in `CONTEXT.md`; public contribution expectations are in `CONTRIBUTING.md`. See `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, and `docs/agents/domain.md`.
