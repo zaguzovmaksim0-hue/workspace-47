@@ -6,13 +6,6 @@
     <string name="native_multiphase_cosign">Add a signature to the document</string>
     <string name="native_multiphase_countersign">Countersign through the service</string>
     <string name="native_multiphase_batch">Batch signing</string>
-    <string name="webauthn_status_label">Passkeys / WebAuthn</string>
-    <string name="webauthn_unsupported">This WebView does not advertise native WebAuthn support. You can continue in an external browser.</string>
-    <string name="webauthn_configuration_failed">Could not enable the WebAuthn engine. Normal browsing remains available.</string>
-    <string name="webauthn_provider_unknown">Native WebAuthn engine enabled for the browser. Credential provider authorization for this app has not yet been confirmed; some passkeys may not be available.</string>
-    <string name="webauthn_no_success_claim">Enabling the engine does not mean sign-in has been completed or approval has been received from Google Password Manager. The website origin is not imitated using JavaScript.</string>
-    <string name="webauthn_external_browser">Continue in external browser</string>
-    <string name="webauthn_close">Close</string>
     <string name="native_multiphase_result">The service returned a result. This alone does not prove acceptance of the procedure.</string>
     <string name="native_multiphase_batch_result">Documents: %1$d; positive results: %2$d; other results: %3$d.</string>
 </resources>

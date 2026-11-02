@@ -2,6 +2,15 @@
 
 Cada versión es una actualización en desarrollo: consulta el resultado de CI del commit antes de instalar su APK. Los APK del canal diario se firman con la clave persistente `CN=Firma Mobile Daily APK` (SHA-256 `f1bcad77c90bab402ac9671b0ac6c034cc1d916d4561f65e480740021e5d6971`); consulta [la firma del APK y la migración desde otras firmas](docs/instalacion.md#firma-del-apk-y-actualizaciones).
 
+## 0.2.18 (20) — 2026-11-02
+
+- Diseño renovado en toda la aplicación: nueva paleta clara y oscura, esquinas redondeadas, tipografía más legible e iconos propios.
+- Inicio reorganizado: tarjeta del certificado, acceso al navegador y secciones «Herramientas» y «Ajustes e información».
+- Catálogo más limpio: tarjetas con una sola acción, insignia solo para sedes verificadas y selector de región simplificado.
+- Información legal con navegación clara y versión visible; se retiran de la interfaz el informe de compatibilidad y el estado técnico de WebAuthn.
+- Verificación sin conexión con el resultado destacado y las notas plegadas en «Más información»; diario de comprobaciones más legible, con exportación «Exportar diario (JSON)».
+- Navegador: menú con iconos unificados, franja del certificado y aviso de navegación general más discretos; buscador del catálogo sin etiqueta flotante.
+
 ## 0.2.17 (19) — 2026-11-02
 
 - AutoFirma: `expPolicy` ampliado para las firmas locales CAdES y PAdES (#564).

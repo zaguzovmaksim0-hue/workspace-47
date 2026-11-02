@@ -141,7 +141,7 @@ class PortalCatalogScreenTest {
             onBackToCertificate = { backRequested = true },
         )
 
-        rule.onNodeWithContentDescription("← Volver al certificado")
+        rule.onNodeWithContentDescription("Volver al certificado")
             .assertIsDisplayed()
             .performClick()
 
@@ -217,7 +217,7 @@ class PortalCatalogScreenTest {
                 .getString(dev.junta.firmamobile.R.string.catalog_region_change),
             substring = true,
         ).performClick()
-        rule.onNodeWithText("ELIGE TU REGIÓN").assertIsDisplayed()
+        rule.onNodeWithText("Elige tu región").assertIsDisplayed()
         rule.onNodeWithText("Buscar región").assertDoesNotExist()
         rule.onNodeWithText("Aragón").performClick()
 
@@ -585,11 +585,9 @@ class PortalCatalogScreenTest {
         val label = org.robolectric.RuntimeEnvironment.getApplication()
             .getString(dev.junta.firmamobile.R.string.catalog_favorite_add)
         rule.onAllNodesWithTag("catalog-favorite-${portal.portalId.value}").assertCountEquals(1)
-        val statusCount = if (portal.supportStatus == PortalSupportStatus.VERIFIED_E2E ||
-            portal.supportStatus == PortalSupportStatus.IMPLEMENTED_NOT_E2E) 1 else 0
-        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}").assertCountEquals(statusCount)
         val verifiedCount = if (portal.supportStatus == PortalSupportStatus.VERIFIED_E2E &&
             portal.lastVerifiedOn != null) 1 else 0
+        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}").assertCountEquals(verifiedCount)
         rule.onAllNodesWithTag("catalog-verified-on-${portal.portalId.value}").assertCountEquals(verifiedCount)
         rule.onNodeWithContentDescription(label).assertIsDisplayed().performClick()
         rule.runOnIdle { assertEquals(listOf(portal.portalId), favorites) }

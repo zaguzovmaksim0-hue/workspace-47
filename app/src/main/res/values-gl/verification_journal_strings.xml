@@ -8,7 +8,7 @@
     <string name="verification_journal_provider_warning">Un fallo do provedor pode deixar un ficheiro externo parcial. Cancelar non desfai os bytes xa escritos.</string>
     <string name="verification_journal_empty">Aínda non hai comprobacións nesta sesión.</string>
     <string name="verification_journal_clear">Borrar diario</string>
-    <string name="verification_journal_export">Exportar instantánea JSON</string>
+    <string name="verification_journal_export">Exportar diario (JSON)</string>
     <string name="verification_journal_close">Pechar</string>
     <string name="verification_journal_kind_verify">Verificación CMS/PDF local</string>
     <string name="verification_journal_completed">Completada (só integridade local)</string>
@@ -16,8 +16,8 @@
     <string name="verification_journal_failed">Fallida</string>
     <string name="verification_journal_row">N.º %1$d · %2$s · %3$s · %4$s</string>
     <string name="verification_journal_choosing">Escolle un destino JSON ou cancela.</string>
-    <string name="verification_journal_writing">Exportando a instantánea…</string>
-    <string name="verification_journal_exported">Instantánea exportada.</string>
+    <string name="verification_journal_writing">Exportando o diario…</string>
+    <string name="verification_journal_exported">Diario exportado.</string>
     <string name="verification_journal_export_cancelled">Exportación cancelada.</string>
     <string name="verification_journal_export_failed">Non se puido exportar. Pode quedar un ficheiro externo parcial.</string>
 </resources>

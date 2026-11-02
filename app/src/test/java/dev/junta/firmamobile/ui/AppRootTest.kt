@@ -39,7 +39,7 @@ class AppRootTest {
         rule.onNodeWithTag("open-legal-information").performScrollTo().performClick()
         rule.onNodeWithText("Privacidad").assertIsDisplayed()
         rule.onNodeWithText("Licencias y componentes").assertIsDisplayed()
-        rule.onNodeWithText("Cerrar").performClick()
+        rule.onNodeWithContentDescription("Cerrar").performClick()
         rule.onNodeWithTag("legal-information-dialog").assertDoesNotExist()
     }
 

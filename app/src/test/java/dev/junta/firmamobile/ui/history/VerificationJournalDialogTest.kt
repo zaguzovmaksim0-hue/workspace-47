@@ -44,6 +44,9 @@ class VerificationJournalDialogTest {
         val snapshot = journal.snapshot()
         rule.setContent { JuntaFirmaTheme { verificationJournalDialog(journal, onDismiss = {}) } }
         rule.onNodeWithText(context.getString(R.string.verification_journal_scope)).performScrollTo().assertExists()
+        rule.onNodeWithText(context.getString(R.string.verification_journal_integrity)).assertDoesNotExist()
+        rule.onNodeWithTag("verification-journal-details").performScrollTo()
+            .assertHasClickAction().assertHeightIsAtLeast(48.dp).performClick()
         rule.onNodeWithText(context.getString(R.string.verification_journal_integrity)).performScrollTo().assertExists()
         rule.onNodeWithText(context.getString(R.string.verification_journal_copies)).performScrollTo().assertExists()
         rule.onNodeWithText(context.getString(R.string.verification_journal_provider_warning)).performScrollTo().assertExists()

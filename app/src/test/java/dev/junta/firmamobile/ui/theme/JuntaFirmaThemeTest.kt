@@ -61,8 +61,30 @@ class JuntaFirmaThemeTest {
 
     @Test
     @Config(sdk = [31], qualifiers = "es-rES-notnight")
-    fun supportedSystemLightUsesPlatformDynamicColors() {
+    fun supportedSystemLightKeepsTheStaticBrandPalette() {
         rule.setContent { JuntaFirmaTheme { ThemeProbe() } }
+        rule.runOnIdle {
+            assertSame(JuntaLightColorScheme, snapshot.scheme)
+            assertEquals(JuntaLightPalette, snapshot.palette)
+            assertBoundColorsAndContrast()
+        }
+    }
+
+    @Test
+    @Config(sdk = [31], qualifiers = "es-rES-night")
+    fun supportedSystemDarkKeepsTheStaticBrandPalette() {
+        rule.setContent { JuntaFirmaTheme { ThemeProbe() } }
+        rule.runOnIdle {
+            assertSame(JuntaDarkColorScheme, snapshot.scheme)
+            assertEquals(JuntaDarkPalette, snapshot.palette)
+            assertBoundColorsAndContrast()
+        }
+    }
+
+    @Test
+    @Config(sdk = [31], qualifiers = "es-rES-notnight")
+    fun explicitDynamicLightStillUsesPlatformColors() {
+        rule.setContent { juntaFirmaTheme(darkTheme = false, dynamicColor = true) { ThemeProbe() } }
         rule.runOnIdle {
             val expected = dynamicLightColorScheme(RuntimeEnvironment.getApplication())
             assertEquals(expected.primary, snapshot.scheme.primary)
@@ -74,8 +96,8 @@ class JuntaFirmaThemeTest {
 
     @Test
     @Config(sdk = [31], qualifiers = "es-rES-night")
-    fun supportedSystemDarkUsesPlatformDynamicColors() {
-        rule.setContent { JuntaFirmaTheme { ThemeProbe() } }
+    fun explicitDynamicDarkStillUsesPlatformColors() {
+        rule.setContent { juntaFirmaTheme(darkTheme = true, dynamicColor = true) { ThemeProbe() } }
         rule.runOnIdle {
             val expected = dynamicDarkColorScheme(RuntimeEnvironment.getApplication())
             assertEquals(expected.primary, snapshot.scheme.primary)

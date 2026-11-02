@@ -91,7 +91,7 @@ class MainActivityRootNavigationTest {
 
     @Test fun certificateLessContinueOpensCatalogAndExplicitBackReturnsHome() {
         openCatalog()
-        rule.onNodeWithContentDescription("← Volver al certificado").performClick()
+        rule.onNodeWithContentDescription("Volver al certificado").performClick()
         awaitHome()
         rule.onNodeWithTag("catalog-list").assertDoesNotExist()
     }
@@ -105,7 +105,7 @@ class MainActivityRootNavigationTest {
 
     @Test fun certificateHomeSystemBackAfterCatalogReturnFinishesInsteadOfReopeningCatalog() {
         openCatalog()
-        rule.onNodeWithContentDescription("← Volver al certificado").performClick()
+        rule.onNodeWithContentDescription("Volver al certificado").performClick()
         awaitHome()
         rule.onNodeWithTag("catalog-list").assertDoesNotExist()
         scenario.onActivity {

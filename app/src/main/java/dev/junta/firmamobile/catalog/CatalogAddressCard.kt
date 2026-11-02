@@ -10,11 +10,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -22,6 +23,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.contentDescription
@@ -33,12 +35,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.ui.JuntaElevatedPanel
+import dev.junta.firmamobile.ui.JuntaFieldShape
 import dev.junta.firmamobile.ui.JuntaPrimaryButton
 import dev.junta.firmamobile.ui.theme.JuntaHairline
+import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
 import dev.junta.firmamobile.ui.theme.JuntaPaperElevated
 import dev.junta.firmamobile.ui.theme.JuntaTeal
-import dev.junta.firmamobile.ui.theme.JuntaTealDark
 
 /** Small inline component above the catalog, never a modal address dialog. */
 @Composable
@@ -50,13 +53,13 @@ internal fun CatalogAddressCard(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = CutCornerShape(8.dp)
+    val shape = JuntaFieldShape
     JuntaElevatedPanel(
         modifier = modifier,
         testTag = "catalog-address-card",
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.catalog_address_title), color = JuntaTealDark,
+        Text(stringResource(R.string.catalog_address_title), color = JuntaInk,
             style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
         Text(stringResource(R.string.catalog_address_hint), color = JuntaMutedInk,
             style = MaterialTheme.typography.bodySmall)
@@ -80,9 +83,11 @@ internal fun CatalogAddressCard(
                     }
                     if (state.text.isNotEmpty() || state.error != null) {
                         val clearLabel = stringResource(R.string.catalog_address_clear)
-                        TextButton(onClick = onClear, enabled = !state.opening,
-                            modifier = Modifier.heightIn(min = 48.dp).testTag("catalog-address-clear")
-                                .semantics { contentDescription = clearLabel }) { Text("×") }
+                        IconButton(onClick = onClear, enabled = !state.opening,
+                            modifier = Modifier.testTag("catalog-address-clear")
+                                .semantics { contentDescription = clearLabel }) {
+                            Icon(painterResource(R.drawable.ic_ui_close), contentDescription = null)
+                        }
                     }
                 }
             },

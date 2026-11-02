@@ -168,7 +168,7 @@ class RealE2eInstrumentedTest {
         }
         rule.onNodeWithText("Continuar").performScrollTo().performClick()
         waitUntil(UI_TIMEOUT_MILLIS) {
-            rule.onAllNodesWithText("SERVICIOS PÚBLICOS").fetchSemanticsNodes().isNotEmpty()
+            rule.onAllNodesWithText("Servicios públicos").fetchSemanticsNodes().isNotEmpty()
         }
         result.certificateUnlocked = true
     }

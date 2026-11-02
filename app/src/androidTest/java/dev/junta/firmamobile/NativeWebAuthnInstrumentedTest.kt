@@ -1,20 +1,12 @@
 package dev.junta.firmamobile
 
-import android.webkit.WebView
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import dev.junta.firmamobile.browser.TrustedJuntaWebView
 import dev.junta.firmamobile.browser.WebAuthnEngineState
-import dev.junta.firmamobile.ui.WebAuthnStatusButton
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.*
@@ -62,35 +54,6 @@ class NativeWebAuthnInstrumentedTest {
             // Do not call credentials.get/create, fake success or manufacture
             // an origin on behalf of a relying party we do not control.
             scenario.onActivity { (view.parent as? android.view.ViewGroup)?.removeView(view); view.destroy() }
-        }
-    }
-
-    @Test fun enabledEngineIsNotPresentedAsCredentialProviderApproval() {
-        var external = 0
-        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
-var activityContext: android.content.Context? = null
-scenario.onActivity { activityContext = it }
-val strings = checkNotNull(activityContext).resources
-            scenario.onActivity { it.setContent { WebAuthnStatusButton(WebAuthnEngineState.ENABLED_PROVIDER_AUTHORIZATION_UNKNOWN) { external++ } } }
-            rule.onNodeWithTag("webauthn-status").performClick()
-            rule.onNodeWithTag("webauthn-status-dialog").assertIsDisplayed()
-            rule.onNodeWithText(strings.getString(R.string.webauthn_provider_unknown), substring = true).assertIsDisplayed()
-            rule.runOnIdle { assertEquals(0, external) }
-            rule.onNodeWithTag("webauthn-open-browser").performClick()
-            rule.runOnIdle { assertEquals(1, external) }
-        }
-    }
-    @Test fun unsupportedEngineLeavesAnExplicitExternalBrowserOption() {
-        var external = 0
-        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
-var activityContext: android.content.Context? = null
-scenario.onActivity { activityContext = it }
-val strings = checkNotNull(activityContext).resources
-            scenario.onActivity { it.setContent { WebAuthnStatusButton(WebAuthnEngineState.UNSUPPORTED) { external++ } } }
-            rule.onNodeWithTag("webauthn-status").performClick()
-            rule.onNodeWithText(strings.getString(R.string.webauthn_unsupported), substring = true).assertIsDisplayed()
-            rule.onNodeWithTag("webauthn-open-browser").performClick()
-            rule.runOnIdle { assertEquals(1, external) }
         }
     }
 }

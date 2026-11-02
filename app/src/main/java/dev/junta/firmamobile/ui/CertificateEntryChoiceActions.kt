@@ -1,6 +1,9 @@
 package dev.junta.firmamobile.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +20,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.certificate.CertificateEntryChoice
+import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
+import dev.junta.firmamobile.ui.theme.JuntaMutedInk
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -49,16 +54,29 @@ internal fun certificateEntryChooser(state: CertificateUiState.Locked) {
                 onClick = { actions?.onChoose?.invoke(choice) },
                 enabled = actions != null,
                 modifier = Modifier.fillMaxWidth().testTag("certificate-entry-${choice.number}"),
+                shape = JuntaFieldShape,
+                border = BorderStroke(1.dp, JuntaHairline),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(certificateDisplayNameText(summary.ownerName), style = MaterialTheme.typography.bodyLarge)
-                    Text(stringResource(R.string.certificate_issuer, certificateDisplayNameText(summary.issuerName)))
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        certificateDisplayNameText(summary.ownerName),
+                        color = JuntaInk,
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        stringResource(R.string.certificate_issuer, certificateDisplayNameText(summary.issuerName)),
+                        color = JuntaMutedInk,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     Text(
                         stringResource(
                             R.string.certificate_validity,
                             CHOICE_DATE.format(summary.validFrom),
                             CHOICE_DATE.format(summary.validUntil),
                         ),
+                        color = JuntaMutedInk,
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }

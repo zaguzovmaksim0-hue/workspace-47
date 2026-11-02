@@ -1,4 +1,4 @@
-Firma Mobile 0.2.11
+Firma Mobile
 Copyright 2026 Maksim Zaguzov
 
 Proyecto independiente y no oficial, distribuido bajo Apache License 2.0 para su código propio. No pertenece a la Junta de Andalucía ni a otra administración; no implica patrocinio, certificación o respaldo oficial.

@@ -125,6 +125,8 @@ import java.util.Base64
 import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 
+// Compose entry point: one slot per browser action keeps BrowserScreen wiring explicit.
+@Suppress("FunctionNaming", "LongMethod", "LongParameterList")
 @Composable
 internal fun BrowserLayout(
     certificateOwner: String,
@@ -143,7 +145,6 @@ internal fun BrowserLayout(
     onOpenInBrowser: (() -> Unit)? = null,
     certificateAvailable: Boolean = true,
     publicBrowsing: Boolean = false,
-    webAuthnState: dev.junta.firmamobile.browser.WebAuthnEngineState? = null,
     content: @Composable (Modifier) -> Unit,
 ) {
     var showSiteInformation by remember(currentUrl) { mutableStateOf(false) }
@@ -207,10 +208,6 @@ internal fun BrowserLayout(
             ),
             trustLabel = trustLabel,
             publicBrowsing = publicBrowsing,
-            webAuthnState = webAuthnState,
-            onOpenInBrowser = onOpenInBrowser?.let { open ->
-                { showSiteInformation = false; open() }
-            },
             onDismiss = { showSiteInformation = false },
         )
     }

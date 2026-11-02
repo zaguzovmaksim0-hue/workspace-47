@@ -41,10 +41,10 @@ class ThemePaletteTest {
     }
 
     @Test
-    fun lightFallbackPreservesTheExistingBrandTokens() {
+    fun lightFallbackPinsTheRefreshedBrandTokens() {
         assertEquals(
-            listOf(0xFFF2E5D1, 0xFFF8EDDB, 0xFF101310, 0xFF125854,
-                0xFF14736B, 0xFF073C3A, 0xFF4F524C, 0xFFB8AD9B),
+            listOf(0xFFF5F3EE, 0xFFFFFFFF, 0xFF1A1C1B, 0xFF0F5C56,
+                0xFF17756D, 0xFF0A403C, 0xFF5A615D, 0xFFDDD8CE),
             with(JuntaLightPalette) {
                 listOf(paper, paperElevated, ink, teal, tealBright, tealDark, mutedInk, hairline)
             },

@@ -84,7 +84,7 @@
     <string name="browser_delete_all_data_success">Borráronse todos os datos web da aplicación.</string>
     <string name="browser_delete_all_data_failed">Non se puideron borrar todos os datos web.</string>
     <string name="browser_retry">Tentar de novo</string>
-    <string name="browser_compatibility_error">Este WebView non ofrece a ponte segura requirida. A sinatura permanece desactivada.</string>
+    <string name="browser_compatibility_error">O navegador do sistema deste teléfono non permite asinar de forma segura. Actualiza Android System WebView desde Google Play para poder asinar.</string>
     <string name="browser_blank_document_error">A páxina cargouse, pero non mostrou contido visible. Téntao de novo ou ábrea nun navegador externo.</string>
     <string name="browser_load_error">Non se puido cargar o portal de forma segura.</string>
     <string name="browser_client_cert_preferences_error">Non se puido preparar unha sesión nova de certificado. Volve iniciar o acceso.</string>
@@ -123,10 +123,10 @@
     <string name="signing_failed_title">Non se puido completar a sinatura</string>
     <string name="signing_closed_error_code">Código: %1$s</string>
     <string name="unknown_value">descoñecido</string>
-    <string name="catalog_title">SERVIZOS PÚBLICOS</string>
+    <string name="catalog_title">Servizos públicos</string>
     <string name="catalog_subtitle">Atopa e abre a sede ou o servizo público que precisas.</string>
-    <string name="catalog_back_to_certificate">← Volver ao certificado</string>
-    <string name="catalog_my_region_label">A MIÑA REXIÓN</string>
+    <string name="catalog_back_to_certificate">Volver ao certificado</string>
+    <string name="catalog_my_region_label">A miña rexión</string>
     <string name="catalog_region_copy">Amosamos primeiro os servizos da túa rexión e os dispoñibles en toda España.</string>
     <string name="catalog_change_region">Cambiar rexión</string>
     <string name="catalog_use_location">Usar a miña localización</string>
@@ -139,17 +139,12 @@
     <string name="catalog_favorite_saved">Gardado</string>
     <string name="catalog_open">Abrir</string>
     <string name="catalog_open_failed">Non se atopou unha aplicación para abrir este sitio.</string>
-    <string name="catalog_choose_region">ESCOLLE A TÚA REXIÓN</string>
+    <string name="catalog_choose_region">Escolle a túa rexión</string>
     <string name="catalog_section_favorites">Favoritos</string>
-    <string name="catalog_section_favorites_copy">Os teus servizos gardados para atopalos rapidamente.</string>
     <string name="catalog_section_recent">Recentes</string>
-    <string name="catalog_section_recent_copy">Os últimos servizos que abriches.</string>
     <string name="catalog_section_selected_region">En %1$s</string>
-    <string name="catalog_section_region_copy">Servizos públicos deste territorio.</string>
     <string name="catalog_section_spain">Servizos estatais</string>
-    <string name="catalog_section_spain_copy">Organismos e servizos do Estado dispoñibles desde calquera rexión.</string>
     <string name="catalog_section_other_regions">Outros territorios de España</string>
-    <string name="catalog_section_other_regions_copy">Servizos públicos doutras comunidades e territorios.</string>
     <plurals name="catalog_section_service_count">
         <item quantity="one">%1$d servizo</item>
         <item quantity="other">%1$d servizos</item>
@@ -265,7 +260,7 @@
     <string name="native_afirma_cancel_not_sent">A operación cancelouse só neste dispositivo. Non se enviou ningunha notificación ao servidor.</string>
     <string name="native_afirma_cancel_rejected">O servidor de almacenamento non aceptou a notificación de cancelación. Comproba o estado do trámite na web.</string>
     <string name="native_afirma_cancel_uncertain">Non se sabe se o servidor de almacenamento recibiu a notificación de cancelación. Comproba o estado do trámite na web antes de repetir a operación. A notificación non se enviará de novo automaticamente.</string>
-    <string name="public_browsing_title">Navegador sen perfil específico</string>
+    <string name="public_browsing_title">Navegación xeral</string>
     <string name="public_browsing_explanation">Podes navegar por esta web. O uso do certificado ou de AutoFirma require unha confirmación independente; non se garante a compatibilidade de todos os trámites.</string>
     <string name="public_browsing_open">Abrir web</string>
     <string name="public_browsing_clear_copy">Intentaranse borrar os datos do sitio amosado e bloquearase o certificado. A aplicación indicará se Android non permite borrar todas as cookies dese sitio. Non se garante o peche da sesión no servidor.</string>
@@ -295,7 +290,6 @@
     <string name="legal_about">Información da versión</string>
     <string name="legal_back">Volver</string>
     <string name="legal_load_error">Non se puido cargar o documento local. Consulta a documentación do repositorio oficial do proxecto.</string>
-    <string name="compatibility_unverified_short">Compatibilidade de sinatura non confirmada</string>
     <string name="compatibility_unverified_operation">Esta operación non ten compatibilidade confirmada nun escenario real. Comproba o resultado e o xustificante do portal antes de repetila.</string>
     <string name="compatibility_operation_notice">A compatibilidade depende do portal e da operación. Algunhas funcións non se verificaron en escenarios reais; comproba sempre o resultado emitido polo organismo.</string>
     <string name="certificate_retention_label">Prazo de desbloqueo: %1$s</string>
@@ -354,9 +348,8 @@
         <item quantity="one">Sinatura por lotes (%1$d documento)</item>
         <item quantity="other">Sinatura por lotes (%1$d documentos)</item>
     </plurals>
-    <string name="catalog_search_or_address">Buscar un portal ou escribir un enderezo</string>
+    <string name="catalog_search_or_address">Buscar servizo ou enderezo</string>
     <string name="catalog_region_change">Cambiar</string>
-    <string name="catalog_region_inline">%1$s · Cambiar</string>
     <string name="catalog_favorite_add_description">Engadir a preferidos</string>
     <string name="catalog_favorite_remove_description">Retirar de preferidos</string>
 </resources>

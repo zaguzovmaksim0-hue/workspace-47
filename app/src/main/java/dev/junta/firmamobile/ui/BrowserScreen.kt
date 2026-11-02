@@ -211,7 +211,6 @@ fun BrowserScreen(
             trustController.navigate(validatedEntryUrl).activeProfileId,
         )
     }
-    var webAuthnState by remember { mutableStateOf<dev.junta.firmamobile.browser.WebAuthnEngineState?>(null) }
     val webViewRef = remember { AtomicReference<WebView?>() }
     val bridgeAttachmentLease = remember {
         BrowserOwnedResourceLease<WebView, WebMessageBridgeAttachment>()
@@ -1044,7 +1043,6 @@ fun BrowserScreen(
     )) {
     BrowserLayout(
         publicBrowsing = selectedServiceId == null,
-        webAuthnState = webAuthnState,
         currentUrl = currentUrl,
         profileName = effectiveProfile?.displayName
             ?: selectedProfile?.displayName
@@ -1285,7 +1283,6 @@ fun BrowserScreen(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                         )
                         webViewRef.set(webView)
-                        webAuthnState = webView.webAuthnEngineState
                         onShowFileChooser?.let(webView::setFileChooserListener)
                         webView.setDocumentDownloadLauncher(
                             canRespond = {

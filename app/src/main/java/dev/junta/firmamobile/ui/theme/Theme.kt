@@ -18,7 +18,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -69,17 +68,18 @@ val JuntaHairline: Color
     @ReadOnlyComposable
     get() = Color(LocalJuntaPalette.current.hairline)
 
-val JuntaDisplayFont = FontFamily(
+/** Brand wordmark only; every other text uses the platform sans-serif family. */
+val JuntaWordmarkFont = FontFamily(
     Font(
         resId = R.font.bebas_neue_regular,
         weight = FontWeight.Normal,
     ),
 )
 
-internal val JuntaLightColorScheme = fallbackColorScheme(JuntaLightPalette, darkTheme = false)
-internal val JuntaDarkColorScheme = fallbackColorScheme(JuntaDarkPalette, darkTheme = true)
+internal val JuntaLightColorScheme = fallbackColorScheme(JuntaLightPalette, JuntaLightExtras, darkTheme = false)
+internal val JuntaDarkColorScheme = fallbackColorScheme(JuntaDarkPalette, JuntaDarkExtras, darkTheme = true)
 
-private fun fallbackColorScheme(palette: JuntaPalette, darkTheme: Boolean): ColorScheme {
+private fun fallbackColorScheme(palette: JuntaPalette, extras: JuntaSchemeExtras, darkTheme: Boolean): ColorScheme {
     val base = if (darkTheme) darkColorScheme() else lightColorScheme()
     return base.copy(
         primary = Color(palette.teal),
@@ -87,18 +87,36 @@ private fun fallbackColorScheme(palette: JuntaPalette, darkTheme: Boolean): Colo
         onPrimary = Color(palette.paperElevated),
         primaryContainer = Color(palette.primaryContainer),
         onPrimaryContainer = Color(palette.onPrimaryContainer),
+        inversePrimary = Color(extras.inversePrimary),
         secondary = Color(palette.tealDark),
         onSecondary = Color(palette.paperElevated),
+        secondaryContainer = Color(extras.secondaryContainer),
+        onSecondaryContainer = Color(extras.onSecondaryContainer),
+        tertiary = Color(extras.tertiary),
+        onTertiary = Color(extras.onTertiary),
+        tertiaryContainer = Color(extras.tertiaryContainer),
+        onTertiaryContainer = Color(extras.onTertiaryContainer),
         background = Color(palette.paper),
         onBackground = Color(palette.ink),
         surface = Color(palette.paperElevated),
         onSurface = Color(palette.ink),
         surfaceVariant = Color(palette.surfaceVariant),
         onSurfaceVariant = Color(palette.mutedInk),
-        outline = Color(palette.ink),
+        inverseSurface = Color(extras.inverseSurface),
+        inverseOnSurface = Color(extras.inverseOnSurface),
+        outline = Color(extras.outline),
         outlineVariant = Color(palette.hairline),
         error = Color(palette.error),
         onError = Color(palette.onError),
+        errorContainer = Color(extras.errorContainer),
+        onErrorContainer = Color(extras.onErrorContainer),
+        surfaceDim = Color(extras.surfaceDim),
+        surfaceBright = Color(extras.surfaceBright),
+        surfaceContainerLowest = Color(extras.surfaceContainerLowest),
+        surfaceContainerLow = Color(extras.surfaceContainerLow),
+        surfaceContainer = Color(extras.surfaceContainer),
+        surfaceContainerHigh = Color(extras.surfaceContainerHigh),
+        surfaceContainerHighest = Color(extras.surfaceContainerHighest),
     )
 }
 
@@ -122,73 +140,82 @@ private const val UNSIGNED_ARGB_MASK = 0xFFFFFFFFL
 
 private fun Color.argb(): Long = toArgb().toLong() and UNSIGNED_ARGB_MASK
 
-private val JuntaTypography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = JuntaDisplayFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 62.sp,
-        lineHeight = 56.sp,
-        letterSpacing = 1.3.sp,
-    ),
-    headlineLarge = TextStyle(
-        fontFamily = JuntaDisplayFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 40.sp,
-        lineHeight = 42.sp,
-        letterSpacing = 0.9.sp,
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = JuntaDisplayFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 32.sp,
-        lineHeight = 35.sp,
-        letterSpacing = 0.8.sp,
-    ),
-    titleLarge = TextStyle(
-        fontFamily = JuntaDisplayFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 28.sp,
-        lineHeight = 31.sp,
-        letterSpacing = 0.7.sp,
-    ),
-    titleMedium = TextStyle(
+private val MaterialTypography = Typography()
+
+// Calm sentence-case hierarchy: semibold titles, regular body text and medium labels.
+private val JuntaTypography = MaterialTypography.copy(
+    displayLarge = MaterialTypography.displayLarge.copy(
         fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
+        fontSize = 40.sp,
+        lineHeight = 46.sp,
+        letterSpacing = 0.sp,
     ),
-    labelLarge = TextStyle(
+    headlineLarge = MaterialTypography.headlineLarge.copy(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 30.sp,
+        lineHeight = 36.sp,
+    ),
+    headlineMedium = MaterialTypography.headlineMedium.copy(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 26.sp,
+        lineHeight = 32.sp,
+    ),
+    headlineSmall = MaterialTypography.headlineSmall.copy(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+    ),
+    titleLarge = MaterialTypography.titleLarge.copy(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp,
+        lineHeight = 26.sp,
+    ),
+    titleMedium = MaterialTypography.titleMedium.copy(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 17.sp,
+        lineHeight = 23.sp,
+        letterSpacing = 0.sp,
+    ),
+    titleSmall = MaterialTypography.titleSmall.copy(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp,
+        lineHeight = 20.sp,
+    ),
+    labelLarge = MaterialTypography.labelLarge.copy(
         fontWeight = FontWeight.Medium,
+        fontSize = 15.sp,
+        lineHeight = 20.sp,
+    ),
+    bodyLarge = MaterialTypography.bodyLarge.copy(
         fontSize = 16.sp,
-        lineHeight = 22.sp,
-        letterSpacing = 0.2.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.15.sp,
     ),
-    bodyLarge = TextStyle(
-        fontSize = 18.sp,
-        lineHeight = 25.sp,
-    ),
-    bodyMedium = TextStyle(
+    bodyMedium = MaterialTypography.bodyMedium.copy(
         fontSize = 15.sp,
         lineHeight = 21.sp,
+        letterSpacing = 0.1.sp,
     ),
-    bodySmall = TextStyle(
+    bodySmall = MaterialTypography.bodySmall.copy(
         fontSize = 13.sp,
         lineHeight = 18.sp,
     ),
 )
 
 private val JuntaShapes = Shapes(
-    extraSmall = RoundedCornerShape(2.dp),
-    small = RoundedCornerShape(3.dp),
-    medium = RoundedCornerShape(4.dp),
-    large = RoundedCornerShape(6.dp),
-    extraLarge = RoundedCornerShape(8.dp),
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp),
 )
 
 @Composable
 fun JuntaFirmaTheme(content: @Composable () -> Unit) {
     juntaFirmaTheme(
         darkTheme = isSystemInDarkTheme(),
-        dynamicColor = true,
+        // The brand palette is intentional; wallpaper colours made surfaces and buttons inconsistent.
+        dynamicColor = false,
         content = content,
     )
 }

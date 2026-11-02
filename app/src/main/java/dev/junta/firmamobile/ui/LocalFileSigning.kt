@@ -171,12 +171,13 @@ private fun localFileSigningLifetime(controller: LocalFileSigningController, unl
 
 @Composable
 private fun localFileSigningButton(unlocked: Boolean, pickerPending: Boolean, onOpen: () -> Unit) {
-    JuntaOutlinedAction(
-        text = stringResource(R.string.local_signing_title),
+    JuntaToolRow(
+        iconRes = R.drawable.ic_ui_signature,
+        title = stringResource(R.string.local_signing_title),
         onClick = onOpen,
+        subtitle = if (unlocked) null else stringResource(R.string.local_signing_unlock),
         enabled = unlocked && !pickerPending,
     )
-    if (!unlocked) Text(stringResource(R.string.local_signing_unlock))
 }
 
 private fun confirmLocalFileSigning(
