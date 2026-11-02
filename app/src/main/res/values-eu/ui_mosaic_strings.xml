@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_greeting_morning">Egun on</string>
+    <string name="home_greeting_afternoon">Arratsalde on</string>
+    <string name="home_greeting_evening">Gabon</string>
+    <plurals name="certificate_validity_days_left">
+        <item quantity="one">Egun %1$d geratzen da</item>
+        <item quantity="other">%1$d egun geratzen dira</item>
+    </plurals>
+</resources>

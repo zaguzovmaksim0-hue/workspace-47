@@ -306,11 +306,10 @@ class MainActivity : ComponentActivity() {
             },
         )
         window.decorView.post(::drainExternalAfirma)
-        val paperSystemBar = getColor(R.color.jfm_paper)
         enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.light(
-                scrim = paperSystemBar,
-                darkScrim = paperSystemBar,
+            navigationBarStyle = SystemBarStyle.auto(
+                lightScrim = getColor(R.color.jfm_paper_light),
+                darkScrim = getColor(R.color.jfm_paper_dark),
             ),
         )
         setContent {

@@ -13,11 +13,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.history.InMemoryOperationJournal
+import dev.junta.firmamobile.ui.JuntaIconBubble
+import dev.junta.firmamobile.ui.JuntaTone
 
 @Composable
 internal fun verificationJournalDialog(journal: InMemoryOperationJournal, onDismiss: () -> Unit) {
@@ -36,7 +39,8 @@ internal fun verificationJournalDialog(controller: VerificationJournalController
         modifier = Modifier.testTag("verification-journal-dialog"),
         onDismissRequest = close,
         properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
-        title = { Text(stringResource(R.string.verification_journal_title)) },
+        icon = { JuntaIconBubble(iconRes = R.drawable.ic_ui_history, tone = JuntaTone.VIOLET) },
+        title = { Text(stringResource(R.string.verification_journal_title), textAlign = TextAlign.Center) },
         text = {
             verificationJournalContent(state, onExport = { controller.beginExport() }, onClear = controller::clear)
         },

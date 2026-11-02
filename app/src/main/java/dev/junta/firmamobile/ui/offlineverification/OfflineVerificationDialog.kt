@@ -14,11 +14,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.history.LocalOutcome
 import dev.junta.firmamobile.ui.JuntaFieldShape
+import dev.junta.firmamobile.ui.JuntaIconBubble
+import dev.junta.firmamobile.ui.JuntaTone
 
 @Suppress("FunctionNaming") // Unit-returning Compose UI follows the framework naming convention.
 @Composable
@@ -48,7 +51,8 @@ internal fun OfflineVerificationDialog(
         modifier = Modifier.testTag("offline-verification-dialog"),
         onDismissRequest = close,
         properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
-        title = { Text(stringResource(R.string.signature_verification_title)) },
+        icon = { JuntaIconBubble(iconRes = R.drawable.ic_ui_verify, tone = JuntaTone.MINT) },
+        title = { Text(stringResource(R.string.signature_verification_title), textAlign = TextAlign.Center) },
         text = { OfflineVerificationContent(state, controller, onPickCms, onPickOriginal) },
         confirmButton = {
             Button(

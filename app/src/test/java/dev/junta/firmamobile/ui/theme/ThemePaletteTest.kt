@@ -43,8 +43,8 @@ class ThemePaletteTest {
     @Test
     fun lightFallbackPinsTheRefreshedBrandTokens() {
         assertEquals(
-            listOf(0xFFF5F3EE, 0xFFFFFFFF, 0xFF1A1C1B, 0xFF0F5C56,
-                0xFF17756D, 0xFF0A403C, 0xFF5A615D, 0xFFDDD8CE),
+            listOf(0xFFF6F3FF, 0xFFFFFFFF, 0xFF1B1736, 0xFF5236E8,
+                0xFF5F3DF0, 0xFF3B22B8, 0xFF5C5878, 0xFFE3DDF7),
             with(JuntaLightPalette) {
                 listOf(paper, paperElevated, ink, teal, tealBright, tealDark, mutedInk, hairline)
             },

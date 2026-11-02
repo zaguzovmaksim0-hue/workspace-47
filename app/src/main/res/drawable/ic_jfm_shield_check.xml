@@ -1,16 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Original project brand mark: teal shield with a check, no third-party source. -->
+<!-- Original project brand mark: violet-to-magenta shield with a check, no third-party source. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="64dp"
     android:height="64dp"
     android:viewportWidth="64"
     android:viewportHeight="64">
+    <path android:pathData="M32,4.5L54,13.2V30.5C54,44.6 44.8,54.6 32,60C19.2,54.6 10,44.6 10,30.5V13.2Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="54"
+                android:endY="60"
+                android:startX="10"
+                android:startY="4.5"
+                android:type="linear">
+                <item android:color="#FF5B3AF0" android:offset="0" />
+                <item android:color="#FFA630C4" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:fillColor="#FF0F5C56"
-        android:pathData="M32,4.5L54,13.2V30.5C54,44.6 44.8,54.6 32,60C19.2,54.6 10,44.6 10,30.5V13.2Z" />
-    <path
-        android:fillColor="#FF17756D"
+        android:fillColor="#26FFFFFF"
         android:pathData="M32,4.5L54,13.2V30.5C54,44.6 44.8,54.6 32,60Z" />
+    <path
+        android:fillColor="#FFFFD166"
+        android:pathData="M47,6.5a3,3 0,1 1,0 6a3,3 0,1 1,0 -6Z" />
     <path
         android:fillColor="#00000000"
         android:pathData="M22.5,32.5L29.2,39.2L42,26.2"

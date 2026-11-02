@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_tools_title">Herramientas</string>
-    <string name="home_settings_title">Ajustes e información</string>
     <string name="legal_version_value">Versión %1$s</string>
     <string name="offline_verification_intro">Comprueba en este dispositivo, sin conexión, si un PDF o una firma CMS se ha modificado después de firmarse.</string>
     <string name="more_information_show">Más información</string>

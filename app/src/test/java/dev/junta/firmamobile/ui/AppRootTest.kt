@@ -72,7 +72,7 @@ class AppRootTest {
             }
         }
 
-        rule.onNodeWithText("Seleccionar certificado").performClick()
+        rule.onNodeWithText("Seleccionar certificado").performScrollTo().performClick()
         rule.runOnIdle { check(selected) }
     }
 
@@ -192,13 +192,39 @@ class AppRootTest {
             .performScrollTo()
             .assertIsDisplayed()
         rule.onNodeWithText("Continuar").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("Elegir otro").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Elegir otro").assertDoesNotExist()
         rule.onNodeWithText("Bloquear certificado").assertDoesNotExist()
         rule.onNodeWithContentDescription("Opciones del certificado").performScrollTo().performClick()
+        rule.onNodeWithText("Elegir otro").assertIsDisplayed()
+        rule.onNodeWithText("Olvidar certificado").assertIsDisplayed()
         rule.onNodeWithText("Bloquear certificado").assertIsDisplayed().performClick()
         rule.runOnIdle { check(locked) }
         rule.onNodeWithText("Bloquear certificado").assertDoesNotExist()
-        rule.onNodeWithText("Olvidar certificado").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Olvidar certificado").assertDoesNotExist()
+    }
+
+    @Test
+    fun lockedCertificateOffersChangeAndForgetFromTheOptionsMenu() {
+        var selected = false
+        var forgotten = false
+        rule.setContent {
+            JuntaFirmaTheme {
+                AppRoot(
+                    state = CertificateUiState.Locked(reference(), null, null),
+                    onSelectCertificate = { selected = true },
+                    onForget = { forgotten = true },
+                )
+            }
+        }
+
+        rule.onNodeWithText("Elegir otro").assertDoesNotExist()
+        rule.onNodeWithContentDescription("Opciones del certificado").performScrollTo().performClick()
+        rule.onNodeWithText("Bloquear certificado").assertDoesNotExist()
+        rule.onNodeWithText("Elegir otro").assertIsDisplayed().performClick()
+        rule.runOnIdle { check(selected && !forgotten) }
+        rule.onNodeWithContentDescription("Opciones del certificado").performClick()
+        rule.onNodeWithText("Olvidar certificado").assertIsDisplayed().performClick()
+        rule.runOnIdle { check(forgotten) }
     }
 
     private fun reference(summary: CertificateSummary? = null) = StoredCertificateReference(
