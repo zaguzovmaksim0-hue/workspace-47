@@ -50,7 +50,9 @@ class NativeCadesPolicyRequestTest {
     }
 
     @Test fun unsupportedFormatsAndOtherRequirementsRemainRejected() {
-        for (format in listOf("PAdES", "XAdES")) assertFalse(request(policy(), format) is AfirmaServletParseResult.Accepted)
+        // PDF requests carry policies in their PAdES options; see NativePadesRequestTest.
+        assertFalse(request(policy(), "XAdES") is AfirmaServletParseResult.Accepted)
+        assertFalse(request(mapOf("expPolicy" to "FirmaAGE"), "XAdES") is AfirmaServletParseResult.Accepted)
         assertFalse(request(policy() + ("tsaURL" to "https://tsa.synthetic.example")) is AfirmaServletParseResult.Accepted)
     }
 
@@ -65,6 +67,62 @@ class NativeCadesPolicyRequestTest {
         val result = request(props, "CAdEStri")
         assertTrue(result.toString(), result is AfirmaServletParseResult.Accepted)
         (result as AfirmaServletParseResult.Accepted).invocation.use { assertEquals(OID, it.remoteOptions!!.properties["policyIdentifier"]) }
+    }
+
+    @Test fun firmaAgePolicyNameExpandsLikeAutoFirmaForLocalCades() {
+        val result = request(mapOf("expPolicy" to "FirmaAGE"))
+        assertTrue(result.toString(), result is AfirmaServletParseResult.Accepted)
+        (result as AfirmaServletParseResult.Accepted).invocation.use {
+            // Without an explicit mode AutoFirma signs small expPolicy CAdES requests implicitly.
+            assertFalse(it.detached)
+            val policy = checkNotNull(it.cadesPolicy)
+            assertEquals("2.16.724.1.3.1.1.2.1.9", policy.identifier)
+            assertEquals("SHA-1", policy.hashAlgorithm)
+            assertEquals("https://sede.administracion.gob.es/politica_de_firma_anexo_1.pdf", policy.qualifier)
+        }
+    }
+
+    @Test fun anExplicitModeStillWinsOverThePolicyDefault() {
+        for ((mode, detached) in listOf("explicit" to true, "implicit" to false)) {
+            val result = request(mapOf("expPolicy" to "FirmaAGE", "mode" to mode))
+            assertTrue(result.toString(), result is AfirmaServletParseResult.Accepted)
+            (result as AfirmaServletParseResult.Accepted).invocation.use {
+                assertEquals(mode, detached, it.detached); assertNotNull(it.cadesPolicy)
+            }
+        }
+    }
+
+    @Test fun firmaAge18AndPrecalculatedHashesKeepTheirAutoFirmaMeaning() {
+        val age18 = request(mapOf("expPolicy" to "FirmaAGE18"))
+        assertTrue(age18.toString(), age18 is AfirmaServletParseResult.Accepted)
+        (age18 as AfirmaServletParseResult.Accepted).invocation.use {
+            assertEquals("2.16.724.1.3.1.1.2.1.8", it.cadesPolicy!!.identifier)
+        }
+        val digest = MessageDigest.getInstance("SHA-256").digest(DATA)
+        val properties = mapOf("expPolicy" to "FirmaAGE", "precalculatedHashAlgorithm" to "SHA-256")
+        val result = AfirmaServletInvocationParser.parseRetrieved(AfirmaServletOperation.SIGN, PAGE, fields(properties, digest))
+        assertTrue(result.toString(), result is AfirmaServletParseResult.Accepted)
+        (result as AfirmaServletParseResult.Accepted).invocation.use {
+            assertTrue(it.detached); assertNotNull(it.cadesPolicy); assertArrayEquals(digest, it.payloadCopy())
+        }
+    }
+
+    @Test fun unknownPolicyNamesAreRejectedInsteadOfSigningWithoutAPolicy() {
+        for (name in listOf("firmaage", "FIRMAAGE", "FirmaAGE19", "FirmaAGE1.9")) {
+            val result = request(mapOf("expPolicy" to name))
+            assertTrue("$name: $result", result is AfirmaServletParseResult.Unsupported)
+        }
+    }
+
+    @Test fun delegatedServiceForwardsThePolicyNameUnexpanded() {
+        val props = mapOf("expPolicy" to "FirmaAGE", "serverUrl" to "https://signer.synthetic.example/service")
+        val result = request(props, "CAdEStri")
+        assertTrue(result.toString(), result is AfirmaServletParseResult.Accepted)
+        (result as AfirmaServletParseResult.Accepted).invocation.use {
+            val forwarded = it.remoteOptions!!.properties
+            assertEquals("FirmaAGE", forwarded["expPolicy"]); assertNull(forwarded["policyIdentifier"])
+            assertNull(it.cadesPolicy)
+        }
     }
 
     private fun request(properties: Map<String, String>, format: String = "CAdES") =

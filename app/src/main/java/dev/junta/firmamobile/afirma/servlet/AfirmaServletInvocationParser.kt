@@ -76,6 +76,7 @@ internal object AfirmaServletInvocationParser {
         var certificateConstraint: NativeCertificateConstraint? = null
         var precalculatedHash: NativePrecalculatedHash? = null
         var cadesPolicy: NativeCadesPolicy? = null
+        var cadesModeFromPolicy = false
         lateinit var endpoint: URI
         var properties: Map<String, String> = emptyMap()
         var algorithm: SigningAlgorithm? = null
@@ -314,7 +315,7 @@ internal object AfirmaServletInvocationParser {
                 ?: unsupported("xades_constraint_not_implemented")
             detached = true
         } else if (pdf) {
-            padesOptions = NativePadesOptions.parse(properties)
+            padesOptions = NativePadesOptions.parseWithPolicy(properties)
                 ?: unsupported("pdf_signature_property_not_implemented")
             // Both request modes contain the PDF and an embedded CMS.
             // This must never produce a raw CAdES response to a PDF request.
@@ -349,10 +350,14 @@ internal object AfirmaServletInvocationParser {
     }
 
     private fun InvocationBuildState.readCadesOptions() {
-        if (properties.keys.any { it !in setOf("mode", NativePrecalculatedHash.PROPERTY) +
-                NativeCadesPolicy.PROPERTY_NAMES }) unsupported("signature_property_not_implemented")
-        cadesPolicy = try { NativeCadesPolicy.parse(properties) }
+        val allowed = setOf("mode", NativePrecalculatedHash.PROPERTY, NativeSignaturePolicyExpansion.PROPERTY) +
+            NativeCadesPolicy.PROPERTY_NAMES
+        if (properties.keys.any { it !in allowed }) unsupported("signature_property_not_implemented")
+        val policyProperties = NativeSignaturePolicyExpansion.policyProperties(properties,
+            NativeSignaturePolicyExpansion.Format.CADES) ?: unsupported("signature_policy_not_supported")
+        cadesPolicy = try { NativeCadesPolicy.parse(policyProperties) }
             catch (_: Exception) { unsupported("cades_policy_parameters_not_supported") }
+        cadesModeFromPolicy = NativeSignaturePolicyExpansion.leavesCadesModeToPolicy(properties)
         properties[NativePrecalculatedHash.PROPERTY]?.let { digest ->
             if (op != AfirmaServletOperation.SIGN) unsupported("precalculated_hash_operation")
             precalculatedHash = NativePrecalculatedHash.parse(digest) ?: unsupported("precalculated_hash_algorithm")
@@ -370,6 +375,8 @@ internal object AfirmaServletInvocationParser {
         if (encoded.startsWith("http:", true) || encoded.startsWith("https:", true)) unsupported("remote_data")
         val bytes = strictBase64(encoded, MAX_PAYLOAD)
         payload = bytes
+        // Like AutoFirma, an expPolicy CAdES request without mode is implicit below 1 MiB.
+        if (cadesModeFromPolicy) detached = bytes.size >= NativeSignaturePolicyExpansion.CADES_IMPLICIT_LIMIT_BYTES
         precalculatedHash?.let { hash ->
             if (!hash.accepts(bytes, algorithm)) invalid("precalculated_hash_length")
             // The official CAdES precomputed-hash form always omits

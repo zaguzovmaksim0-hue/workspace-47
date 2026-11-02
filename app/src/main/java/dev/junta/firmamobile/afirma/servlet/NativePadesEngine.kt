@@ -71,7 +71,8 @@ internal class NativePadesEngine(
                     val external = document.saveIncrementalForExternalSigning(output)
                     // The document cannot be mutated after this call.
                     range = external.content.use { readBounded(it, maxOutputBytes) }
-                    when (val signed = cms.sign(checkNotNull(range), identity, algorithm, true)) {
+                    val signed = cms.signWithPolicy(checkNotNull(range), identity, algorithm, true, options.policy)
+                    when (signed) {
                         is LocalSignatureResult.Failure -> return signed
                         is LocalSignatureResult.Success -> signed.signature.use { result ->
                             result.withBytes { bytes ->
@@ -136,7 +137,7 @@ internal class NativePadesEngine(
                 val consumed = rawCms.size - input.available()
                 if (consumed <= 0 || consumed > SIGNATURE_SPACE || rawCms.drop(consumed).any { it != 0.toByte() }) return false
                 cmsBytes = rawCms.copyOf(consumed)
-                cms.verify(cmsBytes, content, certificate, algorithm, true)
+                cms.verifyWithPolicy(cmsBytes, content, certificate, algorithm, true, options.policy)
             } finally { content.fill(0); rawCms?.fill(0); cmsBytes?.fill(0) }
         }
     }.getOrDefault(false)

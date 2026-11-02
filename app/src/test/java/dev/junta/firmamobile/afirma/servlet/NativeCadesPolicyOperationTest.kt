@@ -124,6 +124,32 @@ class NativeCadesPolicyOperationTest {
         } finally { controller.close() }
     }
 
+    @Test fun firmaAgeRequestSignsAnAttachedCadesWithTheExpandedAgePolicy() = runBlocking<Unit> {
+        val key = nonExportableSyntheticIdentity()
+        val invocation = request(mapOf("expPolicy" to "FirmaAGE"))
+        val expected = checkNotNull(invocation.cadesPolicy)
+        assertFalse(invocation.detached)
+        var stores = 0
+        val operation = NativeAfirmaOperation(invocation, AfirmaResultTransport { _, _, wire ->
+            stores++
+            val bytes = AfirmaIntermediateCipher.decode(wire.split('|')[1], null)
+            try {
+                val engine = NativeCadesEngine(clock = generalClockFor(key.identity))
+                val certificate = key.identity.certificate
+                assertTrue(engine.verifyWithPolicy(bytes, DATA, certificate, SigningAlgorithm.SHA256_WITH_RSA, false, expected))
+                assertFalse(engine.verifyWithPolicy(bytes, DATA, certificate, SigningAlgorithm.SHA256_WITH_RSA, false, null))
+                assertNotNull(CMSSignedData(bytes).signedContent)
+            } finally { bytes.fill(0) }
+            AfirmaDeliveryResult.ACKNOWLEDGED
+        }, generalClockFor(key.identity))
+        try {
+            assertEquals("CAdES · attached", operation.details.format)
+            assertTrue(operation.details.signaturePolicySummary!!.startsWith("2.16.724.1.3.1.1.2.1.9 · SHA-1 · "))
+            assertEquals(AfirmaDeliveryResult.ACKNOWLEDGED, operation.execute(key.identity) {})
+            assertEquals(1, stores)
+        } finally { operation.close() }
+    }
+
     private fun request(properties: Map<String, String> = NativeCadesPolicyRequestTest.policy()) = acceptedGeneral("sign",
         mapOf("id" to "Policy123", "stservlet" to NativeCadesPolicyRequestTest.STORE, "format" to "CAdES", "algorithm" to "SHA256withRSA", "dat" to url64(DATA), "properties" to props(properties)))
     private fun item(id: String, data: ByteArray, properties: Map<String, String>, operation: String = "sign") =

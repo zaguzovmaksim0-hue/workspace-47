@@ -7,9 +7,14 @@ internal data class NativePadesOptions(
     val reason: String? = null,
     val location: String? = null,
     val contact: String? = null,
+    /** Explicit or `expPolicy`-expanded PAdES-EPES policy signed into the embedded CMS. */
+    val policy: NativeCadesPolicy? = null,
 ) {
-    override fun toString() = "NativePadesOptions(subFilter=$subFilter, metadataPresent=${reason != null || location != null || contact != null})"
+    override fun toString() = "NativePadesOptions(subFilter=$subFilter, " +
+        "metadataPresent=${reason != null || location != null || contact != null}, " +
+        "policyPresent=${policy != null})"
     companion object {
+        private const val ETSI_CADES_DETACHED = "ETSI.CAdES.detached"
         private val ALLOWED = setOf("mode", "format", "signatureSubFilter", "signReason", "signatureProductionCity", "signerContact", "headless", "signingCertificateV2")
         fun acceptsFormat(format: String): Boolean = listOf("PAdES", "PAdES Detached", "Adobe PDF").any { it.equals(format, true) }
         fun parse(properties: Map<String, String>): NativePadesOptions? {
@@ -26,5 +31,19 @@ internal data class NativePadesOptions(
             }
             return NativePadesOptions(subFilter, properties["signReason"], properties["signatureProductionCity"], properties["signerContact"])
         }
+
+        /** AutoFirma PAdES policy handling: `expPolicy` expands to the explicit policy keys and
+         * requires `ETSI.CAdES.detached`, rejecting any other requested subfilter. Explicit
+         * policy keys are signed for both supported subfilters. [parse] keeps rejecting policy
+         * keys for callers that cannot sign them yet. */
+        fun parseWithPolicy(properties: Map<String, String>): NativePadesOptions? = runCatching {
+            val subFilter = properties["signatureSubFilter"]
+            require(NativeSignaturePolicyExpansion.PROPERTY !in properties || subFilter == null ||
+                subFilter == ETSI_CADES_DETACHED)
+            val format = NativeSignaturePolicyExpansion.Format.PADES
+            val expanded = requireNotNull(NativeSignaturePolicyExpansion.policyProperties(properties, format))
+            val policy = NativeCadesPolicy.parse(expanded)
+            checkNotNull(parse(expanded - NativeCadesPolicy.PROPERTY_NAMES)).copy(policy = policy)
+        }.getOrNull()
     }
 }
