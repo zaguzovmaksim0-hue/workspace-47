@@ -4,8 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -33,7 +35,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -54,15 +55,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -70,19 +71,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
+import dev.junta.firmamobile.ui.FirmaCompactKey
+import dev.junta.firmamobile.ui.FirmaKeyStyle
 import dev.junta.firmamobile.ui.JuntaBackdrop
 import dev.junta.firmamobile.ui.JuntaFieldShape
-import dev.junta.firmamobile.ui.JuntaGradients
 import dev.junta.firmamobile.ui.JuntaIconBubble
 import dev.junta.firmamobile.ui.JuntaMonogram
 import dev.junta.firmamobile.ui.JuntaPanelShape
 import dev.junta.firmamobile.ui.JuntaPrimaryButton
 import dev.junta.firmamobile.ui.JuntaTone
-import dev.junta.firmamobile.ui.juntaOverlapAbove
-import dev.junta.firmamobile.ui.theme.JuntaHairline
+import dev.junta.firmamobile.ui.firmaBodyRecess
+import dev.junta.firmamobile.ui.theme.Firma
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
 import dev.junta.firmamobile.ui.theme.JuntaPaper
@@ -421,10 +424,8 @@ private fun locationDialogDismissButton(
 }
 
 private val CatalogShape = RoundedCornerShape(16.dp)
-private val SearchCardShape = RoundedCornerShape(24.dp)
 
-private val HeroSearchOverlap = 28.dp
-private val CatalogListSpacing = 12.dp
+private val SearchShape = RoundedCornerShape(18.dp)
 
 @Composable
 private fun PortalCatalogSection.localizedTitle(): String = when (kind) {
@@ -520,8 +521,7 @@ private fun CatalogScreenContent(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().safeDrawingPadding().imePadding().testTag("catalog-list"),
-        contentPadding = PaddingValues(start = 18.dp, top = 16.dp, end = 18.dp, bottom = 88.dp),
-        verticalArrangement = Arrangement.spacedBy(CatalogListSpacing),
+        contentPadding = PaddingValues(start = 20.dp, top = 14.dp, end = 20.dp, bottom = 88.dp),
     ) {
         CatalogTopItems(
             state = state,
@@ -656,30 +656,29 @@ private fun LazyListScope.CatalogTopItems(
     onChangeRegion: () -> Unit,
 ) {
     item(key = "catalog-header", contentType = "catalog-header") {
+        val sections = state.sections
+        val serviceCount = remember(sections) {
+            sections.flatMapTo(HashSet()) { section -> section.items.map { it.portalId } }.size
+        }
         CatalogHero(
             regionName = state.selectedRegion.localizedName(),
+            serviceCount = serviceCount.takeUnless { state.catalogLoading },
             onBack = onBackToCertificate,
             onChangeRegion = onChangeRegion,
-            bottomInset = HeroSearchOverlap,
         )
     }
     item(key = "catalog-search", contentType = "catalog-search") {
-        Box(
-            modifier = Modifier
-                .juntaOverlapAbove(HeroSearchOverlap + CatalogListSpacing)
-                .padding(horizontal = 10.dp),
-        ) {
-            CatalogSearchAddressField(
-                addressInput = addressInput,
-                actions = CatalogAddressFieldActions(
-                    onAddressInputChange = onAddressInputChange,
-                    onSearchTextChange = onSearchTextChange,
-                    onOpenPublicWeb = onOpenPublicWeb,
-                    suppressAddressOpening = suppressAddressOpening,
-                    onHideKeyboard = onHideKeyboard,
-                ),
-            )
-        }
+        CatalogSearchAddressField(
+            addressInput = addressInput,
+            actions = CatalogAddressFieldActions(
+                onAddressInputChange = onAddressInputChange,
+                onSearchTextChange = onSearchTextChange,
+                onOpenPublicWeb = onOpenPublicWeb,
+                suppressAddressOpening = suppressAddressOpening,
+                onHideKeyboard = onHideKeyboard,
+            ),
+            modifier = Modifier.padding(top = 14.dp),
+        )
     }
 }
 
@@ -709,7 +708,7 @@ private fun LazyListScope.CatalogResults(
 @Suppress("FunctionNaming")
 private fun LazyListScope.CatalogLoadingItem() {
     item(key = "catalog-loading", contentType = "notice") {
-        CatalogLoadingNotice()
+        CatalogLoadingNotice(modifier = Modifier.padding(top = 22.dp))
     }
 }
 
@@ -719,6 +718,7 @@ private fun LazyListScope.CatalogEmptyItem() {
         CatalogEmptyNotice(
             title = stringResource(R.string.catalog_empty_title),
             text = stringResource(R.string.catalog_empty_copy),
+            modifier = Modifier.padding(top = 22.dp),
         )
     }
 }
@@ -726,7 +726,7 @@ private fun LazyListScope.CatalogEmptyItem() {
 @Suppress("FunctionNaming")
 private fun LazyListScope.CatalogFooterCopyItem() {
     item(key = "catalog-footer-copy", contentType = "notice") {
-        CatalogFooterTips()
+        CatalogFooterTips(modifier = Modifier.padding(top = 22.dp))
     }
 }
 
@@ -852,6 +852,7 @@ private fun CatalogAddressFieldActions.emitSearchOrAddressTransition(
 private fun CatalogSearchAddressField(
     addressInput: CatalogAddressInput,
     actions: CatalogAddressFieldActions,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val canOpenAddress = actions.onOpenPublicWeb != null
@@ -872,16 +873,9 @@ private fun CatalogSearchAddressField(
         actions.emitSearchOrAddressTransition(addressInput, next)
     }
 
-    val shadow = JuntaGradients.Catalog[1]
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(elevation = 14.dp, shape = SearchCardShape, ambientColor = shadow, spotColor = shadow)
-            .clip(SearchCardShape)
-            .background(JuntaPaperElevated)
-            .border(1.dp, JuntaHairline, SearchCardShape)
-            .padding(6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         CatalogSearchTextField(
             addressInput = addressInput,
@@ -925,7 +919,7 @@ private fun looksLikeCatalogAddress(text: String): Boolean {
         (!value.contains("://") && value.contains('.') && !value.contains(' '))
 }
 
-@Suppress("LongParameterList", "FunctionNaming")
+@Suppress("LongParameterList", "FunctionNaming", "LongMethod")
 @Composable
 private fun CatalogSearchTextField(
     addressInput: CatalogAddressInput,
@@ -937,27 +931,37 @@ private fun CatalogSearchTextField(
     onHideKeyboard: () -> Unit,
 ) {
     val isAddress = addressInput.destination != null || looksLikeCatalogAddress(addressInput.text)
-    OutlinedTextField(
+    val isError = addressInput.error != null
+    val errorMessage = addressInput.error?.let { stringResource(it.messageRes) }
+    val interaction = remember { MutableInteractionSource() }
+    val colors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = JuntaInk,
+        unfocusedTextColor = JuntaInk,
+        errorTextColor = JuntaInk,
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        errorContainerColor = Color.Transparent,
+        cursorColor = Firma.accent,
+        errorCursorColor = MaterialTheme.colorScheme.error,
+        focusedBorderColor = Firma.accent,
+        unfocusedBorderColor = Color.Transparent,
+        errorBorderColor = MaterialTheme.colorScheme.error,
+        focusedLeadingIconColor = JuntaMutedInk,
+        unfocusedLeadingIconColor = JuntaMutedInk,
+        errorLeadingIconColor = MaterialTheme.colorScheme.error,
+        focusedPlaceholderColor = JuntaMutedInk,
+        unfocusedPlaceholderColor = JuntaMutedInk,
+        errorPlaceholderColor = JuntaMutedInk,
+    )
+    BasicTextField(
         value = addressInput.text,
         onValueChange = onSearchTextChange,
-        placeholder = {
-            Text(
-                stringResource(R.string.catalog_search_or_address),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        singleLine = true,
-        isError = addressInput.error != null,
-        shape = JuntaFieldShape,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            errorContainerColor = Color.Transparent,
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = Color.Transparent,
-        ),
-        leadingIcon = { CatalogSearchGlyph() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { if (errorMessage != null) error(errorMessage) }
+            .testTag("public-web-address"),
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = JuntaInk),
+        cursorBrush = SolidColor(if (isError) MaterialTheme.colorScheme.error else Firma.accent),
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.None,
             autoCorrectEnabled = false,
@@ -968,31 +972,53 @@ private fun CatalogSearchTextField(
             onGo = { onOpenAddress() },
             onDone = { onHideKeyboard() },
         ),
-        modifier = Modifier.fillMaxWidth().testTag("public-web-address"),
-        trailingIcon = { CatalogSearchFieldActions(addressInput.text, addressInput.error, onPaste, onClear) },
-        supportingText = addressInput.error?.let { error -> { CatalogAddressErrorText(error) } },
+        singleLine = true,
+        interactionSource = interaction,
+        decorationBox = { innerTextField ->
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = addressInput.text,
+                innerTextField = innerTextField,
+                enabled = true,
+                singleLine = true,
+                visualTransformation = VisualTransformation.None,
+                interactionSource = interaction,
+                isError = isError,
+                placeholder = {
+                    Text(
+                        stringResource(R.string.catalog_search_or_address),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_ui_search),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                },
+                trailingIcon = { CatalogSearchFieldActions(addressInput.text, addressInput.error, onPaste, onClear) },
+                supportingText = addressInput.error?.let { error -> { CatalogAddressErrorText(error) } },
+                colors = colors,
+                contentPadding = OutlinedTextFieldDefaults.contentPadding(top = 13.dp, bottom = 13.dp),
+                container = {
+                    Box(modifier = Modifier.fillMaxSize().firmaBodyRecess(SearchShape, depth = 3.dp))
+                    OutlinedTextFieldDefaults.Container(
+                        enabled = true,
+                        isError = isError,
+                        interactionSource = interaction,
+                        colors = colors,
+                        shape = SearchShape,
+                        focusedBorderThickness = 2.dp,
+                        unfocusedBorderThickness = 1.dp,
+                    )
+                },
+            )
+        },
     )
 }
 
-/** The search glyph sits on a small catalog-blue gradient tile. */
-@Suppress("FunctionNaming")
-@Composable
-private fun CatalogSearchGlyph() {
-    Box(
-        modifier = Modifier
-            .size(36.dp)
-            .background(Brush.linearGradient(JuntaGradients.Catalog), RoundedCornerShape(percent = 32)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_ui_search),
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(18.dp),
-        )
-    }
-}
-
+/** Paste is a small graphite key inside the recess; once there is text it gives way to clear. */
 @Suppress("FunctionNaming")
 @Composable
 private fun CatalogSearchFieldActions(
@@ -1001,13 +1027,25 @@ private fun CatalogSearchFieldActions(
     onPaste: () -> Unit,
     onClear: () -> Unit,
 ) {
-    Row {
+    Row(
+        modifier = Modifier.padding(end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         if (searchText.isEmpty()) {
-            TextButton(
+            FirmaCompactKey(
                 onClick = onPaste,
-                modifier = Modifier.heightIn(min = 48.dp).testTag("catalog-address-paste"),
+                style = FirmaKeyStyle.GRAPHITE,
+                shape = CircleShape,
+                faceModifier = Modifier.heightIn(min = 34.dp),
+                modifier = Modifier.testTag("catalog-address-paste"),
             ) {
-                Text(stringResource(R.string.catalog_address_paste), style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = stringResource(R.string.catalog_address_paste),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                    color = Firma.keyGraphiteInk,
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                )
             }
         }
         if (searchText.isNotEmpty() || error != null) {
@@ -1025,19 +1063,21 @@ private fun CatalogSearchFieldActions(
     }
 }
 
+@get:StringRes
+private val CatalogAddressInput.Error.messageRes: Int
+    get() = when (this) {
+        CatalogAddressInput.Error.EMPTY -> R.string.catalog_address_required
+        CatalogAddressInput.Error.INVALID -> R.string.catalog_address_invalid
+        CatalogAddressInput.Error.TOO_LONG -> R.string.catalog_address_too_long
+        CatalogAddressInput.Error.CLIPBOARD_EMPTY -> R.string.catalog_address_clipboard_empty
+    }
+
 @Suppress("FunctionNaming")
 @Composable
 private fun CatalogAddressErrorText(error: CatalogAddressInput.Error?) {
     if (error == null) return
     Text(
-        stringResource(
-            when (error) {
-                CatalogAddressInput.Error.EMPTY -> R.string.catalog_address_required
-                CatalogAddressInput.Error.INVALID -> R.string.catalog_address_invalid
-                CatalogAddressInput.Error.TOO_LONG -> R.string.catalog_address_too_long
-                CatalogAddressInput.Error.CLIPBOARD_EMPTY -> R.string.catalog_address_clipboard_empty
-            },
-        ),
+        stringResource(error.messageRes),
         modifier = Modifier.testTag("catalog-address-error"),
     )
 }

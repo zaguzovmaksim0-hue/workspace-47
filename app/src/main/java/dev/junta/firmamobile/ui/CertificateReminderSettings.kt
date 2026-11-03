@@ -49,8 +49,8 @@ internal fun certificateReminderSettings() {
     JuntaToolTile(
         iconRes = R.drawable.ic_ui_bell,
         title = stringResource(R.string.certificate_reminder_settings),
+        caption = stringResource(R.string.home_key_reminders),
         onClick = { visible = true },
-        tone = JuntaTone.SAFFRON,
         modifier = Modifier.testTag("open-certificate-reminder-settings"),
     )
     if (visible) certificateReminderSettingsDialog(

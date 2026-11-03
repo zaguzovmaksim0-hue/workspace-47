@@ -89,7 +89,7 @@ class AppRootTest {
         rule.onNodeWithTag("jfm-certificate-card").assertExists()
         rule.onNodeWithTag("jfm-home-navigation").assertDoesNotExist()
         rule.onNodeWithText("Firma Mobile").assertIsDisplayed()
-        rule.onNodeWithText("Selección segura disponible")
+        rule.onNodeWithText("sin certificado")
             .assertIsDisplayed()
         rule.onNodeWithText(
             "La selección de certificados estará disponible en la fase 2.",
@@ -182,8 +182,7 @@ class AppRootTest {
             }
         }
 
-        rule.onNodeWithText("Certificado encontrado")
-            .performScrollTo()
+        rule.onNodeWithText("listo")
             .assertIsDisplayed()
         rule.onNodeWithText("Persona de Prueba", substring = true)
             .performScrollTo()

@@ -18,12 +18,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.junta.firmamobile.R
 
 internal val LocalJuntaPalette = staticCompositionLocalOf { JuntaLightPalette }
 
@@ -68,13 +66,8 @@ val JuntaHairline: Color
     @ReadOnlyComposable
     get() = Color(LocalJuntaPalette.current.hairline)
 
-/** Brand wordmark only; every other text uses the platform sans-serif family. */
-val JuntaWordmarkFont = FontFamily(
-    Font(
-        resId = R.font.bebas_neue_regular,
-        weight = FontWeight.Normal,
-    ),
-)
+/** Monospaced system face for file names, domains, dates and other "printed" device text. */
+internal val FirmaMono: FontFamily = FontFamily.Monospace
 
 internal val JuntaLightColorScheme = fallbackColorScheme(JuntaLightPalette, JuntaLightExtras, darkTheme = false)
 internal val JuntaDarkColorScheme = fallbackColorScheme(JuntaDarkPalette, JuntaDarkExtras, darkTheme = true)
@@ -142,54 +135,65 @@ private fun Color.argb(): Long = toArgb().toLong() and UNSIGNED_ARGB_MASK
 
 private val MaterialTypography = Typography()
 
-// Calm sentence-case hierarchy: semibold titles, regular body text and medium labels.
+// Device-label hierarchy: medium-weight titles, regular body text and a light display face.
 private val JuntaTypography = MaterialTypography.copy(
     displayLarge = MaterialTypography.displayLarge.copy(
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 40.sp,
-        lineHeight = 46.sp,
-        letterSpacing = 0.sp,
+        fontWeight = FontWeight.Light,
+        fontSize = 64.sp,
+        lineHeight = 64.sp,
+        letterSpacing = (-1).sp,
     ),
     headlineLarge = MaterialTypography.headlineLarge.copy(
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 30.sp,
         lineHeight = 36.sp,
+        letterSpacing = (-0.3).sp,
     ),
     headlineMedium = MaterialTypography.headlineMedium.copy(
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 26.sp,
         lineHeight = 32.sp,
+        letterSpacing = (-0.2).sp,
     ),
     headlineSmall = MaterialTypography.headlineSmall.copy(
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 22.sp,
         lineHeight = 28.sp,
+        letterSpacing = (-0.1).sp,
     ),
     titleLarge = MaterialTypography.titleLarge.copy(
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 20.sp,
         lineHeight = 26.sp,
     ),
     titleMedium = MaterialTypography.titleMedium.copy(
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 17.sp,
-        lineHeight = 23.sp,
+        fontWeight = FontWeight.Medium,
+        fontSize = 16.5.sp,
+        lineHeight = 22.sp,
         letterSpacing = 0.sp,
     ),
     titleSmall = MaterialTypography.titleSmall.copy(
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 15.sp,
         lineHeight = 20.sp,
+        letterSpacing = 0.sp,
     ),
     labelLarge = MaterialTypography.labelLarge.copy(
         fontWeight = FontWeight.Medium,
         fontSize = 15.sp,
         lineHeight = 20.sp,
+        letterSpacing = 0.sp,
+    ),
+    labelMedium = MaterialTypography.labelMedium.copy(
+        fontWeight = FontWeight.Medium,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.1.sp,
     ),
     bodyLarge = MaterialTypography.bodyLarge.copy(
         fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.15.sp,
+        lineHeight = 23.sp,
+        letterSpacing = 0.1.sp,
     ),
     bodyMedium = MaterialTypography.bodyMedium.copy(
         fontSize = 15.sp,
@@ -199,22 +203,24 @@ private val JuntaTypography = MaterialTypography.copy(
     bodySmall = MaterialTypography.bodySmall.copy(
         fontSize = 13.sp,
         lineHeight = 18.sp,
+        letterSpacing = 0.1.sp,
     ),
 )
 
+// Keys and plates use moderate radii; only dialogs and sheets keep a larger corner.
 private val JuntaShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(14.dp),
+    large = RoundedCornerShape(18.dp),
+    extraLarge = RoundedCornerShape(22.dp),
 )
 
 @Composable
 fun JuntaFirmaTheme(content: @Composable () -> Unit) {
     juntaFirmaTheme(
         darkTheme = isSystemInDarkTheme(),
-        // The brand palette is intentional; wallpaper colours made surfaces and buttons inconsistent.
+        // The device palette is intentional; wallpaper colours would repaint keys, display and LEDs.
         dynamicColor = false,
         content = content,
     )
@@ -239,7 +245,8 @@ internal fun juntaFirmaTheme(
         JuntaThemeVariant.DARK -> JuntaDarkPalette
         else -> colorScheme.juntaPalette()
     }
-    CompositionLocalProvider(LocalJuntaPalette provides palette) {
+    val device = if (darkTheme) FirmaDarkColors else FirmaLightColors
+    CompositionLocalProvider(LocalJuntaPalette provides palette, LocalFirmaColors provides device) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = JuntaTypography,

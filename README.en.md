@@ -134,7 +134,7 @@ Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting source, compatibilit
 
 ## Provenance and third-party material
 
-Source/asset/data provenance is tracked in [`docs/provenance.md`](docs/provenance.md). Known third-party material retains its own license, including the bundled Bebas Neue font under SIL Open Font License 1.1.
+Source/asset/data provenance is tracked in [`docs/provenance.md`](docs/provenance.md). Known third-party material retains its own license; see [`NOTICE`](NOTICE). The app bundles no font of its own and uses the platform typeface.
 
 The earlier unresolved custom WebP/launcher PNG artwork was removed and replaced with project-origin XML/vector resources; those resources passed the final Android build/resource verification. See [`docs/visual-asset-audit.md`](docs/visual-asset-audit.md).
 

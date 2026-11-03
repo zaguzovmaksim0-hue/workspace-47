@@ -6,9 +6,9 @@
 
 This audit separates Android resource wiring from copyright/provenance. A binary asset being present in Git does not establish the right to redistribute or relicense it.
 
-## Known licensed asset
+## Bundled fonts
 
-- `app/src/main/res/font/bebas_neue_regular.ttf` — SIL Open Font License 1.1; license text is retained in `docs/licenses/BebasNeue-OFL.txt` and attribution is recorded in `NOTICE`.
+No third-party font file is bundled in the current tree. `app/src/main/res/font/bebas_neue_regular.ttf` (SIL Open Font License 1.1) was removed in the 0.2.20 device redesign together with `docs/licenses/BebasNeue-OFL.txt`, the in-app OFL copy and its `NOTICE` entry; the interface uses the platform typeface. Fonts inside dependencies, such as Liberation Sans in PDFBox Android, keep their own notices.
 
 ## Original unresolved binary set
 
