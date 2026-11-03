@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_tools_title">Eines</string>
-    <string name="home_settings_title">Configuració i informació</string>
     <string name="legal_version_value">Versió %1$s</string>
     <string name="offline_verification_intro">Comprova en aquest dispositiu, sense connexió, si un PDF o una signatura CMS s’ha modificat després de signar-se.</string>
     <string name="more_information_show">Més informació</string>

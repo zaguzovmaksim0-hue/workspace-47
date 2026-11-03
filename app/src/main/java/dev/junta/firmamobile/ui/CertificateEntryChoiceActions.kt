@@ -1,28 +1,42 @@
 package dev.junta.firmamobile.ui
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.certificate.CertificateEntryChoice
 import dev.junta.firmamobile.ui.theme.JuntaHairline
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
+import dev.junta.firmamobile.ui.theme.JuntaPaperElevated
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -45,46 +59,72 @@ internal fun certificateEntryChooser(state: CertificateUiState.Locked) {
             ),
             color = JuntaInk,
             style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.semantics { heading() },
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         state.choices.forEach { choice ->
-            val summary = choice.summary
-            OutlinedButton(
-                onClick = { actions?.onChoose?.invoke(choice) },
-                enabled = actions != null,
-                modifier = Modifier.fillMaxWidth().testTag("certificate-entry-${choice.number}"),
-                shape = JuntaFieldShape,
-                border = BorderStroke(1.dp, JuntaHairline),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            ) {
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        certificateDisplayNameText(summary.ownerName),
-                        color = JuntaInk,
-                        style = MaterialTheme.typography.titleSmall,
-                    )
-                    Text(
-                        stringResource(R.string.certificate_issuer, certificateDisplayNameText(summary.issuerName)),
-                        color = JuntaMutedInk,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Text(
-                        stringResource(
-                            R.string.certificate_validity,
-                            CHOICE_DATE.format(summary.validFrom),
-                            CHOICE_DATE.format(summary.validUntil),
-                        ),
-                        color = JuntaMutedInk,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
+            key(choice.number) {
+                certificateEntryChoiceRow(choice, enabled = actions != null) { actions?.onChoose?.invoke(choice) }
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
+        Spacer(modifier = Modifier.height(4.dp))
         JuntaOutlinedAction(
             text = stringResource(R.string.certificate_entry_cancel),
             onClick = { actions?.onCancel?.invoke() },
+        )
+    }
+}
+
+/** One identity inside the file: holder initials, issuer and validity, tappable as a whole. */
+@Composable
+private fun certificateEntryChoiceRow(choice: CertificateEntryChoice, enabled: Boolean, onClick: () -> Unit) {
+    val summary = choice.summary
+    val owner = certificateDisplayNameText(summary.ownerName)
+    val interaction = remember { MutableInteractionSource() }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .juntaPressScale(interaction)
+            .clip(JuntaFieldShape)
+            .background(JuntaPaperElevated)
+            .border(1.dp, JuntaHairline, JuntaFieldShape)
+            .clickable(
+                interactionSource = interaction,
+                indication = ripple(),
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .testTag("certificate-entry-${choice.number}"),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        JuntaMonogram(name = owner, size = 42.dp)
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(owner, color = JuntaInk, style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.certificate_issuer, certificateDisplayNameText(summary.issuerName)),
+                color = JuntaMutedInk,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
+                stringResource(
+                    R.string.certificate_validity,
+                    CHOICE_DATE.format(summary.validFrom),
+                    CHOICE_DATE.format(summary.validUntil),
+                ),
+                color = JuntaMutedInk,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Icon(
+            painter = painterResource(R.drawable.ic_ui_chevron_right),
+            contentDescription = null,
+            tint = JuntaMutedInk,
+            modifier = Modifier.size(20.dp),
         )
     }
 }

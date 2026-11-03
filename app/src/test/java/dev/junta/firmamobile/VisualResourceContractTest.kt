@@ -45,10 +45,8 @@ class VisualResourceContractTest {
             0,
             resources.getIdentifier("ic_launcher_monochrome", "drawable", packageName),
         )
-        assertNotEquals(
-            0,
-            resources.getIdentifier("jfm_home_background", "drawable", packageName),
-        )
+        // 0.2.19 draws the home and catalog backdrops in Compose; no background image resource remains.
+        assertEquals(0, resources.getIdentifier("jfm_home_background", "drawable", packageName))
         assertEquals(0, resources.getIdentifier("navigation_history", "string", packageName))
 
         val foregroundBounds = vectorPathBounds(R.drawable.ic_launcher_foreground)

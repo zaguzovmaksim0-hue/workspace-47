@@ -1,10 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Original project launcher background: violet-to-magenta field, coral glow and azulejo stars. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <path android:pathData="M0,0H108V108H0Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="108"
+                android:endY="108"
+                android:startX="0"
+                android:startY="0"
+                android:type="linear">
+                <item android:color="#FF4A2BDF" android:offset="0" />
+                <item android:color="#FF7F32DC" android:offset="0.55" />
+                <item android:color="#FFAE36C9" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M0,0H108V108H0Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="20"
+                android:centerY="96"
+                android:gradientRadius="62"
+                android:type="radial">
+                <item android:color="#73FF7A6B" android:offset="0" />
+                <item android:color="#00FF7A6B" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:fillColor="#0B5F5B"
-        android:pathData="M0,0H108V108H0Z" />
+        android:fillColor="#00000000"
+        android:pathData="M22,24H30V32H22Z M26,22.3L31.7,28L26,33.7L20.3,28Z M81,53H89V61H81Z M85,51.3L90.7,57L85,62.7L79.3,57Z M27,81H33V87H27Z M30,79.8L34.2,84L30,88.2L25.8,84Z"
+        android:strokeColor="#33FFFFFF"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.2" />
 </vector>

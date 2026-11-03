@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="jfm_paper">#F2E5D1</color>
+    <color name="jfm_paper">#F6F3FF</color>
+    <!-- Fixed scrims for the system navigation bar in each theme. -->
+    <color name="jfm_paper_light">#F6F3FF</color>
+    <color name="jfm_paper_dark">#0F0C1F</color>
 </resources>

@@ -40,13 +40,13 @@ The earlier visual-identity commit introduced 21 binary image paths without sour
 
 The publication branch removes all 21 unresolved binary paths and replaces the required resource names with repository-native text/XML resources created specifically for the publication remediation:
 
-- `app/src/main/res/drawable/jfm_home_background.xml` — neutral geometric vector background;
+- `app/src/main/res/drawable/jfm_home_background.xml` — neutral geometric vector background (retired in 0.2.19, when the backdrop moved into Compose code);
 - `app/src/main/res/drawable/ic_launcher_background.xml` — simple project color field;
 - `app/src/main/res/drawable/ic_launcher_foreground.xml` — generic document/signature geometry;
 - `app/src/main/res/mipmap-anydpi/ic_launcher.xml` — fallback layer-list;
 - `app/src/main/res/mipmap-anydpi/ic_launcher_round.xml` — fallback layer-list.
 
-The Android 8+ adaptive icon resources under `mipmap-anydpi-v26/` continue to reference `@drawable/ic_launcher_background` and `@drawable/ic_launcher_foreground`, so the replacement preserves the existing resource contract. The app UI continues to resolve `R.drawable.jfm_home_background` without changing Kotlin wiring.
+The Android 8+ adaptive icon resources under `mipmap-anydpi-v26/` continue to reference `@drawable/ic_launcher_background` and `@drawable/ic_launcher_foreground`, so the replacement preserves the existing resource contract. The app UI continued to resolve `R.drawable.jfm_home_background` without changing Kotlin wiring until the 0.2.19 Mosaico redesign, which draws the home and catalog backdrops in Compose code and removes the XML resource; no image resource replaces it.
 
 The replacement artwork was constructed as simple project-specific XML geometry during this remediation; no third-party image, government seal, official emblem or externally sourced graphic was used as its visual source.
 
