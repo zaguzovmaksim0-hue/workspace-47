@@ -1,36 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Original project launcher mark: a white document with a gold seal, no third-party source. -->
+<!-- Original project launcher mark: an orange device key printed with "F" and a green status LED; no third-party source. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#33200A60"
-        android:pathData="M37,32H60L72,44V79A3,3 0,0 1,69,82H37A3,3 0,0 1,34,79V35A3,3 0,0 1,37,32Z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M35,29H58L70,41V76A3,3 0,0 1,67,79H35A3,3 0,0 1,32,76V32A3,3 0,0 1,35,29Z" />
-    <path
-        android:fillColor="#FFD9CCFF"
-        android:pathData="M58,29V38A3,3 0,0 0,61,41H70Z" />
-    <path
-        android:fillColor="#FF6236F0"
-        android:pathData="M38,49.5H62V53H38Z" />
-    <path
-        android:fillColor="#FFB7A6F7"
-        android:pathData="M38,57.5H58V61H38Z M38,65.5H50V69H38Z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M66,62a10,10 0,1 1,0 20a10,10 0,1 1,0 -20Z" />
-    <path
-        android:fillColor="#FFFFC53D"
-        android:pathData="M66,64a8,8 0,1 1,0 16a8,8 0,1 1,0 -16Z" />
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M62.2,72.2L65,75L70,69.4"
-        android:strokeColor="#FF3B22B8"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:strokeWidth="2.4" />
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.9"
+        android:scaleY="0.9">
+        <!-- Contact shadow and the darker side of the key. -->
+        <path
+            android:fillColor="#24000000"
+            android:pathData="M42,36H66A12,12 0,0 1,78,48V71A12,12 0,0 1,66,83H42A12,12 0,0 1,30,71V48A12,12 0,0 1,42,36Z" />
+        <path
+            android:fillColor="#FF8F3410"
+            android:pathData="M42,34H66A12,12 0,0 1,78,46V69A12,12 0,0 1,66,81H42A12,12 0,0 1,30,69V46A12,12 0,0 1,42,34Z" />
+        <!-- Key face with its sheen. -->
+        <path
+            android:fillColor="#FFD9521A"
+            android:pathData="M42,29H66A12,12 0,0 1,78,41V64A12,12 0,0 1,66,76H42A12,12 0,0 1,30,64V41A12,12 0,0 1,42,29Z" />
+        <path android:pathData="M42,29H66A12,12 0,0 1,78,41V50H30V41A12,12 0,0 1,42,29Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:endX="54"
+                    android:endY="50"
+                    android:startX="54"
+                    android:startY="29"
+                    android:type="linear">
+                    <item android:color="#33FFFFFF" android:offset="0" />
+                    <item android:color="#00FFFFFF" android:offset="1" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <!-- The printed "F". -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M45,39H63V45H51.5V50.5H61V56.5H51.5V66H45Z" />
+        <!-- Status LED with its glow and lens highlight. -->
+        <path
+            android:fillColor="#383E9F4A"
+            android:pathData="M70.5,59.5m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+        <path
+            android:fillColor="#FF4CC35A"
+            android:pathData="M70.5,59.5m-2.6,0a2.6,2.6 0,1 1,5.2 0a2.6,2.6 0,1 1,-5.2 0" />
+        <path
+            android:fillColor="#B3FFFFFF"
+            android:pathData="M69.7,58.7m-0.9,0a0.9,0.9 0,1 1,1.8 0a0.9,0.9 0,1 1,-1.8 0" />
+    </group>
 </vector>

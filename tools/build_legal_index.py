@@ -15,7 +15,6 @@ def build():
     ]
     titles = {
         'Apache-2.0.txt': 'Apache License 2.0 — texto común de bibliotecas',
-        'bebas-neue-OFL.txt': 'Bebas Neue — SIL Open Font License',
         'liberation-LICENSE.txt': 'Liberation Sans — SIL Open Font License',
         'pdfbox-LICENSE.txt': 'PDFBox Android — licencia y componentes adicionales',
         'pdfbox-NOTICE.txt': 'PDFBox Android — avisos de autoría',
@@ -59,7 +58,6 @@ def build():
     text = ['Componentes de Firma Mobile',
             'Inventario vinculado al bloqueo de dependencias. Los módulos de metadatos pueden no contener código binario.',
             'La licencia de Firma Mobile no sustituye los términos de estas bibliotecas.',
-            'Bebas Neue: copyright 2019 The Bebas Neue Project Authors; aviso OFL upstream: Dharma Type 2010.',
             'Liberation Sans: datos digitalizados copyright 2010 Google Corporation; copyright 2012 Red Hat, Inc.',
             'Fuentes de avisos adicionales: PDFBox Android v2.0.27.0 (LICENSE.txt y NOTICE.txt), SLF4J v_1.7.36 (LICENSE.txt), Liberation Fonts (LICENSE).',
             'Los avisos de dependencias se preservan íntegros, incluso cuando contienen referencias a herramientas o componentes no usados directamente por esta aplicación.']

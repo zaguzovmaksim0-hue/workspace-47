@@ -7,16 +7,12 @@
     <string name="certificate_copy">Selecciona tu archivo .p12 o .pfx.</string>
     <string name="privacy_copy">El archivo y la contraseña no se enviarán a terceros.</string>
     <string name="select_certificate">Seleccionar certificado</string>
-    <string name="certificate_status_ready_title">Selección segura disponible</string>
     <string name="certificate_status_ready_copy">El archivo se procesa únicamente en este dispositivo.</string>
-    <string name="certificate_status_loading_title">Preparando el almacén seguro</string>
     <string name="certificate_status_loading_copy">Comprobando si existe un certificado seleccionado.</string>
     <string name="certificate_status_locked_title">Certificado protegido</string>
     <string name="certificate_status_locked_copy">Introduce la contraseña y elige el plazo de desbloqueo en este dispositivo.</string>
-    <string name="certificate_status_unlocking_title">Verificando certificado</string>
     <string name="certificate_status_unlocking_copy">La identidad se está comprobando localmente.</string>
-    <string name="certificate_status_unlocked_title">Certificado listo</string>
-    <string name="certificate_status_unlocked_copy">La sesión caduca al terminar el plazo elegido. Bloquear, cambiar o eliminar el certificado también cierra la sesión.</string>
+    <string name="certificate_status_unlocked_copy">La sesión se cierra al acabar el plazo elegido.</string>
     <string name="certificate_loading">Cargando certificado…</string>
     <string name="certificate_selected">Certificado seleccionado: %1$s</string>
     <string name="certificate_password">Contraseña del certificado</string>
@@ -124,7 +120,6 @@
     <string name="signing_closed_error_code">Código: %1$s</string>
     <string name="unknown_value">desconocido</string>
     <string name="catalog_title">Servicios públicos</string>
-    <string name="catalog_subtitle">Encuentra y abre la sede o el servicio público que necesitas.</string>
     <string name="catalog_back_to_certificate">Volver al certificado</string>
     <string name="catalog_my_region_label">Mi región</string>
     <string name="catalog_region_copy">Mostramos primero los servicios de tu región y los disponibles en toda España.</string>
@@ -348,7 +343,7 @@
         <item quantity="one">Firma por lotes (%1$d documento)</item>
         <item quantity="other">Firma por lotes (%1$d documentos)</item>
     </plurals>
-    <string name="catalog_search_or_address">Buscar servicio o dirección</string>
+    <string name="catalog_search_or_address">Servicio o dirección</string>
     <string name="catalog_region_change">Cambiar</string>
     <string name="catalog_favorite_add_description">Añadir a preferidos</string>
     <string name="catalog_favorite_remove_description">Quitar de preferidos</string>

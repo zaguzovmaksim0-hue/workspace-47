@@ -176,8 +176,8 @@ private fun localFileSigningButton(unlocked: Boolean, pickerPending: Boolean, on
     JuntaToolTile(
         iconRes = R.drawable.ic_ui_signature,
         title = stringResource(R.string.local_signing_title),
+        caption = stringResource(R.string.home_key_sign),
         onClick = onOpen,
-        tone = JuntaTone.CORAL,
         subtitle = if (unlocked) null else stringResource(R.string.local_signing_unlock),
         enabled = unlocked && !pickerPending,
     )
