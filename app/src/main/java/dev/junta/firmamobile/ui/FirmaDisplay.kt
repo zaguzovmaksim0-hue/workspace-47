@@ -74,7 +74,7 @@ private const val WIDE_DIGITS = 4
 @Suppress("FunctionNaming")
 @Composable
 internal fun FirmaValidityDisplay(summary: CertificateSummary, modifier: Modifier = Modifier) {
-    val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+    val locale = LocalConfiguration.current.locales[0]
     val zone = ZoneId.systemDefault()
     val validity = remember(summary) { DisplayValidity.of(summary, Instant.now()) }
     val boot = remember(summary) { Animatable(0f) }

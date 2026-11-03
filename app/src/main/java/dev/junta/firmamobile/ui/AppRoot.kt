@@ -767,7 +767,7 @@ private fun CertificateUiError.message(): String = stringResource(
 )
 
 @Composable
-private fun currentLocale(): Locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+private fun currentLocale(): Locale = LocalConfiguration.current.locales[0]
 
 private val ISO_DATE: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val CARD_EXPIRY: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/yy")
