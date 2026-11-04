@@ -178,6 +178,9 @@ fun BrowserScreen(
     val currentConsumeExternalReturn by rememberUpdatedState(consumeExternalReturn)
     val currentSigningState by rememberUpdatedState(signingState)
     val currentExternalAppRequest by rememberUpdatedState(onExternalAppRequest)
+    // Top-level ordinary browsing only: popups and portal sessions never offer a mode switch.
+    val portalModeActions = LocalPortalModeActions.current?.takeIf { popupTransport == null && profileId == null }
+    val currentPortalModeActions by rememberUpdatedState(portalModeActions)
     val clientCertPreferenceState by
         clientCertPreferenceCoordinator.state.collectAsState()
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
@@ -444,6 +447,11 @@ fun BrowserScreen(
             nativeFallback.hasPending || nativeRetrieval.hasPending ||
             clientAuthPreparing || currentSigningState !is SigningUiState.Idle
         if (!isCurrentOwner || !isForeground || busy) return false
+        // The catalog may offer its reviewed portal mode for this exact page.
+        fun fallback(epoch: Long, rawUnsupportedUri: String?, reason: String) {
+            val portalMode = currentPortalModeActions?.targetFor?.invoke(page) != null
+            nativeFallback.offer(owner, epoch, rawUnsupportedUri, reason, portalMode)
+        }
         when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
             is AfirmaServletParseResult.Accepted -> {
                 val epoch = navigationEpoch.longValue
@@ -455,7 +463,7 @@ fun BrowserScreen(
                         parsed.invocation.close()
                         null
                     }
-                    if (operation == null) nativeFallback.offer(owner, epoch, null)
+                    if (operation == null) fallback(epoch, null, NATIVE_OPERATION_UNAVAILABLE)
                     else nativeAfirma.offer(owner, epoch, operation)
                 } else {
                     nativeAfirmaScope.launch {
@@ -468,7 +476,7 @@ fun BrowserScreen(
                             parsed.invocation.close()
                             null
                         }
-                        if (operation == null) nativeFallback.offer(owner, epoch, null)
+                        if (operation == null) fallback(epoch, null, NATIVE_OPERATION_UNAVAILABLE)
                         else nativeAfirma.offer(owner, epoch, operation)
                     }
                 }
@@ -478,10 +486,17 @@ fun BrowserScreen(
                 navigationEpoch.longValue,
                 parsed.invocation,
             )
-            is AfirmaServletParseResult.Unsupported -> nativeFallback.offer(owner, navigationEpoch.longValue, rawUri)
-            is AfirmaServletParseResult.Invalid -> nativeFallback.offer(owner, navigationEpoch.longValue, null)
+            is AfirmaServletParseResult.Unsupported -> fallback(navigationEpoch.longValue, rawUri, parsed.reason)
+            is AfirmaServletParseResult.Invalid -> fallback(navigationEpoch.longValue, null, parsed.reason)
         }
         return true
+    }
+
+    // The prompt only proves the choice is still current; the target is resolved again here.
+    fun openPortalModeFromFallback(token: UUID) {
+        val live = nativeFallback.consumePortalMode(token)
+        val actions = currentPortalModeActions?.takeIf { live } ?: return
+        webViewRef.get()?.url?.let(actions.targetFor)?.let(actions.open)
     }
 
     fun advanceNavigationEpoch() {
@@ -1807,22 +1822,13 @@ fun BrowserScreen(
             )
         }
         nativeFallbackPrompt?.let { fallback ->
-            AlertDialog(
-                onDismissRequest = { nativeFallback.dismiss(fallback.token) },
-                title = { Text(stringResource(R.string.native_afirma_title)) },
-                text = { Text(stringResource(if (fallback.invalid) R.string.native_afirma_invalid else R.string.native_afirma_unsupported)) },
-                confirmButton = {
-                    TextButton(onClick = { nativeFallback.dismiss(fallback.token) }) {
-                        Text(stringResource(R.string.native_afirma_close))
-                    }
+            NativeAfirmaFallbackDialog(
+                prompt = fallback,
+                onClose = { nativeFallback.dismiss(fallback.token) },
+                onOpenOfficial = {
+                    nativeFallback.consume(fallback.token)?.let { onOpenOfficialAutoFirma(Uri.parse(it)) }
                 },
-                dismissButton = {
-                    if (!fallback.invalid) {
-                        TextButton(onClick = {
-                            nativeFallback.consume(fallback.token)?.let { onOpenOfficialAutoFirma(Uri.parse(it)) }
-                        }) { Text(stringResource(R.string.native_afirma_official)) }
-                    }
-                },
+                onOpenPortalMode = { openPortalModeFromFallback(fallback.token) },
             )
         }
         interactivePrompt?.let { prompt ->
@@ -2018,6 +2024,9 @@ fun BrowserScreen(
 
 
 private const val WARMUP_TIMEOUT_MS = 8_000L
+
+/** Closed fallback code shown when an accepted request cannot become a native operation. */
+private const val NATIVE_OPERATION_UNAVAILABLE = "native_operation_unavailable"
 
 private class CurrentPageRelayRequestTransport(
     private val store: AfirmaRelayStore,
