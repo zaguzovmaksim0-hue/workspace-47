@@ -2,6 +2,10 @@
 
 Cada versión es una actualización en desarrollo: consulta el resultado de CI del commit antes de instalar su APK. Los APK del canal diario se firman con la clave persistente `CN=Firma Mobile Daily APK` (SHA-256 `f1bcad77c90bab402ac9671b0ac6c034cc1d916d4561f65e480740021e5d6971`); consulta [la firma del APK y la migración desde otras firmas](docs/instalacion.md#firma-del-apk-y-actualizaciones).
 
+## 0.2.21 (23) — 2026-11-04
+
+- AutoFirma en navegación general: si una sede del catálogo con modo específico revisado envía una solicitud que el motor universal no puede atender (por ejemplo, el acceso con certificado de la Oficina Virtual de la Junta de Andalucía, cuyo MiniApplet no indica dónde devolver la firma), el aviso ofrece «Modo específico del portal» y lo abre desde su página de entrada con el perfil del catálogo. El aviso muestra además el código técnico del rechazo.
+
 ## 0.2.20 (22) — 2026-11-03
 
 - Nuevo diseño «F», inspirado en un aparato físico: cuerpo gris cálido, teclas con relieve que se hunden al pulsarlas, LEDs de estado y una pantalla oscura con cifras. Se retira la fuente Bebas Neue: la interfaz usa la tipografía del sistema.
