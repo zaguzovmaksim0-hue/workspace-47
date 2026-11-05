@@ -9,7 +9,7 @@ from pathlib import Path
 from tools.generate_afirma_shim import RESOURCE_RANGES
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKFLOW = ROOT / "docs/archive/workflows/real-e2e.yml.disabled"
+WORKFLOW = ROOT / ".github/workflows/real-e2e.yml"
 RUNNER = ROOT / "scripts/ci/run-real-e2e.sh"
 REPORT_HELPER = ROOT / "scripts/ci/real_e2e_report.py"
 INSTRUMENTATION = ROOT / "app/src/androidTest/java/dev/junta/firmamobile/RealE2eInstrumentedTest.kt"

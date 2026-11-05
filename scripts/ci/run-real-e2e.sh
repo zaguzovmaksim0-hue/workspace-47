@@ -15,6 +15,8 @@ readonly LOGS_DIR="$REPORT_DIR/navigation"
 readonly RESULT_PATH="$FIXTURE_DIR/result.json"
 readonly PROGRESS_PATH="$REPORT_DIR/progress.tsv"
 readonly CATALOG_FILE="$ROOT_DIR/app/src/main/res/raw/public_portal_catalog_v1.json"
+# The probe and the reviewed portal recipes match the Spanish UI and Spanish portal pages.
+readonly APP_LOCALE="es-ES"
 # 75s portal observation + 90s signing + 30s post-sign observation + 15s margin.
 readonly PORTAL_TIMEOUT_SECONDS=210
 readonly ADB_TIMEOUT_SECONDS=30
@@ -92,6 +94,24 @@ stage_fixture() {
   unset REAL_E2E_CERT_P12_B64 REAL_E2E_CERT_PASSWORD
 }
 
+prepare_device() {
+  local total="$1"
+  progress DEVICE_PREPARE_START - 0 "$total"
+  # Long catalog shards must not lose the foreground activity to the screen timeout or keyguard.
+  adb_bounded shell svc power stayon true >/dev/null
+  adb_bounded shell settings put system screen_off_timeout 2147483647 >/dev/null
+  adb_bounded shell input keyevent KEYCODE_WAKEUP >/dev/null
+  adb_bounded shell wm dismiss-keyguard >/dev/null 2>&1 || true
+  # The emulator image defaults to en-US; pin the per-app language before the first launch.
+  adb_bounded shell cmd locale set-app-locales "$PACKAGE_NAME" --user 0 --locales "$APP_LOCALE" >/dev/null
+  local locales
+  locales="$(adb_bounded shell cmd locale get-app-locales "$PACKAGE_NAME" --user 0 | tr -d '\r')"
+  [[ "$locales" == *"$APP_LOCALE"* ]] || {
+    printf 'REAL_E2E could not pin the Spanish app locale: %s\n' "$locales" >&2
+    exit 65
+  }
+  progress DEVICE_PREPARE_DONE - 0 "$total"
+}
 
 main() {
   [[ -f "$QA_APK" && -f "$TEST_APK" && -f "$CATALOG_FILE" && -x "$REPORT_HELPER" ]]
@@ -140,6 +160,7 @@ main() {
   progress INSTALL_TEST_START - 0 "${#portal_ids[@]}"
   adb_install_bounded "$TEST_APK" >/dev/null
   progress INSTALL_TEST_DONE - 0 "${#portal_ids[@]}"
+  prepare_device "${#portal_ids[@]}"
   progress STAGE_FIXTURE_START - 0 "${#portal_ids[@]}"
   stage_fixture "${#portal_ids[@]}"
   progress STAGE_FIXTURE_DONE - 0 "${#portal_ids[@]}"
