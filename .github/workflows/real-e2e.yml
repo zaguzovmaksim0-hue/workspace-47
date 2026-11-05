@@ -22,10 +22,11 @@ concurrency:
 
 env:
   JAVA_VERSION: "17"
-  # Chromium WebView on the SwiftShader Vulkan path can abort the whole emulator process on
-  # real portal pages; keep guest Vulkan disabled so WebView renders through GLES. The runner
-  # script reuses the same options when it has to restart a lost emulator mid-shard.
-  REAL_E2E_EMULATOR_OPTIONS: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -feature -Vulkan
+  # Chromium WebView on real portal pages aborted the whole emulator process both on the guest
+  # Vulkan path and on the legacy swiftshader_indirect GLES translator. Render host-side through
+  # ANGLE on SwiftShader (swangle) with guest Vulkan disabled. The runner script reuses the same
+  # options when it has to restart a lost emulator mid-shard.
+  REAL_E2E_EMULATOR_OPTIONS: -no-window -gpu swangle -no-snapshot -noaudio -no-boot-anim -feature -Vulkan
 
 jobs:
   real-e2e:
