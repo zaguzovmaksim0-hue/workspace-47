@@ -1167,18 +1167,16 @@ class RealE2eInstrumentedTest {
             }
 
             if (Capability.CLIENT_TLS_AUTH in profileCapabilities &&
-                rule.onAllNodesWithText("Acceso con certificado").fetchSemanticsNodes().isNotEmpty()
+                dialogTextVisible(CLIENT_AUTH_DIALOG_TITLE)
             ) {
                 result.clientAuthObserved = true
                 result.level = maxOf(result.level, 2)
                 val host = allowedClientAuthHosts.firstOrNull { allowedHost ->
-                    rule.onAllNodesWithText("Dominio: $allowedHost").fetchSemanticsNodes().isNotEmpty()
+                    dialogTextVisible("Dominio: $allowedHost")
                 }
                 if (host == null) {
                     result.unexpectedClientAuthHost = true
-                    rule.onAllNodesWithText("Cancelar").fetchSemanticsNodes().firstOrNull()?.let {
-                        rule.onNodeWithText("Cancelar").performClick()
-                    }
+                    clickDialogButton("Cancelar")
                     result.classification = ProbeClassification.FAIL_UNEXPECTED_CLIENT_AUTH_HOST
                     return
                 }
@@ -1190,11 +1188,10 @@ class RealE2eInstrumentedTest {
                 result.clientAuthConfirmed = true
                 result.level = maxOf(result.level, 3)
                 rule.waitUntil(timeoutMillis = 5_000) {
-                    rule.onAllNodes(
-                        hasText("Continuar", substring = false, ignoreCase = false) and isEnabled(),
-                    ).fetchSemanticsNodes().isNotEmpty()
+                    rule.onAllNodes(dialogButton("Continuar") and isEnabled())
+                        .fetchSemanticsNodes().isNotEmpty()
                 }
-                rule.onNodeWithText("Continuar").performClick()
+                clickDialogButton("Continuar")
             }
 
             if (Capability.SELECT_CERTIFICATE in profileCapabilities && !certificateSelectionHandled &&
@@ -1325,6 +1322,22 @@ class RealE2eInstrumentedTest {
             check(SystemClock.elapsedRealtime() < deadline) { "REAL_E2E_SIGNING_OWNER_MISSING" }
             SystemClock.sleep(POLL_MILLIS)
         }
+    }
+
+    // The browser chrome reuses "Acceso con certificado" as its trust label on client-auth
+    // origins, so only text inside a dialog counts as a client-certificate prompt.
+    private fun dialogTextVisible(text: String): Boolean {
+        val matcher = hasText(text, substring = false, ignoreCase = false) and hasAnyAncestor(isDialog())
+        return rule.onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() ||
+            rule.onAllNodes(matcher, useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    private fun dialogButton(label: String): SemanticsMatcher =
+        hasText(label, substring = false, ignoreCase = false) and hasClickAction() and hasAnyAncestor(isDialog())
+
+    private fun clickDialogButton(label: String) {
+        val buttons = rule.onAllNodes(dialogButton(label))
+        if (buttons.fetchSemanticsNodes().isNotEmpty()) buttons[0].performClick()
     }
 
     private fun clickSigningConfirmation(): Boolean {
@@ -1993,6 +2006,7 @@ class RealE2eInstrumentedTest {
         const val UNIZAR_AUTH_HANDLER = "lanza"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
+        const val CLIENT_AUTH_DIALOG_TITLE = "Acceso con certificado"
         const val BADAJOZ_PAGE_READY_TIMEOUT_MILLIS = 60_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
         const val SIGNING_OWNER_TIMEOUT_MILLIS = 10_000L

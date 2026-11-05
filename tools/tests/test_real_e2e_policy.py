@@ -557,6 +557,28 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING"', helper)
         self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING" -> "SIGNING_OWNER_MISSING"', source)
 
+    def test_client_auth_prompt_is_detected_only_inside_dialogs(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        observation = source[source.index("private fun observePortal("):]
+        observation = observation[:observation.index("private fun waitForSigningTerminalState(")]
+        self.assertIn("dialogTextVisible(CLIENT_AUTH_DIALOG_TITLE)", observation)
+        self.assertIn('dialogTextVisible("Dominio: $allowedHost")', observation)
+        self.assertIn('clickDialogButton("Cancelar")', observation)
+        self.assertIn('clickDialogButton("Continuar")', observation)
+        self.assertNotIn('onAllNodesWithText("Acceso con certificado")', source)
+        self.assertNotIn('onAllNodesWithText("Dominio: ', source)
+        helper = source[source.index("private fun dialogTextVisible("):]
+        helper = helper[:helper.index("private fun clickSigningConfirmation(")]
+        self.assertIn("hasAnyAncestor(isDialog())", helper)
+        self.assertIn("useUnmergedTree = true", helper)
+        self.assertIn("useUnmergedTree = false", helper)
+        self.assertIn('const val CLIENT_AUTH_DIALOG_TITLE = "Acceso con certificado"', source)
+        strings = self.read(ROOT / "app/src/main/res/values/strings.xml")
+        self.assertIn('<string name="interactive_tls_title">Acceso con certificado</string>', strings)
+        self.assertIn('<string name="certificate_selection_domain">Dominio: %1$s</string>', strings)
+        self.assertIn('<string name="continue_to_portal">Continuar</string>', strings)
+        self.assertIn('<string name="cancel">Cancelar</string>', strings)
+
     def test_infrastructure_codes_unwrap_main_thread_wrappers(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn("safeInfrastructureCodeFor(unwrapMainThreadFailure(throwable), stage)", source)

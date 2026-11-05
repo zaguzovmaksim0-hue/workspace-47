@@ -1080,7 +1080,7 @@ records:
     signature_format: "CAdES sobre hash precalculado"
     signature_algorithm: "SHA1withRSA; precalculatedHashAlgorithm=SHA1"
     endpoint:
-      - "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"
+      - "https://tramita.unizar.es/afirma-server-triphase-signer-2.9/SignatureService"
       - "https://tramita.unizar.es/afirma-signature-storage/StorageService"
       - "https://tramita.unizar.es/afirma-signature-retriever/RetrieveService"
     discovery_state: "REVIEWED"
