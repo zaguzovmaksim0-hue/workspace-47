@@ -104,6 +104,10 @@ PROGRESS_STAGES = {
     "INSTALL_TEST_DONE",
     "DEVICE_PREPARE_START",
     "DEVICE_PREPARE_DONE",
+    "DEVICE_LOST",
+    "EMULATOR_RESTART_START",
+    "EMULATOR_RESTART_DONE",
+    "EMULATOR_RESTART_FAILED",
     "STAGE_FIXTURE_START",
     "STAGE_MKDIR_START",
     "STAGE_MKDIR_DONE",
@@ -407,7 +411,7 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--catalog", type=Path, required=True)
     p.add_argument("--portal", required=True)
     p.add_argument("--output", type=Path, required=True)
-    p.add_argument("--reason", required=True, choices=("TIMEOUT", "RESULT_MISSING"))
+    p.add_argument("--reason", required=True, choices=("TIMEOUT", "RESULT_MISSING", "EMULATOR_LOST"))
     p.set_defaults(func=synthetic)
 
     p = sub.add_parser("summary")

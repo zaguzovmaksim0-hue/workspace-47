@@ -21,6 +21,12 @@ readonly APP_LOCALE="es-ES"
 readonly PORTAL_TIMEOUT_SECONDS=210
 readonly ADB_TIMEOUT_SECONDS=30
 readonly ADB_INSTALL_TIMEOUT_SECONDS=120
+# android-emulator-runner starts AVD "test" on console port 5554; a lost emulator is restarted the
+# same way with the reviewed REAL_E2E_EMULATOR_OPTIONS so one crash does not void the whole shard.
+readonly EMULATOR_AVD_NAME="test"
+readonly EMULATOR_PORT=5554
+readonly EMULATOR_BOOT_TIMEOUT_SECONDS=420
+readonly EMULATOR_RESTART_LIMIT=4
 readonly REPORT_HELPER="$ROOT_DIR/scripts/ci/real_e2e_report.py"
 readonly QA_APK="$ROOT_DIR/app/build/outputs/apk/qa/app-qa.apk"
 readonly TEST_APK="$ROOT_DIR/app/build/outputs/apk/androidTest/qa/app-qa-androidTest.apk"
@@ -108,9 +114,68 @@ prepare_device() {
   locales="$(adb_bounded shell cmd locale get-app-locales "$PACKAGE_NAME" --user 0 | tr -d '\r')"
   [[ "$locales" == *"$APP_LOCALE"* ]] || {
     printf 'REAL_E2E could not pin the Spanish app locale: %s\n' "$locales" >&2
-    exit 65
+    return 65
   }
   progress DEVICE_PREPARE_DONE - 0 "$total"
+}
+
+device_online() {
+  [[ "$(adb_bounded get-state 2>/dev/null | tr -d '\r')" == device ]]
+}
+
+# Host-side evidence only (emulator process count, host memory, kernel crash/OOM lines); no guest,
+# portal or credential data is printed.
+report_device_loss() {
+  local portal_id="$1" emulator_processes
+  emulator_processes="$(pgrep -c -f qemu-system 2>/dev/null || true)"
+  printf 'REAL_E2E_DEVICE_LOST portal=%s emulator_processes=%s\n' "$portal_id" "${emulator_processes:-0}"
+  free -m 2>/dev/null \
+    | awk 'NR == 2 { printf "REAL_E2E_HOST_MEMORY used_mb=%s available_mb=%s\n", $3, $7 }' || true
+  sudo -n dmesg 2>/dev/null \
+    | grep -E -i 'segfault|general protection|traps:|out of memory|oom-kill|killed process' \
+    | tail -n 6 | cut -c1-220 | sed 's/^/REAL_E2E_HOST_KERNEL /' || true
+}
+
+fixture_present() {
+  local cert_size password_size
+  cert_size="$(adb_bounded shell run-as "$PACKAGE_NAME" stat -c %s "$CERTIFICATE_PATH" 2>/dev/null | tr -d '\r' || true)"
+  password_size="$(adb_bounded shell run-as "$PACKAGE_NAME" stat -c %s "$PASSWORD_PATH" 2>/dev/null | tr -d '\r' || true)"
+  [[ "$cert_size" =~ ^[0-9]+$ && "$cert_size" -ge 1 && "$password_size" =~ ^[0-9]+$ && "$password_size" -ge 1 ]]
+}
+
+restart_emulator() {
+  local total="$1"
+  local emulator_bin="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}/emulator/emulator"
+  [[ -x "$emulator_bin" && -n "${REAL_E2E_EMULATOR_OPTIONS:-}" ]] || return 1
+  adb_bounded -s "emulator-$EMULATOR_PORT" emu kill >/dev/null 2>&1 || true
+  pkill -KILL -f qemu-system >/dev/null 2>&1 || true
+  sleep 3
+  local -a emulator_options
+  read -r -a emulator_options <<<"$REAL_E2E_EMULATOR_OPTIONS"
+  nohup "$emulator_bin" -port "$EMULATOR_PORT" -avd "$EMULATOR_AVD_NAME" "${emulator_options[@]}" \
+    >"${RUNNER_TEMP:-/tmp}/real-e2e-emulator-restart.log" 2>&1 &
+  local deadline=$((SECONDS + EMULATOR_BOOT_TIMEOUT_SECONDS)) booted=""
+  while ((SECONDS < deadline)); do
+    booted="$(adb_bounded shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+    [[ "$booted" == 1 ]] && break
+    sleep 5
+  done
+  [[ "$booted" == 1 ]] || return 1
+  adb_bounded shell settings put global window_animation_scale 0.0 >/dev/null || return 1
+  adb_bounded shell settings put global transition_animation_scale 0.0 >/dev/null || return 1
+  adb_bounded shell settings put global animator_duration_scale 0.0 >/dev/null || return 1
+  prepare_device "$total" || return 1
+  fixture_present
+}
+
+write_synthetic_result() {
+  local portal_id="$1" result_file="$2" reason="$3"
+  "$REPORT_HELPER" synthetic \
+    --catalog "$CATALOG_FILE" \
+    --portal "$portal_id" \
+    --output "$result_file" \
+    --reason "$reason"
+  "$REPORT_HELPER" validate-result --result "$result_file" --portal "$portal_id"
 }
 
 main() {
@@ -172,10 +237,20 @@ main() {
   }
 
   local index=0 portal_id status result_file navigation_file reason
+  local device_lost=false device_available=true restarts=0
   for portal_id in "${portal_ids[@]}"; do
     index=$((index + 1))
     printf '[%d/%d] %s\n' "$index" "${#portal_ids[@]}" "$portal_id"
     progress PORTAL_START "$portal_id" "$index" "${#portal_ids[@]}"
+    result_file="$RESULTS_DIR/$portal_id.json"
+    navigation_file="$LOGS_DIR/$portal_id.log"
+    if [[ "$device_available" != true ]]; then
+      write_synthetic_result "$portal_id" "$result_file" EMULATOR_LOST
+      "$REPORT_HELPER" describe-result --result "$result_file" --portal "$portal_id"
+      : >"$navigation_file"
+      progress PORTAL_DONE "$portal_id" "$index" "${#portal_ids[@]}"
+      continue
+    fi
     adb_bounded shell am force-stop "$PACKAGE_NAME" >/dev/null 2>&1 || true
     adb_bounded shell run-as "$PACKAGE_NAME" rm -f "$RESULT_PATH" files/qa-navigation.log >/dev/null 2>&1 || true
 
@@ -192,31 +267,48 @@ main() {
     status=$?
     set -e
     progress "INSTRUMENT_DONE_${status}" "$portal_id" "$index" "${#portal_ids[@]}"
+    device_lost=false
+    if ((status != 0)) && ! device_online; then
+      device_lost=true
+      progress DEVICE_LOST "$portal_id" "$index" "${#portal_ids[@]}"
+      report_device_loss "$portal_id"
+    fi
 
     progress RESULT_READ_START "$portal_id" "$index" "${#portal_ids[@]}"
-    result_file="$RESULTS_DIR/$portal_id.json"
-    if ! adb_bounded exec-out run-as "$PACKAGE_NAME" cat "$RESULT_PATH" >"$result_file" 2>/dev/null || \
+    if [[ "$device_lost" == true ]]; then
+      write_synthetic_result "$portal_id" "$result_file" EMULATOR_LOST
+    elif ! adb_bounded exec-out run-as "$PACKAGE_NAME" cat "$RESULT_PATH" >"$result_file" 2>/dev/null || \
        ! "$REPORT_HELPER" validate-result --result "$result_file" --portal "$portal_id"; then
       if [[ $status -eq 124 ]]; then reason=TIMEOUT; else reason=RESULT_MISSING; fi
-      "$REPORT_HELPER" synthetic \
-        --catalog "$CATALOG_FILE" \
-        --portal "$portal_id" \
-        --output "$result_file" \
-        --reason "$reason"
-      "$REPORT_HELPER" validate-result --result "$result_file" --portal "$portal_id"
+      write_synthetic_result "$portal_id" "$result_file" "$reason"
     fi
 
     "$REPORT_HELPER" describe-result --result "$result_file" --portal "$portal_id"
     progress RESULT_READ_DONE "$portal_id" "$index" "${#portal_ids[@]}"
     progress NAV_READ_START "$portal_id" "$index" "${#portal_ids[@]}"
-    navigation_file="$LOGS_DIR/$portal_id.log"
-    if adb_bounded exec-out run-as "$PACKAGE_NAME" cat files/qa-navigation.log >"$navigation_file" 2>/dev/null; then
+    if [[ "$device_lost" != true ]] && \
+       adb_bounded exec-out run-as "$PACKAGE_NAME" cat files/qa-navigation.log >"$navigation_file" 2>/dev/null; then
       "$REPORT_HELPER" validate-log --log "$navigation_file"
     else
       : >"$navigation_file"
     fi
     progress NAV_READ_DONE "$portal_id" "$index" "${#portal_ids[@]}"
     progress PORTAL_DONE "$portal_id" "$index" "${#portal_ids[@]}"
+
+    if [[ "$device_lost" == true ]]; then
+      if ((restarts >= EMULATOR_RESTART_LIMIT)); then
+        device_available=false
+        continue
+      fi
+      restarts=$((restarts + 1))
+      progress EMULATOR_RESTART_START "$portal_id" "$index" "${#portal_ids[@]}"
+      if restart_emulator "${#portal_ids[@]}"; then
+        progress EMULATOR_RESTART_DONE "$portal_id" "$index" "${#portal_ids[@]}"
+      else
+        device_available=false
+        progress EMULATOR_RESTART_FAILED "$portal_id" "$index" "${#portal_ids[@]}"
+      fi
+    fi
   done
 
   progress SUMMARY_START - "${#portal_ids[@]}" "${#portal_ids[@]}"
