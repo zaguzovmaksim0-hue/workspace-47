@@ -679,6 +679,62 @@ class RealE2ePolicyTest(unittest.TestCase):
             rejected = self.helper("validate-progress", "--progress", str(path))
             self.assertNotEqual(0, rejected.returncode)
 
+    def test_progress_validator_accepts_emulator_recovery_checkpoints(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "progress.tsv"
+            path.write_text(
+                "2026-11-05T21:00:00Z\t0\t1/31\tjunta-andalucia-carne-joven\tINSTRUMENT_DONE_255\t90\n"
+                "2026-11-05T21:00:01Z\t0\t1/31\tjunta-andalucia-carne-joven\tDEVICE_LOST\t91\n"
+                "2026-11-05T21:00:02Z\t0\t1/31\tjunta-andalucia-carne-joven\tEMULATOR_RESTART_START\t92\n"
+                "2026-11-05T21:01:30Z\t0\t1/31\tjunta-andalucia-carne-joven\tEMULATOR_RESTART_DONE\t180\n"
+                "2026-11-05T21:09:30Z\t0\t9/31\tjunta-andalucia-sede\tEMULATOR_RESTART_FAILED\t660\n",
+                encoding="ascii",
+            )
+            accepted = self.helper("validate-progress", "--progress", str(path))
+            self.assertEqual(0, accepted.returncode, accepted.stderr)
+
+    def test_synthetic_result_records_a_lost_emulator(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "result.json"
+            synthetic = self.helper(
+                "synthetic", "--catalog", str(CATALOG),
+                "--portal", "junta-andalucia-carne-joven",
+                "--output", str(path), "--reason", "EMULATOR_LOST",
+            )
+            self.assertEqual(0, synthetic.returncode, synthetic.stderr)
+            data = json.loads(path.read_text(encoding="ascii"))
+            self.assertEqual("INFRASTRUCTURE_ERROR", data["classification"])
+            self.assertEqual("EMULATOR_LOST", data["infrastructureError"])
+            rejected = self.helper(
+                "synthetic", "--catalog", str(CATALOG),
+                "--portal", "junta-andalucia-carne-joven",
+                "--output", str(path), "--reason", "ANYTHING_ELSE",
+            )
+            self.assertNotEqual(0, rejected.returncode)
+
+    def test_runner_recovers_a_lost_emulator_without_restaging_credentials(self) -> None:
+        workflow = self.read(WORKFLOW)
+        runner = self.read(RUNNER)
+        self.assertIn(
+            "REAL_E2E_EMULATOR_OPTIONS: -no-window -gpu swiftshader_indirect -no-snapshot "
+            "-noaudio -no-boot-anim -feature -Vulkan",
+            workflow,
+        )
+        self.assertIn("emulator-options: ${{ env.REAL_E2E_EMULATOR_OPTIONS }}", workflow)
+        self.assertIn("readonly EMULATOR_RESTART_LIMIT=4", runner)
+        self.assertIn('if ((status != 0)) && ! device_online; then', runner)
+        self.assertIn('report_device_loss "$portal_id"', runner)
+        self.assertIn('write_synthetic_result "$portal_id" "$result_file" EMULATOR_LOST', runner)
+        self.assertIn('if restart_emulator "${#portal_ids[@]}"; then', runner)
+        self.assertIn('prepare_device "$total" || return 1', runner)
+        self.assertIn("fixture_present", runner)
+        restart = runner[runner.index("restart_emulator() {"):runner.index("write_synthetic_result() {")]
+        self.assertNotIn("REAL_E2E_CERT", restart)
+        self.assertNotIn("stage_fixture", restart)
+        loss = runner[runner.index("report_device_loss() {"):runner.index("fixture_present() {")]
+        self.assertNotIn("logcat", loss)
+        self.assertNotIn("run-as", loss)
+
     def test_navigation_validator_accepts_sanitized_mini_applet_bridge_events(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "navigation.log"
