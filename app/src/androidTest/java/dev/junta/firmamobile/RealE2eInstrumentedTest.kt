@@ -337,6 +337,7 @@ class RealE2eInstrumentedTest {
                 expectedLabel = UNIZAR_AUTH_LABEL,
                 expectedImageAlt = UNIZAR_AUTH_IMAGE_ALT,
                 expectedOnClick = UNIZAR_AUTH_ONCLICK,
+                expectedHandlerName = UNIZAR_AUTH_HANDLER,
             )
             else -> Unit
         }
@@ -857,8 +858,12 @@ class RealE2eInstrumentedTest {
         expectedLabel: String,
         expectedImageAlt: String,
         expectedOnClick: String,
+        expectedHandlerName: String,
     ) {
         // Unizar can expose a transitional DOM before the final certificate button is ready.
+        // The current page labels the button through its tooltip title and binds the reviewed
+        // handler from script instead of an inline onclick, so wait for that handler too.
+        require(JS_IDENTIFIER.matches(expectedHandlerName))
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedContainerId = JSONObject.quote(expectedContainerId)
         val quotedElementId = JSONObject.quote(expectedElementId)
@@ -893,11 +898,19 @@ class RealE2eInstrumentedTest {
                       const elements = Array.from(container.querySelectorAll('button'));
                       if (elements.length !== 1) return 2;
                       const element = elements[0];
+                      const label = element.getAttribute('aria-label') ?? element.getAttribute('title');
+                      const inlineOnClick = element.getAttribute('onclick');
                       if (element.id !== $quotedElementId ||
                           element.getAttribute('type') !== 'button' ||
-                          element.getAttribute('aria-label') !== $quotedExpectedLabel ||
+                          label !== $quotedExpectedLabel ||
                           element.querySelector('img')?.getAttribute('alt') !== $quotedExpectedImageAlt ||
-                          element.getAttribute('onclick') !== $quotedExpectedOnClick) return 2;
+                          (inlineOnClick !== null && inlineOnClick !== $quotedExpectedOnClick)) return 2;
+                      const handlerReady = typeof $expectedHandlerName === 'function' && (
+                        inlineOnClick !== null ||
+                        document.readyState === 'complete' ||
+                        (window.jQuery?._data?.(element, 'events')?.click?.length ?? 0) > 0
+                      );
+                      if (!handlerReady) return 0;
                       element.click();
                       return 1;
                     })()
@@ -1294,13 +1307,24 @@ class RealE2eInstrumentedTest {
     private fun signingCoordinatorForScenario(
         scenario: ActivityScenario<MainActivity>,
     ): SigningCoordinator {
-        var coordinator: SigningCoordinator? = null
-        scenario.onActivity { activity ->
-            val field = MainActivity::class.java.getDeclaredField("signingCoordinator")
-                .apply { isAccessible = true }
-            coordinator = field.get(activity) as SigningCoordinator
+        // MainActivity owns the ordinary coordinator through SigningOrchestrator, which the
+        // Activity installs once its ready content is initialized. Wait briefly for that owner
+        // instead of failing the whole portal observation on a transient null.
+        val deadline = SystemClock.elapsedRealtime() + SIGNING_OWNER_TIMEOUT_MILLIS
+        while (true) {
+            var coordinator: SigningCoordinator? = null
+            scenario.onActivity { activity ->
+                val orchestrator = MainActivity::class.java.getDeclaredField("signing")
+                    .apply { isAccessible = true }
+                    .get(activity) ?: return@onActivity
+                coordinator = orchestrator.javaClass.getDeclaredField("signingCoordinator")
+                    .apply { isAccessible = true }
+                    .get(orchestrator) as SigningCoordinator
+            }
+            coordinator?.let { return it }
+            check(SystemClock.elapsedRealtime() < deadline) { "REAL_E2E_SIGNING_OWNER_MISSING" }
+            SystemClock.sleep(POLL_MILLIS)
         }
-        return requireNotNull(coordinator)
     }
 
     private fun clickSigningConfirmation(): Boolean {
@@ -1596,8 +1620,26 @@ class RealE2eInstrumentedTest {
         rule.waitUntil(timeoutMillis = timeoutMillis, condition = predicate)
     }
 
-    private fun safeInfrastructureCode(throwable: Throwable, stage: ProbeStage): String = when (throwable.message) {
+    private fun safeInfrastructureCode(throwable: Throwable, stage: ProbeStage): String =
+        safeInfrastructureCodeFor(unwrapMainThreadFailure(throwable), stage)
+
+    // ActivityScenario.onActivity and other main-thread hops rethrow the original failure inside
+    // a bare RuntimeException; report the original type so the sanitized code stays diagnostic.
+    private fun unwrapMainThreadFailure(throwable: Throwable): Throwable {
+        var current = throwable
+        var depth = 0
+        while (current.javaClass == RuntimeException::class.java && depth < MAX_FAILURE_UNWRAP_DEPTH) {
+            val cause = current.cause ?: break
+            if (cause === current) break
+            current = cause
+            depth += 1
+        }
+        return current
+    }
+
+    private fun safeInfrastructureCodeFor(throwable: Throwable, stage: ProbeStage): String = when (throwable.message) {
         "REAL_E2E_CERTIFICATE_MISSING" -> "CERTIFICATE_MISSING"
+        "REAL_E2E_SIGNING_OWNER_MISSING" -> "SIGNING_OWNER_MISSING"
         "REAL_E2E_PASSWORD_MISSING" -> "PASSWORD_MISSING"
         "REAL_E2E_RECIPE_WEBVIEW_MISSING" -> "RECIPE_WEBVIEW_MISSING"
         "REAL_E2E_RECIPE_SOURCE_MISMATCH" -> "RECIPE_SOURCE_MISMATCH"
@@ -1899,7 +1941,7 @@ class RealE2eInstrumentedTest {
         const val AEAT_CENSAL_DATA_LABEL = "Mis datos censales"
         const val AEAT_CENSAL_DATA_HREF =
             "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/" +
-                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CP"
+                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CPE"
         const val AEAT_CERTIFICATE_PAGE_URL = AEAT_CENSAL_DATA_HREF
         const val AEAT_CERTIFICATE_BUTTON_LABEL = "Certificado o DNI electrónico"
         const val LLEIDA_PORTAL_ID = "diputacion-lleida-sede"
@@ -1943,15 +1985,18 @@ class RealE2eInstrumentedTest {
         const val UNIZAR_ENTRY_URL =
             "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent"
         const val UNIZAR_AUTH_CONTAINER_ID = "capaAccesoCertificado"
-        const val UNIZAR_AUTH_ELEMENT_ID = "entrar"
+        const val UNIZAR_AUTH_ELEMENT_ID = "acEntrar"
         const val UNIZAR_AUTH_LABEL =
             "Pulse para ejecutar Autofirma e identificarse con certificado."
         const val UNIZAR_AUTH_IMAGE_ALT = "certificado login"
         const val UNIZAR_AUTH_ONCLICK = "lanza();"
+        const val UNIZAR_AUTH_HANDLER = "lanza"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
         const val BADAJOZ_PAGE_READY_TIMEOUT_MILLIS = 60_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
+        const val SIGNING_OWNER_TIMEOUT_MILLIS = 10_000L
+        const val MAX_FAILURE_UNWRAP_DEPTH = 4
         const val SIGNING_TIMEOUT_MILLIS = 90_000L
         const val POST_SIGN_TIMEOUT_MILLIS = 30_000L
         const val RECIPE_TERMINAL_GRACE_MILLIS = 5_000L
@@ -1961,6 +2006,7 @@ class RealE2eInstrumentedTest {
         const val MAX_CLIENT_AUTH_CONFIRMATIONS = 8
         val PORTAL_ID_PATTERN = Regex("[a-z0-9][a-z0-9-]{0,95}")
         val SAFE_ERROR_TOKEN = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
+        val JS_IDENTIFIER = Regex("[A-Za-z_][A-Za-z0-9_]{0,63}")
         val SANITIZED_HOST = Regex("(?:^| )host=([a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?)(?: |$)")
         val SANITIZED_NAVIGATION_EVENT = Regex(
             "(?:^| )event=(NAVIGATION_ALLOWED|PAGE_STARTED|PAGE_FINISHED)(?: |$)",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import tempfile
 import unittest
@@ -422,7 +423,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             source,
         )
         self.assertIn('UNIZAR_AUTH_CONTAINER_ID = "capaAccesoCertificado"', source)
-        self.assertIn('UNIZAR_AUTH_ELEMENT_ID = "entrar"', source)
+        self.assertIn('UNIZAR_AUTH_ELEMENT_ID = "acEntrar"', source)
         self.assertIn(
             'const val UNIZAR_AUTH_LABEL =\n            "Pulse para ejecutar Autofirma e identificarse con certificado."',
             source,
@@ -431,7 +432,8 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('UNIZAR_AUTH_ONCLICK = "lanza();"', source)
         self.assertIn('UNIZAR_PORTAL_ID -> clickExactContainedButton(', source)
         self.assertIn("container.querySelectorAll('button')", source)
-        self.assertIn("element.getAttribute('aria-label') !== $quotedExpectedLabel", source)
+        self.assertIn("element.getAttribute('aria-label') ?? element.getAttribute('title')", source)
+        self.assertIn("label !== $quotedExpectedLabel", source)
         self.assertIn("element.querySelector('img')?.getAttribute('alt') !== $quotedExpectedImageAlt", source)
         self.assertIn("elements.length !== 1", source)
         self.assertIn('element.click()', source)
@@ -535,6 +537,45 @@ class RealE2ePolicyTest(unittest.TestCase):
         signing_wait = source[source.index("private fun waitForSigningTerminalState("):]
         signing_wait = signing_wait[:signing_wait.index("private fun signingCoordinatorForScenario(")]
         self.assertIn("signingCoordinator.state.value", signing_wait)
+
+    def test_instrumentation_reflection_targets_exist_in_app_sources(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        main_activity = self.read(ROOT / "app/src/main/java/dev/junta/firmamobile/MainActivity.kt")
+        orchestrator = self.read(ROOT / "app/src/main/java/dev/junta/firmamobile/SigningOrchestrator.kt")
+        reflected = set(re.findall(r'MainActivity::class\.java\.getDeclaredField\("([A-Za-z_]+)"\)', source))
+        self.assertIn("currentWebView", reflected)
+        self.assertIn("signing", reflected)
+        for name in sorted(reflected):
+            self.assertRegex(main_activity, rf"private (?:var|val) {name}\b", name)
+        self.assertIn("private var signing: SigningOrchestrator?", main_activity)
+        self.assertIn("private val signingCoordinator: SigningCoordinator,", orchestrator)
+        helper = source[source.index("private fun signingCoordinatorForScenario("):]
+        helper = helper[:helper.index("private fun clickSigningConfirmation(")]
+        self.assertIn('getDeclaredField("signing")', helper)
+        self.assertIn('orchestrator.javaClass.getDeclaredField("signingCoordinator")', helper)
+        self.assertIn("SIGNING_OWNER_TIMEOUT_MILLIS", helper)
+        self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING"', helper)
+        self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING" -> "SIGNING_OWNER_MISSING"', source)
+
+    def test_infrastructure_codes_unwrap_main_thread_wrappers(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn("safeInfrastructureCodeFor(unwrapMainThreadFailure(throwable), stage)", source)
+        unwrap = source[source.index("private fun unwrapMainThreadFailure("):]
+        unwrap = unwrap[:unwrap.index("private fun safeInfrastructureCodeFor(")]
+        self.assertIn("current.javaClass == RuntimeException::class.java", unwrap)
+        self.assertIn("MAX_FAILURE_UNWRAP_DEPTH", unwrap)
+        self.assertIn("if (cause === current) break", unwrap)
+
+    def test_unizar_recipe_waits_for_the_script_bound_certificate_handler(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source[source.index("private fun clickExactContainedButton("):]
+        helper = helper[:helper.index("private fun clickExactButton(")]
+        self.assertIn("require(JS_IDENTIFIER.matches(expectedHandlerName))", helper)
+        self.assertIn("(inlineOnClick !== null && inlineOnClick !== $quotedExpectedOnClick)", helper)
+        self.assertIn("typeof $expectedHandlerName === 'function'", helper)
+        self.assertIn("if (!handlerReady) return 0;", helper)
+        self.assertIn("expectedHandlerName = UNIZAR_AUTH_HANDLER", source)
+        self.assertIn('UNIZAR_AUTH_HANDLER = "lanza"', source)
 
     def test_runner_allows_the_post_sign_window_to_finish(self) -> None:
         runner = self.read(RUNNER)
