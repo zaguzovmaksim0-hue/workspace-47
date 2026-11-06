@@ -24,6 +24,8 @@ internal object SameOriginDirectClientAuthContract {
         "menorca-carpeta-ciutadana",
         PATTEX_PROFILE_ID,
         "diputacion-soria-sede-client-auth",
+        "diputacion-burgos-portal",
+        "diputacion-huesca-portal",
     )
     private const val HTTPS_PORT = 443
 }
