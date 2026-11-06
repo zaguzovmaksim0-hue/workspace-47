@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Short lowercase labels printed on the device; screen readers get the full sentences. -->
+    <string name="home_status_loading">kargatzen</string>
+    <string name="home_status_none">ziurtagiririk ez</string>
+    <string name="home_status_locked">blokeatuta</string>
+    <string name="home_status_unlocking">egiaztatzen</string>
+    <string name="home_status_ready">prest</string>
+    <string name="card_holder_label">titularra</string>
+    <string name="card_issuer_label">jaulkitzailea</string>
+    <string name="card_valid_until_label">iraungitze-data</string>
+    <string name="home_eject">aldatu</string>
+    <string name="home_eject_description">Ziurtagiria aldatu</string>
+    <plurals name="display_days_left">
+        <item quantity="one">egun\ngeratzen da</item>
+        <item quantity="other">egun\ngeratzen dira</item>
+    </plurals>
+    <string name="display_until">amaiera</string>
+    <string name="display_today">gaur</string>
+    <string name="home_key_sign">sinatu</string>
+    <string name="home_key_verify">egiaztatu</string>
+    <string name="home_key_journal">egunkaria</string>
+    <string name="home_key_reminders">oharrak</string>
+    <plurals name="certificate_validity_days_left">
+        <item quantity="one">Egun %1$d geratzen da</item>
+        <item quantity="other">%1$d egun geratzen dira</item>
+    </plurals>
+    <plurals name="catalog_services_unit">
+        <item quantity="one">zerbitzu</item>
+        <item quantity="other">zerbitzu</item>
+    </plurals>
+    <string name="catalog_legend_verified">egiaztatua</string>
+    <string name="catalog_legend_unverified">egiaztatu gabe</string>
+</resources>

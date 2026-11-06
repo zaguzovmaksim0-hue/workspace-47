@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Short lowercase labels printed on the device; screen readers get the full sentences. -->
+    <string name="home_status_loading">loading</string>
+    <string name="home_status_none">no certificate</string>
+    <string name="home_status_locked">locked</string>
+    <string name="home_status_unlocking">checking</string>
+    <string name="home_status_ready">ready</string>
+    <string name="card_holder_label">holder</string>
+    <string name="card_issuer_label">issuer</string>
+    <string name="card_valid_until_label">valid until</string>
+    <string name="home_eject">change</string>
+    <string name="home_eject_description">Change certificate</string>
+    <plurals name="display_days_left">
+        <item quantity="one">day\nleft</item>
+        <item quantity="other">days\nleft</item>
+    </plurals>
+    <string name="display_until">until</string>
+    <string name="display_today">today</string>
+    <string name="home_key_sign">sign</string>
+    <string name="home_key_verify">verify</string>
+    <string name="home_key_journal">log</string>
+    <string name="home_key_reminders">alerts</string>
+    <plurals name="certificate_validity_days_left">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
+    <plurals name="catalog_services_unit">
+        <item quantity="one">service</item>
+        <item quantity="other">services</item>
+    </plurals>
+    <string name="catalog_legend_verified">verified</string>
+    <string name="catalog_legend_unverified">not verified</string>
+</resources>

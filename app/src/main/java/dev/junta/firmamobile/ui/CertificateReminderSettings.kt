@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -45,9 +46,10 @@ internal fun certificateReminderSettings() {
         scope.launch { settings.save(granted, denied = !granted) }
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { settings.refresh() } }
-    JuntaToolRow(
+    JuntaToolTile(
         iconRes = R.drawable.ic_ui_bell,
         title = stringResource(R.string.certificate_reminder_settings),
+        caption = stringResource(R.string.home_key_reminders),
         onClick = { visible = true },
         modifier = Modifier.testTag("open-certificate-reminder-settings"),
     )
@@ -90,7 +92,8 @@ internal fun certificateReminderSettingsDialog(
     val label = stringResource(R.string.certificate_reminder_toggle)
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.certificate_reminder_settings)) },
+        icon = { JuntaIconBubble(iconRes = R.drawable.ic_ui_bell, tone = JuntaTone.SAFFRON) },
+        title = { Text(stringResource(R.string.certificate_reminder_settings), textAlign = TextAlign.Center) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.certificate_reminder_copy))

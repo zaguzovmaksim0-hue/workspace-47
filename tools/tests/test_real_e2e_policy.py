@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import tempfile
 import unittest
@@ -9,7 +10,7 @@ from pathlib import Path
 from tools.generate_afirma_shim import RESOURCE_RANGES
 
 ROOT = Path(__file__).resolve().parents[2]
-WORKFLOW = ROOT / "docs/archive/workflows/real-e2e.yml.disabled"
+WORKFLOW = ROOT / ".github/workflows/real-e2e.yml"
 RUNNER = ROOT / "scripts/ci/run-real-e2e.sh"
 REPORT_HELPER = ROOT / "scripts/ci/real_e2e_report.py"
 INSTRUMENTATION = ROOT / "app/src/androidTest/java/dev/junta/firmamobile/RealE2eInstrumentedTest.kt"
@@ -337,6 +338,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('hasObservedTerminalNavigationFailure()', helper)
         for event in (
             'event=NETWORK_ERROR',
+            'event=BLANK_DOCUMENT',
             'event=SSL_ERROR_CANCELLED',
             'event=NAVIGATION_BLOCKED',
         ):
@@ -422,7 +424,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             source,
         )
         self.assertIn('UNIZAR_AUTH_CONTAINER_ID = "capaAccesoCertificado"', source)
-        self.assertIn('UNIZAR_AUTH_ELEMENT_ID = "entrar"', source)
+        self.assertIn('UNIZAR_AUTH_ELEMENT_ID = "acEntrar"', source)
         self.assertIn(
             'const val UNIZAR_AUTH_LABEL =\n            "Pulse para ejecutar Autofirma e identificarse con certificado."',
             source,
@@ -431,7 +433,8 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('UNIZAR_AUTH_ONCLICK = "lanza();"', source)
         self.assertIn('UNIZAR_PORTAL_ID -> clickExactContainedButton(', source)
         self.assertIn("container.querySelectorAll('button')", source)
-        self.assertIn("element.getAttribute('aria-label') !== $quotedExpectedLabel", source)
+        self.assertIn("element.getAttribute('aria-label') ?? element.getAttribute('title')", source)
+        self.assertIn("label !== $quotedExpectedLabel", source)
         self.assertIn("element.querySelector('img')?.getAttribute('alt') !== $quotedExpectedImageAlt", source)
         self.assertIn("elements.length !== 1", source)
         self.assertIn('element.click()', source)
@@ -535,6 +538,80 @@ class RealE2ePolicyTest(unittest.TestCase):
         signing_wait = source[source.index("private fun waitForSigningTerminalState("):]
         signing_wait = signing_wait[:signing_wait.index("private fun signingCoordinatorForScenario(")]
         self.assertIn("signingCoordinator.state.value", signing_wait)
+
+    def test_instrumentation_reflection_targets_exist_in_app_sources(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        main_activity = self.read(ROOT / "app/src/main/java/dev/junta/firmamobile/MainActivity.kt")
+        orchestrator = self.read(ROOT / "app/src/main/java/dev/junta/firmamobile/SigningOrchestrator.kt")
+        reflected = set(re.findall(r'MainActivity::class\.java\.getDeclaredField\("([A-Za-z_]+)"\)', source))
+        self.assertIn("currentWebView", reflected)
+        self.assertIn("signing", reflected)
+        for name in sorted(reflected):
+            self.assertRegex(main_activity, rf"private (?:var|val) {name}\b", name)
+        self.assertIn("private var signing: SigningOrchestrator?", main_activity)
+        self.assertIn("private val signingCoordinator: SigningCoordinator,", orchestrator)
+        helper = source[source.index("private fun signingCoordinatorForScenario("):]
+        helper = helper[:helper.index("private fun clickSigningConfirmation(")]
+        self.assertIn('getDeclaredField("signing")', helper)
+        self.assertIn('orchestrator.javaClass.getDeclaredField("signingCoordinator")', helper)
+        self.assertIn("SIGNING_OWNER_TIMEOUT_MILLIS", helper)
+        self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING"', helper)
+        self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING" -> "SIGNING_OWNER_MISSING"', source)
+
+    def test_client_auth_prompt_is_detected_by_dialog_test_tags(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        observation = source[source.index("private fun observePortal("):]
+        observation = observation[:observation.index("private fun waitForSigningTerminalState(")]
+        self.assertIn("taggedNodeVisible(CLIENT_AUTH_DIALOG_TAG)", observation)
+        self.assertIn("taggedNodeVisible(INTERACTIVE_CLIENT_AUTH_DIALOG_TAG)", observation)
+        self.assertIn('clientAuthDialogTextVisible("Dominio: $allowedHost")', observation)
+        self.assertIn("clickTaggedNode(CLIENT_AUTH_CANCEL_TAG)", observation)
+        self.assertIn("clickTaggedNode(INTERACTIVE_CLIENT_AUTH_CANCEL_TAG)", observation)
+        self.assertIn("hasTestTag(CLIENT_AUTH_CONTINUE_TAG) and isEnabled()", observation)
+        self.assertIn("clickTaggedNode(CLIENT_AUTH_CONTINUE_TAG)", observation)
+        # The browser chrome trust label shares the dialog title, so visible text alone is ambiguous.
+        self.assertNotIn('onAllNodesWithText("Acceso con certificado")', source)
+        self.assertNotIn('onAllNodesWithText("Dominio: ', source)
+        client_auth = observation[observation.index("if (Capability.CLIENT_TLS_AUTH in profileCapabilities &&"):]
+        client_auth = client_auth[:client_auth.index("if (Capability.SELECT_CERTIFICATE in profileCapabilities")]
+        self.assertNotIn('"Continuar"', client_auth)
+        self.assertNotIn('"Cancelar"', client_auth)
+        helper = source[source.index("private fun taggedNodeVisible("):]
+        helper = helper[:helper.index("private fun clickSigningConfirmation(")]
+        self.assertIn("hasAnyAncestor(hasTestTag(CLIENT_AUTH_DIALOG_TAG))", helper)
+        self.assertNotIn("isDialog()", helper)
+        self.assertIn("useUnmergedTree = true", helper)
+        self.assertIn("useUnmergedTree = false", helper)
+        dialogs = self.read(ROOT / "app/src/main/java/dev/junta/firmamobile/ui/BrowserConfirmationDialogs.kt")
+        interactive = self.read(ROOT / "app/src/main/java/dev/junta/firmamobile/ui/InteractiveClientAuthDialog.kt")
+        for tag in ("client-auth-confirmation", "client-auth-confirmation-continue", "client-auth-confirmation-cancel"):
+            self.assertIn(f'Modifier.testTag("{tag}")', dialogs)
+            self.assertIn(f'= "{tag}"', source)
+        for tag in ("interactive-client-auth", "interactive-client-auth-cancel"):
+            self.assertIn(f'Modifier.testTag("{tag}")', interactive)
+            self.assertIn(f'= "{tag}"', source)
+        strings = self.read(ROOT / "app/src/main/res/values/strings.xml")
+        self.assertIn('<string name="certificate_selection_domain">Dominio: %1$s</string>', strings)
+
+    def test_infrastructure_codes_unwrap_main_thread_wrappers(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn("safeInfrastructureCodeFor(unwrapMainThreadFailure(throwable), stage)", source)
+        unwrap = source[source.index("private fun unwrapMainThreadFailure("):]
+        unwrap = unwrap[:unwrap.index("private fun safeInfrastructureCodeFor(")]
+        self.assertIn("current.javaClass == RuntimeException::class.java", unwrap)
+        self.assertIn("MAX_FAILURE_UNWRAP_DEPTH", unwrap)
+        self.assertIn("if (cause === current) break", unwrap)
+
+    def test_unizar_recipe_waits_for_the_script_bound_certificate_handler(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source[source.index("private fun clickExactContainedButton("):]
+        helper = helper[:helper.index("private fun clickExactButton(")]
+        self.assertIn("require(JS_IDENTIFIER.matches(expectedHandlerName))", helper)
+        self.assertIn("(inlineOnClick !== null && inlineOnClick !== $quotedExpectedOnClick)", helper)
+        self.assertIn("typeof $expectedHandlerName === 'function'", helper)
+        self.assertIn("if (!handlerReady) return 0;", helper)
+        self.assertIn("expectedHandlerName = UNIZAR_AUTH_HANDLER", source)
+        self.assertIn('UNIZAR_AUTH_HANDLER = "lanza"', source)
 
     def test_runner_allows_the_post_sign_window_to_finish(self) -> None:
         runner = self.read(RUNNER)
@@ -679,6 +756,62 @@ class RealE2ePolicyTest(unittest.TestCase):
             rejected = self.helper("validate-progress", "--progress", str(path))
             self.assertNotEqual(0, rejected.returncode)
 
+    def test_progress_validator_accepts_emulator_recovery_checkpoints(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "progress.tsv"
+            path.write_text(
+                "2026-11-05T21:00:00Z\t0\t1/31\tjunta-andalucia-carne-joven\tINSTRUMENT_DONE_255\t90\n"
+                "2026-11-05T21:00:01Z\t0\t1/31\tjunta-andalucia-carne-joven\tDEVICE_LOST\t91\n"
+                "2026-11-05T21:00:02Z\t0\t1/31\tjunta-andalucia-carne-joven\tEMULATOR_RESTART_START\t92\n"
+                "2026-11-05T21:01:30Z\t0\t1/31\tjunta-andalucia-carne-joven\tEMULATOR_RESTART_DONE\t180\n"
+                "2026-11-05T21:09:30Z\t0\t9/31\tjunta-andalucia-sede\tEMULATOR_RESTART_FAILED\t660\n",
+                encoding="ascii",
+            )
+            accepted = self.helper("validate-progress", "--progress", str(path))
+            self.assertEqual(0, accepted.returncode, accepted.stderr)
+
+    def test_synthetic_result_records_a_lost_emulator(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "result.json"
+            synthetic = self.helper(
+                "synthetic", "--catalog", str(CATALOG),
+                "--portal", "junta-andalucia-carne-joven",
+                "--output", str(path), "--reason", "EMULATOR_LOST",
+            )
+            self.assertEqual(0, synthetic.returncode, synthetic.stderr)
+            data = json.loads(path.read_text(encoding="ascii"))
+            self.assertEqual("INFRASTRUCTURE_ERROR", data["classification"])
+            self.assertEqual("EMULATOR_LOST", data["infrastructureError"])
+            rejected = self.helper(
+                "synthetic", "--catalog", str(CATALOG),
+                "--portal", "junta-andalucia-carne-joven",
+                "--output", str(path), "--reason", "ANYTHING_ELSE",
+            )
+            self.assertNotEqual(0, rejected.returncode)
+
+    def test_runner_recovers_a_lost_emulator_without_restaging_credentials(self) -> None:
+        workflow = self.read(WORKFLOW)
+        runner = self.read(RUNNER)
+        self.assertIn(
+            "REAL_E2E_EMULATOR_OPTIONS: -no-window -gpu swangle -no-snapshot "
+            "-noaudio -no-boot-anim -feature -Vulkan",
+            workflow,
+        )
+        self.assertIn("emulator-options: ${{ env.REAL_E2E_EMULATOR_OPTIONS }}", workflow)
+        self.assertIn("readonly EMULATOR_RESTART_LIMIT=4", runner)
+        self.assertIn('if ((status != 0)) && ! device_online; then', runner)
+        self.assertIn('report_device_loss "$portal_id"', runner)
+        self.assertIn('write_synthetic_result "$portal_id" "$result_file" EMULATOR_LOST', runner)
+        self.assertIn('if restart_emulator "${#portal_ids[@]}"; then', runner)
+        self.assertIn('prepare_device "$total" || return 1', runner)
+        self.assertIn("fixture_present", runner)
+        restart = runner[runner.index("restart_emulator() {"):runner.index("write_synthetic_result() {")]
+        self.assertNotIn("REAL_E2E_CERT", restart)
+        self.assertNotIn("stage_fixture", restart)
+        loss = runner[runner.index("report_device_loss() {"):runner.index("fixture_present() {")]
+        self.assertNotIn("logcat", loss)
+        self.assertNotIn("run-as", loss)
+
     def test_navigation_validator_accepts_sanitized_mini_applet_bridge_events(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "navigation.log"
@@ -821,6 +954,183 @@ class RealE2ePolicyTest(unittest.TestCase):
                 "junta-andalucia-carne-joven",
             )
             self.assertNotEqual(0, validated.returncode)
+
+
+    def test_runner_summarizes_instrumentation_and_guest_crashes_without_uploading_raw_text(self) -> None:
+        workflow = self.read(WORKFLOW)
+        runner = self.read(RUNNER)
+        self.assertIn('readonly INSTRUMENT_OUTPUT="${RUNNER_TEMP:-/tmp}/real-e2e-instrument.out"', runner)
+        self.assertIn('readonly GUEST_LOG="${RUNNER_TEMP:-/tmp}/real-e2e-guest.log"', runner)
+        self.assertIn('        >"$INSTRUMENT_OUTPUT" 2>&1\n    status=$?', runner)
+        self.assertIn('"$REPORT_HELPER" describe-instrumentation \\', runner)
+        self.assertIn('rm -f "$INSTRUMENT_OUTPUT"\n', runner)
+        self.assertIn('describe_guest_crashes "$portal_id" "$guest_since"', runner)
+        self.assertIn('"$REPORT_HELPER" describe-guest-log --log "$GUEST_LOG" --portal "$portal_id" || true', runner)
+        self.assertIn('rm -f "$GUEST_LOG"\n', runner)
+        self.assertIn('rm -f "$INSTRUMENT_OUTPUT" "$GUEST_LOG" || true', runner)
+        self.assertIn("REAL_E2E_NAVIGATION_LOG_DISCARDED", runner)
+        self.assertNotIn("RUNNER_TEMP", workflow)
+        self.assertNotIn("real-e2e-instrument.out", workflow)
+        self.assertNotIn("real-e2e-guest.log", workflow)
+        guest = runner[runner.index("describe_guest_crashes() {"):runner.index("main() {")]
+        self.assertNotIn("run-as", guest)
+        self.assertNotIn("REAL_E2E_CERT", guest)
+
+    def test_runner_reports_host_emulator_crash_evidence(self) -> None:
+        runner = self.read(RUNNER)
+        loss = runner[runner.index("report_device_loss() {"):runner.index("fixture_present() {")]
+        self.assertIn("REAL_E2E_HOST_MINIDUMPS count=", loss)
+        self.assertIn('"$REPORT_HELPER" describe-minidump --dump "$newest_dump" || true', loss)
+        self.assertIn("REAL_E2E_EMULATOR_EXIT code=", loss)
+        self.assertIn('printf \'%s\\n\' "$?" >"$EMULATOR_EXIT_FILE"', runner)
+        self.assertIn(") </dev/null >/dev/null 2>&1 &", runner)
+
+    def test_instrumentation_summary_never_echoes_messages_or_stack_text(self) -> None:
+        secret = "Z9999999Z"
+        output = "\n".join([
+            "INSTRUMENTATION_STATUS_CODE: 1",
+            f"INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: holder {secret} https://example.invalid/a",
+            "\tat org.junit.Assert.fail(Assert.java:89)",
+            f"Caused by: java.lang.IllegalStateException: {secret}",
+            "INSTRUMENTATION_STATUS_CODE: -2",
+            "INSTRUMENTATION_RESULT: stream=",
+            "FAILURES!!!",
+            "Tests run: 1,  Failures: 1",
+            f"INSTRUMENTATION_RESULT: shortMsg=holder: https://example.invalid/{secret}",
+            "INSTRUMENTATION_CODE: -1",
+        ])
+        with tempfile.TemporaryDirectory() as directory:
+            failed = Path(directory) / "failed.out"
+            failed.write_text(output, encoding="utf-8")
+            crashed = Path(directory) / "crashed.out"
+            crashed.write_text(
+                "INSTRUMENTATION_STATUS_CODE: 1\n"
+                "INSTRUMENTATION_RESULT: shortMsg=Process crashed.\n"
+                "INSTRUMENTATION_CODE: 0\n",
+                encoding="utf-8",
+            )
+            summary = self.helper(
+                "describe-instrumentation", "--output", str(failed),
+                "--portal", "unizar-tramitador", "--status", "0",
+            )
+            crash = self.helper(
+                "describe-instrumentation", "--output", str(crashed),
+                "--portal", "unizar-tramitador", "--status", "0",
+            )
+            missing = self.helper(
+                "describe-instrumentation", "--output", str(Path(directory) / "missing.out"),
+                "--portal", "unizar-tramitador", "--status", "124",
+            )
+        for completed in (summary, crash, missing):
+            self.assertEqual(0, completed.returncode, completed.stderr)
+            self.assertNotIn(secret, completed.stdout)
+            self.assertNotIn("https", completed.stdout)
+            self.assertNotIn("holder", completed.stdout)
+        self.assertIn("exception=java.lang.AssertionError", summary.stdout)
+        self.assertIn("caused_by=java.lang.IllegalStateException", summary.stdout)
+        self.assertIn("result=REDACTED tests=1 failures=1 status_codes=1,-2", summary.stdout)
+        self.assertIn("code=0 result=Process_crashed.", crash.stdout)
+        self.assertIn("status=124 bytes=0", missing.stdout)
+
+    def test_guest_crash_summary_emits_only_signal_name_and_class_tokens(self) -> None:
+        secret = "Z9999999Z"
+        log = "\n".join([
+            "--------- beginning of crash",
+            "F/libc    ( 3420): Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0 "
+            "in tid 3456 (RenderThread), pid 3420 (unta.firmamobile)",
+            "F/DEBUG   ( 3500): *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***",
+            "F/DEBUG   ( 3500): pid: 3420, tid: 3456, name: RenderThread  >>> dev.junta.firmamobile <<<",
+            f"F/DEBUG   ( 3500): Abort message: '[FATAL:gl_utils.cc(42)] Check failed: {secret}'",
+            "F/DEBUG   ( 3500):       #00 pc 000000000005a2c8  /apex/com.android.runtime/lib64/bionic/libc.so "
+            "(abort+168) (BuildId: abc)",
+            "E/AndroidRuntime( 3420): FATAL EXCEPTION: main",
+            "E/AndroidRuntime( 3420): Process: dev.junta.firmamobile, PID: 3420",
+            f"E/AndroidRuntime( 3420): java.lang.RuntimeException: holder {secret} https://example.invalid",
+            "E/AndroidRuntime( 3420): \tat android.app.ActivityThread.main(ActivityThread.java:1)",
+            f"I/am_crash(  590): [0,3420,dev.junta.firmamobile,1,java.lang.RuntimeException,{secret},A.java,1,0]",
+            "I/am_kill (  590): [0,4212,com.google.android.gms.persistent,915,empty #17]",
+            "I/am_proc_died(  590): [0,3420,dev.junta.firmamobile,0,2]",
+            "E/cr_AwBrowserTerminator( 3420): Render process's crash wasn't handled by all associated "
+            "webviews, triggering application crash.",
+        ])
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "guest.log"
+            path.write_text(log, encoding="utf-8")
+            described = self.helper("describe-guest-log", "--log", str(path), "--portal", "unizar-tramitador")
+        self.assertEqual(0, described.returncode, described.stderr)
+        self.assertNotIn(secret, described.stdout)
+        self.assertNotIn("https", described.stdout)
+        self.assertNotIn("holder", described.stdout)
+        self.assertNotIn("com.google.android.gms", described.stdout)
+        self.assertIn(
+            "kind=native signal=SIGSEGV(11) code=SEGV_MAPERR thread=RenderThread process=unta.firmamobile",
+            described.stdout,
+        )
+        self.assertIn("kind=abort token=FATAL:gl_utils.cc(42)", described.stdout)
+        self.assertIn("kind=frame frame=00 module=libc.so symbol=abort+168", described.stdout)
+        self.assertIn(
+            "kind=java thread=main process=dev.junta.firmamobile exception=java.lang.RuntimeException",
+            described.stdout,
+        )
+        self.assertIn("kind=am_crash process=dev.junta.firmamobile exception=java.lang.RuntimeException", described.stdout)
+        self.assertIn("kind=proc_died process=dev.junta.firmamobile", described.stdout)
+        self.assertIn("kind=webview_renderer_gone_unhandled", described.stdout)
+        for line in described.stdout.splitlines():
+            self.assertTrue(line.startswith(("REAL_E2E_GUEST portal=", "REAL_E2E_GUEST_SUMMARY portal=")), line)
+
+    def test_host_minidump_summary_reports_signal_and_module_basenames_only(self) -> None:
+        import struct
+
+        modules = [
+            (0x400000, 0x10000, "/opt/sdk/emulator/qemu/linux-x86_64/qemu-system-x86_64"),
+            (0x7F0000000000, 0x200000, "/opt/sdk/emulator/lib64/libOpenglRender.so"),
+        ]
+        blob = bytearray(32 + 12 * 4)
+        system_info = len(blob)
+        blob += struct.pack("<H", 9) + bytes(54)
+        names = []
+        for _base, _size, name in modules:
+            encoded = name.encode("utf-16-le")
+            names.append(len(blob))
+            blob += struct.pack("<I", len(encoded)) + encoded + b"\0\0"
+        module_list = bytearray(struct.pack("<I", len(modules)))
+        for (base, size, _name), name_rva in zip(modules, names):
+            module_list += struct.pack("<QIIII", base, size, 0, 0, name_rva) + bytes(108 - 24)
+        module_rva = len(blob)
+        blob += module_list
+        context = bytearray(1232)
+        struct.pack_into("<Q", context, 248, modules[1][0] + 0x123)
+        context_rva = len(blob)
+        blob += context
+        stack = struct.pack("<QQ", 0xDEADBEEF, modules[0][0] + 0x40)
+        stack_rva = len(blob)
+        blob += stack
+        exception_rva = len(blob)
+        blob += struct.pack("<IIIIQQII", 77, 0, 11, 1, 0, 0, 0, 0) + bytes(120)
+        blob += struct.pack("<II", len(context), context_rva)
+        thread_rva = len(blob)
+        blob += struct.pack("<I", 1) + struct.pack(
+            "<IIIIQQIIII", 77, 0, 0, 0, 0, 0x7FFD0000, len(stack), stack_rva, len(context), context_rva
+        )
+        entries = [(7, 56, system_info), (4, len(module_list), module_rva), (6, 168, exception_rva), (3, 52, thread_rva)]
+        struct.pack_into("<4sIIIIIQ", blob, 0, b"MDMP", 0xA793, len(entries), 32, 0, 0, 0)
+        for index, (stream_type, size, rva) in enumerate(entries):
+            struct.pack_into("<III", blob, 32 + 12 * index, stream_type, size, rva)
+        with tempfile.TemporaryDirectory() as directory:
+            dump = Path(directory) / "crash.dmp"
+            dump.write_bytes(bytes(blob))
+            garbage = Path(directory) / "garbage.dmp"
+            garbage.write_bytes(b"not a dump")
+            described = self.helper("describe-minidump", "--dump", str(dump))
+            unreadable = self.helper("describe-minidump", "--dump", str(garbage))
+        self.assertEqual(0, described.returncode, described.stderr)
+        self.assertIn(
+            "signal=SIGSEGV(11) code=1 pc_module=libOpenglRender.so stack_modules=qemu-system-x86_64",
+            described.stdout,
+        )
+        self.assertNotIn("/opt/sdk", described.stdout)
+        self.assertEqual(0, unreadable.returncode, unreadable.stderr)
+        self.assertTrue(unreadable.stdout.startswith("REAL_E2E_HOST_MINIDUMP unreadable="))
 
 
 if __name__ == "__main__":

@@ -5,9 +5,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class RepositoryHygieneTest(unittest.TestCase):
     def test_retired_workflows_are_not_executable(self):
-        self.assertFalse((ROOT / ".github/workflows/real-e2e.yml").exists())
         self.assertFalse((ROOT / ".github/workflows/kai-macos.yml").exists())
-        self.assertTrue((ROOT / "docs/archive/workflows/real-e2e.yml.disabled").is_file())
+
+    def test_operator_authorized_real_e2e_workflow_is_active_once(self):
+        # Re-authorized by the operator on 2026-11-05: one manual, main-only workflow.
+        self.assertTrue((ROOT / ".github/workflows/real-e2e.yml").is_file())
+        self.assertFalse((ROOT / "docs/archive/workflows/real-e2e.yml.disabled").exists())
 
     def test_root_does_not_vendor_the_unrelated_profiler(self):
         self.assertFalse(list(ROOT.glob("kai_csv_profiler-*.whl")))

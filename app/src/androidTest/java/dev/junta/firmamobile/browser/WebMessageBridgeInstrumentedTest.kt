@@ -488,7 +488,7 @@ class WebMessageBridgeInstrumentedTest {
                 btoa('12345678901234567890'),
                 'SHA1withRSA',
                 'CAdES',
-                'precalculatedHashAlgorithm=SHA1\nserverUrl=https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService',
+                'precalculatedHashAlgorithm=SHA1\nserverUrl=https://tramita.unizar.es/afirma-server-triphase-signer-2.9/SignatureService',
                 function(signatureB64, certificateB64) {
                   document.title = signatureB64 === 'AQID' &&
                     certificateB64 === 'BAUG' && originalCalls === 0 ? 'PASS' : 'FAIL';

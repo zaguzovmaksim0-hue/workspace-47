@@ -118,7 +118,7 @@ class ProfileHttpTransportTest {
     @Test
     fun transportUsesTheExactEndpointSetInjectedByTheActiveProfile() {
         val secondEndpoint = URI(
-            "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService",
+            "https://tramita.unizar.es/afirma-server-triphase-signer-2.9/SignatureService",
         )
         val secondPolicy = SafeNetworkUrlPolicy(setOf(secondEndpoint))
         val secondUrl = (secondPolicy.validateRequest(secondEndpoint) as NetworkUrlValidation.Allowed).url

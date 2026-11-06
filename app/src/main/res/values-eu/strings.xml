@@ -7,16 +7,12 @@
     <string name="certificate_copy">Hautatu zure .p12 edo .pfx fitxategia.</string>
     <string name="privacy_copy">Fitxategia eta pasahitza ez zaizkie hirugarrenei bidaliko.</string>
     <string name="select_certificate">Hautatu ziurtagiria</string>
-    <string name="certificate_status_ready_title">Hautaketa segurua erabilgarri</string>
     <string name="certificate_status_ready_copy">Fitxategia gailu honetan soilik prozesatzen da.</string>
-    <string name="certificate_status_loading_title">Biltegi segurua prestatzen</string>
     <string name="certificate_status_loading_copy">Ziurtagiririk hautatuta dagoen egiaztatzen.</string>
     <string name="certificate_status_locked_title">Ziurtagiri babestua</string>
     <string name="certificate_status_locked_copy">Sartu pasahitza eta aukeratu gailu honetan desblokeatuta egoteko epea.</string>
-    <string name="certificate_status_unlocking_title">Ziurtagiria egiaztatzen</string>
     <string name="certificate_status_unlocking_copy">Identitatea lokalean egiaztatzen ari da.</string>
-    <string name="certificate_status_unlocked_title">Ziurtagiria prest</string>
-    <string name="certificate_status_unlocked_copy">Saioa hautatutako epea amaitzean iraungitzen da. Ziurtagiria blokeatzeak, aldatzeak edo ezabatzeak ere saioa ixten du.</string>
+    <string name="certificate_status_unlocked_copy">Saioa hautatutako epea amaitzean ixten da.</string>
     <string name="certificate_loading">Ziurtagiria kargatzen…</string>
     <string name="certificate_selected">Hautatutako ziurtagiria: %1$s</string>
     <string name="certificate_password">Ziurtagiriaren pasahitza</string>
@@ -124,7 +120,6 @@
     <string name="signing_closed_error_code">Kodea: %1$s</string>
     <string name="unknown_value">ezezaguna</string>
     <string name="catalog_title">Zerbitzu publikoak</string>
-    <string name="catalog_subtitle">Bilatu eta ireki behar duzun egoitza edo zerbitzu publikoa.</string>
     <string name="catalog_back_to_certificate">Itzuli ziurtagirira</string>
     <string name="catalog_my_region_label">Nire eskualdea</string>
     <string name="catalog_region_copy">Zure eskualdeko zerbitzuak eta Espainia osoan erabilgarri daudenak erakusten ditugu lehenik.</string>
@@ -348,7 +343,7 @@
         <item quantity="one">Lote-sinadura (%1$d dokumentu)</item>
         <item quantity="other">Lote-sinadura (%1$d dokumentu)</item>
     </plurals>
-    <string name="catalog_search_or_address">Bilatu zerbitzua edo helbidea</string>
+    <string name="catalog_search_or_address">Zerbitzua edo helbidea</string>
     <string name="catalog_region_change">Aldatu</string>
     <string name="catalog_favorite_add_description">Gehitu gogokoetara</string>
     <string name="catalog_favorite_remove_description">Kendu gogokoetatik</string>

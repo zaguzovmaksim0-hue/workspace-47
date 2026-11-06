@@ -326,12 +326,18 @@ object SiteProfileCatalogParser {
                 )
                 val boundSourceParameters = linkedEphemeral + linkedEphemeralMappings.keys
                 val boundTargetParameters = linkedEphemeral + linkedEphemeralMappings.values
+                // Reviewed sedipualba exception: the idtoken source page is an iframe, so the
+                // top-level source (login.aspx) cannot carry the token the target requires.
+                val reviewedUnlinkedIdToken =
+                    profileId.value in SEDIPUALBA_UNLINKED_IDTOKEN_PROFILE_IDS &&
+                        sourceFixed.isEmpty() && sourceEphemeral.isEmpty() &&
+                        boundSourceParameters.isEmpty() && ephemeral == setOf(SEDIPUALBA_ID_TOKEN)
                 require(sourceEphemeral == boundSourceParameters)
-                require(ephemeral == boundTargetParameters)
+                require(ephemeral == boundTargetParameters || reviewedUnlinkedIdToken)
                 if (sourceFixed.isNotEmpty() || sourceEphemeral.isNotEmpty()) {
                     require(boundSourceParameters.isNotEmpty())
                 } else {
-                    require(ephemeral.isEmpty())
+                    require(ephemeral.isEmpty() || reviewedUnlinkedIdToken)
                 }
             }
             ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> {
@@ -661,7 +667,10 @@ object SiteProfileCatalogParser {
                         p.capabilities ==
                             setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
                     )
-                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID) {
+                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID ||
+                    p.profileId.value == BURGOS_PROFILE_ID ||
+                    p.profileId.value == HUESCA_PROFILE_ID
+                ) {
                     require(p.endpoints.isEmpty())
                     require(p.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
                     require(p.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
@@ -680,7 +689,10 @@ object SiteProfileCatalogParser {
                             p.profileId.value == CUENCA_PROFILE_ID ||
                             p.profileId.value == MALLORCA_PROFILE_ID ||
                             p.profileId.value == GVA_PROFILE_ID ||
-                            p.profileId.value == SORIA_PROFILE_ID
+                            p.profileId.value == SORIA_PROFILE_ID ||
+                            p.profileId.value == AEAT_MIS_DATOS_PROFILE_ID ||
+                            p.profileId.value == BURGOS_PROFILE_ID ||
+                            p.profileId.value == HUESCA_PROFILE_ID
                     )
                 }
                 require(policy.sourceUrls.all { source ->
@@ -1298,7 +1310,7 @@ object SiteProfileCatalogParser {
                 requestOrigins = setOf(ExactOrigin.parse(AEAT_REQUEST_ORIGIN)),
                 sourceUrls = setOf(URI(AEAT_SOURCE_URL)),
                 requestPath = AEAT_REQUEST_PATH,
-                fixedQueryParameters = emptyMap(),
+                fixedQueryParameters = mapOf("ref" to AEAT_REPRESENTATION_REF),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
                 grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
@@ -1316,7 +1328,7 @@ object SiteProfileCatalogParser {
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == AEAT_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-07-31") })
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-11-06") })
     }
 
     private fun validateImportassProfile(profile: SiteProfile) {
@@ -2274,8 +2286,8 @@ object SiteProfileCatalogParser {
         require(profile.redirectOrigins.isEmpty())
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        validateStaCertificateClientAuth(profile, BURGOS_ORIGIN, BURGOS_CLIENT_AUTH_SOURCE_URL)
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(profile.evidence.isNotEmpty())
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
@@ -2297,6 +2309,23 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateStaCertificateClientAuth(profile: SiteProfile, origin: String, sourceUrl: String) {
+        val clientAuth = requireNotNull(profile.clientAuthPolicy)
+        require(clientAuth.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE)
+        require(clientAuth.requestOrigins == setOf(ExactOrigin.parse(origin)))
+        require(clientAuth.sourceUrls == setOf(URI(sourceUrl)))
+        require(clientAuth.requestPath == STA_CLIENT_AUTH_PATH)
+        require(clientAuth.fixedQueryParameters == STA_CLIENT_AUTH_FIXED_QUERY)
+        require(clientAuth.requiredEphemeralQueryParameters.isEmpty())
+        require(clientAuth.sourceFixedQueryParameters.isEmpty())
+        require(clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty())
+        require(clientAuth.linkedEphemeralQueryParameters.isEmpty())
+        require(clientAuth.linkedEphemeralQueryParameterMappings.isEmpty())
+        require(!clientAuth.allowEmptyIssuerList)
+        require(clientAuth.grantTtlSeconds == REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS)
+        require(clientAuth.requestPort == HTTPS_PORT)
+    }
+
     private fun validateHuescaProfile(profile: SiteProfile) {
         require(profile.profileVersion == HUESCA_PROFILE_VERSION)
         require(profile.displayName == HUESCA_DISPLAY_NAME)
@@ -2307,8 +2336,8 @@ object SiteProfileCatalogParser {
         require(profile.redirectOrigins.isEmpty())
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        validateStaCertificateClientAuth(profile, HUESCA_ORIGIN, HUESCA_CLIENT_AUTH_SOURCE_URL)
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(profile.evidence.isNotEmpty())
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
@@ -2419,16 +2448,13 @@ object SiteProfileCatalogParser {
             profile.clientAuthPolicy == ClientAuthPolicy(
                 transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(LEON_CLIENT_AUTH_ORIGIN)),
-                sourceUrls = setOf(URI(LEON_SOURCE_URL)),
+                sourceUrls = setOf(URI(LEON_LOGIN_SOURCE_URL)),
                 requestPath = "/",
                 fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "24000"),
                 requiredEphemeralQueryParameters = setOf("idtoken"),
                 allowEmptyIssuerList = true,
                 grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
                 requestPort = HTTPS_PORT,
-                sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
-                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
-                linkedEphemeralQueryParameters = setOf("idtoken"),
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == LEON_EVIDENCE_URLS)
@@ -2452,16 +2478,13 @@ object SiteProfileCatalogParser {
             profile.clientAuthPolicy == ClientAuthPolicy(
                 transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(SEDIPUALBA_CLIENT_AUTH_ORIGIN)),
-                sourceUrls = setOf(URI(ALBACETE_SOURCE_URL)),
+                sourceUrls = setOf(URI(ALBACETE_LOGIN_SOURCE_URL)),
                 requestPath = "/",
                 fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "02000"),
                 requiredEphemeralQueryParameters = setOf("idtoken"),
                 allowEmptyIssuerList = true,
                 grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
                 requestPort = HTTPS_PORT,
-                sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
-                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
-                linkedEphemeralQueryParameters = setOf("idtoken"),
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == ALBACETE_EVIDENCE_URLS)
@@ -2485,16 +2508,13 @@ object SiteProfileCatalogParser {
             profile.clientAuthPolicy == ClientAuthPolicy(
                 transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(SEDIPUALBA_CLIENT_AUTH_ORIGIN)),
-                sourceUrls = setOf(URI(MALLORCA_SOURCE_URL)),
+                sourceUrls = setOf(URI(MALLORCA_LOGIN_SOURCE_URL)),
                 requestPath = "/",
                 fixedQueryParameters = linkedMapOf("idioma" to "ca", "entidad" to "07700"),
                 requiredEphemeralQueryParameters = setOf("idtoken"),
                 allowEmptyIssuerList = true,
                 grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
                 requestPort = HTTPS_PORT,
-                sourceFixedQueryParameters = linkedMapOf("idioma" to "ca"),
-                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
-                linkedEphemeralQueryParameters = setOf("idtoken"),
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MALLORCA_EVIDENCE_URLS)
@@ -2518,16 +2538,13 @@ object SiteProfileCatalogParser {
             profile.clientAuthPolicy == ClientAuthPolicy(
                 transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(SEDIPUALBA_CLIENT_AUTH_ORIGIN)),
-                sourceUrls = setOf(URI(CUENCA_SOURCE_URL)),
+                sourceUrls = setOf(URI(CUENCA_LOGIN_SOURCE_URL)),
                 requestPath = "/",
                 fixedQueryParameters = linkedMapOf("idioma" to "es", "entidad" to "16000"),
                 requiredEphemeralQueryParameters = setOf("idtoken"),
                 allowEmptyIssuerList = true,
                 grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
                 requestPort = HTTPS_PORT,
-                sourceFixedQueryParameters = linkedMapOf("idioma" to "es"),
-                sourceRequiredEphemeralQueryParameters = setOf("idtoken"),
-                linkedEphemeralQueryParameters = setOf("idtoken"),
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CUENCA_EVIDENCE_URLS)
@@ -3423,16 +3440,23 @@ object SiteProfileCatalogParser {
         CARNE_JOVEN_SOURCE_URL,
     )
     private const val AEAT_MIS_DATOS_PROFILE_ID = "aeat-mis-datos-censales"
-    private const val AEAT_PROFILE_VERSION = 1
+    private const val AEAT_PROFILE_VERSION = 2
     private const val AEAT_DISPLAY_NAME = "Agencia Tributaria — Mis datos censales"
     private const val AEAT_START_URL = "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
     private const val AEAT_INITIATOR_ORIGIN = "https://sede.agenciatributaria.gob.es"
     private const val AEAT_REQUEST_ORIGIN = "https://www1.agenciatributaria.gob.es"
-    private const val AEAT_SOURCE_URL = AEAT_START_URL
-    private const val AEAT_REQUEST_PATH = "/wlpl/BUGC-JDIT/MdcAcceso"
+    // The "Mis datos censales" link opens the AEAT access selector with rep=S, whose certificate button
+    // goes through the representation dialog; ref stays pinned so the grant cannot reach other AEAT services.
+    private const val AEAT_SOURCE_URL =
+        "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html" +
+            "?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CPE"
+    private const val AEAT_REQUEST_PATH = "/wlpl/OVCT-CXEW/DialogoRepresentacion"
+    private const val AEAT_REPRESENTATION_REF = "/wlpl/BUGC-JDIT/MdcAcceso"
     private val AEAT_EVIDENCE_URLS = setOf(
         AEAT_START_URL,
-        "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso",
+        AEAT_SOURCE_URL,
+        "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+            "?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso",
     )
     private const val IMPORTASS_PROFILE_ID = "tgss-importass-client-auth"
     private const val IMPORTASS_PROFILE_VERSION = 1
@@ -3764,6 +3788,13 @@ object SiteProfileCatalogParser {
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val OURENSE_PROFILE_ID = "diputacion-ourense-sede"
     private const val MALAGA_PROFILE_ID = "diputacion-malaga-instancia-general"
+    private const val SEDIPUALBA_ID_TOKEN = "idtoken"
+    private val SEDIPUALBA_UNLINKED_IDTOKEN_PROFILE_IDS = setOf(
+        "diputacion-albacete-portal",
+        "diputacion-cuenca-portal",
+        "diputacion-leon-sede",
+        "consell-mallorca-sede",
+    )
     private const val MALAGA_PROFILE_VERSION = 3
     private const val MALAGA_DISPLAY_NAME =
         "Diputación de Málaga — Instancia general — acceso con certificado"
@@ -3926,7 +3957,7 @@ object SiteProfileCatalogParser {
     private const val LA_PALMA_SAFE_DESCRIPTION =
         "Firma por lotes en la Sede electrónica del Cabildo Insular de La Palma"
     private const val BURGOS_PROFILE_ID = "diputacion-burgos-portal"
-    private const val BURGOS_PROFILE_VERSION = 1
+    private const val BURGOS_PROFILE_VERSION = 2
     private const val BURGOS_DISPLAY_NAME = "Diputación Provincial de Burgos — Registro electrónico"
     private const val BURGOS_START_URL =
         "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA" +
@@ -3935,13 +3966,20 @@ object SiteProfileCatalogParser {
     private const val BURGOS_SAFE_DESCRIPTION =
         "Firma por lotes de Instancia Genérica en el Registro electrónico de la Diputación Provincial de Burgos"
     private const val HUESCA_PROFILE_ID = "diputacion-huesca-portal"
-    private const val HUESCA_PROFILE_VERSION = 1
+    private const val HUESCA_PROFILE_VERSION = 2
     private const val HUESCA_DISPLAY_NAME = "Diputación Provincial de Huesca — Oficina Virtual"
     private const val HUESCA_START_URL =
         "https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME"
     private const val HUESCA_ORIGIN = "https://ovc24.dphuesca.es"
     private const val HUESCA_SAFE_DESCRIPTION =
         "Firma por lotes en la Oficina Virtual de la Diputación Provincial de Huesca"
+    private const val BURGOS_CLIENT_AUTH_SOURCE_URL =
+        "https://registro.diputaciondeburgos.es/sta/CarpetaPrivate/doEvent?APP_CODE=STA&PAGE_CODE=HOME"
+    private const val HUESCA_CLIENT_AUTH_SOURCE_URL =
+        "https://ovc24.dphuesca.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
+    // STA "Acceso con Certificado Digital" renegotiates TLS on its own host and asks for a client certificate.
+    private const val STA_CLIENT_AUTH_PATH = "/sta/CarpetaPrivate/Certificate"
+    private val STA_CLIENT_AUTH_FIXED_QUERY = mapOf("APP_CODE" to "STA", "PAGE_CODE" to "HOME")
     private const val LUGO_PROFILE_ID = "diputacion-lugo-sede"
     private const val LUGO_PROFILE_VERSION = 1
     private const val LUGO_DISPLAY_NAME = "Deputación de Lugo — Sede electrónica"
@@ -3965,13 +4003,15 @@ object SiteProfileCatalogParser {
     private val CAIB_EVIDENCE_URLS = setOf(CAIB_START_URL, "https://intranet.caib.es/portafibback/")
 
     private const val LEON_PROFILE_ID = "diputacion-leon-sede"
-    private const val LEON_PROFILE_VERSION = 1
+    private const val LEON_PROFILE_VERSION = 2
     private const val LEON_DISPLAY_NAME = "Diputación Provincial de León — acceso con certificado"
     private const val LEON_START_URL =
         "https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270"
+    // The options page runs in an iframe; #optSsl navigates window.top, so the top-level source is login.aspx.
+    private const val LEON_LOGIN_SOURCE_URL =
+        "https://sede.dipuleon.es/carpetaciudadana/login.aspx" +
+            "?returnUrl=https%3a%2f%2fsede.dipuleon.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d20270"
     private const val LEON_ORIGIN = "https://sede.dipuleon.es"
-    private const val LEON_SOURCE_URL =
-        "https://sede.dipuleon.es/segex/identificacion_opciones.aspx"
     private const val LEON_CLIENT_AUTH_ORIGIN = "https://identificacionssl.sedipualba.es"
     private val LEON_EVIDENCE_URLS = setOf(
         LEON_START_URL,
@@ -3980,10 +4020,14 @@ object SiteProfileCatalogParser {
     )
     private const val SEDIPUALBA_CLIENT_AUTH_ORIGIN = "https://identificacionssl.sedipualba.es"
     private const val ALBACETE_PROFILE_ID = "diputacion-albacete-portal"
-    private const val ALBACETE_PROFILE_VERSION = 1
+    private const val ALBACETE_PROFILE_VERSION = 2
     private const val ALBACETE_DISPLAY_NAME = "Diputación Provincial de Albacete — acceso con certificado"
     private const val ALBACETE_START_URL =
         "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567"
+    // The options page runs in an iframe; #optSsl navigates window.top, so the top-level source is login.aspx.
+    private const val ALBACETE_LOGIN_SOURCE_URL =
+        "https://sede.dipualba.es/carpetaciudadana/login.aspx" +
+            "?returnUrl=https%3a%2f%2fsede.dipualba.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d567"
     private const val ALBACETE_ORIGIN = "https://sede.dipualba.es"
     private const val ALBACETE_SOURCE_URL =
         "https://sede.dipualba.es/segex/identificacion_opciones.aspx"
@@ -3994,23 +4038,29 @@ object SiteProfileCatalogParser {
         "https://identificacionssl.sedipualba.es/",
     )
     private const val MALLORCA_PROFILE_ID = "consell-mallorca-sede"
-    private const val MALLORCA_PROFILE_VERSION = 1
+    private const val MALLORCA_PROFILE_VERSION = 2
     private const val MALLORCA_DISPLAY_NAME = "Consell de Mallorca — acceso con certificado"
     private const val MALLORCA_START_URL =
         "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+    // The options page runs in an iframe; #optSsl navigates window.top, so the top-level source is login.aspx.
+    private const val MALLORCA_LOGIN_SOURCE_URL =
+        "https://cim.secimallorca.net/carpetaciudadana/login.aspx" +
+            "?returnUrl=https%3a%2f%2fcim.secimallorca.net%2fsegex%2ftramite.aspx%3fidtramite%3d12082"
     private const val MALLORCA_ORIGIN = "https://cim.secimallorca.net"
-    private const val MALLORCA_SOURCE_URL =
-        "https://cim.secimallorca.net/segex/identificacion_opciones.aspx"
     private val MALLORCA_EVIDENCE_URLS = setOf(
         MALLORCA_START_URL,
         "https://cim.secimallorca.net/carpetaciudadana/login.aspx",
         "https://identificacionssl.sedipualba.es/",
     )
     private const val CUENCA_PROFILE_ID = "diputacion-cuenca-portal"
-    private const val CUENCA_PROFILE_VERSION = 1
+    private const val CUENCA_PROFILE_VERSION = 2
     private const val CUENCA_DISPLAY_NAME = "Diputación Provincial de Cuenca — acceso con certificado"
     private const val CUENCA_START_URL =
         "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074"
+    // The options page runs in an iframe; #optSsl navigates window.top, so the top-level source is login.aspx.
+    private const val CUENCA_LOGIN_SOURCE_URL =
+        "https://sede.dipucuenca.es/carpetaciudadana/login.aspx" +
+            "?returnUrl=https%3a%2f%2fsede.dipucuenca.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d12074"
     private const val CUENCA_ORIGIN = "https://sede.dipucuenca.es"
     private const val CUENCA_SOURCE_URL =
         "https://sede.dipucuenca.es/segex/identificacion_opciones.aspx"
