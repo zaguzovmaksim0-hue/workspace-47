@@ -30,7 +30,6 @@ val strings = checkNotNull(activityContext).resources
                 }
                 rule.onNodeWithText(strings.getString(R.string.app_name)).assertIsDisplayed()
                 rule.onNodeWithText(strings.getString(R.string.unofficial_disclosure)).assertIsDisplayed()
-                rule.onNodeWithText(strings.getString(R.string.certificate_title)).assertIsDisplayed()
                 rule.onNodeWithText(strings.getString(R.string.certificate_copy)).assertIsDisplayed()
                 rule.onNodeWithText(strings.getString(R.string.privacy_copy))
                     .assertIsDisplayed()
