@@ -1751,7 +1751,7 @@
     },
     {
       "profileId": "mugeju-remision-documentacion-client-auth",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "MUGEJU — Remisión de documentación con certificado",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -1763,10 +1763,11 @@
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
       "clientAuthPolicy": {
-        "transitionMode": "DIRECT_FROM_SOURCE",
+        "transitionMode": "IN_PLACE_FROM_SOURCE",
         "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
-        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceProvider"],
+        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
         "requestPath": "/IdP2/AuthenticateCitizen",
+        "requestMethod": "POST",
         "fixedQueryParameters": {},
         "requiredEphemeralQueryParameters": [],
         "allowEmptyIssuerList": true,
@@ -1778,6 +1779,7 @@
         {"url":"https://sedemugeju.gob.es/remisiondocumentacion","reviewedOn":"2026-08-19"},
         {"url":"https://sedemugeju.gob.es/mutualnet3/clave/ControladorClaveCiudadanoServlet?operation=REM","reviewedOn":"2026-08-19"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-18"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect","reviewedOn":"2026-11-06"},
         {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-18"}
       ]
     },

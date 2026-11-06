@@ -390,10 +390,10 @@ class RealE2ePolicyTest(unittest.TestCase):
             'MALAGA_ENTRY_URL =',
             'MALAGA_LOCAL_CLAVE_URL = "https://clave.malaga.es/clave.php"',
             'MALAGA_CLAVE_SUBMIT_VALUE = "Acceder con cl@ve"',
-            'MALAGA_CLAVE_SERVICE_PROVIDER_URL =',
-            'MALAGA_CLAVE_SERVICE_REDIRECT_URL =',
-            'MALAGA_AFIRMA_ONCLICK =',
-            'MALAGA_AFIRMA_IMAGE_SRC = "ImageRetrieve?id=IDP_AFIRMA"',
+            'CLAVE_SERVICE_PROVIDER_URL =',
+            'CLAVE_SERVICE_REDIRECT_URL =',
+            'CLAVE_AFIRMA_ONCLICK =',
+            'CLAVE_AFIRMA_IMAGE_SRC = "ImageRetrieve?id=IDP_AFIRMA"',
             'MALAGA_PORTAL_ID -> runMalagaClaveCertificateRecipe(scenario)',
             "document.querySelectorAll('form#claveFrm')",
             "input[type=\"hidden\"][name=\"tkn\"]",
@@ -415,6 +415,11 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn('loadUrl(', recipe)
         self.assertNotIn('controls[0].contains(images[0])', recipe)
         self.assertIn('controls[0].click()', recipe)
+
+    def test_mugeju_recipe_only_picks_the_clave_certificate_idp(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"', source)
+        self.assertIn('MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
 
     def test_unizar_recipe_targets_the_certificate_button_inside_its_container(self) -> None:
         source = self.read(INSTRUMENTATION)

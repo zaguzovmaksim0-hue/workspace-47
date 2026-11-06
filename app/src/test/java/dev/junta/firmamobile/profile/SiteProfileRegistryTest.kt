@@ -38,9 +38,21 @@ class SiteProfileRegistryTest {
             TrustMode.TRUSTED_BROWSE,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, claveIdent)?.trustMode,
         )
+        // MUGEJU arms client TLS on the Cl@ve ServiceRedirect POST; ServiceProvider is trusted only as a redirect hop.
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mugeju, clave)?.trustMode,
+        )
         assertEquals(
             TrustMode.TRUSTED_BROWSE,
-            BuiltInSiteProfiles.qaRegistry.resolveForProfile(mugeju, clave)?.trustMode,
+            BuiltInSiteProfiles.qaRegistry.resolveRedirect(mugeju, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                mugeju,
+                URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"),
+            )?.trustMode,
         )
         assertEquals(
             TrustMode.TRUSTED_CLIENT_AUTH,
