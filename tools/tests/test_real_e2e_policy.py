@@ -1078,6 +1078,45 @@ class RealE2ePolicyTest(unittest.TestCase):
         for line in described.stdout.splitlines():
             self.assertTrue(line.startswith(("REAL_E2E_GUEST portal=", "REAL_E2E_GUEST_SUMMARY portal=")), line)
 
+    def test_anr_dropbox_trace_emits_only_main_thread_code_locations(self) -> None:
+        secret = "Z9999999Z"
+        log = "\n".join([
+            "I/am_anr  (  590): [0,3420,dev.junta.firmamobile,0,Input dispatching timed out]",
+            "Drop box contents: 1 entries",
+            "========================================",
+            "2026-11-06 16:02:01 data_app_anr (text, 9000 bytes)",
+            "Process: dev.junta.firmamobile",
+            f"Subject: Input dispatching timed out {secret}",
+            '"main" prio=5 tid=1 Runnable',
+            f"  | group=\"main\" sCount=0 {secret}",
+            "  at dev.junta.firmamobile.profile.SiteProfileCatalogParser.parse(SiteProfileCatalogParser.kt:330)",
+            f"  - locked <0x0abc> (a java.lang.Object) {secret}",
+            "  at dev.junta.firmamobile.App.onCreate$lambda$0(App.kt:12)",
+            "",
+            '"RenderThread" prio=7 tid=12 Native',
+            "  at com.example.Other.secretWork(Other.java:1)",
+        ])
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "guest.log"
+            path.write_text(log, encoding="utf-8")
+            described = self.helper("describe-guest-log", "--log", str(path), "--portal", "unizar-tramitador")
+        self.assertEqual(0, described.returncode, described.stderr)
+        self.assertNotIn(secret, described.stdout)
+        self.assertNotIn("Input dispatching", described.stdout)
+        self.assertNotIn("Other.secretWork", described.stdout)
+        self.assertIn("kind=anr process=dev.junta.firmamobile", described.stdout)
+        self.assertIn(
+            "kind=anr_frame frame=00 symbol=dev.junta.firmamobile.profile.SiteProfileCatalogParser.parse",
+            described.stdout,
+        )
+        self.assertIn("kind=anr_frame frame=01 symbol=dev.junta.firmamobile.App.onCreate$lambda$0", described.stdout)
+
+    def test_runner_reads_anr_dropbox_only_after_an_observed_anr(self) -> None:
+        runner = (ROOT / "scripts/ci/run-real-e2e.sh").read_text(encoding="utf-8")
+        guest = runner[runner.index("describe_guest_crashes() {"):runner.index("main() {")]
+        self.assertIn("if grep -q 'am_anr' \"$GUEST_LOG\"; then", guest)
+        self.assertIn("dumpsys dropbox --print data_app_anr >>\"$GUEST_LOG\"", guest)
+
     def test_host_minidump_summary_reports_signal_and_module_basenames_only(self) -> None:
         import struct
 

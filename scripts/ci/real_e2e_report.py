@@ -390,6 +390,8 @@ NATIVE_SIGNAL_RE = re.compile(
 )
 TOMBSTONE_NAME_RE = re.compile(r"pid: \d+, tid: \d+, name: (\S{1,40})\s+>>> (\S{1,80}) <<<")
 TOMBSTONE_FRAME_RE = re.compile(r"#(\d{2}) pc [0-9a-f]{4,16}\s+(\S{1,512})(.*)")
+ANR_MAIN_THREAD_RE = re.compile(r'"main" prio=\d+ tid=\d+ ')
+ANR_FRAME_RE = re.compile(r"\s+at ((?:[A-Za-z_$][A-Za-z0-9_$]*\.){1,30}[A-Za-z_$<][A-Za-z0-9_$<>]{0,80})\(")
 FATAL_TOKEN_RE = re.compile(r"\[FATAL:([A-Za-z0-9_./-]{1,80}\(\d{1,6}\))\]")
 INTERESTING_PROCESS_MARKERS = (
     "firmamobile",
@@ -547,9 +549,20 @@ def describe_guest_log(args: argparse.Namespace) -> None:
         java_thread = java_process = java_exception = None
         java_causes = []
 
+    anr_main_blocks = 0
+    anr_frames_left = 0
     for raw_line in text.splitlines():
         match = GUEST_LINE_RE.fullmatch(raw_line.rstrip("\r"))
         if match is None:
+            # dumpsys dropbox data_app_anr: keep only the main thread's code locations, never messages.
+            if ANR_MAIN_THREAD_RE.match(raw_line):
+                anr_main_blocks += 1
+                anr_frames_left = 12 if anr_main_blocks <= 2 else 0
+            elif anr_frames_left and (frame := ANR_FRAME_RE.match(raw_line)):
+                records.append(f"kind=anr_frame frame={12 - anr_frames_left:02d} symbol={frame.group(1)}")
+                anr_frames_left -= 1
+            elif not raw_line.strip():
+                anr_frames_left = 0
             continue
         tag = match.group(2).strip()
         message = match.group(3)
