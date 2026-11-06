@@ -30,9 +30,15 @@ class CaibPublicCatalogContractTest(unittest.TestCase):
         profile = next(p for p in json.loads(PROFILES.read_text())["profiles"] if p["profileId"] == "caib-portafib")
         self.assertEqual("QA_ONLY", profile["activation"])
         self.assertEqual(["https://www.caib.es", "https://intranet.caib.es"], profile["initiatorOrigins"])
-        self.assertEqual([], profile["redirectOrigins"])
+        # Cl@ve certificate login only (owner decision 2026-11-06): the PortaFIB signature is the filing.
+        self.assertEqual(["https://pasarela.clave.gob.es"], profile["redirectOrigins"])
         self.assertEqual([], profile["trustedBrowseOrigins"])
-        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertEqual(["SIGN", "CLIENT_TLS_AUTH"], profile["capabilities"])
+        policy = profile["clientAuthPolicy"]
+        self.assertEqual("IN_PLACE_FROM_SOURCE", policy["transitionMode"])
+        self.assertEqual("POST", policy["requestMethod"])
+        self.assertEqual(["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"], policy["sourceUrls"])
+        self.assertEqual(["https://pasarela-ident.clave.gob.es"], policy["requestOrigins"])
         op = profile["operationPolicies"][0]
         self.assertEqual(["SHA256_WITH_RSA"], op["algorithms"])
         self.assertEqual("PADES", op["format"])

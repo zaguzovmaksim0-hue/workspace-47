@@ -15,8 +15,8 @@ class ReviewedOriginSharesTest {
     @Test
     fun canonicalCatalogPublishesTypedDirectionalDeclarations() {
         val catalog = SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON)
-        assertEquals(69, catalog.reviewedOriginShares.size)
-        assertEquals(596, catalog.reviewedOriginShares.sumOf { it.laterOwners.size })
+        assertEquals(73, catalog.reviewedOriginShares.size)
+        assertEquals(732, catalog.reviewedOriginShares.sumOf { it.laterOwners.size })
         assertTrue(catalog.reviewedOriginShares.all { share ->
             share.firstOwner !in share.laterOwners && share.redirectRoles.isNotEmpty()
         })

@@ -380,7 +380,7 @@ class MiniAppletBridgeAdapterTest {
         result.request.normalized.use { request ->
             assertEquals(TENERIFE_PROTOCOL_ID, request.protocolId.value)
             assertEquals(TENERIFE_PROFILE_ID, request.context.profileId)
-            assertEquals(1, request.context.profileVersion)
+            assertEquals(2, request.context.profileVersion)
             assertEquals("sede.tenerife.es", request.context.origin.host)
             assertEquals(48, request.context.navigationEpoch)
             assertEquals(SigningAlgorithm.SHA512_WITH_RSA, request.algorithm)

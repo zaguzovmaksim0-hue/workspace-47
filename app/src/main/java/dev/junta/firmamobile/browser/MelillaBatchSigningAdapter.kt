@@ -122,9 +122,9 @@ internal class CaibBatchSigningAdapter(
             ?: return null
         val profile = registry.profile(request.profileId)?.takeIf { it == resolved.profile } ?: return null
         val operation = profile.operationPolicies[ProtocolOperation.SIGN] ?: return null
-        if (profile.profileId.value != CaibBatchProtocolAdapter.PROFILE_ID || profile.profileVersion != 1 ||
+        if (profile.profileId.value != CaibBatchProtocolAdapter.PROFILE_ID || profile.profileVersion != 2 ||
             profile.compatibilityStatus != CompatibilityStatus.VERIFIED_CONTRACT ||
-            profile.capabilities != setOf(Capability.SIGN) ||
+            profile.capabilities != setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH) ||
             operation.inputAdapterId.value != CaibBatchProtocolAdapter.ID.value ||
             operation.algorithms != setOf(ProfileSignatureAlgorithm.SHA256_WITH_RSA) ||
             operation.format != ProfileSignatureFormat.PADES || request.algorithm != "SHA256withRSA" ||

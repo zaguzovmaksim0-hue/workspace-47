@@ -87,7 +87,7 @@ class CaibBatchProtocolAdapterTest {
         protocolId = CaibBatchProtocolAdapter.ID,
         context = SigningContext(
             profileId = CaibBatchProtocolAdapter.PROFILE_ID,
-            profileVersion = 1,
+            profileVersion = 2,
             origin = TrustedOrigin("https", "intranet.caib.es", 443),
             navigationId = NavigationId("caib-batch-test"),
             navigationEpoch = 7L,

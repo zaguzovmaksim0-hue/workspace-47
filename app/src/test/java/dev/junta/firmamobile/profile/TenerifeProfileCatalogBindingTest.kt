@@ -34,20 +34,20 @@ class TenerifeProfileCatalogBindingTest {
     fun qaProfilePreservesExactTenerifeSignerContractAndReleaseStaysDisabled() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Cabildo Insular de Tenerife — Sede electrónica", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse("https://sede.tenerife.es")), profile.initiatorOrigins)
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
-        assertEquals(setOf(Capability.SIGN), profile.capabilities)
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertClaveLoginOnlyPolicy(profile)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-14" })
+        assertTrue(profile.evidence.filter { it.url.host == "sede.tenerife.es" }.all { it.reviewedOn.toString() == "2026-08-14" })
 
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), operation.inputAdapterId)

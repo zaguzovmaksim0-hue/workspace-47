@@ -105,7 +105,7 @@ class CaibBatchProtocolAdapter internal constructor(
     }
 
     private fun NormalizedBatchSigningRequest.matchesContract(): Boolean {
-        if (!isOpen() || protocolId != ID || context.profileId != PROFILE_ID || context.profileVersion != 1 ||
+        if (!isOpen() || protocolId != ID || context.profileId != PROFILE_ID || context.profileVersion != 2 ||
             context.origin != TrustedOrigin("https", "intranet.caib.es", 443) ||
             algorithm != SigningAlgorithm.SHA256_WITH_RSA || format != BatchSigningFormat.PADES ||
             suboperation != "sign" || stopOnError || documents.size != 1

@@ -424,6 +424,24 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"', source)
         self.assertIn('MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
 
+    def test_tenerife_and_caib_prove_only_the_clave_login_and_never_file(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        self.assertIn('CAIB_SEU_PORTAL_ID, CAIB_REGISTRE_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('TENERIFE_SEDE_PORTAL_ID, TENERIFE_INSTITUCIONAL_PORTAL_ID -> {', source)
+        self.assertIn(
+            'TENERIFE_ACCESS_URL = "https://sede.tenerife.es/es/acceso?returnBack=personal%2Fvista-general"',
+            source,
+        )
+        self.assertIn('expectedType = "submit"', source)
+        self.assertIn("if (element.getAttribute('type') !== $quotedExpectedType) return false;", source)
+        conseq = source.split('val CONSEQ_RECIPE_PROFILES = setOf(', 1)[1].split(')', 1)[0]
+        for profile in ('"tenerife-sede-electronica"', '"caib-portafib"'):
+            self.assertIn(profile, conseq)
+            # Consequential signing must never be driven automatically for these profiles.
+            safe = source.split('val SAFE_AUTH_SIGN_PROFILES = setOf(', 1)[1].split(')', 1)[0]
+            self.assertNotIn(profile, safe)
+        self.assertIn('(Capability.CLIENT_TLS_AUTH !in capabilities || result.clientCertProceeded)', source)
+
     def test_unizar_recipe_targets_the_certificate_button_inside_its_container(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('UNIZAR_PORTAL_ID = "unizar-tramitador"', source)

@@ -325,6 +325,29 @@ class RealE2eInstrumentedTest {
             MALAGA_PORTAL_ID -> runMalagaClaveCertificateRecipe(scenario)
             // MUGEJU auto-posts its SAML request to Cl@ve; only the certificate IdP choice remains.
             MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
+            // CAIB sistramit redirects straight to Cl@ve. Login only: the PortaFIB signature is the filing.
+            CAIB_SEU_PORTAL_ID, CAIB_REGISTRE_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
+            // Tenerife: login only, the AutoScript signature is the filing.
+            TENERIFE_SEDE_PORTAL_ID, TENERIFE_INSTITUCIONAL_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = TENERIFE_HOME_URL,
+                    expectedLabel = TENERIFE_LOGIN_LABEL,
+                    expectedHref = TENERIFE_LOGIN_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = TENERIFE_ACCESS_URL,
+                    expectedElementId = null,
+                    expectedLabel = TENERIFE_CLAVE_BUTTON_LABEL,
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    waitForExpectedUrl = true,
+                    expectedType = "submit",
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
             SEVILLA_PORTAL_ID -> clickExactContainedAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = SEVILLA_ENTRY_URL,
@@ -1052,8 +1075,10 @@ class RealE2eInstrumentedTest {
         expectedOnClick: String?,
         waitForExpectedUrl: Boolean = false,
         waitForBadajozSignHook: Boolean = false,
+        expectedType: String = "button",
     ) {
         require(expectedLabel != null || expectedAriaLabel != null)
+        val quotedExpectedType = JSONObject.quote(expectedType)
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedExpectedElementId = expectedElementId?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedLabel = expectedLabel?.let { JSONObject.quote(it) } ?: "null"
@@ -1095,7 +1120,7 @@ class RealE2eInstrumentedTest {
                       const expectedOnClick = $quotedExpectedOnClick;
                       const waitForBadajozSignHook = $quotedWaitForBadajozSignHook;
                       const elements = Array.from(document.querySelectorAll('button')).filter(element => {
-                        if (element.getAttribute('type') !== 'button') return false;
+                        if (element.getAttribute('type') !== $quotedExpectedType) return false;
                         if (expectedId !== null && element.id !== expectedId) return false;
                         const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
                         if (expectedLabel !== null && label !== expectedLabel) return false;
@@ -1709,7 +1734,9 @@ class RealE2eInstrumentedTest {
             result.classification = if (
                 result.profileId in CONSEQ_RECIPE_PROFILES &&
                 result.webViewActive &&
-                (result.pageStarted || result.pageFinished)
+                (result.pageStarted || result.pageFinished) &&
+                // Everything before the consequential step must be proven, including the certificate login.
+                (Capability.CLIENT_TLS_AUTH !in capabilities || result.clientCertProceeded)
             ) {
                 ProbeClassification.BLOCKED_CONSEQUENTIAL_ACTION
             } else {
@@ -2040,6 +2067,9 @@ class RealE2eInstrumentedTest {
         const val CARNE_JOVEN_AUTH_LINK_ID = "bot-obtener"
         val CONSEQ_RECIPE_PROFILES = setOf(
             "reg-age-redsara",
+            // Owner decision 2026-11-06: prove the Cl@ve certificate login only, never file.
+            "tenerife-sede-electronica",
+            "caib-portafib",
         )
         const val CARNE_JOVEN_AUTH_HREF =
             "/carneJoven/servlet/CallAuthenticationServlet"
@@ -2141,6 +2171,15 @@ class RealE2eInstrumentedTest {
             "https://sede.malaga.es/instancia-general/nueva-instancia-general/"
         const val MALAGA_LOCAL_CLAVE_URL = "https://clave.malaga.es/clave.php"
         const val MALAGA_CLAVE_SUBMIT_VALUE = "Acceder con cl@ve"
+        const val CAIB_SEU_PORTAL_ID = "caib-seu-electronica"
+        const val CAIB_REGISTRE_PORTAL_ID = "caib-registre-electronic"
+        const val TENERIFE_SEDE_PORTAL_ID = "tenerife-sede-electronica"
+        const val TENERIFE_INSTITUCIONAL_PORTAL_ID = "tenerife-portal-institucional"
+        const val TENERIFE_HOME_URL = "https://sede.tenerife.es/es"
+        const val TENERIFE_LOGIN_LABEL = "Acceder"
+        const val TENERIFE_LOGIN_HREF = "/es/personal/vista-general"
+        const val TENERIFE_ACCESS_URL = "https://sede.tenerife.es/es/acceso?returnBack=personal%2Fvista-general"
+        const val TENERIFE_CLAVE_BUTTON_LABEL = "Identificarme"
         const val CLAVE_SERVICE_PROVIDER_URL =
             "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val CLAVE_SERVICE_REDIRECT_URL =

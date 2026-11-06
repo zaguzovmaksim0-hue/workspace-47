@@ -107,7 +107,7 @@ class SigningAdapterGoldenCharacterizationTest(private val case: AdapterGoldenCa
             request(origin = TrustedOrigin("https", case.host, 444)),
             request(protocol = SigningProtocolId("other-golden-protocol")),
             request(profile = "other-golden-profile"),
-            request(version = 2),
+            request(version = caseVersion + 1),
             request(algorithm = if (case.algorithm == SigningAlgorithm.SHA1_WITH_RSA) {
                 SigningAlgorithm.SHA256_WITH_RSA
             } else SigningAlgorithm.SHA1_WITH_RSA),
@@ -346,13 +346,17 @@ class SigningAdapterGoldenCharacterizationTest(private val case: AdapterGoldenCa
             ";filter=nonexpired:\nmode=implicit\n"
     } else case.properties
 
+    // Tenerife moved to profile v2 when it gained the Cl@ve login hop.
+    private val caseVersion get() =
+        if (case.profile == TenerifeCadesDetachedAdapter.PROFILE_ID) TenerifeCadesDetachedAdapter.PROFILE_VERSION else 1
+
     private fun request(
         data: ByteArray = case.data,
         properties: String = properties(),
         origin: TrustedOrigin = TrustedOrigin("https", case.host, 443),
         protocol: SigningProtocolId = adapter.id,
         profile: String = case.profile,
-        version: Int = 1,
+        version: Int = caseVersion,
         algorithm: SigningAlgorithm = case.algorithm,
         format: SigningFormat = case.format,
         description: String = case.description,
