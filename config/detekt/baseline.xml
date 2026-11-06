@@ -165,7 +165,7 @@
     <ID>CyclomaticComplexMethod:JuntaTriPhaseCodec.kt$AutoFirmaCadesTriPhaseCodec$private fun ByteArray.isStrictUtf8WithoutNul(): Boolean</ID>
     <ID>CyclomaticComplexMethod:JuntaTriPhaseCodec.kt$AutoFirmaCadesTriPhaseCodec$private fun parsePreResponse( data: JuntaTriPhaseRequestData, response: ByteArray, ): PreSignResult</ID>
     <ID>CyclomaticComplexMethod:JuntaWebViewClient.kt$JuntaWebViewClient$override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?)</ID>
-    <ID>CyclomaticComplexMethod:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, ): Boolean</ID>
+    <ID>CyclomaticComplexMethod:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, isRedirect: Boolean = false, ): Boolean</ID>
     <ID>CyclomaticComplexMethod:JuntaWebViewClient.kt$JuntaWebViewClient$private fun recordVeaAuthReturnDiagnostic(rawUrl: String)</ID>
     <ID>CyclomaticComplexMethod:LocalXadesDetachedAdapter.kt$XadesDetachedCodec$private fun createSignedProperties( document: Document, signedPropertiesId: String, referenceId: String, certificate: X509Certificate, clock: Clock, ): Element</ID>
     <ID>CyclomaticComplexMethod:LugoBatchBridgeAdapter.kt$LugoBatchBridgeAdapter$@Synchronized fun route(rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, navigationEpoch: Long = 0L): MelillaBatchBridgeRouteResult</ID>
@@ -347,7 +347,7 @@
     <ID>LongMethod:IsciiiCertificateSelectionBridgeAdapter.kt$IsciiiCertificateSelectionBridgeAdapter$fun route( rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, navigationEpoch: Long = 0L, currentPageUrl: String? = null, ): CertificateSelectionBridgeRouteResult</ID>
     <ID>LongMethod:JuntaTriPhaseCodec.kt$AutoFirmaCadesTriPhaseCodec$override fun decodeRequest( request: NormalizedSignRequest, certificateChain: List&lt;X509Certificate&gt;, ): JuntaTriPhaseRequestData</ID>
     <ID>LongMethod:JuntaTriPhaseCodec.kt$AutoFirmaCadesTriPhaseCodec$private fun parsePreResponse( data: JuntaTriPhaseRequestData, response: ByteArray, ): PreSignResult</ID>
-    <ID>LongMethod:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, ): Boolean</ID>
+    <ID>LongMethod:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, isRedirect: Boolean = false, ): Boolean</ID>
     <ID>LongMethod:LocalXadesDetachedAdapter.kt$XadesDetachedCodec$fun createPreSign( data: ByteArray, certificateChain: List&lt;X509Certificate&gt;, clock: Clock, ): XadesPreSignMaterial</ID>
     <ID>LongMethod:MainActivity.kt$MainActivity$private fun initializeReadyContent(repository: PortalCatalogRepository)</ID>
     <ID>LongMethod:MelillaBatchBridgeAdapter.kt$StaBatchBridgeAdapter$@Synchronized fun route( rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, navigationEpoch: Long = 0L, ): MelillaBatchBridgeRouteResult</ID>
@@ -430,6 +430,9 @@
     <ID>LongParameterList:PoliciaXadesDetachedAdapter.kt$PoliciaXadesDetachedCodec$( document: Document, contentId: String, referenceId: String, contentDigest: ByteArray, isXml: Boolean, signedPropertiesId: String, signedPropertiesDigest: ByteArray, keyInfoId: String, keyInfoDigest: ByteArray, )</ID>
     <ID>LongParameterList:PoliciaXadesDetachedAdapter.kt$PoliciaXadesDetachedCodec$( document: Document, signedPropertiesId: String, referenceId: String, certificate: X509Certificate, clock: Clock, isXml: Boolean, )</ID>
     <ID>LongParameterList:PortalCallbackDiagnosticProtocol.kt$PortalCallbackDiagnosticProtocol$( rawMessage: String, sourceOrigin: Uri, isMainFrame: Boolean, expectedProfileId: ProfileId, registry: SiteProfileRegistry, enabled: Boolean, )</ID>
+    <ID>LongParameterList:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$( activeProfileId: ProfileId?, currentUrl: String?, targetUrl: String, currentEpoch: Long, isModernMainFrameRequest: Boolean, redirectingRequestUrl: String? = null, )</ID>
+    <ID>LongParameterList:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$( profile: SiteProfile, policy: ClientAuthPolicy, currentUrl: String?, redirectingRequestUrl: String?, target: URI, currentEpoch: Long, nowNanos: Long, )</ID>
+    <ID>LongParameterList:JuntaWebViewClient.kt$JuntaWebViewClient$( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, isRedirect: Boolean = false, )</ID>
     <ID>LongParameterList:PortalCatalogScreen.kt$( state: PortalCatalogUiState, onSearchTextChange: (String) -&gt; Unit, onSelectRegion: (PortalRegionCode) -&gt; Unit, onUseLocation: () -&gt; Unit, onOpenLocationSettings: () -&gt; Unit, onOpenAppSettings: () -&gt; Unit, onDismissLocationMessage: () -&gt; Unit, onToggleFavorite: (PortalId) -&gt; Unit, onOpenPortal: (PortalCatalogItem) -&gt; Unit, onBackToCertificate: () -&gt; Unit, onUserMessageShown: () -&gt; Unit, verifiedOnly: Boolean, onVerifiedOnlyChange: (Boolean) -&gt; Unit, onOpenPublicWeb: ((java.net.URI) -&gt; Unit)? = null, onOpenCompatibilityPortal: ((PortalCatalogItem) -&gt; Unit)? = null, )</ID>
     <ID>LongParameterList:ProfileHttpTransport.kt$OkHttpProfileHttpExecutor$( expectedHost: String, approvedAddresses: List&lt;InetAddress&gt;, connectTimeoutMillis: Int, readTimeoutMillis: Int, tracker: ProfileHttpCallPhaseTracker, cancellation: ProfileHttpCancellation? = null, )</ID>
     <ID>LongParameterList:ProfileHttpTransport.kt$ProfileHttpExecutor$( url: URI, resolvedAddresses: List&lt;InetAddress&gt;, body: ByteArray, connectTimeoutMillis: Int, readTimeoutMillis: Int, maxResponseBytes: Int, cancellation: ProfileHttpCancellation, tracker: ProfileHttpCallPhaseTracker, )</ID>
@@ -1339,7 +1342,7 @@
     <ID>NestedBlockDepth:CertificateDocumentAccess.kt$ContentResolverCertificateDocumentAccess$override fun queryMetadata(uri: Uri): CertificateDocumentMetadata</ID>
     <ID>NestedBlockDepth:EuskadiClientAuthPostBridgeAdapter.kt$EuskadiClientAuthPostBridgeAdapter$private fun String.uniqueTopLevelKeys(): Set&lt;String&gt;?</ID>
     <ID>NestedBlockDepth:IsciiiCertificateSelectionBridgeAdapter.kt$IsciiiCertificateSelectionBridgeAdapter$private fun String.uniqueTopLevelKeys(): Set&lt;String&gt;?</ID>
-    <ID>NestedBlockDepth:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, ): Boolean</ID>
+    <ID>NestedBlockDepth:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, isRedirect: Boolean = false, ): Boolean</ID>
     <ID>NestedBlockDepth:LugoBatchBridgeAdapter.kt$LugoBatchBridgeAdapter$private fun String.uniqueTopLevelKeys(): Set&lt;String&gt;?</ID>
     <ID>NestedBlockDepth:MiniAppletBridgeAdapter.kt$ProfileMiniAppletBridgeAdapter$private fun String.uniqueTopLevelKeys(): Set&lt;String&gt;?</ID>
     <ID>NestedBlockDepth:NativeMultiPhaseOperation.kt$NativeMultiPhaseOperation$override suspend fun executeWithCheckpoints(identity: UnlockedIdentity, checkpoint: suspend () -&gt; Unit, authorizeUpload: suspend () -&gt; Unit): AfirmaDeliveryResult</ID>
@@ -1416,9 +1419,9 @@
     <ID>ReturnCount:CertificateViewModel.kt$CertificateViewModel$fun onAppBackgrounded()</ID>
     <ID>ReturnCount:CertificateViewModel.kt$CertificateViewModel$fun onAppForegrounded()</ID>
     <ID>ReturnCount:CertificateViewModel.kt$CertificateViewModel$private suspend fun restore(reference: StoredCertificateReference): CertificateUiState</ID>
-    <ID>ReturnCount:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$@Synchronized fun observeTopLevelNavigation( activeProfileId: ProfileId?, currentUrl: String?, targetUrl: String, currentEpoch: Long, isModernMainFrameRequest: Boolean, ): AuthorizedClientAuthTarget?</ID>
+    <ID>ReturnCount:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$@Synchronized fun observeTopLevelNavigation( activeProfileId: ProfileId?, currentUrl: String?, targetUrl: String, currentEpoch: Long, isModernMainFrameRequest: Boolean, redirectingRequestUrl: String? = null, ): AuthorizedClientAuthTarget?</ID>
     <ID>ReturnCount:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$@Synchronized fun observeTopLevelResourceRequest( activeProfileId: ProfileId?, currentUrl: String?, targetUrl: String, method: String, currentEpoch: Long, isMainFrameRequest: Boolean, ): AuthorizedClientAuthTarget?</ID>
-    <ID>ReturnCount:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$private fun authorizeDirectTransition( profile: SiteProfile, policy: ClientAuthPolicy, currentUrl: String?, target: URI, currentEpoch: Long, nowNanos: Long, ): AuthorizedClientAuthTarget?</ID>
+    <ID>ReturnCount:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$private fun authorizeDirectTransition( profile: SiteProfile, policy: ClientAuthPolicy, currentUrl: String?, redirectingRequestUrl: String?, target: URI, currentEpoch: Long, nowNanos: Long, ): AuthorizedClientAuthTarget?</ID>
     <ID>ReturnCount:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$private fun authorizeInPlaceGetRedirectTransition( profile: SiteProfile, policy: ClientAuthPolicy, currentUrl: String?, target: URI, currentEpoch: Long, nowNanos: Long, ): AuthorizedClientAuthTarget?</ID>
     <ID>ReturnCount:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$private fun authorizeRedirectTransition( profile: SiteProfile, policy: ClientAuthPolicy, currentUrl: String?, target: URI, currentEpoch: Long, nowNanos: Long, ): AuthorizedClientAuthTarget?</ID>
     <ID>ReturnCount:ClientAuthNavigationAuthorizer.kt$ClientAuthNavigationAuthorizer$private fun currentBelongsTo(profile: SiteProfile, currentUrl: String?): Boolean</ID>
@@ -1483,7 +1486,7 @@
     <ID>ReturnCount:JuntaOriginPolicy.kt$JuntaOriginPolicy$fun webMessageOriginRules(profileId: ProfileId): Set&lt;String&gt;</ID>
     <ID>ReturnCount:JuntaOriginPolicy.kt$JuntaOriginPolicy$private fun canonicalOrigin(uri: Uri): TrustedOrigin?</ID>
     <ID>ReturnCount:JuntaTriPhaseCodec.kt$AutoFirmaCadesTriPhaseCodec$private fun ByteArray.isStrictUtf8WithoutNul(): Boolean</ID>
-    <ID>ReturnCount:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, ): Boolean</ID>
+    <ID>ReturnCount:JuntaWebViewClient.kt$JuntaWebViewClient$private fun handleNavigation( view: WebView, targetUrl: String, isModernMainFrame: Boolean, method: String, hasUserGesture: Boolean = false, isRedirect: Boolean = false, ): Boolean</ID>
     <ID>ReturnCount:JuntaWebViewClient.kt$JuntaWebViewClient$private fun recordVeaAuthReturnDiagnostic(rawUrl: String)</ID>
     <ID>ReturnCount:LiteralSigningProperties.kt$LiteralSigningProperties$fun canonicalize(raw: String, expected: String): String?</ID>
     <ID>ReturnCount:LiteralSigningProperties.kt$LiteralSigningProperties$private fun parse(raw: String): Map&lt;String, String&gt;?</ID>
