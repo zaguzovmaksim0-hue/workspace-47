@@ -1043,7 +1043,7 @@
     },
     {
       "profileId": "diputacion-leon-sede",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Diputación Provincial de León — acceso con certificado",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -1057,10 +1057,7 @@
       "clientAuthPolicy": {
         "transitionMode": "DIRECT_FROM_SOURCE",
         "requestOrigins": ["https://identificacionssl.sedipualba.es"],
-        "sourceUrls": ["https://sede.dipuleon.es/segex/identificacion_opciones.aspx"],
-        "sourceFixedQueryParameters": {"idioma":"es"},
-        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
-        "linkedEphemeralQueryParameters": ["idtoken"],
+        "sourceUrls": ["https://sede.dipuleon.es/carpetaciudadana/login.aspx?returnUrl=https%3a%2f%2fsede.dipuleon.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d20270"],
         "requestPath": "/",
         "fixedQueryParameters": {"idioma":"es","entidad":"24000"},
         "requiredEphemeralQueryParameters": ["idtoken"],
@@ -1077,7 +1074,7 @@
     },
     {
       "profileId": "diputacion-albacete-portal",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Diputación Provincial de Albacete — acceso con certificado",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -1091,10 +1088,7 @@
       "clientAuthPolicy": {
         "transitionMode": "DIRECT_FROM_SOURCE",
         "requestOrigins": ["https://identificacionssl.sedipualba.es"],
-        "sourceUrls": ["https://sede.dipualba.es/segex/identificacion_opciones.aspx"],
-        "sourceFixedQueryParameters": {"idioma":"es"},
-        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
-        "linkedEphemeralQueryParameters": ["idtoken"],
+        "sourceUrls": ["https://sede.dipualba.es/carpetaciudadana/login.aspx?returnUrl=https%3a%2f%2fsede.dipualba.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d567"],
         "requestPath": "/",
         "fixedQueryParameters": {"idioma":"es","entidad":"02000"},
         "requiredEphemeralQueryParameters": ["idtoken"],
@@ -1112,7 +1106,7 @@
     },
     {
       "profileId": "consell-mallorca-sede",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Consell de Mallorca — acceso con certificado",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -1126,10 +1120,7 @@
       "clientAuthPolicy": {
         "transitionMode": "DIRECT_FROM_SOURCE",
         "requestOrigins": ["https://identificacionssl.sedipualba.es"],
-        "sourceUrls": ["https://cim.secimallorca.net/segex/identificacion_opciones.aspx"],
-        "sourceFixedQueryParameters": {"idioma":"ca"},
-        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
-        "linkedEphemeralQueryParameters": ["idtoken"],
+        "sourceUrls": ["https://cim.secimallorca.net/carpetaciudadana/login.aspx?returnUrl=https%3a%2f%2fcim.secimallorca.net%2fsegex%2ftramite.aspx%3fidtramite%3d12082"],
         "requestPath": "/",
         "fixedQueryParameters": {"idioma":"ca","entidad":"07700"},
         "requiredEphemeralQueryParameters": ["idtoken"],
@@ -1146,7 +1137,7 @@
     },
     {
       "profileId": "diputacion-cuenca-portal",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Diputación Provincial de Cuenca — acceso con certificado",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -1160,10 +1151,7 @@
       "clientAuthPolicy": {
         "transitionMode": "DIRECT_FROM_SOURCE",
         "requestOrigins": ["https://identificacionssl.sedipualba.es"],
-        "sourceUrls": ["https://sede.dipucuenca.es/segex/identificacion_opciones.aspx"],
-        "sourceFixedQueryParameters": {"idioma":"es"},
-        "sourceRequiredEphemeralQueryParameters": ["idtoken"],
-        "linkedEphemeralQueryParameters": ["idtoken"],
+        "sourceUrls": ["https://sede.dipucuenca.es/carpetaciudadana/login.aspx?returnUrl=https%3a%2f%2fsede.dipucuenca.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d12074"],
         "requestPath": "/",
         "fixedQueryParameters": {"idioma":"es","entidad":"16000"},
         "requiredEphemeralQueryParameters": ["idtoken"],

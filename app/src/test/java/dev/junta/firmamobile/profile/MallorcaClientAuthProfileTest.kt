@@ -28,14 +28,17 @@ class MallorcaClientAuthProfileTest {
     private val profileId = ProfileId("consell-mallorca-sede")
     private val portalId = PortalId("mallorca-sede-electronica")
     private val startUrl = URI("https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082")
-    private val sourceUrl = URI("https://cim.secimallorca.net/segex/identificacion_opciones.aspx")
+    private val sourceUrl = URI(
+        "https://cim.secimallorca.net/carpetaciudadana/login.aspx" +
+            "?returnUrl=https%3a%2f%2fcim.secimallorca.net%2fsegex%2ftramite.aspx%3fidtramite%3d12082",
+    )
 
     @Test
     fun qaProfilePinsObservedSedipualbaClientTlsTransitionAndReleaseStaysDisabled() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Consell de Mallorca — acceso con certificado", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -52,9 +55,9 @@ class MallorcaClientAuthProfileTest {
             policy.requestOrigins,
         )
         assertEquals(setOf(sourceUrl), policy.sourceUrls)
-        assertEquals(mapOf("idioma" to "ca"), policy.sourceFixedQueryParameters)
-        assertEquals(setOf("idtoken"), policy.sourceRequiredEphemeralQueryParameters)
-        assertEquals(setOf("idtoken"), policy.linkedEphemeralQueryParameters)
+        assertTrue(policy.sourceFixedQueryParameters.isEmpty())
+        assertTrue(policy.sourceRequiredEphemeralQueryParameters.isEmpty())
+        assertTrue(policy.linkedEphemeralQueryParameters.isEmpty())
         assertEquals("/", policy.requestPath)
         assertEquals(mapOf("idioma" to "ca", "entidad" to "07700"), policy.fixedQueryParameters)
         assertEquals(setOf("idtoken"), policy.requiredEphemeralQueryParameters)

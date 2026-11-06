@@ -347,6 +347,19 @@ class SharedOriginCharacterizationTest {
     }
 
     @Test
+    fun sedipualbaUnlinkedIdTokenExceptionStaysNarrow() {
+        val id = "diputacion-albacete-portal"
+        val block = profileJson(id)
+        val ephemeral = "\"requiredEphemeralQueryParameters\": [\"idtoken\"]"
+        assertEquals(1, parse(listOf(block)).profiles.size)
+        rejects(
+            "extra unlinked target parameter",
+            listOf(replace(block, ephemeral, "\"requiredEphemeralQueryParameters\": [\"idtoken\", \"other\"]")),
+        )
+        rejects("unreviewed owner", listOf(replace(block, "\"profileId\": \"$id\"", "\"profileId\": \"unreviewed-sedipualba\"")))
+    }
+
+    @Test
     fun sameOriginTlsRequestOriginsAndPathsAreIndependentGoldenValues() {
         val expected = listOf(
             Triple(
