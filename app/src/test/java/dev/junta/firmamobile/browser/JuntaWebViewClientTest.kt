@@ -1128,6 +1128,67 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun pattexServerRedirectFromExactSourceRequestProducesOneGrantBeforeAnyPageCommits() {
+        var epoch = 4L
+        var captured: AuthorizedClientAuthTarget? = null
+        val client = pattexClient({ epoch }) { captured = it }
+
+        // Observed on 2026-11-06: externos.jsf answers 302 straight to accesoCertificadoSEDE.jsf, so no
+        // source page ever commits and WebView.getUrl() is still null when the redirect is reported.
+        client.shouldInterceptRequest(webView, request(PATTEX_SOURCE))
+        assertTrue(client.shouldOverrideUrlLoading(webView, redirectRequest(PATTEX_TARGET)))
+        assertEquals("/PATTEX/accesoCertificadoSEDE.jsf", captured?.target?.rawPath)
+        assertEquals(PATTEX_SOURCE, captured?.source?.toASCIIString())
+
+        captured = null
+        epoch = 5L
+        val fresh = pattexClient({ epoch }) { captured = it }
+        fresh.shouldInterceptRequest(webView, request(PATTEX_SOURCE))
+        epoch = 6L
+        assertFalse(fresh.shouldOverrideUrlLoading(webView, redirectRequest(PATTEX_TARGET)))
+        assertNull("a later navigation makes the source request stale", captured)
+    }
+
+    @Test
+    fun pattexRedirectSourceIsOnlyTheExactRedirectingRequest() {
+        var captured: AuthorizedClientAuthTarget? = null
+        val notRedirect = pattexClient({ 1L }) { captured = it }
+        notRedirect.shouldInterceptRequest(webView, request(PATTEX_SOURCE))
+        notRedirect.shouldOverrideUrlLoading(webView, request(PATTEX_TARGET))
+        assertNull("a non-redirect navigation never borrows the request URL", captured)
+
+        val otherSource = pattexClient({ 1L }) { captured = it }
+        otherSource.shouldInterceptRequest(webView, request(PATTEX_SOURCE.replace("info=060", "info=061")))
+        otherSource.shouldOverrideUrlLoading(webView, redirectRequest(PATTEX_TARGET))
+        assertNull(captured)
+
+        val noRequest = pattexClient({ 1L }) { captured = it }
+        noRequest.shouldOverrideUrlLoading(webView, redirectRequest(PATTEX_TARGET))
+        assertNull(captured)
+
+        // In a chain the redirecting document is the previous hop, not the first request.
+        val chained = pattexClient({ 1L }) { captured = it }
+        chained.shouldInterceptRequest(webView, request(PATTEX_SOURCE))
+        chained.shouldOverrideUrlLoading(webView, redirectRequest("https://pattex.juntaex.es/PATTEX/otro.jsf"))
+        chained.shouldOverrideUrlLoading(webView, redirectRequest(PATTEX_TARGET))
+        assertNull(captured)
+    }
+
+    private fun pattexClient(
+        epoch: () -> Long,
+        onTarget: (AuthorizedClientAuthTarget) -> Unit,
+    ) = JuntaWebViewClient(
+        callbacks = RecordingBrowserCallbacks(),
+        logger = logger,
+        navigationPolicy = JuntaNavigationPolicy(ProfileId(PATTEX_PROFILE)),
+        currentPageUrl = { null },
+        clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry),
+        activeProfileId = { ProfileId(PATTEX_PROFILE) },
+        currentNavigationEpoch = epoch,
+        onClientAuthTarget = onTarget,
+    )
+
+    @Test
     fun carneJovenCertificateGrantRemainsSeparateFromOrdinaryNavigation() {
         var capturedAuthorizedTarget: AuthorizedClientAuthTarget? = null
         val carneJovenCallbacks = RecordingBrowserCallbacks()
@@ -1830,6 +1891,15 @@ class JuntaWebViewClientTest {
         override fun getRequestHeaders(): Map<String, String> = emptyMap()
     }
 
+    private fun redirectRequest(rawUrl: String) = object : WebResourceRequest {
+        override fun getUrl(): Uri = Uri.parse(rawUrl)
+        override fun isForMainFrame(): Boolean = true
+        override fun isRedirect(): Boolean = true
+        override fun hasGesture(): Boolean = false
+        override fun getMethod(): String = "GET"
+        override fun getRequestHeaders(): Map<String, String> = emptyMap()
+    }
+
     private fun subframeRequest(rawUrl: String) = object : WebResourceRequest {
         override fun getUrl(): Uri = Uri.parse(rawUrl)
         override fun isForMainFrame(): Boolean = false
@@ -1961,6 +2031,10 @@ class JuntaWebViewClientTest {
     }
 
     private companion object {
+        const val PATTEX_PROFILE = "extremadura-pattex-client-auth"
+        const val PATTEX_SOURCE =
+            "https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo"
+        const val PATTEX_TARGET = "https://pattex.juntaex.es/PATTEX/accesoCertificadoSEDE.jsf"
         const val CARNE_JOVEN_INDEX =
             "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val CARNE_JOVEN_SOURCE =
