@@ -705,7 +705,7 @@ class SiteProfileCatalogParserTest {
         assertEquals(
             mapOf(
                 "precalculatedHashAlgorithm" to "SHA1",
-                "serverUrl" to "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService",
+                "serverUrl" to "https://tramita.unizar.es/afirma-server-triphase-signer-2.9/SignatureService",
             ),
             operation.fixedExtraProperties,
         )

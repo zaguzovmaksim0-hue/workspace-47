@@ -168,6 +168,7 @@ internal fun ClientAuthConfirmationDialog(
     val confirmArmed = rememberConsentArmed(host)
     AlertDialog(
         onDismissRequest = onCancel,
+        modifier = Modifier.testTag("client-auth-confirmation"),
         title = { Text(stringResource(R.string.interactive_tls_title)) },
         text = {
             FilterObscuredTouches()
@@ -185,12 +186,18 @@ internal fun ClientAuthConfirmationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onContinue, enabled = confirmArmed) {
+            TextButton(
+                onClick = onContinue,
+                enabled = confirmArmed,
+                modifier = Modifier.testTag("client-auth-confirmation-continue"),
+            ) {
                 Text(stringResource(R.string.continue_to_portal))
             }
         },
         dismissButton = {
-            TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onCancel, modifier = Modifier.testTag("client-auth-confirmation-cancel")) {
+                Text(stringResource(R.string.cancel))
+            }
         },
     )
 }
