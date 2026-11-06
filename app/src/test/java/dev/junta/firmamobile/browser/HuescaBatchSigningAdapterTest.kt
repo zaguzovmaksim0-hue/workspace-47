@@ -44,7 +44,7 @@ class HuescaBatchSigningAdapterTest {
         )
         assertEquals(HuescaBatchProtocolAdapter.ID, normalized.protocolId)
         assertEquals("diputacion-huesca-portal", normalized.context.profileId)
-        assertEquals(1, normalized.context.profileVersion)
+        assertEquals(2, normalized.context.profileVersion)
         assertEquals("ovc24.dphuesca.es", normalized.context.origin.host)
         assertEquals(9L, normalized.context.navigationEpoch)
         assertEquals(observedAt, normalized.context.observedAt)
