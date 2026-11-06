@@ -680,7 +680,8 @@ object SiteProfileCatalogParser {
                             p.profileId.value == CUENCA_PROFILE_ID ||
                             p.profileId.value == MALLORCA_PROFILE_ID ||
                             p.profileId.value == GVA_PROFILE_ID ||
-                            p.profileId.value == SORIA_PROFILE_ID
+                            p.profileId.value == SORIA_PROFILE_ID ||
+                            p.profileId.value == AEAT_MIS_DATOS_PROFILE_ID
                     )
                 }
                 require(policy.sourceUrls.all { source ->
@@ -1298,7 +1299,7 @@ object SiteProfileCatalogParser {
                 requestOrigins = setOf(ExactOrigin.parse(AEAT_REQUEST_ORIGIN)),
                 sourceUrls = setOf(URI(AEAT_SOURCE_URL)),
                 requestPath = AEAT_REQUEST_PATH,
-                fixedQueryParameters = emptyMap(),
+                fixedQueryParameters = mapOf("ref" to AEAT_REPRESENTATION_REF),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
                 grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
@@ -1316,7 +1317,7 @@ object SiteProfileCatalogParser {
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == AEAT_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-07-31") })
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-11-06") })
     }
 
     private fun validateImportassProfile(profile: SiteProfile) {
@@ -3423,16 +3424,23 @@ object SiteProfileCatalogParser {
         CARNE_JOVEN_SOURCE_URL,
     )
     private const val AEAT_MIS_DATOS_PROFILE_ID = "aeat-mis-datos-censales"
-    private const val AEAT_PROFILE_VERSION = 1
+    private const val AEAT_PROFILE_VERSION = 2
     private const val AEAT_DISPLAY_NAME = "Agencia Tributaria — Mis datos censales"
     private const val AEAT_START_URL = "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
     private const val AEAT_INITIATOR_ORIGIN = "https://sede.agenciatributaria.gob.es"
     private const val AEAT_REQUEST_ORIGIN = "https://www1.agenciatributaria.gob.es"
-    private const val AEAT_SOURCE_URL = AEAT_START_URL
-    private const val AEAT_REQUEST_PATH = "/wlpl/BUGC-JDIT/MdcAcceso"
+    // The "Mis datos censales" link opens the AEAT access selector with rep=S, whose certificate button
+    // goes through the representation dialog; ref stays pinned so the grant cannot reach other AEAT services.
+    private const val AEAT_SOURCE_URL =
+        "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html" +
+            "?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CPE"
+    private const val AEAT_REQUEST_PATH = "/wlpl/OVCT-CXEW/DialogoRepresentacion"
+    private const val AEAT_REPRESENTATION_REF = "/wlpl/BUGC-JDIT/MdcAcceso"
     private val AEAT_EVIDENCE_URLS = setOf(
         AEAT_START_URL,
-        "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso",
+        AEAT_SOURCE_URL,
+        "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+            "?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso",
     )
     private const val IMPORTASS_PROFILE_ID = "tgss-importass-client-auth"
     private const val IMPORTASS_PROFILE_VERSION = 1
