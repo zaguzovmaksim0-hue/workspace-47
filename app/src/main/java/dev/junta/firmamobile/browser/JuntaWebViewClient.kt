@@ -473,9 +473,11 @@ class JuntaWebViewClient(
                 }
             }
             recordVeaAuthReturnDiagnostic(request.url.toString())
-            if (request.method.equals(GET_METHOD, ignoreCase = true)) {
-                lastMainFrameRequest.set(MainFrameRequest(request.url.toString(), currentNavigationEpoch()))
-            }
+            // Any other main-frame request (e.g. a POST) replaces the source: its redirect must not borrow a GET.
+            lastMainFrameRequest.set(
+                MainFrameRequest(request.url.toString(), currentNavigationEpoch())
+                    .takeIf { request.method.equals(GET_METHOD, ignoreCase = true) },
+            )
             logger.recordNavigationEvent(
                 code = DiagnosticEventCode.NETWORK_REQUEST,
                 rawUrl = request.url.toString(),

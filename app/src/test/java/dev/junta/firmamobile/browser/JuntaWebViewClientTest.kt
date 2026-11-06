@@ -1166,6 +1166,13 @@ class JuntaWebViewClientTest {
         noRequest.shouldOverrideUrlLoading(webView, redirectRequest(PATTEX_TARGET))
         assertNull(captured)
 
+        // A main-frame POST after the source GET is the real redirecting request and does not match the source.
+        val postAfterSource = pattexClient({ 1L }) { captured = it }
+        postAfterSource.shouldInterceptRequest(webView, request(PATTEX_SOURCE))
+        postAfterSource.shouldInterceptRequest(webView, request("https://pattex.juntaex.es/PATTEX/otro.jsf", "POST"))
+        postAfterSource.shouldOverrideUrlLoading(webView, redirectRequest(PATTEX_TARGET))
+        assertNull(captured)
+
         // In a chain the redirecting document is the previous hop, not the first request.
         val chained = pattexClient({ 1L }) { captured = it }
         chained.shouldInterceptRequest(webView, request(PATTEX_SOURCE))
