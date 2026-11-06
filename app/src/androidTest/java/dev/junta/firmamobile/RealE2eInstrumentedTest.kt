@@ -1115,6 +1115,7 @@ class RealE2eInstrumentedTest {
     private fun hasObservedTerminalNavigationFailure(): Boolean =
         diagnosticRecords().any { record ->
             record.contains("event=NETWORK_ERROR") ||
+                record.contains("event=BLANK_DOCUMENT") ||
                 record.contains("event=SSL_ERROR_CANCELLED") ||
                 record.contains("event=NAVIGATION_BLOCKED")
         }
@@ -1526,7 +1527,9 @@ class RealE2eInstrumentedTest {
         result.clientCertRejected = result.clientCertRejected || records.any {
             it.contains("stage=client-cert-rejected-")
         }
-        result.networkError = result.networkError || records.any { it.contains("event=NETWORK_ERROR") }
+        result.networkError = result.networkError || records.any {
+            it.contains("event=NETWORK_ERROR") || it.contains("event=BLANK_DOCUMENT")
+        }
         result.sslError = result.sslError || records.any { it.contains("event=SSL_ERROR_CANCELLED") }
         result.navigationBlocked = result.navigationBlocked || records.any {
             it.contains("event=NAVIGATION_BLOCKED")
