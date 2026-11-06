@@ -669,30 +669,38 @@ class ClientAuthNavigationAuthorizerTest {
     @Test
     fun exactMugejuClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
         val mugeju = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
-        val authorized = mugeju.observeTopLevelNavigation(
-            MUGEJU_PROFILE, MUGEJU_SOURCE, MUGEJU_TARGET, 80, true,
+        // A plain navigation from Cl@ve no longer arms anything: the AFIRMA hop is a POST chain.
+        assertNull(mugeju.observeTopLevelNavigation(MUGEJU_PROFILE, MUGEJU_SERVICE_PROVIDER, MUGEJU_TARGET, 79, true))
+        assertNull(
+            mugeju.observeTopLevelResourceRequest(
+                MUGEJU_PROFILE, MUGEJU_SERVICE_PROVIDER, MUGEJU_SOURCE, "POST", 80, true,
+            ),
+        )
+        val authorized = mugeju.observeTopLevelResourceRequest(
+            MUGEJU_PROFILE, MUGEJU_SOURCE, MUGEJU_TARGET, "POST", 81, true,
         )
 
         assertEquals(MUGEJU_PROFILE, authorized?.profileId)
         assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
         assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
         assertNull(authorized?.target?.rawQuery)
-        assertNull(
-            mugeju.observeTopLevelNavigation(MUGEJU_PROFILE, MUGEJU_SOURCE, MUGEJU_TARGET, 80, true),
-        )
 
         listOf(
-            MUGEJU_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
-            "$MUGEJU_TARGET?extra=1",
-            MUGEJU_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
-            MUGEJU_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
-        ).forEachIndexed { index, invalidTarget ->
+            Triple(MUGEJU_SOURCE, MUGEJU_TARGET, "GET"),
+            Triple(MUGEJU_SOURCE, MUGEJU_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"), "POST"),
+            Triple(MUGEJU_SOURCE, "$MUGEJU_TARGET?extra=1", "POST"),
+            Triple(
+                MUGEJU_SOURCE,
+                MUGEJU_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
+                "POST",
+            ),
+            Triple(MUGEJU_SOURCE, MUGEJU_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"), "POST"),
+            Triple("https://evil.example/Proxy2/ServiceRedirect", MUGEJU_TARGET, "POST"),
+        ).forEachIndexed { index, (current, target, method) ->
             val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
             assertNull(
-                invalidTarget,
-                fresh.observeTopLevelNavigation(
-                    MUGEJU_PROFILE, MUGEJU_SOURCE, invalidTarget, 81L + index, true,
-                ),
+                "$current -> $target $method",
+                fresh.observeTopLevelResourceRequest(MUGEJU_PROFILE, current, target, method, 90L + index, true),
             )
         }
     }
@@ -1717,7 +1725,8 @@ class ClientAuthNavigationAuthorizerTest {
         const val CATALUNYA_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val CATALUNYA_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val MUGEJU_PROFILE = ProfileId("mugeju-remision-documentacion-client-auth")
-        const val MUGEJU_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val MUGEJU_SERVICE_PROVIDER = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val MUGEJU_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
         const val MUGEJU_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
         val MALLORCA_PROFILE = ProfileId("consell-mallorca-sede")

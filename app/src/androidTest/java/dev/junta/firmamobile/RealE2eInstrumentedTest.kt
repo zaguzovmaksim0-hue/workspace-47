@@ -322,6 +322,8 @@ class RealE2eInstrumentedTest {
                 )
             }
             MALAGA_PORTAL_ID -> runMalagaClaveCertificateRecipe(scenario)
+            // MUGEJU auto-posts its SAML request to Cl@ve; only the certificate IdP choice remains.
+            MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
             SEVILLA_PORTAL_ID -> clickExactContainedAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = SEVILLA_ENTRY_URL,
@@ -419,7 +421,7 @@ class RealE2eInstrumentedTest {
         scenario: ActivityScenario<MainActivity>,
     ) {
         clickMalagaClaveEntry(scenario)
-        clickMalagaClaveAfirmaProvider(scenario)
+        clickClaveAfirmaProvider(scenario)
     }
 
     private fun clickMalagaClaveEntry(
@@ -446,7 +448,7 @@ class RealE2eInstrumentedTest {
                 val currentUrl = webView.url
                 if (currentUrl != null && !recipeUrlMatches(currentUrl, MALAGA_ENTRY_URL)) {
                     if (recipeUrlMatches(currentUrl, MALAGA_LOCAL_CLAVE_URL) ||
-                        recipeUrlMatches(currentUrl, MALAGA_CLAVE_SERVICE_PROVIDER_URL)
+                        recipeUrlMatches(currentUrl, CLAVE_SERVICE_PROVIDER_URL)
                     ) {
                         clicked = true
                     } else {
@@ -490,14 +492,14 @@ class RealE2eInstrumentedTest {
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
-    private fun clickMalagaClaveAfirmaProvider(
+    private fun clickClaveAfirmaProvider(
         scenario: ActivityScenario<MainActivity>,
     ) {
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
-        val quotedServiceProvider = JSONObject.quote(MALAGA_CLAVE_SERVICE_PROVIDER_URL)
-        val quotedServiceRedirect = JSONObject.quote(MALAGA_CLAVE_SERVICE_REDIRECT_URL)
-        val quotedAfirmaOnClick = JSONObject.quote(MALAGA_AFIRMA_ONCLICK)
-        val quotedAfirmaImage = JSONObject.quote(MALAGA_AFIRMA_IMAGE_SRC)
+        val quotedServiceProvider = JSONObject.quote(CLAVE_SERVICE_PROVIDER_URL)
+        val quotedServiceRedirect = JSONObject.quote(CLAVE_SERVICE_REDIRECT_URL)
+        val quotedAfirmaOnClick = JSONObject.quote(CLAVE_AFIRMA_ONCLICK)
+        val quotedAfirmaImage = JSONObject.quote(CLAVE_AFIRMA_IMAGE_SRC)
         while (SystemClock.elapsedRealtime() < deadline) {
             if (hasObservedTerminalNavigationFailure()) return
             val inspected = CountDownLatch(1)
@@ -514,7 +516,7 @@ class RealE2eInstrumentedTest {
                     return@onActivity
                 }
                 val currentUrl = webView.url
-                if (currentUrl == null || !recipeUrlMatches(currentUrl, MALAGA_CLAVE_SERVICE_PROVIDER_URL)) {
+                if (currentUrl == null || !recipeUrlMatches(currentUrl, CLAVE_SERVICE_PROVIDER_URL)) {
                     waitingForExpectedUrl = true
                     inspected.countDown()
                     return@onActivity
@@ -2131,17 +2133,18 @@ class RealE2eInstrumentedTest {
         const val LLEIDA_CERT_BUTTON_ONCLICK = "javascript: pulsarLoginValid();"
         const val DIPUTACION_SEVILLA_PORTAL_ID = "diputacion-sevilla-sede"
         const val MALAGA_PORTAL_ID = "diputacion-malaga-sede"
+        const val MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"
         const val MALAGA_ENTRY_URL =
             "https://sede.malaga.es/instancia-general/nueva-instancia-general/"
         const val MALAGA_LOCAL_CLAVE_URL = "https://clave.malaga.es/clave.php"
         const val MALAGA_CLAVE_SUBMIT_VALUE = "Acceder con cl@ve"
-        const val MALAGA_CLAVE_SERVICE_PROVIDER_URL =
+        const val CLAVE_SERVICE_PROVIDER_URL =
             "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
-        const val MALAGA_CLAVE_SERVICE_REDIRECT_URL =
+        const val CLAVE_SERVICE_REDIRECT_URL =
             "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
-        const val MALAGA_AFIRMA_ONCLICK =
+        const val CLAVE_AFIRMA_ONCLICK =
             "JAVASCRIPT:selectedIdP('AFIRMA');idpRedirect.submit();"
-        const val MALAGA_AFIRMA_IMAGE_SRC = "ImageRetrieve?id=IDP_AFIRMA"
+        const val CLAVE_AFIRMA_IMAGE_SRC = "ImageRetrieve?id=IDP_AFIRMA"
         const val DIPUTACION_SEVILLA_INDEX_URL =
             "https://sedeelectronicadipusevilla.es/opencms/system/modules/sede/elements/secciones/index"
         const val DIPUTACION_SEVILLA_AUTH_URL =

@@ -343,8 +343,9 @@ object SiteProfileCatalogParser {
             ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE -> {
                 require(requestPort == HTTPS_PORT)
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
+                // Reviewed Cl@ve AFIRMA hop: ServiceRedirect auto-POSTs to AuthenticateCitizen without parameters.
                 val reviewedUnparameterizedPostSource =
-                    profileId.value == MALAGA_PROFILE_ID &&
+                    profileId.value in setOf(MALAGA_PROFILE_ID, MUGEJU_PROFILE_ID) &&
                         requestMethod == HttpMethod.POST &&
                         requestPort == HTTPS_PORT &&
                         requestOrigins == setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)) &&
@@ -2002,10 +2003,11 @@ object SiteProfileCatalogParser {
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(
             profile.clientAuthPolicy == ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(MUGEJU_CLIENT_AUTH_ORIGIN)),
                 sourceUrls = setOf(URI(MUGEJU_CLIENT_AUTH_SOURCE_URL)),
                 requestPath = MUGEJU_CLIENT_AUTH_REQUEST_PATH,
+                requestMethod = HttpMethod.POST,
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
@@ -3753,19 +3755,21 @@ object SiteProfileCatalogParser {
     private const val MADRID_CUENTA_DIGITAL_PROFILE_ID = "comunidad-madrid-cuenta-digital-53f1"
     private const val MADRID_GESTIONA_ORIGIN = "https://gestiona.comunidad.madrid"
     private const val MUGEJU_PROFILE_ID = "mugeju-remision-documentacion-client-auth"
-    private const val MUGEJU_PROFILE_VERSION = 1
+    private const val MUGEJU_PROFILE_VERSION = 2
     private const val MUGEJU_DISPLAY_NAME = "MUGEJU — Remisión de documentación con certificado"
     private const val MUGEJU_START_URL = "https://sedemugeju.gob.es/remisiondocumentacion"
     private const val MUGEJU_ORIGIN = "https://sedemugeju.gob.es"
     private const val MUGEJU_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
     private const val MUGEJU_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
-    private const val MUGEJU_CLIENT_AUTH_SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private const val MUGEJU_CLAVE_SERVICE_PROVIDER_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private const val MUGEJU_CLIENT_AUTH_SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
     private const val MUGEJU_CLIENT_AUTH_REQUEST_PATH = "/IdP2/AuthenticateCitizen"
     private val MUGEJU_EVIDENCE_REVIEWS = mapOf(
         MUGEJU_START_URL to LocalDate.parse("2026-08-19"),
         "https://sedemugeju.gob.es/mutualnet3/clave/ControladorClaveCiudadanoServlet?operation=REM" to
             LocalDate.parse("2026-08-19"),
-        MUGEJU_CLIENT_AUTH_SOURCE_URL to LocalDate.parse("2026-08-18"),
+        MUGEJU_CLAVE_SERVICE_PROVIDER_URL to LocalDate.parse("2026-08-18"),
+        MUGEJU_CLIENT_AUTH_SOURCE_URL to LocalDate.parse("2026-11-06"),
         "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen" to LocalDate.parse("2026-08-18"),
     )
     private const val EDUCATION_PROFILE_ID = "educacion-convocatoria"
