@@ -186,7 +186,7 @@ class HuescaBatchProtocolAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("huesca-batch-autoscript-v1")
         private const val PROFILE_ID = "diputacion-huesca-portal"
-        private const val PROFILE_VERSION = 1
+        private const val PROFILE_VERSION = 2
     }
 }
 
@@ -220,7 +220,7 @@ class BurgosBatchProtocolAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("burgos-batch-autoscript-v1")
         private const val PROFILE_ID = "diputacion-burgos-portal"
-        private const val PROFILE_VERSION = 1
+        private const val PROFILE_VERSION = 2
     }
 }
 

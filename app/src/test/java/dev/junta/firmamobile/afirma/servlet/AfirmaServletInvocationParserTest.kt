@@ -258,6 +258,24 @@ class AfirmaServletInvocationParserTest {
         unsupported(sign(mapOf("properties" to b64("filter=nonexpired:true;ssl:true"))))
     }
 
+    @Test fun miniAppletPageWithoutServletsStaysIncompleteAndItsKeyUsageFilterStaysUnsupported() {
+        // Synthetic MiniApplet 1.5 shape after setServlets(null, null): the page sends no stservlet,
+        // so there is nowhere to return a signature. Its key-usage filter is also not implemented.
+        val properties = b64(
+            "filters=keyusage.digitalsignature:true;nonexpired:\n" +
+                "serverUrl=https://triphase.synthetic.example/TriPhaseSignatureService",
+        )
+        val miniApplet = linkedMapOf(
+            "op" to "sign", "id" to "Session123", "key" to "12345678", "format" to "CAdES",
+            "algorithm" to "SHA1withRSA", "properties" to properties, "dat" to b64("payload"),
+        )
+        assertEquals(AfirmaServletParseResult.Invalid("missing_storage_url"),
+            AfirmaServletInvocationParser.parse(uri("sign", miniApplet), "https://sede.synthetic.example/firma"))
+        val withStorage = miniApplet + ("stservlet" to "https://storage.example/StorageService")
+        assertEquals(AfirmaServletParseResult.Unsupported("certificate_filter_not_implemented"),
+            AfirmaServletInvocationParser.parse(uri("sign", withStorage), "https://sede.synthetic.example/firma"))
+    }
+
     private fun cipherConfig(keySize: Int, ivSize: Int): String {
         val key = Base64.getEncoder().encodeToString(ByteArray(keySize))
         val iv = Base64.getEncoder().encodeToString(ByteArray(ivSize))

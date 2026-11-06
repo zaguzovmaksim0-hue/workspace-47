@@ -5,15 +5,6 @@ El material propio del proyecto se distribuye bajo Apache License, Version 2.0.
 El texto completo se encuentra en LICENSE. Este aviso no modifica sus términos
 ni sustituye las licencias de componentes de terceros.
 
-Bebas Neue
------------
-Fuente incluida: app/src/main/res/font/bebas_neue_regular.ttf
-Copyright (c) 2010 Dharma Type (aviso del archivo OFL del proveedor)
-Copyright 2019 The Bebas Neue Project Authors
-(https://github.com/dharmatype/Bebas-Neue; metadatos de la fuente incluida)
-Licencia: SIL Open Font License, Version 1.1
-Texto completo: docs/licenses/BebasNeue-OFL.txt
-
 Gradle Wrapper
 --------------
 El repositorio incluye Gradle Wrapper para Gradle 9.4.1. Sus archivos conservan

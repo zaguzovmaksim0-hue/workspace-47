@@ -1,11 +1,11 @@
 package dev.junta.firmamobile.catalog
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -30,17 +32,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -54,35 +55,41 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
-import dev.junta.firmamobile.ui.JuntaElevatedPanel
+import dev.junta.firmamobile.ui.FirmaCompactKey
+import dev.junta.firmamobile.ui.FirmaKeyStyle
+import dev.junta.firmamobile.ui.JuntaBackdrop
 import dev.junta.firmamobile.ui.JuntaFieldShape
+import dev.junta.firmamobile.ui.JuntaIconBubble
+import dev.junta.firmamobile.ui.JuntaMonogram
+import dev.junta.firmamobile.ui.JuntaPanelShape
 import dev.junta.firmamobile.ui.JuntaPrimaryButton
-import dev.junta.firmamobile.ui.theme.JuntaHairline
+import dev.junta.firmamobile.ui.JuntaTone
+import dev.junta.firmamobile.ui.firmaBodyRecess
+import dev.junta.firmamobile.ui.theme.Firma
 import dev.junta.firmamobile.ui.theme.JuntaInk
 import dev.junta.firmamobile.ui.theme.JuntaMutedInk
 import dev.junta.firmamobile.ui.theme.JuntaPaper
 import dev.junta.firmamobile.ui.theme.JuntaPaperElevated
-import dev.junta.firmamobile.ui.theme.JuntaTeal
 import dev.junta.firmamobile.ui.theme.JuntaTealDark
 
 @Suppress("LongParameterList", "FunctionNaming")
@@ -237,30 +244,26 @@ private fun RegionPickerContent(
             .padding(bottom = 18.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            text = stringResource(R.string.catalog_choose_region),
-            color = JuntaInk,
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.semantics { heading() },
-        )
-        OutlinedButton(
-            onClick = onUseLocation,
-            enabled = !locationLoading,
-            shape = JuntaFieldShape,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_ui_location),
-                contentDescription = null,
-                modifier = Modifier.size(20.dp).padding(end = 2.dp),
-            )
+            JuntaIconBubble(iconRes = R.drawable.ic_ui_location, tone = JuntaTone.CORAL, size = 40.dp, iconSize = 20.dp)
             Text(
-                stringResource(
-                    if (locationLoading) R.string.catalog_locating else R.string.catalog_use_location,
-                ),
-                modifier = Modifier.padding(start = 8.dp),
+                text = stringResource(R.string.catalog_choose_region),
+                color = JuntaInk,
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.semantics { heading() },
             )
         }
+        JuntaPrimaryButton(
+            text = stringResource(
+                if (locationLoading) R.string.catalog_locating else R.string.catalog_use_location,
+            ),
+            onClick = onUseLocation,
+            enabled = !locationLoading,
+            iconRes = R.drawable.ic_ui_location,
+        )
         RegionPickerOptions(selectedRegion, onSelect)
     }
 }
@@ -293,14 +296,16 @@ private fun RegionPickerOption(name: String, selected: Boolean, onClick: () -> U
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 52.dp)
+            .heightIn(min = 56.dp)
             .clip(JuntaFieldShape)
             .background(if (selected) MaterialTheme.colorScheme.primaryContainer else JuntaPaperElevated)
             .semantics { this.selected = selected }
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        JuntaMonogram(name = name, size = 36.dp)
         Text(
             text = name,
             color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else JuntaInk,
@@ -312,8 +317,8 @@ private fun RegionPickerOption(name: String, selected: Boolean, onClick: () -> U
             Icon(
                 painter = painterResource(R.drawable.ic_ui_check_circle),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(22.dp),
             )
         }
     }
@@ -420,7 +425,7 @@ private fun locationDialogDismissButton(
 
 private val CatalogShape = RoundedCornerShape(16.dp)
 
-private const val EXPANDED_CHEVRON_DEGREES = 180f
+private val SearchShape = RoundedCornerShape(18.dp)
 
 @Composable
 private fun PortalCatalogSection.localizedTitle(): String = when (kind) {
@@ -516,8 +521,7 @@ private fun CatalogScreenContent(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().safeDrawingPadding().imePadding().testTag("catalog-list"),
-        contentPadding = PaddingValues(start = 18.dp, top = 16.dp, end = 18.dp, bottom = 88.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(start = 20.dp, top = 14.dp, end = 20.dp, bottom = 88.dp),
     ) {
         CatalogTopItems(
             state = state,
@@ -652,7 +656,16 @@ private fun LazyListScope.CatalogTopItems(
     onChangeRegion: () -> Unit,
 ) {
     item(key = "catalog-header", contentType = "catalog-header") {
-        CatalogHeader(onBackToCertificate = onBackToCertificate)
+        val sections = state.sections
+        val serviceCount = remember(sections) {
+            sections.flatMapTo(HashSet()) { section -> section.items.map { it.portalId } }.size
+        }
+        CatalogHero(
+            regionName = state.selectedRegion.localizedName(),
+            serviceCount = serviceCount.takeUnless { state.catalogLoading },
+            onBack = onBackToCertificate,
+            onChangeRegion = onChangeRegion,
+        )
     }
     item(key = "catalog-search", contentType = "catalog-search") {
         CatalogSearchAddressField(
@@ -664,12 +677,7 @@ private fun LazyListScope.CatalogTopItems(
                 suppressAddressOpening = suppressAddressOpening,
                 onHideKeyboard = onHideKeyboard,
             ),
-        )
-    }
-    item(key = "catalog-region", contentType = "catalog-region") {
-        RegionSelectorCard(
-            selectedRegion = state.selectedRegion,
-            onChangeRegion = onChangeRegion,
+            modifier = Modifier.padding(top = 14.dp),
         )
     }
 }
@@ -700,20 +708,17 @@ private fun LazyListScope.CatalogResults(
 @Suppress("FunctionNaming")
 private fun LazyListScope.CatalogLoadingItem() {
     item(key = "catalog-loading", contentType = "notice") {
-        Text(
-            stringResource(R.string.catalog_loading),
-            color = JuntaMutedInk,
-            modifier = Modifier.testTag("catalog-loading"),
-        )
+        CatalogLoadingNotice(modifier = Modifier.padding(top = 22.dp))
     }
 }
 
 @Suppress("FunctionNaming")
 private fun LazyListScope.CatalogEmptyItem() {
     item(key = "catalog-empty", contentType = "catalog-empty") {
-        CatalogNotice(
+        CatalogEmptyNotice(
             title = stringResource(R.string.catalog_empty_title),
             text = stringResource(R.string.catalog_empty_copy),
+            modifier = Modifier.padding(top = 22.dp),
         )
     }
 }
@@ -721,19 +726,7 @@ private fun LazyListScope.CatalogEmptyItem() {
 @Suppress("FunctionNaming")
 private fun LazyListScope.CatalogFooterCopyItem() {
     item(key = "catalog-footer-copy", contentType = "notice") {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                stringResource(R.string.catalog_universal_afirma_copy),
-                style = MaterialTheme.typography.bodySmall,
-                color = JuntaMutedInk,
-                modifier = Modifier.fillMaxWidth().testTag("catalog-universal-afirma"),
-            )
-            Text(
-                stringResource(R.string.catalog_options_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = JuntaMutedInk,
-            )
-        }
+        CatalogFooterTips(modifier = Modifier.padding(top = 22.dp))
     }
 }
 
@@ -776,6 +769,7 @@ private fun LazyListScope.CatalogSection(
     item(key = "section-$sectionKey", contentType = "section-header") {
         CatalogSectionHeader(
             section = section,
+            title = section.localizedTitle(),
             expanded = expanded,
             onToggle = if (collapsible) {
                 { actions.onToggleSection(sectionKey) }
@@ -858,6 +852,7 @@ private fun CatalogAddressFieldActions.emitSearchOrAddressTransition(
 private fun CatalogSearchAddressField(
     addressInput: CatalogAddressInput,
     actions: CatalogAddressFieldActions,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val canOpenAddress = actions.onOpenPublicWeb != null
@@ -878,7 +873,10 @@ private fun CatalogSearchAddressField(
         actions.emitSearchOrAddressTransition(addressInput, next)
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         CatalogSearchTextField(
             addressInput = addressInput,
             canOpenAddress = canOpenAddress,
@@ -921,7 +919,7 @@ private fun looksLikeCatalogAddress(text: String): Boolean {
         (!value.contains("://") && value.contains('.') && !value.contains(' '))
 }
 
-@Suppress("LongParameterList", "FunctionNaming")
+@Suppress("LongParameterList", "FunctionNaming", "LongMethod")
 @Composable
 private fun CatalogSearchTextField(
     addressInput: CatalogAddressInput,
@@ -933,32 +931,37 @@ private fun CatalogSearchTextField(
     onHideKeyboard: () -> Unit,
 ) {
     val isAddress = addressInput.destination != null || looksLikeCatalogAddress(addressInput.text)
-    OutlinedTextField(
+    val isError = addressInput.error != null
+    val errorMessage = addressInput.error?.let { stringResource(it.messageRes) }
+    val interaction = remember { MutableInteractionSource() }
+    val colors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = JuntaInk,
+        unfocusedTextColor = JuntaInk,
+        errorTextColor = JuntaInk,
+        focusedContainerColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        errorContainerColor = Color.Transparent,
+        cursorColor = Firma.accent,
+        errorCursorColor = MaterialTheme.colorScheme.error,
+        focusedBorderColor = Firma.accent,
+        unfocusedBorderColor = Color.Transparent,
+        errorBorderColor = MaterialTheme.colorScheme.error,
+        focusedLeadingIconColor = JuntaMutedInk,
+        unfocusedLeadingIconColor = JuntaMutedInk,
+        errorLeadingIconColor = MaterialTheme.colorScheme.error,
+        focusedPlaceholderColor = JuntaMutedInk,
+        unfocusedPlaceholderColor = JuntaMutedInk,
+        errorPlaceholderColor = JuntaMutedInk,
+    )
+    BasicTextField(
         value = addressInput.text,
         onValueChange = onSearchTextChange,
-        placeholder = {
-            Text(
-                stringResource(R.string.catalog_search_or_address),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        singleLine = true,
-        isError = addressInput.error != null,
-        shape = JuntaFieldShape,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = JuntaPaperElevated,
-            unfocusedContainerColor = JuntaPaperElevated,
-            focusedBorderColor = JuntaTeal,
-            unfocusedBorderColor = JuntaHairline,
-        ),
-        leadingIcon = {
-            Icon(
-                painter = painterResource(R.drawable.ic_ui_search),
-                contentDescription = null,
-                tint = JuntaMutedInk,
-            )
-        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { if (errorMessage != null) error(errorMessage) }
+            .testTag("public-web-address"),
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = JuntaInk),
+        cursorBrush = SolidColor(if (isError) MaterialTheme.colorScheme.error else Firma.accent),
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.None,
             autoCorrectEnabled = false,
@@ -969,12 +972,53 @@ private fun CatalogSearchTextField(
             onGo = { onOpenAddress() },
             onDone = { onHideKeyboard() },
         ),
-        modifier = Modifier.fillMaxWidth().testTag("public-web-address"),
-        trailingIcon = { CatalogSearchFieldActions(addressInput.text, addressInput.error, onPaste, onClear) },
-        supportingText = { CatalogAddressErrorText(addressInput.error) },
+        singleLine = true,
+        interactionSource = interaction,
+        decorationBox = { innerTextField ->
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = addressInput.text,
+                innerTextField = innerTextField,
+                enabled = true,
+                singleLine = true,
+                visualTransformation = VisualTransformation.None,
+                interactionSource = interaction,
+                isError = isError,
+                placeholder = {
+                    Text(
+                        stringResource(R.string.catalog_search_or_address),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_ui_search),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                },
+                trailingIcon = { CatalogSearchFieldActions(addressInput.text, addressInput.error, onPaste, onClear) },
+                supportingText = addressInput.error?.let { error -> { CatalogAddressErrorText(error) } },
+                colors = colors,
+                contentPadding = OutlinedTextFieldDefaults.contentPadding(top = 13.dp, bottom = 13.dp),
+                container = {
+                    Box(modifier = Modifier.fillMaxSize().firmaBodyRecess(SearchShape, depth = 3.dp))
+                    OutlinedTextFieldDefaults.Container(
+                        enabled = true,
+                        isError = isError,
+                        interactionSource = interaction,
+                        colors = colors,
+                        shape = SearchShape,
+                        focusedBorderThickness = 2.dp,
+                        unfocusedBorderThickness = 1.dp,
+                    )
+                },
+            )
+        },
     )
 }
 
+/** Paste is a small graphite key inside the recess; once there is text it gives way to clear. */
 @Suppress("FunctionNaming")
 @Composable
 private fun CatalogSearchFieldActions(
@@ -983,13 +1027,25 @@ private fun CatalogSearchFieldActions(
     onPaste: () -> Unit,
     onClear: () -> Unit,
 ) {
-    Row {
+    Row(
+        modifier = Modifier.padding(end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         if (searchText.isEmpty()) {
-            TextButton(
+            FirmaCompactKey(
                 onClick = onPaste,
-                modifier = Modifier.heightIn(min = 48.dp).testTag("catalog-address-paste"),
+                style = FirmaKeyStyle.GRAPHITE,
+                shape = CircleShape,
+                faceModifier = Modifier.heightIn(min = 34.dp),
+                modifier = Modifier.testTag("catalog-address-paste"),
             ) {
-                Text(stringResource(R.string.catalog_address_paste), style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = stringResource(R.string.catalog_address_paste),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                    color = Firma.keyGraphiteInk,
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                )
             }
         }
         if (searchText.isNotEmpty() || error != null) {
@@ -1007,19 +1063,21 @@ private fun CatalogSearchFieldActions(
     }
 }
 
+@get:StringRes
+private val CatalogAddressInput.Error.messageRes: Int
+    get() = when (this) {
+        CatalogAddressInput.Error.EMPTY -> R.string.catalog_address_required
+        CatalogAddressInput.Error.INVALID -> R.string.catalog_address_invalid
+        CatalogAddressInput.Error.TOO_LONG -> R.string.catalog_address_too_long
+        CatalogAddressInput.Error.CLIPBOARD_EMPTY -> R.string.catalog_address_clipboard_empty
+    }
+
 @Suppress("FunctionNaming")
 @Composable
 private fun CatalogAddressErrorText(error: CatalogAddressInput.Error?) {
     if (error == null) return
     Text(
-        stringResource(
-            when (error) {
-                CatalogAddressInput.Error.EMPTY -> R.string.catalog_address_required
-                CatalogAddressInput.Error.INVALID -> R.string.catalog_address_invalid
-                CatalogAddressInput.Error.TOO_LONG -> R.string.catalog_address_too_long
-                CatalogAddressInput.Error.CLIPBOARD_EMPTY -> R.string.catalog_address_clipboard_empty
-            },
-        ),
+        stringResource(error.messageRes),
         modifier = Modifier.testTag("catalog-address-error"),
     )
 }
@@ -1027,12 +1085,7 @@ private fun CatalogAddressErrorText(error: CatalogAddressInput.Error?) {
 @Suppress("FunctionNaming")
 @Composable
 private fun CatalogBackgroundArt() {
-    Image(
-        painter = painterResource(R.drawable.jfm_home_background),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier.fillMaxSize().testTag("jfm-catalog-background"),
-    )
+    JuntaBackdrop(modifier = Modifier.fillMaxSize().testTag("jfm-catalog-background"))
 }
 
 @Suppress("FunctionNaming")
@@ -1042,153 +1095,8 @@ private fun CatalogOpenAddressButton(onClick: () -> Unit) {
         text = stringResource(R.string.catalog_open_site),
         onClick = onClick,
         modifier = Modifier.testTag("public-web-open-confirm"),
+        iconRes = R.drawable.ic_ui_open_in_new,
     )
-}
-
-@Suppress("FunctionNaming")
-@Composable
-private fun CatalogHeader(onBackToCertificate: () -> Unit) {
-    Column {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onBackToCertificate) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_ui_arrow_back),
-                    contentDescription = stringResource(R.string.catalog_back_to_certificate),
-                    tint = JuntaInk,
-                )
-            }
-            Text(
-                stringResource(R.string.catalog_title),
-                color = JuntaInk,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.weight(1f).semantics { heading() },
-            )
-        }
-        Text(
-            stringResource(R.string.catalog_subtitle),
-            color = JuntaMutedInk,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(start = 54.dp),
-        )
-    }
-}
-
-@Suppress("FunctionNaming")
-@Composable
-private fun RegionSelectorCard(selectedRegion: PortalRegionCode, onChangeRegion: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clip(CatalogShape)
-            .background(JuntaPaperElevated)
-            .border(1.dp, JuntaHairline, CatalogShape)
-            .clickable(role = Role.Button, onClick = onChangeRegion)
-            .testTag("catalog-region-selector")
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_ui_location),
-            contentDescription = null,
-            tint = JuntaTeal,
-            modifier = Modifier.size(22.dp),
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.catalog_my_region_label),
-                color = JuntaMutedInk,
-                style = MaterialTheme.typography.labelMedium,
-            )
-            Text(
-                text = selectedRegion.localizedName(),
-                color = JuntaInk,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Text(
-            text = stringResource(R.string.catalog_region_change),
-            color = JuntaTeal,
-            style = MaterialTheme.typography.labelLarge,
-        )
-    }
-}
-
-@Suppress("FunctionNaming")
-@Composable
-private fun CatalogSectionHeader(
-    section: PortalCatalogSection,
-    expanded: Boolean,
-    onToggle: (() -> Unit)?,
-) {
-    val expandedState = stringResource(R.string.catalog_section_expanded)
-    val collapsedState = stringResource(R.string.catalog_section_collapsed)
-    val headerModifier = if (onToggle == null) {
-        Modifier.fillMaxWidth().padding(start = 4.dp, top = 12.dp).semantics(mergeDescendants = true) { heading() }
-    } else {
-        Modifier.fillMaxWidth().heightIn(min = 64.dp).clip(CatalogShape)
-            .background(JuntaPaperElevated).border(1.dp, JuntaHairline, CatalogShape)
-            .semantics(mergeDescendants = true) {
-                heading()
-                stateDescription = if (expanded) expandedState else collapsedState
-            }.clickable(role = Role.Button, onClick = onToggle)
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-    }
-    Row(
-        modifier = headerModifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                section.localizedTitle(),
-                color = JuntaInk,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            val serviceCount = section.items.size
-            Text(
-                pluralStringResource(
-                    R.plurals.catalog_section_service_count,
-                    serviceCount,
-                    serviceCount,
-                ),
-                color = JuntaMutedInk,
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-        if (onToggle != null) {
-            Icon(
-                painter = painterResource(R.drawable.ic_ui_expand_more),
-                contentDescription = null,
-                tint = JuntaTeal,
-                modifier = Modifier
-                    .size(24.dp)
-                    .rotate(if (expanded) EXPANDED_CHEVRON_DEGREES else 0f),
-            )
-        }
-    }
-}
-
-@Suppress("FunctionNaming")
-@Composable
-private fun CatalogNotice(title: String, text: String) {
-    Column(
-        modifier = Modifier.fillMaxWidth().background(JuntaPaperElevated, CatalogShape)
-            .border(1.dp, JuntaHairline, CatalogShape).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text(title, color = JuntaInk, style = MaterialTheme.typography.titleMedium)
-        Text(text, color = JuntaMutedInk, style = MaterialTheme.typography.bodyMedium)
-    }
 }
 
 @Suppress("LongParameterList", "FunctionNaming")
@@ -1203,34 +1111,33 @@ private fun PortalOptionsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { JuntaMonogram(name = portal.organization, size = 48.dp) },
         title = { Text(portal.displayName, maxLines = 3, overflow = TextOverflow.Ellipsis) },
         text = {
-            Column {
-                TextButton(
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                PortalOptionRow(
+                    iconRes = if (isFavorite) R.drawable.ic_ui_star else R.drawable.ic_ui_star_outline,
+                    tone = JuntaTone.SAFFRON,
+                    text = stringResource(
+                        if (isFavorite) R.string.catalog_favorite_saved else R.string.catalog_favorite_add,
+                    ),
+                    modifier = Modifier.testTag("catalog-option-favorite"),
                     onClick = {
                         onDismiss()
                         onToggleFavorite(portal.portalId)
                     },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                        .testTag("catalog-option-favorite"),
-                ) {
-                    Text(
-                        stringResource(
-                            if (isFavorite) R.string.catalog_favorite_saved else R.string.catalog_favorite_add,
-                        ),
-                    )
-                }
+                )
                 if (canOpenCompatibilityPortal && onOpenCompatibilityPortal != null) {
-                    TextButton(
+                    PortalOptionRow(
+                        iconRes = R.drawable.ic_ui_shield,
+                        tone = JuntaTone.VIOLET,
+                        text = stringResource(R.string.catalog_open_profile_compatibility),
+                        modifier = Modifier.testTag("catalog-open-profile-${portal.portalId.value}"),
                         onClick = {
                             onDismiss()
                             onOpenCompatibilityPortal(portal)
                         },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                            .testTag("catalog-open-profile-${portal.portalId.value}"),
-                    ) {
-                        Text(stringResource(R.string.catalog_open_profile_compatibility))
-                    }
+                    )
                 }
             }
         },
@@ -1239,7 +1146,40 @@ private fun PortalOptionsDialog(
                 Text(stringResource(R.string.catalog_options_close))
             }
         },
-        shape = CatalogShape,
+        shape = JuntaPanelShape,
+        containerColor = JuntaPaperElevated,
         modifier = Modifier.testTag("catalog-site-options"),
     )
+}
+
+/** One option of the long-press menu: a colour tile and a label, the whole row is the target. */
+@Suppress("FunctionNaming")
+@Composable
+private fun PortalOptionRow(
+    @DrawableRes iconRes: Int,
+    tone: JuntaTone,
+    text: String,
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clip(JuntaFieldShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        JuntaIconBubble(iconRes = iconRes, tone = tone, size = 36.dp, iconSize = 18.dp)
+        Text(
+            text = text,
+            modifier = Modifier.weight(1f),
+            color = JuntaInk,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+        )
+    }
 }

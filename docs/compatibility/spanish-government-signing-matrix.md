@@ -470,7 +470,7 @@ firma. El endpoint `ws024` anterior es el único destino tri-phase actual.
   también Storage/Retrieve. La existencia de ramas `coSign` y `counterSign` en
   el integration JS no prueba que esta entrada las use.
 - **Signing endpoints exactos:**
-  `https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService`,
+  `https://tramita.unizar.es/afirma-server-triphase-signer-2.9/SignatureService`,
   `https://tramita.unizar.es/afirma-signature-storage/StorageService` y
   `https://tramita.unizar.es/afirma-signature-retriever/RetrieveService`.
 - **Formato / algoritmo:** los campos públicos de la entrada observada fijan
