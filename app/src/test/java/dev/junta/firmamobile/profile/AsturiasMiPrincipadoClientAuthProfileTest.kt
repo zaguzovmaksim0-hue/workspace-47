@@ -37,7 +37,8 @@ class AsturiasMiPrincipadoClientAuthProfileTest {
         "https://miprincipado.asturias.es/-/dboid-6269000102616541907573" +
             "?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
     )
-    private val claveSource = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private val claveServiceProvider = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private val claveSource = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
     private val claveTarget = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
 
     @Test
@@ -45,7 +46,7 @@ class AsturiasMiPrincipadoClientAuthProfileTest {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Principado de Asturias — MiPrincipado / Solicitud Genérica", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -64,7 +65,8 @@ class AsturiasMiPrincipadoClientAuthProfileTest {
         assertTrue(profile.operationPolicies.isEmpty())
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
 
-        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
+        assertEquals(HttpMethod.POST, policy.requestMethod)
         assertEquals(setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")), policy.requestOrigins)
         assertEquals(setOf(URI(claveSource)), policy.sourceUrls)
         assertTrue(policy.sourceFixedQueryParameters.isEmpty())
@@ -79,7 +81,11 @@ class AsturiasMiPrincipadoClientAuthProfileTest {
         assertEquals(443, policy.requestPort)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-19" })
+        assertEquals(
+            setOf("2026-11-06"),
+            profile.evidence.filter { it.url == URI(claveSource) }.map { it.reviewedOn.toString() }.toSet(),
+        )
+        assertTrue(profile.evidence.filter { it.url != URI(claveSource) }.all { it.reviewedOn.toString() == "2026-08-19" })
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
@@ -109,6 +115,7 @@ class AsturiasMiPrincipadoClientAuthProfileTest {
         listOf(
             "https://tramita.asturias.es/sta/Relec/STARhssoManager",
             "https://rhsso.asturias.es/auth/realms/princast-asturias/protocol/openid-connect/auth",
+            claveServiceProvider,
             claveSource,
         ).forEach { url ->
             val state = controller.navigate(url)
@@ -117,11 +124,18 @@ class AsturiasMiPrincipadoClientAuthProfileTest {
         }
 
         val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry) { 1_000_000_000L }
-        val authorized = authorizer.observeTopLevelNavigation(
+        // Cl@ve's AFIRMA hop is a POST chain: ServiceProvider -> ServiceRedirect -> AuthenticateCitizen.
+        assertNull(
+            authorizer.observeTopLevelResourceRequest(
+                profileId, claveServiceProvider, claveSource, "POST", controller.current().epoch, true,
+            ),
+        )
+        val authorized = authorizer.observeTopLevelResourceRequest(
             profileId,
             claveSource,
             claveTarget,
-            controller.current().epoch,
+            "POST",
+            controller.current().epoch + 1,
             true,
         )
         assertNotNull(authorized)
@@ -136,7 +150,7 @@ class AsturiasMiPrincipadoClientAuthProfileTest {
             val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry) { 2_000_000_000L + index }
             assertNull(
                 invalidTarget,
-                fresh.observeTopLevelNavigation(profileId, claveSource, invalidTarget, 20L + index, true),
+                fresh.observeTopLevelResourceRequest(profileId, claveSource, invalidTarget, "POST", 20L + index, true),
             )
         }
 

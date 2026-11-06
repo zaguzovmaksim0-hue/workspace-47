@@ -320,6 +320,7 @@ class RealE2eInstrumentedTest {
                     expectedOnClick = DIPUTACION_SEVILLA_AUTH_BUTTON_ONCLICK,
                     waitForExpectedUrl = true,
                 )
+                clickClaveAfirmaProvider(scenario)
             }
             MALAGA_PORTAL_ID -> runMalagaClaveCertificateRecipe(scenario)
             // MUGEJU auto-posts its SAML request to Cl@ve; only the certificate IdP choice remains.
@@ -533,9 +534,11 @@ class RealE2eInstrumentedTest {
                       const saml = form.querySelectorAll('input[type="hidden"][name="SAMLRequest"]');
                       const relay = form.querySelectorAll('input[type="hidden"][name="RelayState"]');
                       const selected = form.querySelectorAll('input[type="hidden"][name="SelectedIdP"]');
-                      if (saml.length !== 1 || relay.length !== 1 || selected.length !== 1 ||
+                      // Some Cl@ve service providers (Sevilla-dip, Tenerife) send no RelayState.
+                      if (saml.length !== 1 || relay.length > 1 || selected.length !== 1 ||
                           saml[0].value.length < 512 || saml[0].value.length > 32768 ||
-                          relay[0].value.length < 1 || relay[0].value.length > 512 ||
+                          (relay.length === 1 &&
+                            (relay[0].value.length < 1 || relay[0].value.length > 512)) ||
                           selected[0].value !== '') return 2;
                       if (typeof window.selectedIdP !== 'function') return 2;
                       const controls = Array.from(document.querySelectorAll('[onclick]')).filter(
