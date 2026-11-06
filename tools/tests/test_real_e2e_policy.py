@@ -1082,7 +1082,19 @@ class RealE2ePolicyTest(unittest.TestCase):
         secret = "Z9999999Z"
         log = "\n".join([
             "I/am_anr  (  590): [0,3420,dev.junta.firmamobile,0,Input dispatching timed out]",
-            "Drop box contents: 1 entries",
+            "Drop box contents: 3 entries",
+            "========================================",
+            "2026-11-06 15:00:01 data_app_anr (text, 9000 bytes)",
+            "Process: com.example.unrelated",
+            '"main" prio=5 tid=1 Native',
+            "  at com.example.Unrelated.stale(Unrelated.java:1)",
+            "",
+            "========================================",
+            "2026-11-06 15:30:01 data_app_anr (text, 9000 bytes)",
+            "Process: dev.junta.firmamobile",
+            '"main" prio=5 tid=1 Native',
+            "  at dev.junta.firmamobile.Old.previousRun(Old.kt:1)",
+            "",
             "========================================",
             "2026-11-06 16:02:01 data_app_anr (text, 9000 bytes)",
             "Process: dev.junta.firmamobile",
@@ -1104,6 +1116,8 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn(secret, described.stdout)
         self.assertNotIn("Input dispatching", described.stdout)
         self.assertNotIn("Other.secretWork", described.stdout)
+        self.assertNotIn("Unrelated.stale", described.stdout)
+        self.assertNotIn("Old.previousRun", described.stdout)
         self.assertIn("kind=anr process=dev.junta.firmamobile", described.stdout)
         self.assertIn(
             "kind=anr_frame frame=00 symbol=dev.junta.firmamobile.profile.SiteProfileCatalogParser.parse",

@@ -390,6 +390,9 @@ NATIVE_SIGNAL_RE = re.compile(
 )
 TOMBSTONE_NAME_RE = re.compile(r"pid: \d+, tid: \d+, name: (\S{1,40})\s+>>> (\S{1,80}) <<<")
 TOMBSTONE_FRAME_RE = re.compile(r"#(\d{2}) pc [0-9a-f]{4,16}\s+(\S{1,512})(.*)")
+APP_PROCESS = "dev.junta.firmamobile"
+ANR_ENTRY_RE = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} data_app_anr ")
+ANR_PROCESS_RE = re.compile(r"Process: (\S{1,80})\s*$")
 ANR_MAIN_THREAD_RE = re.compile(r'"main" prio=\d+ tid=\d+ ')
 ANR_FRAME_RE = re.compile(r"\s+at ((?:[A-Za-z_$][A-Za-z0-9_$]*\.){1,30}[A-Za-z_$<][A-Za-z0-9_$<>]{0,80})\(")
 FATAL_TOKEN_RE = re.compile(r"\[FATAL:([A-Za-z0-9_./-]{1,80}\(\d{1,6}\))\]")
@@ -549,20 +552,28 @@ def describe_guest_log(args: argparse.Namespace) -> None:
         java_thread = java_process = java_exception = None
         java_causes = []
 
-    anr_main_blocks = 0
-    anr_frames_left = 0
+    # dumpsys dropbox data_app_anr: entries are oldest first; keep only the newest app entry's
+    # main-thread code locations, never messages.
+    anr_entry_is_app = False
+    anr_entry_frames: list[str] = []
+    anr_app_frames: list[str] = []
+    in_main_thread = False
     for raw_line in text.splitlines():
         match = GUEST_LINE_RE.fullmatch(raw_line.rstrip("\r"))
         if match is None:
-            # dumpsys dropbox data_app_anr: keep only the main thread's code locations, never messages.
-            if ANR_MAIN_THREAD_RE.match(raw_line):
-                anr_main_blocks += 1
-                anr_frames_left = 12 if anr_main_blocks <= 2 else 0
-            elif anr_frames_left and (frame := ANR_FRAME_RE.match(raw_line)):
-                records.append(f"kind=anr_frame frame={12 - anr_frames_left:02d} symbol={frame.group(1)}")
-                anr_frames_left -= 1
+            if ANR_ENTRY_RE.match(raw_line):
+                anr_entry_is_app, anr_entry_frames, in_main_thread = False, [], False
+            elif process := ANR_PROCESS_RE.match(raw_line):
+                anr_entry_is_app = process.group(1) == APP_PROCESS
+                if anr_entry_is_app:
+                    anr_app_frames = anr_entry_frames
+            elif ANR_MAIN_THREAD_RE.match(raw_line):
+                in_main_thread = anr_entry_is_app and not anr_entry_frames
+            elif in_main_thread and (frame := ANR_FRAME_RE.match(raw_line)):
+                if len(anr_entry_frames) < 12:
+                    anr_entry_frames.append(frame.group(1))
             elif not raw_line.strip():
-                anr_frames_left = 0
+                in_main_thread = False
             continue
         tag = match.group(2).strip()
         message = match.group(3)
@@ -628,6 +639,7 @@ def describe_guest_log(args: argparse.Namespace) -> None:
         elif tag == "cr_AwBrowserTerminator" and "wasn't hand" in message:
             records.append("kind=webview_renderer_gone_unhandled")
     flush_java()
+    records.extend(f"kind=anr_frame frame={i:02d} symbol={symbol}" for i, symbol in enumerate(anr_app_frames))
 
     counts = Counter(records)
     ordered = list(dict.fromkeys(records))
