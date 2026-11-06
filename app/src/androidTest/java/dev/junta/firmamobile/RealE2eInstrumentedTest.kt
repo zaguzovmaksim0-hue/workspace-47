@@ -1230,7 +1230,7 @@ class RealE2eInstrumentedTest {
                     val preSignRecords = diagnosticRecords()
                     val signingEvidenceTracker = SigningEvidenceTracker(preSignRecords)
                     check(clickSigningConfirmation()) {
-                        "REAL_E2E_SIGN_CONFIRMATION_CLICK_TIMEOUT"
+                        signingConfirmationClickTimeoutCode()
                     }
                     result.signingConfirmed = true
                     val completedRecords = waitForSigningTerminalState(
@@ -1358,15 +1358,18 @@ class RealE2eInstrumentedTest {
         val exactDialogButton =
             exactSigningLabel and hasClickAction() and hasAnyAncestor(isDialog())
         val exactTextButton = exactSigningLabel and hasClickAction()
-        rule.waitUntil(timeoutMillis = 5_000) {
-            rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty() ||
-                rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = false)
+        // A missing or disabled button must still reach the snapshot below instead of a bare timeout.
+        runCatching {
+            rule.waitUntil(timeoutMillis = 5_000) {
+                rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = true)
                     .fetchSemanticsNodes().isNotEmpty() ||
-                rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = true)
-                    .fetchSemanticsNodes().isNotEmpty() ||
-                rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = false)
-                    .fetchSemanticsNodes().isNotEmpty()
+                    rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = false)
+                        .fetchSemanticsNodes().isNotEmpty() ||
+                    rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = true)
+                        .fetchSemanticsNodes().isNotEmpty() ||
+                    rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = false)
+                        .fetchSemanticsNodes().isNotEmpty()
+            }
         }
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
@@ -1389,6 +1392,20 @@ class RealE2eInstrumentedTest {
             SystemClock.sleep(POLL_MILLIS)
         }
         return false
+    }
+
+    // Sanitized UI snapshot for a failed confirmation click: how many exact "Firmar" buttons exist
+    // inside a dialog (D) or anywhere (T), and how many of those are enabled (E); counts only, no text.
+    private fun signingConfirmationClickTimeoutCode(): String {
+        val label = hasText("Firmar", substring = false, ignoreCase = false) or
+            hasAnyDescendant(hasText("Firmar", substring = false, ignoreCase = false))
+        fun count(matcher: SemanticsMatcher): Int = runCatching {
+            rule.onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().size
+        }.getOrDefault(-1)
+        val dialog = count(label and hasClickAction() and hasAnyAncestor(isDialog()))
+        val any = count(label and hasClickAction())
+        val enabled = count(label and hasClickAction() and isEnabled())
+        return SIGN_CONFIRM_CLICK_TIMEOUT_PREFIX + "D${dialog}_T${any}_E$enabled".replace("-", "X")
     }
 
     private fun performSigningConfirmationAction(
@@ -1670,6 +1687,10 @@ class RealE2eInstrumentedTest {
         "REAL_E2E_RECIPE_TARGET_TIMEOUT" -> "RECIPE_TARGET_TIMEOUT"
         "REAL_E2E_RECIPE_PAGE_READY_TIMEOUT" -> "RECIPE_PAGE_READY_TIMEOUT"
         else -> {
+            val message = throwable.message.orEmpty()
+            if (message.startsWith(SIGN_CONFIRM_CLICK_TIMEOUT_PREFIX)) {
+                message.removePrefix("REAL_E2E_").takeIf { SAFE_ERROR_TOKEN.matches(it) }?.let { return it }
+            }
             val type = throwable.javaClass.simpleName.takeIf { SAFE_ERROR_TOKEN.matches(it) }
                 ?: "UNKNOWN_ERROR"
             "${type}_${stage.name}"
@@ -2033,6 +2054,7 @@ class RealE2eInstrumentedTest {
         const val MAX_CLIENT_AUTH_CONFIRMATIONS = 8
         val PORTAL_ID_PATTERN = Regex("[a-z0-9][a-z0-9-]{0,95}")
         val SAFE_ERROR_TOKEN = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
+        const val SIGN_CONFIRM_CLICK_TIMEOUT_PREFIX = "REAL_E2E_SIGN_CONFIRM_CLICK_TIMEOUT_"
         val JS_IDENTIFIER = Regex("[A-Za-z_][A-Za-z0-9_]{0,63}")
         val SANITIZED_HOST = Regex("(?:^| )host=([a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?)(?: |$)")
         val SANITIZED_NAVIGATION_EVENT = Regex(
