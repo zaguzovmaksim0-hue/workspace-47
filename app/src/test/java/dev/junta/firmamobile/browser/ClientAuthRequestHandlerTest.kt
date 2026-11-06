@@ -547,9 +547,11 @@ class ClientAuthRequestHandlerTest {
         val PROFILE = ProfileId("carne-joven-andalucia")
         val AEAT_PROFILE = ProfileId("aeat-mis-datos-censales")
         const val AEAT_SOURCE =
-            "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+            "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html" +
+                "?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CPE"
         const val AEAT_TARGET =
-            "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+            "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+                "?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso"
         const val INDEX = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
         const val SOURCE =
             "https://ws104.juntadeandalucia.es/carneJoven/servlet/CallAuthenticationServlet"

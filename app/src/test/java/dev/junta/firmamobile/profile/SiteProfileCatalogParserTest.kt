@@ -836,10 +836,11 @@ class SiteProfileCatalogParserTest {
     @Test
     fun rejectsDirectFixedQueryOutsideThePinnedSanidadContract() {
         val aeatPathAndQuery =
-            "\"requestPath\":\"/wlpl/BUGC-JDIT/MdcAcceso\",\"fixedQueryParameters\":{}"
+            "\"requestPath\":\"/wlpl/OVCT-CXEW/DialogoRepresentacion\"," +
+                "\"fixedQueryParameters\":{\"ref\":\"/wlpl/BUGC-JDIT/MdcAcceso\"}"
         val expanded =
-            "\"requestPath\":\"/wlpl/BUGC-JDIT/MdcAcceso\"," +
-                "\"fixedQueryParameters\":{\"unexpected\":\"1\"}"
+            "\"requestPath\":\"/wlpl/OVCT-CXEW/DialogoRepresentacion\"," +
+                "\"fixedQueryParameters\":{\"ref\":\"/wlpl/BUGC-JDIT/MdcAcceso\",\"unexpected\":\"1\"}"
 
         assertTrue(BuiltInSiteProfiles.JSON.contains(aeatPathAndQuery))
         assertThrows(IllegalArgumentException::class.java) {
@@ -904,9 +905,17 @@ class SiteProfileCatalogParserTest {
             setOf(ExactOrigin.parse("https://www1.agenciatributaria.gob.es")),
             policy.requestOrigins,
         )
-        assertEquals(setOf(profile.startUrl), policy.sourceUrls)
-        assertEquals("/wlpl/BUGC-JDIT/MdcAcceso", policy.requestPath)
-        assertTrue(policy.fixedQueryParameters.isEmpty())
+        assertEquals(
+            setOf(
+                URI(
+                    "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/" +
+                        "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CPE",
+                ),
+            ),
+            policy.sourceUrls,
+        )
+        assertEquals("/wlpl/OVCT-CXEW/DialogoRepresentacion", policy.requestPath)
+        assertEquals(mapOf("ref" to "/wlpl/BUGC-JDIT/MdcAcceso"), policy.fixedQueryParameters)
         assertTrue(policy.requiredEphemeralQueryParameters.isEmpty())
         assertEquals(false, policy.allowEmptyIssuerList)
         assertEquals(15, policy.grantTtlSeconds)

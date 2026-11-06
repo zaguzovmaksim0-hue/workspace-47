@@ -74,7 +74,7 @@
     },
     {
       "profileId": "aeat-mis-datos-censales",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Agencia Tributaria — Mis datos censales",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -85,9 +85,9 @@
       "endpoints": [],
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode": "DIRECT_FROM_SOURCE","requestOrigins":["https://www1.agenciatributaria.gob.es"],"sourceUrls":["https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"],"requestPath":"/wlpl/BUGC-JDIT/MdcAcceso","fixedQueryParameters":{},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
+      "clientAuthPolicy": {"transitionMode": "DIRECT_FROM_SOURCE","requestOrigins":["https://www1.agenciatributaria.gob.es"],"sourceUrls":["https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CPE"],"requestPath":"/wlpl/OVCT-CXEW/DialogoRepresentacion","fixedQueryParameters":{"ref":"/wlpl/BUGC-JDIT/MdcAcceso"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
-      "evidence": [{"url":"https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html","reviewedOn":"2026-07-31"},{"url":"https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso","reviewedOn":"2026-07-31"}]
+      "evidence": [{"url":"https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html","reviewedOn":"2026-11-06"},{"url":"https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CPE","reviewedOn":"2026-11-06"},{"url":"https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso","reviewedOn":"2026-11-06"}]
     },
     {
       "profileId": "junta-ofvirtual",
