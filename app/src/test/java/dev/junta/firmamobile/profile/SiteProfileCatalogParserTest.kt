@@ -1046,7 +1046,7 @@ class SiteProfileCatalogParserTest {
         assertEquals(setOf(ExactOrigin.parse("https://sede.depourense.es")), profile.initiatorOrigins)
         assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
-        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
         assertEquals(
             setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
             policy.sourceUrls,

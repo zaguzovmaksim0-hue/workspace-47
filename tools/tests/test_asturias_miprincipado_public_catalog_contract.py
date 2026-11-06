@@ -17,7 +17,7 @@ START_URL = (
     "https://miprincipado.asturias.es/-/dboid-6269000102616541907573"
     "?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites"
 )
-SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
 TARGET_URL = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
 
 SPEC = importlib.util.spec_from_file_location("public_catalog_generator", GENERATOR_PATH)
@@ -65,7 +65,8 @@ class AsturiasMiPrincipadoPublicCatalogContractTest(unittest.TestCase):
         )
         self.assertEqual([], profile["trustedBrowseOrigins"])
         policy = profile["clientAuthPolicy"]
-        self.assertEqual("DIRECT_FROM_SOURCE", policy["transitionMode"])
+        self.assertEqual("IN_PLACE_FROM_SOURCE", policy["transitionMode"])
+        self.assertEqual("POST", policy["requestMethod"])
         self.assertEqual(["https://pasarela-ident.clave.gob.es"], policy["requestOrigins"])
         self.assertEqual([SOURCE_URL], policy["sourceUrls"])
         self.assertEqual("/IdP2/AuthenticateCitizen", policy["requestPath"])
@@ -81,7 +82,12 @@ class AsturiasMiPrincipadoPublicCatalogContractTest(unittest.TestCase):
         evidence_urls = {item["url"] for item in profile["evidence"]}
         self.assertIn(SOURCE_URL, evidence_urls)
         self.assertIn(TARGET_URL, evidence_urls)
-        self.assertTrue(all(item["reviewedOn"] == "2026-08-19" for item in profile["evidence"]))
+        self.assertTrue(
+            all(item["reviewedOn"] == "2026-08-19" for item in profile["evidence"] if item["url"] != SOURCE_URL)
+        )
+        self.assertEqual(
+            ["2026-11-06"], [item["reviewedOn"] for item in profile["evidence"] if item["url"] == SOURCE_URL]
+        )
 
 
 if __name__ == "__main__":

@@ -367,6 +367,8 @@ class RealE2ePolicyTest(unittest.TestCase):
 
     def test_diputacion_sevilla_recipe_reaches_the_reviewed_certificate_login(self) -> None:
         source = self.read(INSTRUMENTATION)
+        block = source.split('DIPUTACION_SEVILLA_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        self.assertTrue(block.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
         for expected in (
             'DIPUTACION_SEVILLA_PORTAL_ID = "diputacion-sevilla-sede"',
             'DIPUTACION_SEVILLA_INDEX_URL =',
@@ -380,6 +382,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             'expectedHref = DIPUTACION_SEVILLA_AUTH_HREF',
             'expectedOnClick = DIPUTACION_SEVILLA_AUTH_BUTTON_ONCLICK',
             'waitForExpectedUrl = true',
+            'clickClaveAfirmaProvider(scenario)',
         ):
             self.assertIn(expected, source)
 

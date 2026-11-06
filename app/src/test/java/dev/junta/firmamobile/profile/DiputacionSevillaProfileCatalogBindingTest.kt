@@ -36,7 +36,7 @@ class DiputacionSevillaProfileCatalogBindingTest {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Diputación de Sevilla — Sede electrónica", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -47,7 +47,8 @@ class DiputacionSevillaProfileCatalogBindingTest {
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
         assertTrue(profile.operationPolicies.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
-        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
+        assertEquals(HttpMethod.POST, policy.requestMethod)
         assertEquals(setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")), policy.requestOrigins)
         assertEquals(setOf(sourceUrl), policy.sourceUrls)
         assertEquals("/IdP2/AuthenticateCitizen", policy.requestPath)

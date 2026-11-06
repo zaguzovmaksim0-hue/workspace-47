@@ -344,8 +344,10 @@ object SiteProfileCatalogParser {
                 require(requestPort == HTTPS_PORT)
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
                 // Reviewed Cl@ve AFIRMA hop: ServiceRedirect auto-POSTs to AuthenticateCitizen without parameters.
+                val reviewedClavePostProfile = profileId.value in setOf(MALAGA_PROFILE_ID, MUGEJU_PROFILE_ID) ||
+                    profileId.value in CLAVE_DIRECT_PINS
                 val reviewedUnparameterizedPostSource =
-                    profileId.value in setOf(MALAGA_PROFILE_ID, MUGEJU_PROFILE_ID) &&
+                    reviewedClavePostProfile &&
                         requestMethod == HttpMethod.POST &&
                         requestPort == HTTPS_PORT &&
                         requestOrigins == setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)) &&
@@ -1121,7 +1123,7 @@ object SiteProfileCatalogParser {
     )
 
     private fun validateClaveDirectProfile(profile: SiteProfile, pin: ClaveDirectPin) {
-        require(profile.profileVersion == 1)
+        require(profile.profileVersion == CLAVE_DIRECT_PROFILE_VERSION)
         require(profile.displayName == pin.displayName)
         require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
         require(profile.activation == ProfileActivation.QA_ONLY)
@@ -1135,7 +1137,7 @@ object SiteProfileCatalogParser {
         require(profile.certificateRules == CertificateFilterRules(pin.keyAlgorithms, true))
         require(
             profile.clientAuthPolicy == ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(CLAVE_IDENT_ORIGIN)),
                 sourceUrls = setOf(URI(pin.sourceUrl)),
                 requestPath = CLAVE_AUTHENTICATE_PATH,
@@ -1146,7 +1148,7 @@ object SiteProfileCatalogParser {
                 requireOfferedKeyTypeMatch = true,
                 requireTlsClientAuthExtendedKeyUsage = true,
                 requestPort = HTTPS_PORT,
-                requestMethod = HttpMethod.GET,
+                requestMethod = HttpMethod.POST,
                 sourceFixedQueryParameters = emptyMap(),
                 sourceRequiredEphemeralQueryParameters = emptySet(),
                 linkedEphemeralQueryParameters = emptySet(),
@@ -3340,6 +3342,9 @@ object SiteProfileCatalogParser {
     private const val CLAVE_PROVIDER_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
     private const val CLAVE_REDIRECT_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
     private const val CLAVE_PASARELA_ORIGIN = "https://pasarela.clave.gob.es"
+    // v2: ServiceRedirect auto-POSTs to AuthenticateCitizen, so the grant is armed in place on that POST.
+    private const val CLAVE_DIRECT_PROFILE_VERSION = 2
+
     private val CLAVE_DIRECT_PINS = mapOf(
         ASTURIAS_PROFILE_ID to ClaveDirectPin(
             displayName = "Principado de Asturias — MiPrincipado / Solicitud Genérica",
@@ -3354,7 +3359,7 @@ object SiteProfileCatalogParser {
                 ),
                 trustedBrowse = emptySet(),
             ),
-            sourceUrl = CLAVE_PROVIDER_URL,
+            sourceUrl = CLAVE_REDIRECT_URL,
             keyAlgorithms = setOf("RSA"),
             evidence = claveEvidence(
                 "2026-08-19",
@@ -3363,7 +3368,7 @@ object SiteProfileCatalogParser {
                 "https://tramita.asturias.es/sta/Relec/STARhssoManager",
                 CLAVE_PROVIDER_URL,
                 CLAVE_IDENT_EVIDENCE_URL,
-            ),
+            ) + (CLAVE_REDIRECT_URL to "2026-11-06"),
         ),
         OURENSE_PROFILE_ID to ClaveDirectPin(
             displayName = "Deputación de Ourense — Solicitud de propósito general",

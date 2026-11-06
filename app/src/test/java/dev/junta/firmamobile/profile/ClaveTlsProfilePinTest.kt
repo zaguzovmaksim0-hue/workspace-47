@@ -21,6 +21,8 @@ class ClaveTlsProfilePinTest {
             TlsProfileMutation("$id allowEmptyIssuerList flip", id, """"allowEmptyIssuerList"\s*:\s*true""", """"allowEmptyIssuerList":false"""),
             TlsProfileMutation("$id requestPort 8443", id, """"requestPort"\s*:\s*443""", """"requestPort":8443"""),
             TlsProfileMutation("$id fixedQueryParameters", id, """"fixedQueryParameters"\s*:\s*\{\}""", """"fixedQueryParameters":{"a":"b"}"""),
+            TlsProfileMutation("$id transitionMode", id, """IN_PLACE_FROM_SOURCE""", "DIRECT_FROM_SOURCE"),
+            TlsProfileMutation("$id requestMethod", id, """("requestMethod"\s*:\s*)"POST"""", "$1\"GET\""),
             TlsProfileMutation("$id certificate rules", id, """"requireDigitalSignatureKeyUsage"\s*:\s*true""", """"requireDigitalSignatureKeyUsage":false"""),
         )
     }

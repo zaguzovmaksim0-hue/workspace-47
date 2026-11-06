@@ -1827,7 +1827,7 @@
     },
 {
       "profileId": "asturias-miprincipado",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Principado de Asturias — MiPrincipado / Solicitud Genérica",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -1843,21 +1843,23 @@
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
       "clientAuthPolicy": {
-        "transitionMode": "DIRECT_FROM_SOURCE",
+        "transitionMode": "IN_PLACE_FROM_SOURCE",
         "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
-        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceProvider"],
+        "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
         "requestPath": "/IdP2/AuthenticateCitizen",
         "fixedQueryParameters": {},
         "requiredEphemeralQueryParameters": [],
         "allowEmptyIssuerList": true,
         "grantTtlSeconds": 15,
-        "requestPort": 443
+        "requestPort": 443,
+        "requestMethod": "POST"
       },
       "certificateRules": {"allowedKeyAlgorithms":["RSA"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
         {"url":"https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites","reviewedOn":"2026-08-19"},
         {"url":"https://tramita.asturias.es/sta/Relec/STARhssoManager","reviewedOn":"2026-08-19"},
         {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceProvider","reviewedOn":"2026-08-19"},
+        {"url":"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect","reviewedOn":"2026-11-06"},
         {"url":"https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen","reviewedOn":"2026-08-19"}
       ]
     },
@@ -3130,7 +3132,7 @@
     },
     {
       "profileId": "diputacion-ourense-sede",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Deputación de Ourense — Solicitud de propósito general",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -3142,7 +3144,7 @@
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
       "clientAuthPolicy": {
-        "transitionMode": "DIRECT_FROM_SOURCE",
+        "transitionMode": "IN_PLACE_FROM_SOURCE",
         "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
         "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
         "requestPath": "/IdP2/AuthenticateCitizen",
@@ -3150,7 +3152,8 @@
         "requiredEphemeralQueryParameters": [],
         "allowEmptyIssuerList": true,
         "grantTtlSeconds": 15,
-        "requestPort": 443
+        "requestPort": 443,
+        "requestMethod": "POST"
       },
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
@@ -3162,7 +3165,7 @@
     },
     {
       "profileId": "diputacion-sevilla-sede",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Diputación de Sevilla — Sede electrónica",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -3174,7 +3177,7 @@
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
       "clientAuthPolicy": {
-        "transitionMode":"DIRECT_FROM_SOURCE",
+        "transitionMode":"IN_PLACE_FROM_SOURCE",
         "requestOrigins":["https://pasarela-ident.clave.gob.es"],
         "sourceUrls":["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
         "requestPath":"/IdP2/AuthenticateCitizen",
@@ -3182,7 +3185,8 @@
         "requiredEphemeralQueryParameters":[],
         "allowEmptyIssuerList":true,
         "grantTtlSeconds":15,
-        "requestPort":443
+        "requestPort":443,
+        "requestMethod":"POST"
       },
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
@@ -3195,7 +3199,7 @@
     },
     {
       "profileId": "diputacion-a-coruna-solicitud-general",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Deputación da Coruña — Solicitude Xeral",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -3207,7 +3211,7 @@
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
       "clientAuthPolicy": {
-        "transitionMode":"DIRECT_FROM_SOURCE",
+        "transitionMode":"IN_PLACE_FROM_SOURCE",
         "requestOrigins":["https://pasarela-ident.clave.gob.es"],
         "sourceUrls":["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
         "requestPath":"/IdP2/AuthenticateCitizen",
@@ -3215,7 +3219,8 @@
         "requiredEphemeralQueryParameters":[],
         "allowEmptyIssuerList":true,
         "grantTtlSeconds":15,
-        "requestPort":443
+        "requestPort":443,
+        "requestMethod":"POST"
       },
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
