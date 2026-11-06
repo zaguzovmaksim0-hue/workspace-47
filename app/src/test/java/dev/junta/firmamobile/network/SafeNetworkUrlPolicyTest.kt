@@ -57,7 +57,7 @@ class SafeNetworkUrlPolicyTest {
 
     @Test
     fun profilePolicyAllowsOnlyItsExactCanonicalEndpoints() {
-        val second = URI("https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService")
+        val second = URI("https://tramita.unizar.es/afirma-server-triphase-signer-2.9/SignatureService")
         val profilePolicy = SafeNetworkUrlPolicy(
             setOf(URI(SafeNetworkUrlPolicy.JUNTA_TRIPHASE_ENDPOINT), second),
         )
@@ -67,7 +67,7 @@ class SafeNetworkUrlPolicyTest {
             profilePolicy.validateRequest(URI("https://tramita.unizar.es/other")) is NetworkUrlValidation.Blocked,
         )
         assertTrue(
-            profilePolicy.validateRequest(URI("https://TRAMITA.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"))
+            profilePolicy.validateRequest(URI("https://TRAMITA.unizar.es/afirma-server-triphase-signer-2.9/SignatureService"))
                 is NetworkUrlValidation.Blocked,
         )
         assertThrows(IllegalArgumentException::class.java) {

@@ -101,8 +101,9 @@ internal class HuescaBatchSigningAdapter(
         clock = clock,
         contract = StaBatchSigningContract(
             profileId = HuescaBatchBridgeAdapter.PROFILE_ID,
-            profileVersion = 1,
+            profileVersion = 2,
             protocolId = HuescaBatchProtocolAdapter.ID,
+            capabilities = setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH),
         ),
     )
 
@@ -241,8 +242,9 @@ internal class BurgosBatchSigningAdapter(
         clock = clock,
         contract = StaBatchSigningContract(
             profileId = BurgosBatchBridgeAdapter.PROFILE_ID,
-            profileVersion = 1,
+            profileVersion = 2,
             protocolId = BurgosBatchProtocolAdapter.ID,
+            capabilities = setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH),
         ),
     )
     fun normalize(request: MelillaBatchBridgeRequest): NormalizedBatchSigningRequest? = delegate.normalize(request)
@@ -254,6 +256,8 @@ private data class StaBatchSigningContract(
     val profileId: String,
     val profileVersion: Int,
     val protocolId: dev.junta.firmamobile.signing.SigningProtocolId,
+    // Burgos and Huesca also log in with client TLS before the batch signature.
+    val capabilities: Set<Capability> = setOf(Capability.SIGN),
 )
 
 private class StaBatchSigningAdapter(
@@ -276,7 +280,7 @@ private class StaBatchSigningAdapter(
         if (profile.profileId.value != contract.profileId ||
             profile.profileVersion != contract.profileVersion ||
             profile.compatibilityStatus != CompatibilityStatus.VERIFIED_CONTRACT ||
-            profile.capabilities != setOf(Capability.SIGN) ||
+            profile.capabilities != contract.capabilities ||
             operation.operation != ProtocolOperation.SIGN ||
             operation.inputAdapterId.value != contract.protocolId.value ||
             operation.algorithms != setOf(ProfileSignatureAlgorithm.SHA256_WITH_RSA) ||

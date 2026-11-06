@@ -3,4 +3,6 @@
     <string name="catalog_open_universal_afirma">Open with AutoFirma</string>
     <string name="catalog_open_profile_compatibility">Portal-specific mode</string>
     <string name="catalog_universal_afirma_copy">Only services marked as verified have been tested end to end with this app.</string>
+    <string name="native_afirma_portal_mode_hint">This service has a portal-specific mode in the app. It opens again from its start page.</string>
+    <string name="native_afirma_reason">Technical code: %1$s</string>
 </resources>

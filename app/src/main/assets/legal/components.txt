@@ -4,8 +4,6 @@ Inventario vinculado al bloqueo de dependencias. Los módulos de metadatos puede
 
 La licencia de Firma Mobile no sustituye los términos de estas bibliotecas.
 
-Bebas Neue: copyright 2019 The Bebas Neue Project Authors; aviso OFL upstream: Dharma Type 2010.
-
 Liberation Sans: datos digitalizados copyright 2010 Google Corporation; copyright 2012 Red Hat, Inc.
 
 Fuentes de avisos adicionales: PDFBox Android v2.0.27.0 (LICENSE.txt y NOTICE.txt), SLF4J v_1.7.36 (LICENSE.txt), Liberation Fonts (LICENSE).
