@@ -557,27 +557,40 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING"', helper)
         self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING" -> "SIGNING_OWNER_MISSING"', source)
 
-    def test_client_auth_prompt_is_detected_only_inside_dialogs(self) -> None:
+    def test_client_auth_prompt_is_detected_by_dialog_test_tags(self) -> None:
         source = self.read(INSTRUMENTATION)
         observation = source[source.index("private fun observePortal("):]
         observation = observation[:observation.index("private fun waitForSigningTerminalState(")]
-        self.assertIn("dialogTextVisible(CLIENT_AUTH_DIALOG_TITLE)", observation)
-        self.assertIn('dialogTextVisible("Dominio: $allowedHost")', observation)
-        self.assertIn('clickDialogButton("Cancelar")', observation)
-        self.assertIn('clickDialogButton("Continuar")', observation)
+        self.assertIn("taggedNodeVisible(CLIENT_AUTH_DIALOG_TAG)", observation)
+        self.assertIn("taggedNodeVisible(INTERACTIVE_CLIENT_AUTH_DIALOG_TAG)", observation)
+        self.assertIn('clientAuthDialogTextVisible("Dominio: $allowedHost")', observation)
+        self.assertIn("clickTaggedNode(CLIENT_AUTH_CANCEL_TAG)", observation)
+        self.assertIn("clickTaggedNode(INTERACTIVE_CLIENT_AUTH_CANCEL_TAG)", observation)
+        self.assertIn("hasTestTag(CLIENT_AUTH_CONTINUE_TAG) and isEnabled()", observation)
+        self.assertIn("clickTaggedNode(CLIENT_AUTH_CONTINUE_TAG)", observation)
+        # The browser chrome trust label shares the dialog title, so visible text alone is ambiguous.
         self.assertNotIn('onAllNodesWithText("Acceso con certificado")', source)
         self.assertNotIn('onAllNodesWithText("Dominio: ', source)
-        helper = source[source.index("private fun dialogTextVisible("):]
+        client_auth = observation[observation.index("if (Capability.CLIENT_TLS_AUTH in profileCapabilities &&"):]
+        client_auth = client_auth[:client_auth.index("if (Capability.SELECT_CERTIFICATE in profileCapabilities")]
+        self.assertNotIn('"Continuar"', client_auth)
+        self.assertNotIn('"Cancelar"', client_auth)
+        helper = source[source.index("private fun taggedNodeVisible("):]
         helper = helper[:helper.index("private fun clickSigningConfirmation(")]
-        self.assertIn("hasAnyAncestor(isDialog())", helper)
+        self.assertIn("hasAnyAncestor(hasTestTag(CLIENT_AUTH_DIALOG_TAG))", helper)
+        self.assertNotIn("isDialog()", helper)
         self.assertIn("useUnmergedTree = true", helper)
         self.assertIn("useUnmergedTree = false", helper)
-        self.assertIn('const val CLIENT_AUTH_DIALOG_TITLE = "Acceso con certificado"', source)
+        dialogs = self.read(ROOT / "app/src/main/java/dev/junta/firmamobile/ui/BrowserConfirmationDialogs.kt")
+        interactive = self.read(ROOT / "app/src/main/java/dev/junta/firmamobile/ui/InteractiveClientAuthDialog.kt")
+        for tag in ("client-auth-confirmation", "client-auth-confirmation-continue", "client-auth-confirmation-cancel"):
+            self.assertIn(f'Modifier.testTag("{tag}")', dialogs)
+            self.assertIn(f'= "{tag}"', source)
+        for tag in ("interactive-client-auth", "interactive-client-auth-cancel"):
+            self.assertIn(f'Modifier.testTag("{tag}")', interactive)
+            self.assertIn(f'= "{tag}"', source)
         strings = self.read(ROOT / "app/src/main/res/values/strings.xml")
-        self.assertIn('<string name="interactive_tls_title">Acceso con certificado</string>', strings)
         self.assertIn('<string name="certificate_selection_domain">Dominio: %1$s</string>', strings)
-        self.assertIn('<string name="continue_to_portal">Continuar</string>', strings)
-        self.assertIn('<string name="cancel">Cancelar</string>', strings)
 
     def test_infrastructure_codes_unwrap_main_thread_wrappers(self) -> None:
         source = self.read(INSTRUMENTATION)

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
@@ -1167,16 +1168,20 @@ class RealE2eInstrumentedTest {
             }
 
             if (Capability.CLIENT_TLS_AUTH in profileCapabilities &&
-                dialogTextVisible(CLIENT_AUTH_DIALOG_TITLE)
+                (taggedNodeVisible(CLIENT_AUTH_DIALOG_TAG) || taggedNodeVisible(INTERACTIVE_CLIENT_AUTH_DIALOG_TAG))
             ) {
                 result.clientAuthObserved = true
                 result.level = maxOf(result.level, 2)
                 val host = allowedClientAuthHosts.firstOrNull { allowedHost ->
-                    dialogTextVisible("Dominio: $allowedHost")
+                    clientAuthDialogTextVisible("Dominio: $allowedHost")
                 }
                 if (host == null) {
+                    // Either the in-place prompt names a host outside the profile, or the app fell
+                    // back to its interactive prompt for a server the profile did not authorize.
                     result.unexpectedClientAuthHost = true
-                    clickDialogButton("Cancelar")
+                    if (!clickTaggedNode(CLIENT_AUTH_CANCEL_TAG)) {
+                        clickTaggedNode(INTERACTIVE_CLIENT_AUTH_CANCEL_TAG)
+                    }
                     result.classification = ProbeClassification.FAIL_UNEXPECTED_CLIENT_AUTH_HOST
                     return
                 }
@@ -1188,10 +1193,10 @@ class RealE2eInstrumentedTest {
                 result.clientAuthConfirmed = true
                 result.level = maxOf(result.level, 3)
                 rule.waitUntil(timeoutMillis = 5_000) {
-                    rule.onAllNodes(dialogButton("Continuar") and isEnabled())
+                    rule.onAllNodes(hasTestTag(CLIENT_AUTH_CONTINUE_TAG) and isEnabled(), useUnmergedTree = true)
                         .fetchSemanticsNodes().isNotEmpty()
                 }
-                clickDialogButton("Continuar")
+                clickTaggedNode(CLIENT_AUTH_CONTINUE_TAG)
             }
 
             if (Capability.SELECT_CERTIFICATE in profileCapabilities && !certificateSelectionHandled &&
@@ -1325,19 +1330,23 @@ class RealE2eInstrumentedTest {
     }
 
     // The browser chrome reuses "Acceso con certificado" as its trust label on client-auth
-    // origins, so only text inside a dialog counts as a client-certificate prompt.
-    private fun dialogTextVisible(text: String): Boolean {
-        val matcher = hasText(text, substring = false, ignoreCase = false) and hasAnyAncestor(isDialog())
+    // origins, and Material3 dialogs do not always expose an IsDialog ancestor on the emulator.
+    // Scope client-auth lookups to the dialogs' test tags instead of their visible text.
+    private fun taggedNodeVisible(tag: String): Boolean =
+        rule.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+
+    private fun clientAuthDialogTextVisible(text: String): Boolean {
+        val matcher = hasText(text, substring = false, ignoreCase = false) and
+            hasAnyAncestor(hasTestTag(CLIENT_AUTH_DIALOG_TAG))
         return rule.onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() ||
             rule.onAllNodes(matcher, useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
     }
 
-    private fun dialogButton(label: String): SemanticsMatcher =
-        hasText(label, substring = false, ignoreCase = false) and hasClickAction() and hasAnyAncestor(isDialog())
-
-    private fun clickDialogButton(label: String) {
-        val buttons = rule.onAllNodes(dialogButton(label))
-        if (buttons.fetchSemanticsNodes().isNotEmpty()) buttons[0].performClick()
+    private fun clickTaggedNode(tag: String): Boolean {
+        val nodes = rule.onAllNodes(hasTestTag(tag), useUnmergedTree = true)
+        if (nodes.fetchSemanticsNodes().isEmpty()) return false
+        nodes[0].performClick()
+        return true
     }
 
     private fun clickSigningConfirmation(): Boolean {
@@ -2006,7 +2015,11 @@ class RealE2eInstrumentedTest {
         const val UNIZAR_AUTH_HANDLER = "lanza"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
-        const val CLIENT_AUTH_DIALOG_TITLE = "Acceso con certificado"
+        const val CLIENT_AUTH_DIALOG_TAG = "client-auth-confirmation"
+        const val CLIENT_AUTH_CONTINUE_TAG = "client-auth-confirmation-continue"
+        const val CLIENT_AUTH_CANCEL_TAG = "client-auth-confirmation-cancel"
+        const val INTERACTIVE_CLIENT_AUTH_DIALOG_TAG = "interactive-client-auth"
+        const val INTERACTIVE_CLIENT_AUTH_CANCEL_TAG = "interactive-client-auth-cancel"
         const val BADAJOZ_PAGE_READY_TIMEOUT_MILLIS = 60_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
         const val SIGNING_OWNER_TIMEOUT_MILLIS = 10_000L
