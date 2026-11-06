@@ -33,7 +33,7 @@ class SharedOriginCharacterizationTest {
                 "diputacion-caceres-instancia-general", "diputacion-guadalajara-instancia-general",
                 "diputacion-segovia-registro", "diputacion-palencia-solicitud-general",
                 "diputacion-ourense-sede", "diputacion-sevilla-sede",
-                "diputacion-a-coruna-solicitud-general",
+                "diputacion-a-coruna-solicitud-general", "tenerife-sede-electronica", "caib-portafib",
             ),
             browse = listOf("ministerio-economia-instancia-generica"),
         ),
@@ -46,7 +46,7 @@ class SharedOriginCharacterizationTest {
                 "mugeju-remision-documentacion-client-auth", "asturias-miprincipado",
                 "diputacion-malaga-instancia-general", "catalunya-peticio-generica-client-auth",
                 "diputacion-ourense-sede", "diputacion-sevilla-sede",
-                "diputacion-a-coruna-solicitud-general",
+                "diputacion-a-coruna-solicitud-general", "tenerife-sede-electronica", "caib-portafib",
             ),
         ),
         Family(

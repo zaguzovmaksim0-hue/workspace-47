@@ -106,7 +106,7 @@ internal class LegacyTenerifeCadesDetachedAdapter(
     companion object {
         val ID = SigningProtocolId("tenerife-sede-local-cades-v1")
         const val PROFILE_ID = "tenerife-sede-electronica"
-        const val PROFILE_VERSION = 1
+        const val PROFILE_VERSION = 2
         const val INITIATOR_ORIGIN = "https://sede.tenerife.es"
         const val SAFE_DESCRIPTION =
             "Firma de solicitud en la Sede electrónica del Cabildo Insular de Tenerife"

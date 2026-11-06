@@ -928,10 +928,15 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(sanidad).isEmpty())
         assertEquals(setOf("sede.tea.hacienda.gob.es"), JuntaOriginPolicy.browserAllowedHosts(tea))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(tea).isEmpty())
-        assertEquals(setOf("sede.tenerife.es"), JuntaOriginPolicy.browserAllowedHosts(tenerife))
+        assertEquals(setOf("sede.tenerife.es", "pasarela.clave.gob.es"), JuntaOriginPolicy.browserAllowedHosts(tenerife))
+        // The Cl@ve login hop must never reach the signing bridge.
         assertEquals(
             setOf("https://sede.tenerife.es"),
             JuntaOriginPolicy.webMessageOriginRules(tenerife),
+        )
+        assertEquals(
+            setOf("https://www.caib.es", "https://intranet.caib.es"),
+            JuntaOriginPolicy.webMessageOriginRules(ProfileId("caib-portafib")),
         )
         assertEquals(
             setOf("transparencia.sede.gob.es"),

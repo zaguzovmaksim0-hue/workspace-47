@@ -100,7 +100,7 @@ class TenerifeCadesMigrationTest {
                     sign(prepared).use { local ->
                         val mutations = listOf(
                             request(protocol = SigningProtocolId("wrong")), request(profile = "wrong"),
-                            request(version = 2), request(description = "changed"),
+                            request(version = 1), request(description = "changed"),
                             request(origin = TrustedOrigin("https", "sede.tenerife.es.evil.example", 443)),
                             request(origin = TrustedOrigin("http", "sede.tenerife.es", 443)),
                             request(origin = TrustedOrigin("https", "sede.tenerife.es", 444)),
@@ -164,7 +164,7 @@ class TenerifeCadesMigrationTest {
                             val other = LocalCadesDetachedAdapter(clock)
                             request(
                                 data = ByteArray(20), extra = "mode=explicit\nfilter=nonexpired",
-                                protocol = LocalCadesDetachedAdapter.ID, profile = "aragon-siraw",
+                                protocol = LocalCadesDetachedAdapter.ID, profile = "aragon-siraw", version = 1,
                                 origin = TrustedOrigin("https", "aplicaciones.aragon.es", 443),
                                 algorithm = SigningAlgorithm.SHA1_WITH_RSA,
                             ).use { foreign ->
@@ -300,7 +300,7 @@ class TenerifeCadesMigrationTest {
         extra: String = properties,
         protocol: SigningProtocolId = TenerifeCadesDetachedAdapter.ID,
         profile: String = TenerifeCadesDetachedAdapter.PROFILE_ID,
-        version: Int = 1,
+        version: Int = TenerifeCadesDetachedAdapter.PROFILE_VERSION,
         description: String = TenerifeCadesDetachedAdapter.SAFE_DESCRIPTION,
         origin: TrustedOrigin = TrustedOrigin("https", "sede.tenerife.es", 443),
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA512_WITH_RSA,

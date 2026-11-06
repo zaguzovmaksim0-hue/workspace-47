@@ -344,8 +344,12 @@ object SiteProfileCatalogParser {
                 require(requestPort == HTTPS_PORT)
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
                 // Reviewed Cl@ve AFIRMA hop: ServiceRedirect auto-POSTs to AuthenticateCitizen without parameters.
-                val reviewedClavePostProfile = profileId.value in setOf(MALAGA_PROFILE_ID, MUGEJU_PROFILE_ID) ||
-                    profileId.value in CLAVE_DIRECT_PINS
+                val reviewedClavePostProfile = profileId.value in CLAVE_DIRECT_PINS || profileId.value in setOf(
+                    MALAGA_PROFILE_ID,
+                    MUGEJU_PROFILE_ID,
+                    TENERIFE_PROFILE_ID,
+                    CAIB_PROFILE_ID,
+                )
                 val reviewedUnparameterizedPostSource =
                     reviewedClavePostProfile &&
                         requestMethod == HttpMethod.POST &&
@@ -670,9 +674,13 @@ object SiteProfileCatalogParser {
                         p.capabilities ==
                             setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
                     )
-                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID ||
-                    p.profileId.value == BURGOS_PROFILE_ID ||
-                    p.profileId.value == HUESCA_PROFILE_ID
+                } else if (p.profileId.value in setOf(
+                        JCCM_REGISTRO_PROFILE_ID,
+                        BURGOS_PROFILE_ID,
+                        HUESCA_PROFILE_ID,
+                        TENERIFE_PROFILE_ID,
+                        CAIB_PROFILE_ID,
+                    )
                 ) {
                     require(p.endpoints.isEmpty())
                     require(p.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
@@ -713,6 +721,8 @@ object SiteProfileCatalogParser {
                             MALAGA_PROFILE_ID,
                             SEVILLA_DIPUTACION_PROFILE_ID,
                             CORUNA_PROFILE_ID,
+                            TENERIFE_PROFILE_ID,
+                            CAIB_PROFILE_ID,
                         ) -> p.initiatorOrigins + p.redirectOrigins
                         p.profileId.value == TARRAGONA_PROFILE_ID &&
                             policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ->
@@ -1106,6 +1116,20 @@ object SiteProfileCatalogParser {
     private fun SiteProfile.hasClientTls() = clientAuthPolicy != null || Capability.CLIENT_TLS_AUTH in capabilities
 
     private fun claveEvidence(reviewedOn: String, vararg urls: String) = urls.associateWith { reviewedOn }
+
+    // ServiceRedirect auto-POSTs to AuthenticateCitizen, so the grant is armed in place on that POST.
+    private fun claveRedirectPostPolicy() = ClientAuthPolicy(
+        transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+        requestOrigins = setOf(ExactOrigin.parse(CLAVE_IDENT_ORIGIN)),
+        sourceUrls = setOf(URI(CLAVE_REDIRECT_URL)),
+        requestPath = CLAVE_AUTHENTICATE_PATH,
+        fixedQueryParameters = emptyMap(),
+        requiredEphemeralQueryParameters = emptySet(),
+        allowEmptyIssuerList = true,
+        grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+        requestPort = HTTPS_PORT,
+        requestMethod = HttpMethod.POST,
+    )
 
     private class ClaveOriginPins(
         val initiator: String,
@@ -1867,11 +1891,11 @@ object SiteProfileCatalogParser {
         require(profile.activation == ProfileActivation.QA_ONLY)
         require(profile.startUrl.toASCIIString() == TENERIFE_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(TENERIFE_ORIGIN)))
-        require(profile.redirectOrigins.isEmpty())
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(CLAVE_PASARELA_ORIGIN)))
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        require(profile.clientAuthPolicy == claveRedirectPostPolicy())
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(
             profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
@@ -1890,8 +1914,7 @@ object SiteProfileCatalogParser {
             ),
         )
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TENERIFE_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == TENERIFE_EVIDENCE)
     }
 
     private fun validateMelillaProfile(profile: SiteProfile) {
@@ -2408,14 +2431,13 @@ object SiteProfileCatalogParser {
                 ExactOrigin.parse(CAIB_PUBLIC_ORIGIN), ExactOrigin.parse(CAIB_SIGNING_ORIGIN),
             ),
         )
-        require(profile.redirectOrigins.isEmpty())
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(CLAVE_PASARELA_ORIGIN)))
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        require(profile.clientAuthPolicy == claveRedirectPostPolicy())
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CAIB_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == CAIB_EVIDENCE)
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
         require(
             profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
@@ -3023,6 +3045,8 @@ object SiteProfileCatalogParser {
                             MALAGA_PROFILE_ID,
                             SEVILLA_DIPUTACION_PROFILE_ID,
                             CORUNA_PROFILE_ID,
+                            TENERIFE_PROFILE_ID,
+                            CAIB_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -3043,6 +3067,8 @@ object SiteProfileCatalogParser {
                             MALAGA_PROFILE_ID,
                             SEVILLA_DIPUTACION_PROFILE_ID,
                             CORUNA_PROFILE_ID,
+                            TENERIFE_PROFILE_ID,
+                            CAIB_PROFILE_ID,
                         )
                     }
                     else -> false
@@ -3342,6 +3368,13 @@ object SiteProfileCatalogParser {
     private const val CLAVE_PROVIDER_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
     private const val CLAVE_REDIRECT_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
     private const val CLAVE_PASARELA_ORIGIN = "https://pasarela.clave.gob.es"
+    // Login-only Cl@ve hop for SIGN portals whose signature is the filing itself (Tenerife, CAIB).
+    private val CLAVE_LOGIN_EVIDENCE = claveEvidence(
+        "2026-11-06",
+        CLAVE_PROVIDER_URL,
+        CLAVE_REDIRECT_URL,
+        CLAVE_IDENT_EVIDENCE_URL,
+    )
     // v2: ServiceRedirect auto-POSTs to AuthenticateCitizen, so the grant is armed in place on that POST.
     private const val CLAVE_DIRECT_PROFILE_VERSION = 2
 
@@ -3746,7 +3779,7 @@ object SiteProfileCatalogParser {
             "E=CATALOGO&DETALLE=6269002703260065905043",
     )
     private const val TENERIFE_PROFILE_ID = "tenerife-sede-electronica"
-    private const val TENERIFE_PROFILE_VERSION = 1
+    private const val TENERIFE_PROFILE_VERSION = 2
     private const val TENERIFE_DISPLAY_NAME = "Cabildo Insular de Tenerife — Sede electrónica"
     private const val TENERIFE_START_URL = "https://sede.tenerife.es/"
     private const val TENERIFE_ORIGIN = "https://sede.tenerife.es"
@@ -3926,10 +3959,11 @@ object SiteProfileCatalogParser {
         "filters.1" to "dnie:;nonexpired:",
         "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
     )
-    private val TENERIFE_EVIDENCE_URLS = setOf(
+    private val TENERIFE_EVIDENCE = claveEvidence(
+        "2026-08-14",
         TENERIFE_START_URL,
         "https://sede.tenerife.es/76.81426d6ba0b90ca6.js",
-    )
+    ) + CLAVE_LOGIN_EVIDENCE
     private const val MELILLA_PROFILE_ID = "melilla-sede"
     private const val MELILLA_PROFILE_VERSION = 1
     private const val MELILLA_DISPLAY_NAME = "Ciudad Autónoma de Melilla — Sede Electrónica"
@@ -4000,7 +4034,7 @@ object SiteProfileCatalogParser {
         "Acceso con certificado mediante lote XML clientSigner de la Sede de la Deputación de Lugo"
 
     private const val CAIB_PROFILE_ID = "caib-portafib"
-    private const val CAIB_PROFILE_VERSION = 1
+    private const val CAIB_PROFILE_VERSION = 2
     private const val CAIB_DISPLAY_NAME = "Govern de les Illes Balears — Instància genèrica"
     private const val CAIB_START_URL =
         "https://www.caib.es/sistramitfront/asistente/iniciarTramite.html?tramite=CAIB" +
@@ -4009,7 +4043,8 @@ object SiteProfileCatalogParser {
     private const val CAIB_PUBLIC_ORIGIN = "https://www.caib.es"
     private const val CAIB_SIGNING_ORIGIN = "https://intranet.caib.es"
     private const val CAIB_SAFE_DESCRIPTION = "Firma PAdES de la Instància genèrica mediante PortaFIB"
-    private val CAIB_EVIDENCE_URLS = setOf(CAIB_START_URL, "https://intranet.caib.es/portafibback/")
+    private val CAIB_EVIDENCE =
+        claveEvidence("2026-08-18", CAIB_START_URL, "https://intranet.caib.es/portafibback/") + CLAVE_LOGIN_EVIDENCE
 
     private const val LEON_PROFILE_ID = "diputacion-leon-sede"
     private const val LEON_PROFILE_VERSION = 2

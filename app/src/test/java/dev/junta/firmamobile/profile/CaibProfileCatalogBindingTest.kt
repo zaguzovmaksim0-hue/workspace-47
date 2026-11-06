@@ -41,10 +41,12 @@ class CaibProfileCatalogBindingTest {
             setOf(ExactOrigin.parse("https://www.caib.es"), ExactOrigin.parse("https://intranet.caib.es")),
             profile.initiatorOrigins,
         )
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(2, profile.profileVersion)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertClaveLoginOnlyPolicy(profile)
         val op = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         assertEquals(ProtocolInputAdapterId("caib-portafib-batch-v1"), op.inputAdapterId)
         assertEquals(CallbackContractId("caib-portafib-batch-result-v1"), op.callbackContractId)
