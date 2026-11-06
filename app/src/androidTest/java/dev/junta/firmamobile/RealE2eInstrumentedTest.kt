@@ -10,6 +10,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
@@ -337,6 +338,35 @@ class RealE2eInstrumentedTest {
                 expectedLabel = UNIZAR_AUTH_LABEL,
                 expectedImageAlt = UNIZAR_AUTH_IMAGE_ALT,
                 expectedOnClick = UNIZAR_AUTH_ONCLICK,
+                expectedHandlerName = UNIZAR_AUTH_HANDLER,
+            )
+            SEDIPUALBA_ALBACETE_PORTAL_ID -> clickSedipualbaServerCertificateOption(
+                scenario = scenario,
+                expectedEntryUrl = SEDIPUALBA_ALBACETE_ENTRY_URL,
+                expectedLoginUrl = SEDIPUALBA_ALBACETE_LOGIN_URL,
+                loginLabel = SEDIPUALBA_LOGIN_LABEL_ES,
+                optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_ES,
+            )
+            SEDIPUALBA_CUENCA_PORTAL_ID -> clickSedipualbaServerCertificateOption(
+                scenario = scenario,
+                expectedEntryUrl = SEDIPUALBA_CUENCA_ENTRY_URL,
+                expectedLoginUrl = SEDIPUALBA_CUENCA_LOGIN_URL,
+                loginLabel = SEDIPUALBA_LOGIN_LABEL_ES,
+                optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_ES,
+            )
+            SEDIPUALBA_LEON_PORTAL_ID -> clickSedipualbaServerCertificateOption(
+                scenario = scenario,
+                expectedEntryUrl = SEDIPUALBA_LEON_ENTRY_URL,
+                expectedLoginUrl = SEDIPUALBA_LEON_LOGIN_URL,
+                loginLabel = SEDIPUALBA_LOGIN_LABEL_ES,
+                optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_ES,
+            )
+            SEDIPUALBA_MALLORCA_PORTAL_ID -> clickSedipualbaServerCertificateOption(
+                scenario = scenario,
+                expectedEntryUrl = SEDIPUALBA_MALLORCA_ENTRY_URL,
+                expectedLoginUrl = SEDIPUALBA_MALLORCA_LOGIN_URL,
+                loginLabel = SEDIPUALBA_LOGIN_LABEL_CA,
+                optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_CA,
             )
             else -> Unit
         }
@@ -565,6 +595,78 @@ class RealE2eInstrumentedTest {
             expectedHref = STA_CERTIFICATE_LINK_HREF,
             waitForExpectedUrl = true,
         )
+    }
+
+    // login.aspx opens the options page in a same-origin iframe; #optSsl then navigates window.top.
+    private fun clickSedipualbaServerCertificateOption(
+        scenario: ActivityScenario<MainActivity>,
+        expectedEntryUrl: String,
+        expectedLoginUrl: String,
+        loginLabel: String,
+        optionLabel: String,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = expectedEntryUrl,
+            expectedLabel = loginLabel,
+            expectedHref = expectedLoginUrl,
+        )
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedLabel = JSONObject.quote(optionLabel)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                if (webView.url != expectedLoginUrl) {
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const frame = document.getElementById('ventanaModal');
+                      if (!frame) return 0;
+                      let doc;
+                      try { doc = frame.contentDocument; } catch (e) { return 2; }
+                      if (!doc || !doc.location) return 0;
+                      if (doc.location.origin !== location.origin ||
+                        doc.location.pathname !== '$SEDIPUALBA_OPTIONS_PATH') return 0;
+                      const option = doc.getElementById('optSsl');
+                      if (!option) return 0;
+                      const images = option.querySelectorAll('img');
+                      const titles = option.querySelectorAll('.titulo-opcion span');
+                      if (images.length !== 1 || titles.length !== 1) return 2;
+                      const title = (titles[0].textContent || '').trim().replace(/\s+/g, ' ');
+                      if (images[0].getAttribute('alt') !== $quotedLabel || title !== $quotedLabel) return 2;
+                      option.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
     private fun clickExactStaResponsiveIdentifyAnchor(
@@ -857,8 +959,12 @@ class RealE2eInstrumentedTest {
         expectedLabel: String,
         expectedImageAlt: String,
         expectedOnClick: String,
+        expectedHandlerName: String,
     ) {
         // Unizar can expose a transitional DOM before the final certificate button is ready.
+        // The current page labels the button through its tooltip title and binds the reviewed
+        // handler from script instead of an inline onclick, so wait for that handler too.
+        require(JS_IDENTIFIER.matches(expectedHandlerName))
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedContainerId = JSONObject.quote(expectedContainerId)
         val quotedElementId = JSONObject.quote(expectedElementId)
@@ -893,11 +999,19 @@ class RealE2eInstrumentedTest {
                       const elements = Array.from(container.querySelectorAll('button'));
                       if (elements.length !== 1) return 2;
                       const element = elements[0];
+                      const label = element.getAttribute('aria-label') ?? element.getAttribute('title');
+                      const inlineOnClick = element.getAttribute('onclick');
                       if (element.id !== $quotedElementId ||
                           element.getAttribute('type') !== 'button' ||
-                          element.getAttribute('aria-label') !== $quotedExpectedLabel ||
+                          label !== $quotedExpectedLabel ||
                           element.querySelector('img')?.getAttribute('alt') !== $quotedExpectedImageAlt ||
-                          element.getAttribute('onclick') !== $quotedExpectedOnClick) return 2;
+                          (inlineOnClick !== null && inlineOnClick !== $quotedExpectedOnClick)) return 2;
+                      const handlerReady = typeof $expectedHandlerName === 'function' && (
+                        inlineOnClick !== null ||
+                        document.readyState === 'complete' ||
+                        (window.jQuery?._data?.(element, 'events')?.click?.length ?? 0) > 0
+                      );
+                      if (!handlerReady) return 0;
                       element.click();
                       return 1;
                     })()
@@ -1101,6 +1215,7 @@ class RealE2eInstrumentedTest {
     private fun hasObservedTerminalNavigationFailure(): Boolean =
         diagnosticRecords().any { record ->
             record.contains("event=NETWORK_ERROR") ||
+                record.contains("event=BLANK_DOCUMENT") ||
                 record.contains("event=SSL_ERROR_CANCELLED") ||
                 record.contains("event=NAVIGATION_BLOCKED")
         }
@@ -1154,17 +1269,19 @@ class RealE2eInstrumentedTest {
             }
 
             if (Capability.CLIENT_TLS_AUTH in profileCapabilities &&
-                rule.onAllNodesWithText("Acceso con certificado").fetchSemanticsNodes().isNotEmpty()
+                (taggedNodeVisible(CLIENT_AUTH_DIALOG_TAG) || taggedNodeVisible(INTERACTIVE_CLIENT_AUTH_DIALOG_TAG))
             ) {
                 result.clientAuthObserved = true
                 result.level = maxOf(result.level, 2)
                 val host = allowedClientAuthHosts.firstOrNull { allowedHost ->
-                    rule.onAllNodesWithText("Dominio: $allowedHost").fetchSemanticsNodes().isNotEmpty()
+                    clientAuthDialogTextVisible("Dominio: $allowedHost")
                 }
                 if (host == null) {
+                    // Either the in-place prompt names a host outside the profile, or the app fell
+                    // back to its interactive prompt for a server the profile did not authorize.
                     result.unexpectedClientAuthHost = true
-                    rule.onAllNodesWithText("Cancelar").fetchSemanticsNodes().firstOrNull()?.let {
-                        rule.onNodeWithText("Cancelar").performClick()
+                    if (!clickTaggedNode(CLIENT_AUTH_CANCEL_TAG)) {
+                        clickTaggedNode(INTERACTIVE_CLIENT_AUTH_CANCEL_TAG)
                     }
                     result.classification = ProbeClassification.FAIL_UNEXPECTED_CLIENT_AUTH_HOST
                     return
@@ -1177,11 +1294,10 @@ class RealE2eInstrumentedTest {
                 result.clientAuthConfirmed = true
                 result.level = maxOf(result.level, 3)
                 rule.waitUntil(timeoutMillis = 5_000) {
-                    rule.onAllNodes(
-                        hasText("Continuar", substring = false, ignoreCase = false) and isEnabled(),
-                    ).fetchSemanticsNodes().isNotEmpty()
+                    rule.onAllNodes(hasTestTag(CLIENT_AUTH_CONTINUE_TAG) and isEnabled(), useUnmergedTree = true)
+                        .fetchSemanticsNodes().isNotEmpty()
                 }
-                rule.onNodeWithText("Continuar").performClick()
+                clickTaggedNode(CLIENT_AUTH_CONTINUE_TAG)
             }
 
             if (Capability.SELECT_CERTIFICATE in profileCapabilities && !certificateSelectionHandled &&
@@ -1215,7 +1331,7 @@ class RealE2eInstrumentedTest {
                     val preSignRecords = diagnosticRecords()
                     val signingEvidenceTracker = SigningEvidenceTracker(preSignRecords)
                     check(clickSigningConfirmation()) {
-                        "REAL_E2E_SIGN_CONFIRMATION_CLICK_TIMEOUT"
+                        signingConfirmationClickTimeoutCode()
                     }
                     result.signingConfirmed = true
                     val completedRecords = waitForSigningTerminalState(
@@ -1294,13 +1410,44 @@ class RealE2eInstrumentedTest {
     private fun signingCoordinatorForScenario(
         scenario: ActivityScenario<MainActivity>,
     ): SigningCoordinator {
-        var coordinator: SigningCoordinator? = null
-        scenario.onActivity { activity ->
-            val field = MainActivity::class.java.getDeclaredField("signingCoordinator")
-                .apply { isAccessible = true }
-            coordinator = field.get(activity) as SigningCoordinator
+        // MainActivity owns the ordinary coordinator through SigningOrchestrator, which the
+        // Activity installs once its ready content is initialized. Wait briefly for that owner
+        // instead of failing the whole portal observation on a transient null.
+        val deadline = SystemClock.elapsedRealtime() + SIGNING_OWNER_TIMEOUT_MILLIS
+        while (true) {
+            var coordinator: SigningCoordinator? = null
+            scenario.onActivity { activity ->
+                val orchestrator = MainActivity::class.java.getDeclaredField("signing")
+                    .apply { isAccessible = true }
+                    .get(activity) ?: return@onActivity
+                coordinator = orchestrator.javaClass.getDeclaredField("signingCoordinator")
+                    .apply { isAccessible = true }
+                    .get(orchestrator) as SigningCoordinator
+            }
+            coordinator?.let { return it }
+            check(SystemClock.elapsedRealtime() < deadline) { "REAL_E2E_SIGNING_OWNER_MISSING" }
+            SystemClock.sleep(POLL_MILLIS)
         }
-        return requireNotNull(coordinator)
+    }
+
+    // The browser chrome reuses "Acceso con certificado" as its trust label on client-auth
+    // origins, and Material3 dialogs do not always expose an IsDialog ancestor on the emulator.
+    // Scope client-auth lookups to the dialogs' test tags instead of their visible text.
+    private fun taggedNodeVisible(tag: String): Boolean =
+        rule.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+
+    private fun clientAuthDialogTextVisible(text: String): Boolean {
+        val matcher = hasText(text, substring = false, ignoreCase = false) and
+            hasAnyAncestor(hasTestTag(CLIENT_AUTH_DIALOG_TAG))
+        return rule.onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() ||
+            rule.onAllNodes(matcher, useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    private fun clickTaggedNode(tag: String): Boolean {
+        val nodes = rule.onAllNodes(hasTestTag(tag), useUnmergedTree = true)
+        if (nodes.fetchSemanticsNodes().isEmpty()) return false
+        nodes[0].performClick()
+        return true
     }
 
     private fun clickSigningConfirmation(): Boolean {
@@ -1312,15 +1459,18 @@ class RealE2eInstrumentedTest {
         val exactDialogButton =
             exactSigningLabel and hasClickAction() and hasAnyAncestor(isDialog())
         val exactTextButton = exactSigningLabel and hasClickAction()
-        rule.waitUntil(timeoutMillis = 5_000) {
-            rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = true)
-                .fetchSemanticsNodes().isNotEmpty() ||
-                rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = false)
+        // A missing or disabled button must still reach the snapshot below instead of a bare timeout.
+        runCatching {
+            rule.waitUntil(timeoutMillis = 5_000) {
+                rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = true)
                     .fetchSemanticsNodes().isNotEmpty() ||
-                rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = true)
-                    .fetchSemanticsNodes().isNotEmpty() ||
-                rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = false)
-                    .fetchSemanticsNodes().isNotEmpty()
+                    rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = false)
+                        .fetchSemanticsNodes().isNotEmpty() ||
+                    rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = true)
+                        .fetchSemanticsNodes().isNotEmpty() ||
+                    rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = false)
+                        .fetchSemanticsNodes().isNotEmpty()
+            }
         }
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
@@ -1343,6 +1493,20 @@ class RealE2eInstrumentedTest {
             SystemClock.sleep(POLL_MILLIS)
         }
         return false
+    }
+
+    // Sanitized UI snapshot for a failed confirmation click: how many exact "Firmar" buttons exist
+    // inside a dialog (D) or anywhere (T), and how many of those are enabled (E); counts only, no text.
+    private fun signingConfirmationClickTimeoutCode(): String {
+        val label = hasText("Firmar", substring = false, ignoreCase = false) or
+            hasAnyDescendant(hasText("Firmar", substring = false, ignoreCase = false))
+        fun count(matcher: SemanticsMatcher): Int = runCatching {
+            rule.onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().size
+        }.getOrDefault(-1)
+        val dialog = count(label and hasClickAction() and hasAnyAncestor(isDialog()))
+        val any = count(label and hasClickAction())
+        val enabled = count(label and hasClickAction() and isEnabled())
+        return SIGN_CONFIRM_CLICK_TIMEOUT_PREFIX + "D${dialog}_T${any}_E$enabled".replace("-", "X")
     }
 
     private fun performSigningConfirmationAction(
@@ -1463,7 +1627,9 @@ class RealE2eInstrumentedTest {
         result.clientCertRejected = result.clientCertRejected || records.any {
             it.contains("stage=client-cert-rejected-")
         }
-        result.networkError = result.networkError || records.any { it.contains("event=NETWORK_ERROR") }
+        result.networkError = result.networkError || records.any {
+            it.contains("event=NETWORK_ERROR") || it.contains("event=BLANK_DOCUMENT")
+        }
         result.sslError = result.sslError || records.any { it.contains("event=SSL_ERROR_CANCELLED") }
         result.navigationBlocked = result.navigationBlocked || records.any {
             it.contains("event=NAVIGATION_BLOCKED")
@@ -1596,8 +1762,26 @@ class RealE2eInstrumentedTest {
         rule.waitUntil(timeoutMillis = timeoutMillis, condition = predicate)
     }
 
-    private fun safeInfrastructureCode(throwable: Throwable, stage: ProbeStage): String = when (throwable.message) {
+    private fun safeInfrastructureCode(throwable: Throwable, stage: ProbeStage): String =
+        safeInfrastructureCodeFor(unwrapMainThreadFailure(throwable), stage)
+
+    // ActivityScenario.onActivity and other main-thread hops rethrow the original failure inside
+    // a bare RuntimeException; report the original type so the sanitized code stays diagnostic.
+    private fun unwrapMainThreadFailure(throwable: Throwable): Throwable {
+        var current = throwable
+        var depth = 0
+        while (current.javaClass == RuntimeException::class.java && depth < MAX_FAILURE_UNWRAP_DEPTH) {
+            val cause = current.cause ?: break
+            if (cause === current) break
+            current = cause
+            depth += 1
+        }
+        return current
+    }
+
+    private fun safeInfrastructureCodeFor(throwable: Throwable, stage: ProbeStage): String = when (throwable.message) {
         "REAL_E2E_CERTIFICATE_MISSING" -> "CERTIFICATE_MISSING"
+        "REAL_E2E_SIGNING_OWNER_MISSING" -> "SIGNING_OWNER_MISSING"
         "REAL_E2E_PASSWORD_MISSING" -> "PASSWORD_MISSING"
         "REAL_E2E_RECIPE_WEBVIEW_MISSING" -> "RECIPE_WEBVIEW_MISSING"
         "REAL_E2E_RECIPE_SOURCE_MISMATCH" -> "RECIPE_SOURCE_MISMATCH"
@@ -1606,6 +1790,10 @@ class RealE2eInstrumentedTest {
         "REAL_E2E_RECIPE_TARGET_TIMEOUT" -> "RECIPE_TARGET_TIMEOUT"
         "REAL_E2E_RECIPE_PAGE_READY_TIMEOUT" -> "RECIPE_PAGE_READY_TIMEOUT"
         else -> {
+            val message = throwable.message.orEmpty()
+            if (message.startsWith(SIGN_CONFIRM_CLICK_TIMEOUT_PREFIX)) {
+                message.removePrefix("REAL_E2E_").takeIf { SAFE_ERROR_TOKEN.matches(it) }?.let { return it }
+            }
             val type = throwable.javaClass.simpleName.takeIf { SAFE_ERROR_TOKEN.matches(it) }
                 ?: "UNKNOWN_ERROR"
             "${type}_${stage.name}"
@@ -1881,6 +2069,37 @@ class RealE2eInstrumentedTest {
         const val STA_CERTIFICATE_LINK_ID = "link-certificado"
         const val STA_CERTIFICATE_LINK_HREF =
             "/sta/CarpetaPrivate/Certificate?APP_CODE=STA&PAGE_CODE=HOME"
+        const val SEDIPUALBA_ALBACETE_PORTAL_ID = "diputacion-albacete-portal"
+        const val SEDIPUALBA_ALBACETE_ENTRY_URL =
+            "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567"
+        const val SEDIPUALBA_ALBACETE_LOGIN_URL =
+            "https://sede.dipualba.es/carpetaciudadana/login.aspx?returnUrl=" +
+                "https%3a%2f%2fsede.dipualba.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d567"
+        const val SEDIPUALBA_CUENCA_PORTAL_ID = "diputacion-cuenca-portal"
+        const val SEDIPUALBA_CUENCA_ENTRY_URL =
+            "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074"
+        const val SEDIPUALBA_CUENCA_LOGIN_URL =
+            "https://sede.dipucuenca.es/carpetaciudadana/login.aspx?returnUrl=" +
+                "https%3a%2f%2fsede.dipucuenca.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d12074"
+        const val SEDIPUALBA_LEON_PORTAL_ID = "diputacion-leon-sede"
+        const val SEDIPUALBA_LEON_ENTRY_URL =
+            "https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270"
+        const val SEDIPUALBA_LEON_LOGIN_URL =
+            "https://sede.dipuleon.es/carpetaciudadana/login.aspx?returnUrl=" +
+                "https%3a%2f%2fsede.dipuleon.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d20270"
+        const val SEDIPUALBA_MALLORCA_PORTAL_ID = "mallorca-sede-electronica"
+        const val SEDIPUALBA_MALLORCA_ENTRY_URL =
+            "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+        const val SEDIPUALBA_MALLORCA_LOGIN_URL =
+            "https://cim.secimallorca.net/carpetaciudadana/login.aspx?returnUrl=" +
+                "https%3a%2f%2fcim.secimallorca.net%2fsegex%2ftramite.aspx%3fidtramite%3d12082"
+        const val SEDIPUALBA_OPTIONS_PATH = "/segex/identificacion_opciones.aspx"
+        const val SEDIPUALBA_LOGIN_LABEL_ES = "Iniciar sesi\u00f3n"
+        const val SEDIPUALBA_LOGIN_LABEL_CA = "Iniciar sessi\u00f3"
+        const val SEDIPUALBA_SSL_OPTION_LABEL_ES =
+            "Identificarse con certificado digital a trav\u00e9s de nuestro servidor"
+        const val SEDIPUALBA_SSL_OPTION_LABEL_CA =
+            "Identificar-se amb certificat digital a trav\u00e9s del nostre servidor"
         const val BADAJOZ_PORTAL_ID = "diputacion-badajoz-portal"
         const val BADAJOZ_ENTRY_URL = "https://sede.dip-badajoz.es"
         const val BADAJOZ_LOGIN_PAGE_URL =
@@ -1899,7 +2118,7 @@ class RealE2eInstrumentedTest {
         const val AEAT_CENSAL_DATA_LABEL = "Mis datos censales"
         const val AEAT_CENSAL_DATA_HREF =
             "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/" +
-                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CP"
+                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CPE"
         const val AEAT_CERTIFICATE_PAGE_URL = AEAT_CENSAL_DATA_HREF
         const val AEAT_CERTIFICATE_BUTTON_LABEL = "Certificado o DNI electrónico"
         const val LLEIDA_PORTAL_ID = "diputacion-lleida-sede"
@@ -1943,15 +2162,23 @@ class RealE2eInstrumentedTest {
         const val UNIZAR_ENTRY_URL =
             "https://tramita.unizar.es/tramitador/ciudadano?entrada=ciudadano&fkIdioma=es&idEntidad=ROOT&idLogica=loginComponent"
         const val UNIZAR_AUTH_CONTAINER_ID = "capaAccesoCertificado"
-        const val UNIZAR_AUTH_ELEMENT_ID = "entrar"
+        const val UNIZAR_AUTH_ELEMENT_ID = "acEntrar"
         const val UNIZAR_AUTH_LABEL =
             "Pulse para ejecutar Autofirma e identificarse con certificado."
         const val UNIZAR_AUTH_IMAGE_ALT = "certificado login"
         const val UNIZAR_AUTH_ONCLICK = "lanza();"
+        const val UNIZAR_AUTH_HANDLER = "lanza"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
+        const val CLIENT_AUTH_DIALOG_TAG = "client-auth-confirmation"
+        const val CLIENT_AUTH_CONTINUE_TAG = "client-auth-confirmation-continue"
+        const val CLIENT_AUTH_CANCEL_TAG = "client-auth-confirmation-cancel"
+        const val INTERACTIVE_CLIENT_AUTH_DIALOG_TAG = "interactive-client-auth"
+        const val INTERACTIVE_CLIENT_AUTH_CANCEL_TAG = "interactive-client-auth-cancel"
         const val BADAJOZ_PAGE_READY_TIMEOUT_MILLIS = 60_000L
         const val PORTAL_TIMEOUT_MILLIS = 75_000L
+        const val SIGNING_OWNER_TIMEOUT_MILLIS = 10_000L
+        const val MAX_FAILURE_UNWRAP_DEPTH = 4
         const val SIGNING_TIMEOUT_MILLIS = 90_000L
         const val POST_SIGN_TIMEOUT_MILLIS = 30_000L
         const val RECIPE_TERMINAL_GRACE_MILLIS = 5_000L
@@ -1961,6 +2188,8 @@ class RealE2eInstrumentedTest {
         const val MAX_CLIENT_AUTH_CONFIRMATIONS = 8
         val PORTAL_ID_PATTERN = Regex("[a-z0-9][a-z0-9-]{0,95}")
         val SAFE_ERROR_TOKEN = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
+        const val SIGN_CONFIRM_CLICK_TIMEOUT_PREFIX = "REAL_E2E_SIGN_CONFIRM_CLICK_TIMEOUT_"
+        val JS_IDENTIFIER = Regex("[A-Za-z_][A-Za-z0-9_]{0,63}")
         val SANITIZED_HOST = Regex("(?:^| )host=([a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?)(?: |$)")
         val SANITIZED_NAVIGATION_EVENT = Regex(
             "(?:^| )event=(NAVIGATION_ALLOWED|PAGE_STARTED|PAGE_FINISHED)(?: |$)",

@@ -61,6 +61,8 @@ class RuntimeLicenseEvidenceTest(unittest.TestCase):
         self.assertIn('Copyright 2026 Maksim Zaguzov', license_text)
         self.assertNotIn('2026 Kai', license_text)
         notice = (root / 'NOTICE').read_text()
-        self.assertIn('Dharma Type', notice)
+        # Bebas Neue is no longer bundled; Liberation Sans from PDFBox keeps its OFL notice.
+        self.assertNotIn('Dharma Type', notice)
+        self.assertIn('Liberation Sans', notice)
         self.assertIn('SIL Open Font License', notice)
         self.assertIn('Copyright 2026 Maksim Zaguzov', notice)

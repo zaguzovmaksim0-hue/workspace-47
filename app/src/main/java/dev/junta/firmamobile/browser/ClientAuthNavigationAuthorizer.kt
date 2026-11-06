@@ -59,6 +59,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
         targetUrl: String,
         currentEpoch: Long,
         isModernMainFrameRequest: Boolean,
+        redirectingRequestUrl: String? = null,
     ): AuthorizedClientAuthTarget? {
         if (!isModernMainFrameRequest || activeProfileId == null || currentEpoch == Long.MAX_VALUE) {
             clearPending()
@@ -83,6 +84,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
                 profile = profile,
                 policy = policy,
                 currentUrl = currentUrl,
+                redirectingRequestUrl = redirectingRequestUrl,
                 target = target,
                 currentEpoch = currentEpoch,
                 nowNanos = nowNanos,
@@ -223,14 +225,18 @@ class ClientAuthNavigationAuthorizer internal constructor(
         profile: SiteProfile,
         policy: ClientAuthPolicy,
         currentUrl: String?,
+        redirectingRequestUrl: String?,
         target: URI,
         currentEpoch: Long,
         nowNanos: Long,
     ): AuthorizedClientAuthTarget? {
         pending = null
-        val source = currentUrl?.let(::strictClientAuthHttpsUri) ?: run {
-            return null
-        }
+        // A server redirect issued by the exact source request carries the same authority as a link on
+        // the committed source page; it covers sources that redirect before any page commits (PATTEX).
+        val source = listOfNotNull(currentUrl, redirectingRequestUrl)
+            .mapNotNull(::strictClientAuthHttpsUri)
+            .firstOrNull(policy::matchesSourceUrl)
+            ?: return null
         if (!policy.matchesSourceUrl(source) || !policy.matchesRequestUrl(target) ||
             !policy.hasLinkedEphemeralParameters(source, target)
         ) {

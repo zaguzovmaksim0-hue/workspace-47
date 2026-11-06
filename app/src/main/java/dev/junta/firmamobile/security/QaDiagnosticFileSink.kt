@@ -91,6 +91,7 @@ internal class QaDiagnosticFileSink(
             DiagnosticEventCode.SSL_ERROR_CANCELLED.name,
             DiagnosticEventCode.SAFE_BROWSING_BLOCKED.name,
             DiagnosticEventCode.NETWORK_ERROR.name,
+            DiagnosticEventCode.BLANK_DOCUMENT.name,
             DiagnosticEventCode.MINIAPPLET_BRIDGE.name,
             DiagnosticEventCode.NAVIGATION_ALLOWED.name,
             DiagnosticEventCode.NETWORK_REQUEST.name,

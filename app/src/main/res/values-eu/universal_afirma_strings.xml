@@ -3,4 +3,6 @@
     <string name="catalog_open_universal_afirma">Ireki AutoFirma-rekin</string>
     <string name="catalog_open_profile_compatibility">Atariaren modu espezifikoa</string>
     <string name="catalog_universal_afirma_copy">Egiaztatutzat markatutako egoitzak soilik probatu dira hasieratik amaierara aplikazio honekin.</string>
+    <string name="native_afirma_portal_mode_hint">Egoitza honek atariaren modu espezifikoa du aplikazioan. Berriro irekiko da bere sarrera-orritik.</string>
+    <string name="native_afirma_reason">Kode teknikoa: %1$s</string>
 </resources>

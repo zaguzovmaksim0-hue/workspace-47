@@ -34,7 +34,7 @@ class HuescaProfileCatalogBindingTest {
     fun qaProfilePreservesExactHuescaBatchContractAndReleaseStaysDisabled() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Diputación Provincial de Huesca — Oficina Virtual", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -43,11 +43,16 @@ class HuescaProfileCatalogBindingTest {
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
-        assertEquals(setOf(Capability.SIGN), profile.capabilities)
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val clientAuth = requireNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, clientAuth.transitionMode)
+        assertEquals(profile.initiatorOrigins, clientAuth.requestOrigins)
+        assertEquals("/sta/CarpetaPrivate/Certificate", clientAuth.requestPath)
+        assertEquals(mapOf("APP_CODE" to "STA", "PAGE_CODE" to "HOME"), clientAuth.fixedQueryParameters)
+        assertFalse(clientAuth.allowEmptyIssuerList)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-16" })
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() in setOf("2026-08-16", "2026-11-06") })
 
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         assertEquals(ProtocolInputAdapterId("huesca-batch-autoscript-v1"), operation.inputAdapterId)

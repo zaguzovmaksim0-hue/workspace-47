@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Short lowercase labels printed on the device; screen readers get the full sentences. -->
+    <string name="home_status_loading">carregant</string>
+    <string name="home_status_none">sense certificat</string>
+    <string name="home_status_locked">bloquejat</string>
+    <string name="home_status_unlocking">comprovant</string>
+    <string name="home_status_ready">llest</string>
+    <string name="card_holder_label">titular</string>
+    <string name="card_issuer_label">emissor</string>
+    <string name="card_valid_until_label">vàlid fins a</string>
+    <string name="home_eject">canviar</string>
+    <string name="home_eject_description">Canviar de certificat</string>
+    <plurals name="display_days_left">
+        <item quantity="one">dia\nrestant</item>
+        <item quantity="other">dies\nrestants</item>
+    </plurals>
+    <string name="display_until">fins a</string>
+    <string name="display_today">avui</string>
+    <string name="home_key_sign">signar</string>
+    <string name="home_key_verify">verificar</string>
+    <string name="home_key_journal">diari</string>
+    <string name="home_key_reminders">avisos</string>
+    <plurals name="certificate_validity_days_left">
+        <item quantity="one">Queda %1$d dia</item>
+        <item quantity="other">Queden %1$d dies</item>
+    </plurals>
+    <plurals name="catalog_services_unit">
+        <item quantity="one">servei</item>
+        <item quantity="other">serveis</item>
+    </plurals>
+    <string name="catalog_legend_verified">verificat</string>
+    <string name="catalog_legend_unverified">sense verificar</string>
+</resources>

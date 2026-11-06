@@ -44,7 +44,7 @@ class BurgosBatchSigningAdapterTest {
         )
         assertEquals(BurgosBatchProtocolAdapter.ID, normalized.protocolId)
         assertEquals("diputacion-burgos-portal", normalized.context.profileId)
-        assertEquals(1, normalized.context.profileVersion)
+        assertEquals(2, normalized.context.profileVersion)
         assertEquals("registro.diputaciondeburgos.es", normalized.context.origin.host)
         assertEquals(9L, normalized.context.navigationEpoch)
         assertEquals(observedAt, normalized.context.observedAt)

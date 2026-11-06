@@ -11,7 +11,6 @@ internal fun LegalDocument.localizedTitle(): String {
         "legal/project-notice.txt" -> R.string.legal_title_project_notice
         "legal/components.txt" -> R.string.legal_title_components
         "legal/upstream/Apache-2.0.txt" -> R.string.legal_title_apache
-        "legal/upstream/bebas-neue-OFL.txt" -> R.string.legal_title_bebas_neue
         "legal/upstream/liberation-LICENSE.txt" -> R.string.legal_title_liberation
         "legal/upstream/pdfbox-LICENSE.txt" -> R.string.legal_title_pdfbox_license
         "legal/upstream/pdfbox-NOTICE.txt" -> R.string.legal_title_pdfbox_notice
