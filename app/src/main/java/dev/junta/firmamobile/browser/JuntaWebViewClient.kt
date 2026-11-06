@@ -2,6 +2,8 @@ package dev.junta.firmamobile.browser
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.net.http.SslError
 import android.os.Build
 import android.webkit.RenderProcessGoneDetail
@@ -429,17 +431,28 @@ class JuntaWebViewClient(
     }
 
     private fun detectBlankDocument(view: WebView) {
-        runCatching {
-            val navigationEpoch = currentNavigationEpoch()
-            val finishedUrl = observedTopLevelUrl.get()
-            view.evaluateJavascript(BLANK_DOCUMENT_PROBE) { result ->
-                if (isCurrentBlankProbeResult(view, result, navigationEpoch, finishedUrl)) {
-                    logger.recordBrowserEvent(DiagnosticEventCode.NETWORK_ERROR)
-                    callbacks.onBrowserError(BrowserErrorCode.BLANK_DOCUMENT)
+        val navigationEpoch = currentNavigationEpoch()
+        val finishedUrl = observedTopLevelUrl.get()
+        // Many portals finish an empty shell, then render or script-navigate within ~3 s.
+        Handler(Looper.getMainLooper()).postDelayed(
+            {
+                runCatching {
+                    if (!isSameFinishedNavigation(view, navigationEpoch, finishedUrl)) return@runCatching
+                    view.evaluateJavascript(BLANK_DOCUMENT_PROBE) { result ->
+                        if (isCurrentBlankProbeResult(view, result, navigationEpoch, finishedUrl)) {
+                            logger.recordBrowserEvent(DiagnosticEventCode.BLANK_DOCUMENT)
+                            callbacks.onBrowserError(BrowserErrorCode.BLANK_DOCUMENT)
+                        }
+                    }
                 }
-            }
-        }
+            },
+            BLANK_DOCUMENT_SETTLE_MILLIS,
+        )
     }
+
+    private fun isSameFinishedNavigation(view: WebView, navigationEpoch: Long, finishedUrl: String?): Boolean =
+        isCurrentWebView(view) && currentNavigationEpoch() == navigationEpoch &&
+            observedTopLevelUrl.get() == finishedUrl
 
     private fun isCurrentBlankProbeResult(
         view: WebView,
@@ -448,9 +461,7 @@ class JuntaWebViewClient(
         finishedUrl: String?,
     ): Boolean {
         val isBlankDocument = result?.removeSurrounding("\"", "\"") == BLANK_DOCUMENT_RESULT
-        val isSameNavigation = currentNavigationEpoch() == navigationEpoch &&
-            observedTopLevelUrl.get() == finishedUrl
-        return isBlankDocument && isCurrentWebView(view) && isSameNavigation
+        return isBlankDocument && isSameFinishedNavigation(view, navigationEpoch, finishedUrl)
     }
 
     override fun shouldInterceptRequest(
@@ -669,6 +680,7 @@ class JuntaWebViewClient(
               return visible ? 'content' : 'blank';
             })()
         """.trimIndent()
+        const val BLANK_DOCUMENT_SETTLE_MILLIS = 3_000L
         const val UNKNOWN_METHOD = "UNKNOWN"
         const val GET_METHOD = "GET"
         val CONFIRMED_IN_PLACE_TRANSITIONS = setOf(

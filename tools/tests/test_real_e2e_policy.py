@@ -338,6 +338,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('hasObservedTerminalNavigationFailure()', helper)
         for event in (
             'event=NETWORK_ERROR',
+            'event=BLANK_DOCUMENT',
             'event=SSL_ERROR_CANCELLED',
             'event=NAVIGATION_BLOCKED',
         ):
