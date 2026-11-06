@@ -18,6 +18,8 @@ ISSUER_SHA256 = {
         "f038421f07f20d63a20d3691e5a178ab8459ebe570c1647b7690554ef23876ab",
     "fnmt_ac_servidores_seguros_tipo1":
         "1edb6bd91274882db795bfc514f8aabe10ad955cbccfd3fd5a5b5febb2ce5b68",
+    "fnmt_ac_servidores_seguros_tipo2_g2r":
+        "b45ab8e079025df9783535a720862129c9b2d22672b9be8dfe7cd2eda33f62a3",
     "globalsign_gcc_r3_ev_tls_ca_2025":
         "1b2928021a4b89cf0f572a2436e914e25412ad58edee221e6c7c3c5437179a26",
 }
@@ -32,6 +34,7 @@ HOST_ISSUERS = {
     ): "fnmt_ac_componentes_informaticos",
     ("sede.consejodetransparencia.gob.es",): "fnmt_ac_servidores_seguros_tipo1",
     ("sede.imserso.gob.es",): "globalsign_gcc_r3_ev_tls_ca_2025",
+    ("sede.csd.gob.es",): "fnmt_ac_servidores_seguros_tipo2_g2r",
 }
 
 
