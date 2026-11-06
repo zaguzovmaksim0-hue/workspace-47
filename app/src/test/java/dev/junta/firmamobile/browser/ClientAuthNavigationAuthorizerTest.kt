@@ -40,7 +40,7 @@ class ClientAuthNavigationAuthorizerTest {
 
         assertEquals(AEAT_PROFILE, result?.profileId)
         assertEquals("www1.agenciatributaria.gob.es", result?.target?.host)
-        assertEquals("/wlpl/BUGC-JDIT/MdcAcceso", result?.target?.rawPath)
+        assertEquals("/wlpl/OVCT-CXEW/DialogoRepresentacion", result?.target?.rawPath)
         assertNull(
             direct.observeTopLevelNavigation(
                 AEAT_PROFILE, AEAT_SOURCE, AEAT_TARGET, 40, true,
@@ -779,7 +779,7 @@ class ClientAuthNavigationAuthorizerTest {
 
         assertNull(
             direct.observeTopLevelNavigation(
-                AEAT_PROFILE, AEAT_SOURCE, "$AEAT_TARGET?extra=1", 70, true,
+                AEAT_PROFILE, AEAT_SOURCE, "$AEAT_TARGET&extra=1", 70, true,
             ),
         )
         assertNull(
@@ -808,7 +808,16 @@ class ClientAuthNavigationAuthorizerTest {
             {
                 it.observeTopLevelNavigation(
                     AEAT_PROFILE,
-                    "https://sede.agenciatributaria.gob.es.evil.example/Sede/mi-area-personal.html",
+                    AEAT_SOURCE.replace("sede.agenciatributaria.gob.es", "sede.agenciatributaria.gob.es.evil.example"),
+                    AEAT_TARGET,
+                    50,
+                    true,
+                )
+            },
+            {
+                it.observeTopLevelNavigation(
+                    AEAT_PROFILE,
+                    AEAT_SOURCE.replace("MdcAcceso", "OtroServicio"),
                     AEAT_TARGET,
                     50,
                     true,
@@ -823,12 +832,15 @@ class ClientAuthNavigationAuthorizerTest {
     fun aeatDirectTransitionRejectsEveryTargetExpansion() {
         val invalidTargets = listOf(
             AEAT_TARGET.replace("www1.agenciatributaria.gob.es", "www1.agenciatributaria.gob.es.evil.example"),
-            AEAT_TARGET.replace("/MdcAcceso", "/Other"),
-            AEAT_TARGET.replace("/MdcAcceso", "/MdcAcceso%2Fother"),
+            AEAT_TARGET.replace("/DialogoRepresentacion", "/Other"),
+            AEAT_TARGET.replace("/DialogoRepresentacion", "/DialogoRepresentacion%2Fother"),
+            // The representation dialog is a gateway to every AEAT service: ref must stay pinned.
+            AEAT_TARGET.replace("MdcAcceso", "OtroServicio"),
+            AEAT_TARGET.substringBefore('?'),
             AEAT_TARGET.replace("www1.agenciatributaria.gob.es", "www1.agenciatributaria.gob.es:8443"),
             "$AEAT_TARGET#fragment",
-            "$AEAT_TARGET?extra=1",
-            "$AEAT_TARGET?",
+            "$AEAT_TARGET&extra=1",
+            "$AEAT_TARGET&ref=%2Fwlpl%2FOTRO",
         )
 
         invalidTargets.forEach { target ->
@@ -1392,8 +1404,8 @@ class ClientAuthNavigationAuthorizerTest {
                 transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse("https://www1.agenciatributaria.gob.es")),
                 sourceUrls = setOf(URI(AEAT_SOURCE)),
-                requestPath = "/wlpl/BUGC-JDIT/MdcAcceso",
-                fixedQueryParameters = emptyMap(),
+                requestPath = "/wlpl/OVCT-CXEW/DialogoRepresentacion",
+                fixedQueryParameters = mapOf("ref" to "/wlpl/BUGC-JDIT/MdcAcceso"),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
                 grantTtlSeconds = 15,
@@ -1772,9 +1784,11 @@ class ClientAuthNavigationAuthorizerTest {
             "https://www.carpetaciutadana.org/cime/Login/LoginCert.aspx?URL=$MENORCA_RETURN"
         val TOLEDO_PROFILE = ProfileId("diputacion-toledo-sede")
         const val AEAT_SOURCE =
-            "https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html"
+            "https://sede.agenciatributaria.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html" +
+                "?rep=S&ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso&aut=CPE"
         const val AEAT_TARGET =
-            "https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso"
+            "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+                "?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso"
         const val TOLEDO_SOURCE =
             "https://diputacion.toledo.gob.es/SIGEM_AutenticacionWeb/" +
                 "seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_31&" +
