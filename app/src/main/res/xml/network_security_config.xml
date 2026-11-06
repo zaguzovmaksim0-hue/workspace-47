@@ -47,4 +47,12 @@
             <certificates src="@raw/globalsign_gcc_r3_ev_tls_ca_2025" />
         </trust-anchors>
     </domain-config>
+    <!-- FNMT AC SERVIDORES SEGUROS TIPO2 G2R (root AC RAIZ FNMT-RCM SERVIDORES SEGUROS G2R,
+         cross-signed by system AC RAIZ FNMT-RCM) -->    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">sede.csd.gob.es</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/fnmt_ac_servidores_seguros_tipo2_g2r" />
+        </trust-anchors>
+    </domain-config>
 </network-security-config>
