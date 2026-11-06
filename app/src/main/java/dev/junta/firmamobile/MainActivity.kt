@@ -43,6 +43,7 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalCatalogScreen
 import dev.junta.firmamobile.catalog.PortalOpenTarget
 import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
+import dev.junta.firmamobile.catalog.resolvePortalModeForPage
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TunnelRouteEvent
@@ -61,6 +62,8 @@ import dev.junta.firmamobile.ui.AppRoot
 import dev.junta.firmamobile.ui.CertificateEntryChoiceActions
 import dev.junta.firmamobile.ui.LocalCertificateEntryChoice
 import dev.junta.firmamobile.ui.LocalSavedCertificates
+import dev.junta.firmamobile.ui.LocalPortalModeActions
+import dev.junta.firmamobile.ui.PortalModeActions
 import dev.junta.firmamobile.ui.SavedCertificatesActions
 import dev.junta.firmamobile.ui.BrowserScreen
 import dev.junta.firmamobile.ui.CertificateUiState
@@ -306,11 +309,10 @@ class MainActivity : ComponentActivity() {
             },
         )
         window.decorView.post(::drainExternalAfirma)
-        val paperSystemBar = getColor(R.color.jfm_paper)
         enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.light(
-                scrim = paperSystemBar,
-                darkScrim = paperSystemBar,
+            navigationBarStyle = SystemBarStyle.auto(
+                lightScrim = getColor(R.color.jfm_paper_light),
+                darkScrim = getColor(R.color.jfm_paper_dark),
             ),
         )
         setContent {
@@ -355,9 +357,20 @@ class MainActivity : ComponentActivity() {
                 onChoose = certificateViewModel::chooseCertificate,
                 onCancel = certificateViewModel::cancelCertificateChoice,
             )
+            val portalModeActions = remember {
+                PortalModeActions(
+                    targetFor = { page -> catalogRepository.resolvePortalModeForPage(page) },
+                    open = { target ->
+                        cancelSigning(SigningCancelReason.NAVIGATION)
+                        currentWebView = null
+                        navigation.openBrowser(profileId = target.profileId, entryUrl = target.entryUrl)
+                    },
+                )
+            }
             CompositionLocalProvider(
                 LocalSavedCertificates provides savedCertificateActions,
                 LocalCertificateEntryChoice provides entryChoiceActions,
+                LocalPortalModeActions provides portalModeActions,
             ) { JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
                 val app = application as JuntaFirmaApplication

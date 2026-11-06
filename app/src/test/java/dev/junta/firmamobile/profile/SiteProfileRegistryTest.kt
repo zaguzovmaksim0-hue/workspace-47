@@ -94,7 +94,10 @@ class SiteProfileRegistryTest {
     fun `AEAT client TLS profile is exact and QA only before physical E2E`() {
         val profileId = ProfileId("aeat-mis-datos-censales")
         val source = URI("https://sede.agenciatributaria.gob.es/Sede/mi-area-personal.html")
-        val target = URI("https://www1.agenciatributaria.gob.es/wlpl/BUGC-JDIT/MdcAcceso")
+        val target = URI(
+            "https://www1.agenciatributaria.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+                "?ref=%2Fwlpl%2FBUGC-JDIT%2FMdcAcceso",
+        )
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(source))

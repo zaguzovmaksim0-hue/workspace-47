@@ -13,12 +13,14 @@ class DirectTlsProfilePinTest {
 
     private val mutations = listOf(
         Mutation("aeat requestOrigins host", aeat, """"requestOrigins"\s*:\s*\["[^"]*"""", """"requestOrigins":["https://otro.example.es""""),
-        Mutation("aeat requestPath", aeat, """"requestPath"\s*:\s*"[^"]*"""", """"requestPath":"/wlpl/BUGC-JDIT/Otro""""),
+        Mutation("aeat requestPath", aeat, """"requestPath"\s*:\s*"[^"]*"""", """"requestPath":"/wlpl/OVCT-CXEW/Otro""""),
         Mutation("aeat grantTtlSeconds 15->14", aeat, """"grantTtlSeconds"\s*:\s*15""", """"grantTtlSeconds":14"""),
         Mutation("aeat allowEmptyIssuerList flip", aeat, """"allowEmptyIssuerList"\s*:\s*false""", """"allowEmptyIssuerList":true"""),
-        Mutation("aeat sourceUrl", aeat, """("sourceUrls"\s*:\s*\["[^"]*)mi-area-personal""", "$1otra-area"),
+        Mutation("aeat sourceUrl", aeat, """("sourceUrls"\s*:\s*\["[^"]*)SelectorAccesos""", "$1OtroSelector"),
+        Mutation("aeat source ref", aeat, """("sourceUrls"\s*:\s*\["[^"]*)MdcAcceso""", "$1OtroServicio"),
         Mutation("aeat requestPort 8443", aeat, """"grantTtlSeconds"\s*:\s*15""", """"grantTtlSeconds":15,"requestPort":8443"""),
-        Mutation("aeat fixedQueryParameters", aeat, """"fixedQueryParameters"\s*:\s*\{\}""", """"fixedQueryParameters":{"a":"b"}"""),
+        Mutation("aeat fixedQueryParameters ref", aeat, """"ref"\s*:\s*"/wlpl/BUGC-JDIT/MdcAcceso"""", """"ref":"/wlpl/OTRO/Servicio""""),
+        Mutation("aeat fixedQueryParameters extra", aeat, """"fixedQueryParameters"\s*:\s*\{""", """"fixedQueryParameters":{"a":"b","""),
         Mutation("importass requestOrigins host", importass, """"requestOrigins"\s*:\s*\["[^"]*"""", """"requestOrigins":["https://otro.example.es""""),
         Mutation("importass requestPath", importass, """"requestPath"\s*:\s*"[^"]*"""", """"requestPath":"/IPCE/Otro""""),
         Mutation("importass grantTtlSeconds 15->14", importass, """"grantTtlSeconds"\s*:\s*15""", """"grantTtlSeconds":14"""),

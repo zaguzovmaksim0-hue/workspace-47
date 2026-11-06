@@ -73,8 +73,8 @@ val strings = checkNotNull(activityContext).resources
                 assertScreenshotsAllowed(scenario)
 
                 enterPassword(TEST_PASSPHRASE, strings)
-                waitForText(strings.getString(R.string.certificate_found))
-                rule.onNodeWithText(strings.getString(R.string.certificate_found))
+                waitForText(strings.getString(R.string.home_status_ready))
+                rule.onNodeWithText(strings.getString(R.string.home_status_ready))
                     .performScrollTo()
                     .assertIsDisplayed()
                 rule.onNodeWithText(strings.getString(R.string.certificate_owner, "Persona de Prueba"), substring = true)
@@ -90,12 +90,12 @@ val strings = checkNotNull(activityContext).resources
                     check(session.state() is CertificateSessionState.Unlocked)
                 }
                 scenario.moveToState(Lifecycle.State.RESUMED)
-                waitForText(strings.getString(R.string.certificate_found))
+                waitForText(strings.getString(R.string.home_status_ready))
                 rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password)).assertDoesNotExist()
                 assertScreenshotsAllowed(scenario)
 
                 scenario.recreate()
-                waitForText(strings.getString(R.string.certificate_found))
+                waitForText(strings.getString(R.string.home_status_ready))
                 rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password)).assertDoesNotExist()
                 rule.runOnIdle {
                     check(session.state() is CertificateSessionState.Unlocked)

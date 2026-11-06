@@ -30,14 +30,17 @@ class CuencaClientAuthProfileTest {
     private val startUrl = URI(
         "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074",
     )
-    private val sourceUrl = URI("https://sede.dipucuenca.es/segex/identificacion_opciones.aspx")
+    private val sourceUrl = URI(
+        "https://sede.dipucuenca.es/carpetaciudadana/login.aspx" +
+            "?returnUrl=https%3a%2f%2fsede.dipucuenca.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d12074",
+    )
 
     @Test
     fun qaProfilePinsTheObservedCuencaSedipualbaClientTlsTransitionAndReleaseStaysDisabled() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Diputación Provincial de Cuenca — acceso con certificado", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -54,9 +57,9 @@ class CuencaClientAuthProfileTest {
             policy.requestOrigins,
         )
         assertEquals(setOf(sourceUrl), policy.sourceUrls)
-        assertEquals(mapOf("idioma" to "es"), policy.sourceFixedQueryParameters)
-        assertEquals(setOf("idtoken"), policy.sourceRequiredEphemeralQueryParameters)
-        assertEquals(setOf("idtoken"), policy.linkedEphemeralQueryParameters)
+        assertTrue(policy.sourceFixedQueryParameters.isEmpty())
+        assertTrue(policy.sourceRequiredEphemeralQueryParameters.isEmpty())
+        assertTrue(policy.linkedEphemeralQueryParameters.isEmpty())
         assertEquals("/", policy.requestPath)
         assertEquals(mapOf("idioma" to "es", "entidad" to "16000"), policy.fixedQueryParameters)
         assertEquals(setOf("idtoken"), policy.requiredEphemeralQueryParameters)

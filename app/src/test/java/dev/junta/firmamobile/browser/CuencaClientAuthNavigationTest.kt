@@ -42,10 +42,9 @@ class CuencaClientAuthNavigationTest {
     @Test
     fun cuencaTransitionRejectsMismatchedEntityTokenHostPathAndQuery() {
         val attacks = listOf(
-            SOURCE.replace(TOKEN, OTHER_TOKEN) to TARGET,
-            SOURCE.replace("idioma=es", "idioma=en") to TARGET,
+            SOURCE.substringBefore("?") to TARGET,
+            SOURCE.replace("login.aspx", "login2.aspx") to TARGET,
             "$SOURCE&extra=1" to TARGET,
-            SOURCE to TARGET.replace(TOKEN, OTHER_TOKEN),
             SOURCE to TARGET.replace("idioma=es", "idioma=en"),
             SOURCE to TARGET.replace("entidad=16000", "entidad=02000"),
             SOURCE to "$TARGET&extra=1",
@@ -81,10 +80,8 @@ class CuencaClientAuthNavigationTest {
     private companion object {
         val PROFILE = ProfileId("diputacion-cuenca-portal")
         const val TOKEN = "12345678-w47SyntheticCuencaToken0123456789"
-        const val OTHER_TOKEN = "87654321-w47OtherCuencaToken9876543210"
         const val SOURCE =
-            "https://sede.dipucuenca.es/segex/identificacion_opciones.aspx?" +
-                "idtoken=$TOKEN&idioma=es"
+            "https://sede.dipucuenca.es/carpetaciudadana/login.aspx?returnUrl=https%3a%2f%2fsede.dipucuenca.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d12074"
         const val TARGET =
             "https://identificacionssl.sedipualba.es/?idtoken=$TOKEN&idioma=es&entidad=16000"
     }

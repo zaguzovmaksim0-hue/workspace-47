@@ -7,16 +7,12 @@
     <string name="certificate_copy">Select your .p12 or .pfx file.</string>
     <string name="privacy_copy">The file and password will not be sent to third parties.</string>
     <string name="select_certificate">Select certificate</string>
-    <string name="certificate_status_ready_title">Secure selection available</string>
     <string name="certificate_status_ready_copy">The file is processed only on this device.</string>
-    <string name="certificate_status_loading_title">Preparing secure storage</string>
     <string name="certificate_status_loading_copy">Checking whether a certificate is selected.</string>
     <string name="certificate_status_locked_title">Protected certificate</string>
     <string name="certificate_status_locked_copy">Enter the password and choose how long to unlock it on this device.</string>
-    <string name="certificate_status_unlocking_title">Verifying certificate</string>
     <string name="certificate_status_unlocking_copy">The identity is being checked locally.</string>
-    <string name="certificate_status_unlocked_title">Certificate ready</string>
-    <string name="certificate_status_unlocked_copy">The session expires at the end of the chosen period. Locking, changing or deleting the certificate also closes the session.</string>
+    <string name="certificate_status_unlocked_copy">The session closes when the chosen period ends.</string>
     <string name="certificate_loading">Loading certificate…</string>
     <string name="certificate_selected">Selected certificate: %1$s</string>
     <string name="certificate_password">Certificate password</string>
@@ -124,7 +120,6 @@
     <string name="signing_closed_error_code">Code: %1$s</string>
     <string name="unknown_value">unknown</string>
     <string name="catalog_title">Public services</string>
-    <string name="catalog_subtitle">Find and open the public service or website you need.</string>
     <string name="catalog_back_to_certificate">Return to certificate</string>
     <string name="catalog_my_region_label">My region</string>
     <string name="catalog_region_copy">Services for your region and those available throughout Spain are shown first.</string>
@@ -348,7 +343,7 @@
         <item quantity="one">Batch signing (%1$d document)</item>
         <item quantity="other">Batch signing (%1$d documents)</item>
     </plurals>
-    <string name="catalog_search_or_address">Search services or addresses</string>
+    <string name="catalog_search_or_address">Service or address</string>
     <string name="catalog_region_change">Change</string>
     <string name="catalog_favorite_add_description">Add to favourites</string>
     <string name="catalog_favorite_remove_description">Remove from favourites</string>

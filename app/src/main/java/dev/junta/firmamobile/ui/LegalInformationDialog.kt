@@ -224,16 +224,17 @@ private fun ColumnScope.legalLicenseList(list: List<LegalDocument>?, onSelect: (
 private fun legalMenuItems(onPrivacy: () -> Unit, onLicenses: () -> Unit, onAbout: () -> Unit) {
     JuntaListPanel {
         JuntaToolRow(iconRes = R.drawable.ic_ui_lock, title = stringResource(R.string.legal_privacy),
-            onClick = onPrivacy)
+            onClick = onPrivacy, tone = JuntaTone.MINT)
         JuntaListDivider()
         JuntaToolRow(iconRes = R.drawable.ic_ui_document, title = stringResource(R.string.legal_licenses),
-            onClick = onLicenses)
+            onClick = onLicenses, tone = JuntaTone.SKY)
         JuntaListDivider()
         JuntaToolRow(
             iconRes = R.drawable.ic_ui_info,
             title = stringResource(R.string.legal_about),
             onClick = onAbout,
             subtitle = stringResource(R.string.legal_version_value, BuildConfig.VERSION_NAME),
+            tone = JuntaTone.SAFFRON,
         )
     }
 }

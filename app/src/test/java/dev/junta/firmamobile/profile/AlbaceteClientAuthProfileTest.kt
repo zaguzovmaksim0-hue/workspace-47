@@ -30,14 +30,17 @@ class AlbaceteClientAuthProfileTest {
     private val startUrl = URI(
         "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567",
     )
-    private val sourceUrl = URI("https://sede.dipualba.es/segex/identificacion_opciones.aspx")
+    private val sourceUrl = URI(
+        "https://sede.dipualba.es/carpetaciudadana/login.aspx" +
+            "?returnUrl=https%3a%2f%2fsede.dipualba.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d567",
+    )
 
     @Test
     fun qaProfilePinsTheObservedSedipualbaClientTlsTransitionAndReleaseStaysDisabled() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Diputación Provincial de Albacete — acceso con certificado", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -54,9 +57,9 @@ class AlbaceteClientAuthProfileTest {
             policy.requestOrigins,
         )
         assertEquals(setOf(sourceUrl), policy.sourceUrls)
-        assertEquals(mapOf("idioma" to "es"), policy.sourceFixedQueryParameters)
-        assertEquals(setOf("idtoken"), policy.sourceRequiredEphemeralQueryParameters)
-        assertEquals(setOf("idtoken"), policy.linkedEphemeralQueryParameters)
+        assertTrue(policy.sourceFixedQueryParameters.isEmpty())
+        assertTrue(policy.sourceRequiredEphemeralQueryParameters.isEmpty())
+        assertTrue(policy.linkedEphemeralQueryParameters.isEmpty())
         assertEquals("/", policy.requestPath)
         assertEquals(mapOf("idioma" to "es", "entidad" to "02000"), policy.fixedQueryParameters)
         assertEquals(setOf("idtoken"), policy.requiredEphemeralQueryParameters)

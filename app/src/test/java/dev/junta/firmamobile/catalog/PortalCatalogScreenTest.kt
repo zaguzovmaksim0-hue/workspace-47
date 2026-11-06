@@ -7,6 +7,7 @@ import java.time.format.FormatStyle
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertIsDisplayed
@@ -103,7 +104,7 @@ class PortalCatalogScreenTest {
     fun `card with missing verification date does not invent one`() {
         val portal = repository.portals().first { it.lastVerifiedOn != null }.copy(lastVerifiedOn = null)
         setVerificationCard(portal)
-        rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}").assertDoesNotExist()
+        rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}", useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test
@@ -111,7 +112,7 @@ class PortalCatalogScreenTest {
         val portal = repository.portals().first { it.lastVerifiedOn != null }
             .copy(supportStatus = PortalSupportStatus.VERIFIED_CONTRACT)
         setVerificationCard(portal)
-        rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}").assertDoesNotExist()
+        rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}", useUnmergedTree = true).assertDoesNotExist()
     }
 
     private fun assertVerificationDate(prefix: String) {
@@ -123,10 +124,10 @@ class PortalCatalogScreenTest {
                 .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
             JuntaFirmaTheme { CatalogPortalCard(portal, false, {}, {}, {}) }
         }
-        rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}").assertIsDisplayed()
-        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}").assertCountEquals(1)
-        rule.onAllNodesWithText(expected).assertCountEquals(1)
-        rule.onNodeWithText(expected).assertIsDisplayed()
+        rule.onNodeWithTag("catalog-verified-on-${portal.portalId.value}", useUnmergedTree = true).assertIsDisplayed()
+        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}", useUnmergedTree = true).assertCountEquals(1)
+        rule.onAllNodesWithText(expected, useUnmergedTree = true).assertCountEquals(1)
+        rule.onNodeWithText(expected, useUnmergedTree = true).assertIsDisplayed()
     }
 
     private fun setVerificationCard(portal: PortalCatalogItem) {
@@ -219,7 +220,8 @@ class PortalCatalogScreenTest {
         ).performClick()
         rule.onNodeWithText("Elige tu región").assertIsDisplayed()
         rule.onNodeWithText("Buscar región").assertDoesNotExist()
-        rule.onNodeWithText("Aragón").performClick()
+        // The catalogue behind the sheet may show an "Aragón" section header too; pick the region option.
+        rule.onNode(hasText("Aragón") and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick()
 
         rule.runOnIdle { assertEquals(PortalRegionCode.ARAGON, selected) }
     }
@@ -411,9 +413,13 @@ class PortalCatalogScreenTest {
             .performScrollToNode(hasText("Carné Joven Europeo de Andalucía"))
         rule.onNodeWithText("Carné Joven Europeo de Andalucía").assertIsDisplayed()
         rule.onNodeWithText("Favorito").assertDoesNotExist()
-        rule.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Abrir sitio"))
-        rule.onNodeWithText("Abrir sitio").assertIsDisplayed()
         val portal = state.sections.flatMap { it.items }.single()
+        // The whole row is the "open site" key; its action keeps the spoken label.
+        rule.onNode(hasScrollToIndexAction())
+            .performScrollToNode(hasTestTag("catalog-open-${portal.portalId.value}"))
+        val open = rule.onNodeWithTag("catalog-open-${portal.portalId.value}").assertIsDisplayed()
+        assertEquals("Abrir sitio", open.fetchSemanticsNode().config[SemanticsActions.OnClick].label)
+        rule.onNodeWithTag("catalog-favorite-${portal.portalId.value}").assertIsDisplayed()
         val options = rule.onNodeWithTag("catalog-card-${portal.portalId.value}")
             .fetchSemanticsNode().config[SemanticsActions.CustomActions]
         rule.runOnIdle { assertTrue(options.single().action()) }
@@ -587,8 +593,10 @@ class PortalCatalogScreenTest {
         rule.onAllNodesWithTag("catalog-favorite-${portal.portalId.value}").assertCountEquals(1)
         val verifiedCount = if (portal.supportStatus == PortalSupportStatus.VERIFIED_E2E &&
             portal.lastVerifiedOn != null) 1 else 0
-        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}").assertCountEquals(verifiedCount)
-        rule.onAllNodesWithTag("catalog-verified-on-${portal.portalId.value}").assertCountEquals(verifiedCount)
+        rule.onAllNodesWithTag("catalog-status-${portal.portalId.value}", useUnmergedTree = true)
+            .assertCountEquals(verifiedCount)
+        rule.onAllNodesWithTag("catalog-verified-on-${portal.portalId.value}", useUnmergedTree = true)
+            .assertCountEquals(verifiedCount)
         rule.onNodeWithContentDescription(label).assertIsDisplayed().performClick()
         rule.runOnIdle { assertEquals(listOf(portal.portalId), favorites) }
     }

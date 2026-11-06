@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="jfm_paper">#F2E5D1</color>
+    <color name="jfm_paper">#E7E5E0</color>
+    <!-- Fixed scrims for the system navigation bar in each theme: the lower edge of the device body. -->
+    <color name="jfm_paper_light">#E3E1DB</color>
+    <color name="jfm_paper_dark">#1B1C1A</color>
 </resources>

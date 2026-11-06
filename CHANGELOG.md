@@ -2,6 +2,24 @@
 
 Cada versión es una actualización en desarrollo: consulta el resultado de CI del commit antes de instalar su APK. Los APK del canal diario se firman con la clave persistente `CN=Firma Mobile Daily APK` (SHA-256 `f1bcad77c90bab402ac9671b0ac6c034cc1d916d4561f65e480740021e5d6971`); consulta [la firma del APK y la migración desde otras firmas](docs/instalacion.md#firma-del-apk-y-actualizaciones).
 
+## 0.2.21 (23) — 2026-11-04
+
+- AutoFirma en navegación general: si una sede del catálogo con modo específico revisado envía una solicitud que el motor universal no puede atender (por ejemplo, el acceso con certificado de la Oficina Virtual de la Junta de Andalucía, cuyo MiniApplet no indica dónde devolver la firma), el aviso ofrece «Modo específico del portal» y lo abre desde su página de entrada con el perfil del catálogo. El aviso muestra además el código técnico del rechazo.
+
+## 0.2.20 (22) — 2026-11-03
+
+- Nuevo diseño «F», inspirado en un aparato físico: cuerpo gris cálido, teclas con relieve que se hunden al pulsarlas, LEDs de estado y una pantalla oscura con cifras. Se retira la fuente Bebas Neue: la interfaz usa la tipografía del sistema.
+- Inicio: el certificado es una tarjeta con chip que entra en un lector; la pantalla muestra los días restantes, la fecha de caducidad y una escala de validez. Tecla naranja principal, teclas redondas «firmar», «verificar», «diario» y «avisos», y tecla «cambiar» para elegir otro certificado.
+- Catálogo: tecla de volver, contador de servicios en una pantalla pequeña, selector de región, buscador empotrado con tecla «Pegar» y filas con LED de verificación y tecla de favorito; leyenda «verificado / sin verificar».
+- Nuevo icono de la aplicación: una tecla naranja con «F» y un LED verde, con capa monocroma para los iconos temáticos.
+
+## 0.2.19 (21) — 2026-11-03
+
+- Nuevo diseño «Mosaico», más colorido: cabeceras con degradado y estrellas de azulejo, saludo según la hora del día y fondo con manchas de color que sigue el tema claro u oscuro.
+- Inicio: el certificado aparece como una tarjeta de identidad (listo, bloqueado o desbloqueando) con barra de validez y días restantes; bloquear, elegir otro u olvidar pasan al menú «⋯» y las herramientas se muestran en mosaico.
+- Catálogo: la región es un chip dentro de la cabecera, el buscador flota sobre ella, las secciones tienen color e iniciales, toda la tarjeta abre el sitio y la estrella de favorito se anima.
+- Nuevo icono de la aplicación con capa monocroma para los iconos temáticos, y barras del sistema que siguen el tema.
+
 ## 0.2.18 (20) — 2026-11-02
 
 - Diseño renovado en toda la aplicación: nueva paleta clara y oscura, esquinas redondeadas, tipografía más legible e iconos propios.

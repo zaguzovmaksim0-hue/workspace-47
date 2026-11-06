@@ -232,6 +232,11 @@ valor fue retenido. Las propiedades observadas son únicamente
 `precalculatedHashAlgorithm=SHA1` y el `serverUrl` exacto
 `/afirma-server-triphase-signer-2.7.3/SignatureService`.
 
+Actualización 2026-11-05: Unizar sirve ahora el trifásico en
+`/afirma-server-triphase-signer-2.9/SignatureService` (la ruta 2.7.3 responde
+404) y el bridge rechazaba el `serverUrl` nuevo con `INVALID_REQUEST` en el
+E2E real. El profile fija la ruta 2.9; el resto del contrato no cambia.
+
 El profile implementado restringe origin, profile, navigation epoch, request
 ID, TTL, tuple, tamaño del challenge, propiedades y endpoint antes de red. SHA-1
 solo existe detrás de `LEGACY_SHA1`, sin fallback. Aunque AutoScript configura

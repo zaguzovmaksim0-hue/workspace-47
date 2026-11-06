@@ -44,7 +44,7 @@ class UnizarTriPhaseAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("unizar-autoscript-triphase-cades-v1")
         const val ENDPOINT =
-            "https://tramita.unizar.es/afirma-server-triphase-signer-2.7.3/SignatureService"
+            "https://tramita.unizar.es/afirma-server-triphase-signer-2.9/SignatureService"
         private val URL_POLICY = SafeNetworkUrlPolicy(setOf(URI(ENDPOINT)))
         private const val SHA1_DIGEST_BYTES = 20
         private val FIXED_EXTRA_PROPERTIES = mapOf(

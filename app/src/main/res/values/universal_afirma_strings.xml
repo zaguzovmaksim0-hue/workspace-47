@@ -3,4 +3,6 @@
     <string name="catalog_open_universal_afirma">Abrir con AutoFirma</string>
     <string name="catalog_open_profile_compatibility">Modo específico del portal</string>
     <string name="catalog_universal_afirma_copy">Solo las sedes marcadas como verificadas se han comprobado de principio a fin con esta aplicación.</string>
+    <string name="native_afirma_portal_mode_hint">Esta sede tiene un modo específico del portal en la aplicación. Se abrirá de nuevo desde su página de entrada.</string>
+    <string name="native_afirma_reason">Código técnico: %1$s</string>
 </resources>
