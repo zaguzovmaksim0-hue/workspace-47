@@ -89,7 +89,7 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
-    fun leonDynamicSourceAuthorizesOnlyTheSameObservedIdTokenOnExactCertificateHost() {
+    fun leonDynamicSourceAuthorizesOnlyTheExactLoginSourceOnExactCertificateHost() {
         val leon = ClientAuthNavigationAuthorizer(
             BuiltInSiteProfiles.qaRegistry,
             monotonic::nowNanos,
@@ -112,10 +112,9 @@ class ClientAuthNavigationAuthorizerTest {
     @Test
     fun leonDynamicSourceRejectsTokenHostPathAndQueryExpansion() {
         val attacks = listOf(
-            LEON_SOURCE.replace(LEON_TOKEN, LEON_OTHER_TOKEN) to LEON_TARGET,
-            LEON_SOURCE.replace("idioma=es", "idioma=en") to LEON_TARGET,
+            LEON_SOURCE.substringBefore("?") to LEON_TARGET,
+            LEON_SOURCE.replace("login.aspx", "login2.aspx") to LEON_TARGET,
             "$LEON_SOURCE&extra=1" to LEON_TARGET,
-            LEON_SOURCE to LEON_TARGET.replace(LEON_TOKEN, LEON_OTHER_TOKEN),
             LEON_SOURCE to LEON_TARGET.replace("idioma=es", "idioma=en"),
             LEON_SOURCE to LEON_TARGET.replace("entidad=24000", "entidad=02000"),
             LEON_SOURCE to "$LEON_TARGET&extra=1",
@@ -139,7 +138,7 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
-    fun mallorcaDynamicSourceAuthorizesOnlyTheSameObservedIdTokenOnExactCertificateHost() {
+    fun mallorcaDynamicSourceAuthorizesOnlyTheExactLoginSourceOnExactCertificateHost() {
         val mallorca = ClientAuthNavigationAuthorizer(
             BuiltInSiteProfiles.qaRegistry,
             monotonic::nowNanos,
@@ -166,10 +165,9 @@ class ClientAuthNavigationAuthorizerTest {
     @Test
     fun mallorcaDynamicSourceRejectsTokenHostPathAndQueryExpansion() {
         val attacks = listOf(
-            MALLORCA_SOURCE.replace(MALLORCA_TOKEN, MALLORCA_OTHER_TOKEN) to MALLORCA_TARGET,
-            MALLORCA_SOURCE.replace("idioma=ca", "idioma=es") to MALLORCA_TARGET,
+            MALLORCA_SOURCE.substringBefore("?") to MALLORCA_TARGET,
+            MALLORCA_SOURCE.replace("login.aspx", "login2.aspx") to MALLORCA_TARGET,
             "$MALLORCA_SOURCE&extra=1" to MALLORCA_TARGET,
-            MALLORCA_SOURCE to MALLORCA_TARGET.replace(MALLORCA_TOKEN, MALLORCA_OTHER_TOKEN),
             MALLORCA_SOURCE to MALLORCA_TARGET.replace("idioma=ca", "idioma=es"),
             MALLORCA_SOURCE to MALLORCA_TARGET.replace("entidad=07700", "entidad=24000"),
             MALLORCA_SOURCE to "$MALLORCA_TARGET&extra=1",
@@ -304,7 +302,7 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
-    fun albaceteDynamicSourceAuthorizesOnlyTheSameObservedIdTokenOnExactCertificateHost() {
+    fun albaceteDynamicSourceAuthorizesOnlyTheExactLoginSourceOnExactCertificateHost() {
         val albacete = ClientAuthNavigationAuthorizer(
             BuiltInSiteProfiles.qaRegistry,
             monotonic::nowNanos,
@@ -327,10 +325,9 @@ class ClientAuthNavigationAuthorizerTest {
     @Test
     fun albaceteDynamicSourceRejectsTokenEntityHostPathAndQueryExpansion() {
         val attacks = listOf(
-            ALBACETE_SOURCE.replace(ALBACETE_TOKEN, ALBACETE_OTHER_TOKEN) to ALBACETE_TARGET,
-            ALBACETE_SOURCE.replace("idioma=es", "idioma=en") to ALBACETE_TARGET,
+            ALBACETE_SOURCE.substringBefore("?") to ALBACETE_TARGET,
+            ALBACETE_SOURCE.replace("login.aspx", "login2.aspx") to ALBACETE_TARGET,
             "$ALBACETE_SOURCE&extra=1" to ALBACETE_TARGET,
-            ALBACETE_SOURCE to ALBACETE_TARGET.replace(ALBACETE_TOKEN, ALBACETE_OTHER_TOKEN),
             ALBACETE_SOURCE to ALBACETE_TARGET.replace("idioma=es", "idioma=en"),
             ALBACETE_SOURCE to ALBACETE_TARGET.replace("entidad=02000", "entidad=24000"),
             ALBACETE_SOURCE to "$ALBACETE_TARGET&extra=1",
@@ -1725,9 +1722,8 @@ class ClientAuthNavigationAuthorizerTest {
         val VALLADOLID_PROFILE = ProfileId("diputacion-valladolid-sede")
         val MALLORCA_PROFILE = ProfileId("consell-mallorca-sede")
         const val MALLORCA_TOKEN = "12345678-w47SyntheticMallorcaToken0123456789"
-        const val MALLORCA_OTHER_TOKEN = "87654321-w47OtherMallorcaToken9876543210"
         const val MALLORCA_SOURCE =
-            "https://cim.secimallorca.net/segex/identificacion_opciones.aspx?idtoken=$MALLORCA_TOKEN&idioma=ca"
+            "https://cim.secimallorca.net/carpetaciudadana/login.aspx?returnUrl=https%3a%2f%2fcim.secimallorca.net%2fsegex%2ftramite.aspx%3fidtramite%3d12082"
         const val MALLORCA_TARGET =
             "https://identificacionssl.sedipualba.es/?idtoken=$MALLORCA_TOKEN&idioma=ca&entidad=07700"
         val NAVARRA_PROFILE = ProfileId("navarra-sede-registro-general")
@@ -1760,15 +1756,13 @@ class ClientAuthNavigationAuthorizerTest {
         const val LA_RIOJA_TARGET = "https://ias1.larioja.org/clientcertSSL/login"
         val ALBACETE_PROFILE = ProfileId("diputacion-albacete-portal")
         const val ALBACETE_TOKEN = "12345678-w47SyntheticAlbaceteToken012345"
-        const val ALBACETE_OTHER_TOKEN = "87654321-w47OtherAlbaceteToken987654"
         const val ALBACETE_SOURCE =
-            "https://sede.dipualba.es/segex/identificacion_opciones.aspx?idtoken=$ALBACETE_TOKEN&idioma=es"
+            "https://sede.dipualba.es/carpetaciudadana/login.aspx?returnUrl=https%3a%2f%2fsede.dipualba.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d567"
         const val ALBACETE_TARGET =
             "https://identificacionssl.sedipualba.es/?idtoken=$ALBACETE_TOKEN&idioma=es&entidad=02000"
         const val LEON_TOKEN = "12345678-w47SyntheticLeonToken0123456789"
-        const val LEON_OTHER_TOKEN = "87654321-w47OtherLeonToken9876543210"
         const val LEON_SOURCE =
-            "https://sede.dipuleon.es/segex/identificacion_opciones.aspx?idtoken=$LEON_TOKEN&idioma=es"
+            "https://sede.dipuleon.es/carpetaciudadana/login.aspx?returnUrl=https%3a%2f%2fsede.dipuleon.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d20270"
         const val LEON_TARGET =
             "https://identificacionssl.sedipualba.es/?idtoken=$LEON_TOKEN&idioma=es&entidad=24000"
         val SANIDAD_PROFILE = ProfileId("ministerio-sanidad-certificado")

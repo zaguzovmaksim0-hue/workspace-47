@@ -340,6 +340,34 @@ class RealE2eInstrumentedTest {
                 expectedOnClick = UNIZAR_AUTH_ONCLICK,
                 expectedHandlerName = UNIZAR_AUTH_HANDLER,
             )
+            SEDIPUALBA_ALBACETE_PORTAL_ID -> clickSedipualbaServerCertificateOption(
+                scenario = scenario,
+                expectedEntryUrl = SEDIPUALBA_ALBACETE_ENTRY_URL,
+                expectedLoginUrl = SEDIPUALBA_ALBACETE_LOGIN_URL,
+                loginLabel = SEDIPUALBA_LOGIN_LABEL_ES,
+                optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_ES,
+            )
+            SEDIPUALBA_CUENCA_PORTAL_ID -> clickSedipualbaServerCertificateOption(
+                scenario = scenario,
+                expectedEntryUrl = SEDIPUALBA_CUENCA_ENTRY_URL,
+                expectedLoginUrl = SEDIPUALBA_CUENCA_LOGIN_URL,
+                loginLabel = SEDIPUALBA_LOGIN_LABEL_ES,
+                optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_ES,
+            )
+            SEDIPUALBA_LEON_PORTAL_ID -> clickSedipualbaServerCertificateOption(
+                scenario = scenario,
+                expectedEntryUrl = SEDIPUALBA_LEON_ENTRY_URL,
+                expectedLoginUrl = SEDIPUALBA_LEON_LOGIN_URL,
+                loginLabel = SEDIPUALBA_LOGIN_LABEL_ES,
+                optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_ES,
+            )
+            SEDIPUALBA_MALLORCA_PORTAL_ID -> clickSedipualbaServerCertificateOption(
+                scenario = scenario,
+                expectedEntryUrl = SEDIPUALBA_MALLORCA_ENTRY_URL,
+                expectedLoginUrl = SEDIPUALBA_MALLORCA_LOGIN_URL,
+                loginLabel = SEDIPUALBA_LOGIN_LABEL_CA,
+                optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_CA,
+            )
             else -> Unit
         }
     }
@@ -567,6 +595,78 @@ class RealE2eInstrumentedTest {
             expectedHref = STA_CERTIFICATE_LINK_HREF,
             waitForExpectedUrl = true,
         )
+    }
+
+    // login.aspx opens the options page in a same-origin iframe; #optSsl then navigates window.top.
+    private fun clickSedipualbaServerCertificateOption(
+        scenario: ActivityScenario<MainActivity>,
+        expectedEntryUrl: String,
+        expectedLoginUrl: String,
+        loginLabel: String,
+        optionLabel: String,
+    ) {
+        clickExactLabeledAnchor(
+            scenario = scenario,
+            expectedCurrentUrl = expectedEntryUrl,
+            expectedLabel = loginLabel,
+            expectedHref = expectedLoginUrl,
+        )
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedLabel = JSONObject.quote(optionLabel)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                if (webView.url != expectedLoginUrl) {
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      const frame = document.getElementById('ventanaModal');
+                      if (!frame) return 0;
+                      let doc;
+                      try { doc = frame.contentDocument; } catch (e) { return 2; }
+                      if (!doc || !doc.location) return 0;
+                      if (doc.location.origin !== location.origin ||
+                        doc.location.pathname !== '$SEDIPUALBA_OPTIONS_PATH') return 0;
+                      const option = doc.getElementById('optSsl');
+                      if (!option) return 0;
+                      const images = option.querySelectorAll('img');
+                      const titles = option.querySelectorAll('.titulo-opcion span');
+                      if (images.length !== 1 || titles.length !== 1) return 2;
+                      const title = (titles[0].textContent || '').trim().replace(/\s+/g, ' ');
+                      if (images[0].getAttribute('alt') !== $quotedLabel || title !== $quotedLabel) return 2;
+                      option.click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
     private fun clickExactStaResponsiveIdentifyAnchor(
@@ -1966,6 +2066,37 @@ class RealE2eInstrumentedTest {
         const val STA_CERTIFICATE_LINK_ID = "link-certificado"
         const val STA_CERTIFICATE_LINK_HREF =
             "/sta/CarpetaPrivate/Certificate?APP_CODE=STA&PAGE_CODE=HOME"
+        const val SEDIPUALBA_ALBACETE_PORTAL_ID = "diputacion-albacete-portal"
+        const val SEDIPUALBA_ALBACETE_ENTRY_URL =
+            "https://sede.dipualba.es/carpetaciudadana/tramite.aspx?idtramite=567"
+        const val SEDIPUALBA_ALBACETE_LOGIN_URL =
+            "https://sede.dipualba.es/carpetaciudadana/login.aspx?returnUrl=" +
+                "https%3a%2f%2fsede.dipualba.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d567"
+        const val SEDIPUALBA_CUENCA_PORTAL_ID = "diputacion-cuenca-portal"
+        const val SEDIPUALBA_CUENCA_ENTRY_URL =
+            "https://sede.dipucuenca.es/carpetaciudadana/tramite.aspx?idtramite=12074"
+        const val SEDIPUALBA_CUENCA_LOGIN_URL =
+            "https://sede.dipucuenca.es/carpetaciudadana/login.aspx?returnUrl=" +
+                "https%3a%2f%2fsede.dipucuenca.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d12074"
+        const val SEDIPUALBA_LEON_PORTAL_ID = "diputacion-leon-sede"
+        const val SEDIPUALBA_LEON_ENTRY_URL =
+            "https://sede.dipuleon.es/carpetaciudadana/tramite.aspx?idtramite=20270"
+        const val SEDIPUALBA_LEON_LOGIN_URL =
+            "https://sede.dipuleon.es/carpetaciudadana/login.aspx?returnUrl=" +
+                "https%3a%2f%2fsede.dipuleon.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d20270"
+        const val SEDIPUALBA_MALLORCA_PORTAL_ID = "mallorca-sede-electronica"
+        const val SEDIPUALBA_MALLORCA_ENTRY_URL =
+            "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
+        const val SEDIPUALBA_MALLORCA_LOGIN_URL =
+            "https://cim.secimallorca.net/carpetaciudadana/login.aspx?returnUrl=" +
+                "https%3a%2f%2fcim.secimallorca.net%2fsegex%2ftramite.aspx%3fidtramite%3d12082"
+        const val SEDIPUALBA_OPTIONS_PATH = "/segex/identificacion_opciones.aspx"
+        const val SEDIPUALBA_LOGIN_LABEL_ES = "Iniciar sesi\u00f3n"
+        const val SEDIPUALBA_LOGIN_LABEL_CA = "Iniciar sessi\u00f3"
+        const val SEDIPUALBA_SSL_OPTION_LABEL_ES =
+            "Identificarse con certificado digital a trav\u00e9s de nuestro servidor"
+        const val SEDIPUALBA_SSL_OPTION_LABEL_CA =
+            "Identificar-se amb certificat digital a trav\u00e9s del nostre servidor"
         const val BADAJOZ_PORTAL_ID = "diputacion-badajoz-portal"
         const val BADAJOZ_ENTRY_URL = "https://sede.dip-badajoz.es"
         const val BADAJOZ_LOGIN_PAGE_URL =
