@@ -48,7 +48,7 @@ The working tree was clean and origin matched the verified candidate.
 
 The root Apache-2.0 license does not relicense:
 
-- Bebas Neue, which remains under SIL Open Font License 1.1;
+- fonts bundled by dependencies, such as Liberation Sans in PDFBox Android, which remain under SIL Open Font License 1.1;
 - Gradle Wrapper/upstream material under its existing upstream terms;
 - external Maven, Go, Python or other dependencies;
 - third-party names, marks, services, public portals or protocols;

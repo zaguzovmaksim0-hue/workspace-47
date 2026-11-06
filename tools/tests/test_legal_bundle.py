@@ -24,7 +24,7 @@ class LegalBundleTest(unittest.TestCase):
         self.assertIn('legal/project-license.txt', paths)
         self.assertIn('legal/project-notice.txt', paths)
         self.assertIn('legal/components.txt', paths)
-        self.assertIn('legal/upstream/bebas-neue-OFL.txt', paths)
+        self.assertNotIn('legal/upstream/bebas-neue-OFL.txt', paths)
         self.assertIn('legal/upstream/liberation-LICENSE.txt', paths)
         self.assertIn('legal/upstream/pdfbox-LICENSE.txt', paths)
         for notice in (LEGAL / 'dependencies').glob('*.txt'):

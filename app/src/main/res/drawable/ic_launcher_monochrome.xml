@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Original project themed-icon mark: the device key with its "F" left open; tinted by the system. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
@@ -7,27 +8,11 @@
     <group
         android:pivotX="54"
         android:pivotY="54"
-        android:scaleX="0.76"
-        android:scaleY="0.76">
+        android:scaleX="0.9"
+        android:scaleY="0.9">
         <path
-            android:fillColor="@android:color/transparent"
-            android:pathData="M29,24H61L78,41V82H29Z M61,24V41H78 M38,49H61 M38,59H58 M38,69H50"
-            android:strokeColor="#FF000000"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round"
-            android:strokeWidth="5" />
-        <path
-            android:fillColor="@android:color/transparent"
-            android:pathData="M66,43L83,51V65C83,75 76,82 66,87C56,82 49,75 49,65V51Z"
-            android:strokeColor="#FF000000"
-            android:strokeLineJoin="round"
-            android:strokeWidth="5" />
-        <path
-            android:fillColor="@android:color/transparent"
-            android:pathData="M57,65L63,71L76,57"
-            android:strokeColor="#FF000000"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round"
-            android:strokeWidth="5" />
+            android:fillColor="#FF000000"
+            android:fillType="evenOdd"
+            android:pathData="M42,30H66A12,12 0,0 1,78,42V66A12,12 0,0 1,66,78H42A12,12 0,0 1,30,66V42A12,12 0,0 1,42,30Z M45,40V68H51.5V57.5H61V51.5H51.5V46H63V40Z M70.5,61.5m-2.8,0a2.8,2.8 0,1 0,5.6 0a2.8,2.8 0,1 0,-5.6 0" />
     </group>
 </vector>

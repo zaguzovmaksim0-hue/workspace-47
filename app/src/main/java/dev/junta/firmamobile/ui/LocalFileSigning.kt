@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
@@ -111,7 +112,8 @@ private fun localFileSigningDialog(
     AlertDialog(
         onDismissRequest = onClose,
         properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
-        title = { Text(stringResource(R.string.local_signing_title)) },
+        icon = { JuntaIconBubble(iconRes = R.drawable.ic_ui_signature, tone = JuntaTone.CORAL) },
+        title = { Text(stringResource(R.string.local_signing_title), textAlign = TextAlign.Center) },
         text = {
             FilterObscuredTouches()
             Column(
@@ -171,9 +173,10 @@ private fun localFileSigningLifetime(controller: LocalFileSigningController, unl
 
 @Composable
 private fun localFileSigningButton(unlocked: Boolean, pickerPending: Boolean, onOpen: () -> Unit) {
-    JuntaToolRow(
+    JuntaToolTile(
         iconRes = R.drawable.ic_ui_signature,
         title = stringResource(R.string.local_signing_title),
+        caption = stringResource(R.string.home_key_sign),
         onClick = onOpen,
         subtitle = if (unlocked) null else stringResource(R.string.local_signing_unlock),
         enabled = unlocked && !pickerPending,

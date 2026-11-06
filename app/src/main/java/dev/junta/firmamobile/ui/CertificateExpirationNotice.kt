@@ -2,14 +2,17 @@ package dev.junta.firmamobile.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -25,6 +28,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.certificate.CertificateExpirationPolicy
 import dev.junta.firmamobile.certificate.CertificateExpirationWindow
+import dev.junta.firmamobile.ui.theme.JuntaInk
+import dev.junta.firmamobile.ui.theme.JuntaMutedInk
 import java.time.Clock
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -57,20 +62,28 @@ internal fun CertificateExpirationNotice(
         stringResource(R.string.certificate_expiration_timestamp_copy, timestamp)
     }
     val urgent = warning.window != CertificateExpirationWindow.WITHIN_THIRTY_DAYS
-    Surface(
-        modifier = modifier.fillMaxWidth().testTag("certificate-expiration-notice")
-            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
-        color = if (urgent) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = if (urgent) {
-            MaterialTheme.colorScheme.onErrorContainer
-        } else {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        },
-        shape = MaterialTheme.shapes.small,
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("certificate-expiration-notice")
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite }
+            .firmaBodyRecess(JuntaFieldShape, depth = 3.dp)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, modifier = Modifier.semantics { heading() }, style = MaterialTheme.typography.titleSmall)
-            Text(copy, style = MaterialTheme.typography.bodySmall)
+        FirmaLed(
+            state = if (urgent) FirmaLedState.ALERT else FirmaLedState.WARN,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                title,
+                modifier = Modifier.semantics { heading() },
+                color = JuntaInk,
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Text(copy, color = JuntaMutedInk, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

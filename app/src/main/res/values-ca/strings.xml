@@ -7,16 +7,12 @@
     <string name="certificate_copy">Selecciona el teu fitxer .p12 o .pfx.</string>
     <string name="privacy_copy">El fitxer i la contrasenya no s’enviaran a tercers.</string>
     <string name="select_certificate">Selecciona un certificat</string>
-    <string name="certificate_status_ready_title">Selecció segura disponible</string>
     <string name="certificate_status_ready_copy">El fitxer es processa únicament en aquest dispositiu.</string>
-    <string name="certificate_status_loading_title">Preparant el magatzem segur</string>
     <string name="certificate_status_loading_copy">Comprovant si hi ha un certificat seleccionat.</string>
     <string name="certificate_status_locked_title">Certificat protegit</string>
     <string name="certificate_status_locked_copy">Introdueix la contrasenya i tria el termini de desbloqueig en aquest dispositiu.</string>
-    <string name="certificate_status_unlocking_title">Verificant el certificat</string>
     <string name="certificate_status_unlocking_copy">S’està comprovant la identitat localment.</string>
-    <string name="certificate_status_unlocked_title">Certificat a punt</string>
-    <string name="certificate_status_unlocked_copy">La sessió caduca quan acaba el termini triat. Bloquejar, canviar o eliminar el certificat també tanca la sessió.</string>
+    <string name="certificate_status_unlocked_copy">La sessió es tanca quan acaba el termini triat.</string>
     <string name="certificate_loading">Carregant el certificat…</string>
     <string name="certificate_selected">Certificat seleccionat: %1$s</string>
     <string name="certificate_password">Contrasenya del certificat</string>
@@ -124,7 +120,6 @@
     <string name="signing_closed_error_code">Codi: %1$s</string>
     <string name="unknown_value">desconegut</string>
     <string name="catalog_title">Serveis públics</string>
-    <string name="catalog_subtitle">Troba i obre la seu o el servei públic que necessites.</string>
     <string name="catalog_back_to_certificate">Torna al certificat</string>
     <string name="catalog_my_region_label">La meva regió</string>
     <string name="catalog_region_copy">Mostrem primer els serveis de la teva regió i els disponibles a tot Espanya.</string>
@@ -348,7 +343,7 @@
         <item quantity="one">Signatura per lots (%1$d document)</item>
         <item quantity="other">Signatura per lots (%1$d documents)</item>
     </plurals>
-    <string name="catalog_search_or_address">Cerca un servei o una adreça</string>
+    <string name="catalog_search_or_address">Servei o adreça</string>
     <string name="catalog_region_change">Canvia</string>
     <string name="catalog_favorite_add_description">Afegeix a preferits</string>
     <string name="catalog_favorite_remove_description">Treu dels preferits</string>

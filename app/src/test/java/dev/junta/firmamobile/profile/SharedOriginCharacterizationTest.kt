@@ -347,6 +347,19 @@ class SharedOriginCharacterizationTest {
     }
 
     @Test
+    fun sedipualbaUnlinkedIdTokenExceptionStaysNarrow() {
+        val id = "diputacion-albacete-portal"
+        val block = profileJson(id)
+        val ephemeral = "\"requiredEphemeralQueryParameters\": [\"idtoken\"]"
+        assertEquals(1, parse(listOf(block)).profiles.size)
+        rejects(
+            "extra unlinked target parameter",
+            listOf(replace(block, ephemeral, "\"requiredEphemeralQueryParameters\": [\"idtoken\", \"other\"]")),
+        )
+        rejects("unreviewed owner", listOf(replace(block, "\"profileId\": \"$id\"", "\"profileId\": \"unreviewed-sedipualba\"")))
+    }
+
+    @Test
     fun sameOriginTlsRequestOriginsAndPathsAreIndependentGoldenValues() {
         val expected = listOf(
             Triple(
@@ -363,6 +376,8 @@ class SharedOriginCharacterizationTest {
                 "/web/inicioWebcCert.do",
             ),
             Triple("la-rioja-oficina-electronica", "https://ias1.larioja.org", "/clientcertSSL/login"),
+            Triple("diputacion-burgos-portal", "https://registro.diputaciondeburgos.es", "/sta/CarpetaPrivate/Certificate"),
+            Triple("diputacion-huesca-portal", "https://ovc24.dphuesca.es", "/sta/CarpetaPrivate/Certificate"),
         )
         expected.forEach { (id, origin, path) ->
             val policy = parse(listOf(profileJson(id))).profiles.single().clientAuthPolicy!!
@@ -395,6 +410,8 @@ class SharedOriginCharacterizationTest {
                 "\"fixedQueryParameters\":{\"extra\":\"value\"}",
             ),
             Triple("diputacion-soria-sede-client-auth", "\"ssl\"", "\"other\""),
+            Triple("diputacion-burgos-portal", "\"PAGE_CODE\":\"HOME\"", "\"PAGE_CODE\":\"OTHER\""),
+            Triple("diputacion-huesca-portal", "\"PAGE_CODE\":\"HOME\"", "\"PAGE_CODE\":\"OTHER\""),
         )
         cases.forEach { (id, old, new) ->
             val block = profileJson(id)

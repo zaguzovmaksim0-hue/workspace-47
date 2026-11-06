@@ -7,7 +7,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import dev.junta.firmamobile.history.InMemoryOperationJournal
 import dev.junta.firmamobile.history.OperationKind
-import dev.junta.firmamobile.ui.JuntaListDivider
 import dev.junta.firmamobile.ui.offlineverification.OfflineVerificationDialog
 import dev.junta.firmamobile.ui.offlineverification.OfflineVerificationEntry
 import java.time.Instant
@@ -23,6 +22,5 @@ internal fun verificationJournalHome(journal: InMemoryOperationJournal) {
     )
     if (journalVisible) verificationJournalDialog(journal, onDismiss = { journalVisible = false })
     OfflineVerificationEntry(onClick = { verificationVisible = true })
-    JuntaListDivider()
     verificationJournalEntry(onClick = { journalVisible = true })
 }
