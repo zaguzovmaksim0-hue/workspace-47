@@ -667,7 +667,10 @@ object SiteProfileCatalogParser {
                         p.capabilities ==
                             setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
                     )
-                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID) {
+                } else if (p.profileId.value == JCCM_REGISTRO_PROFILE_ID ||
+                    p.profileId.value == BURGOS_PROFILE_ID ||
+                    p.profileId.value == HUESCA_PROFILE_ID
+                ) {
                     require(p.endpoints.isEmpty())
                     require(p.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
                     require(p.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
@@ -687,7 +690,9 @@ object SiteProfileCatalogParser {
                             p.profileId.value == MALLORCA_PROFILE_ID ||
                             p.profileId.value == GVA_PROFILE_ID ||
                             p.profileId.value == SORIA_PROFILE_ID ||
-                            p.profileId.value == AEAT_MIS_DATOS_PROFILE_ID
+                            p.profileId.value == AEAT_MIS_DATOS_PROFILE_ID ||
+                            p.profileId.value == BURGOS_PROFILE_ID ||
+                            p.profileId.value == HUESCA_PROFILE_ID
                     )
                 }
                 require(policy.sourceUrls.all { source ->
@@ -2281,8 +2286,8 @@ object SiteProfileCatalogParser {
         require(profile.redirectOrigins.isEmpty())
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        validateStaCertificateClientAuth(profile, BURGOS_ORIGIN, BURGOS_CLIENT_AUTH_SOURCE_URL)
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(profile.evidence.isNotEmpty())
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
@@ -2304,6 +2309,23 @@ object SiteProfileCatalogParser {
         )
     }
 
+    private fun validateStaCertificateClientAuth(profile: SiteProfile, origin: String, sourceUrl: String) {
+        val clientAuth = requireNotNull(profile.clientAuthPolicy)
+        require(clientAuth.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE)
+        require(clientAuth.requestOrigins == setOf(ExactOrigin.parse(origin)))
+        require(clientAuth.sourceUrls == setOf(URI(sourceUrl)))
+        require(clientAuth.requestPath == STA_CLIENT_AUTH_PATH)
+        require(clientAuth.fixedQueryParameters == STA_CLIENT_AUTH_FIXED_QUERY)
+        require(clientAuth.requiredEphemeralQueryParameters.isEmpty())
+        require(clientAuth.sourceFixedQueryParameters.isEmpty())
+        require(clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty())
+        require(clientAuth.linkedEphemeralQueryParameters.isEmpty())
+        require(clientAuth.linkedEphemeralQueryParameterMappings.isEmpty())
+        require(!clientAuth.allowEmptyIssuerList)
+        require(clientAuth.grantTtlSeconds == REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS)
+        require(clientAuth.requestPort == HTTPS_PORT)
+    }
+
     private fun validateHuescaProfile(profile: SiteProfile) {
         require(profile.profileVersion == HUESCA_PROFILE_VERSION)
         require(profile.displayName == HUESCA_DISPLAY_NAME)
@@ -2314,8 +2336,8 @@ object SiteProfileCatalogParser {
         require(profile.redirectOrigins.isEmpty())
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        validateStaCertificateClientAuth(profile, HUESCA_ORIGIN, HUESCA_CLIENT_AUTH_SOURCE_URL)
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(profile.evidence.isNotEmpty())
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
@@ -3935,7 +3957,7 @@ object SiteProfileCatalogParser {
     private const val LA_PALMA_SAFE_DESCRIPTION =
         "Firma por lotes en la Sede electrónica del Cabildo Insular de La Palma"
     private const val BURGOS_PROFILE_ID = "diputacion-burgos-portal"
-    private const val BURGOS_PROFILE_VERSION = 1
+    private const val BURGOS_PROFILE_VERSION = 2
     private const val BURGOS_DISPLAY_NAME = "Diputación Provincial de Burgos — Registro electrónico"
     private const val BURGOS_START_URL =
         "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA" +
@@ -3944,13 +3966,20 @@ object SiteProfileCatalogParser {
     private const val BURGOS_SAFE_DESCRIPTION =
         "Firma por lotes de Instancia Genérica en el Registro electrónico de la Diputación Provincial de Burgos"
     private const val HUESCA_PROFILE_ID = "diputacion-huesca-portal"
-    private const val HUESCA_PROFILE_VERSION = 1
+    private const val HUESCA_PROFILE_VERSION = 2
     private const val HUESCA_DISPLAY_NAME = "Diputación Provincial de Huesca — Oficina Virtual"
     private const val HUESCA_START_URL =
         "https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME"
     private const val HUESCA_ORIGIN = "https://ovc24.dphuesca.es"
     private const val HUESCA_SAFE_DESCRIPTION =
         "Firma por lotes en la Oficina Virtual de la Diputación Provincial de Huesca"
+    private const val BURGOS_CLIENT_AUTH_SOURCE_URL =
+        "https://registro.diputaciondeburgos.es/sta/CarpetaPrivate/doEvent?APP_CODE=STA&PAGE_CODE=HOME"
+    private const val HUESCA_CLIENT_AUTH_SOURCE_URL =
+        "https://ovc24.dphuesca.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
+    // STA "Acceso con Certificado Digital" renegotiates TLS on its own host and asks for a client certificate.
+    private const val STA_CLIENT_AUTH_PATH = "/sta/CarpetaPrivate/Certificate"
+    private val STA_CLIENT_AUTH_FIXED_QUERY = mapOf("APP_CODE" to "STA", "PAGE_CODE" to "HOME")
     private const val LUGO_PROFILE_ID = "diputacion-lugo-sede"
     private const val LUGO_PROFILE_VERSION = 1
     private const val LUGO_DISPLAY_NAME = "Deputación de Lugo — Sede electrónica"
