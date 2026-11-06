@@ -227,6 +227,9 @@ describe_guest_crashes() {
   adb_bounded shell logcat -d -v brief -b main -b system -b events -t "$since.000" -s \
     am_crash:V am_kill:V am_proc_died:V am_anr:V am_low_memory:V lowmemorykiller:V lmkd:V \
     cr_AwBrowserTerminator:V >>"$GUEST_LOG" 2>/dev/null || true
+  if grep -q 'am_anr' "$GUEST_LOG"; then
+    adb_bounded shell dumpsys dropbox --print data_app_anr >>"$GUEST_LOG" 2>/dev/null || true
+  fi
   "$REPORT_HELPER" describe-guest-log --log "$GUEST_LOG" --portal "$portal_id" || true
   rm -f "$GUEST_LOG"
 }
