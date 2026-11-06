@@ -16,4 +16,35 @@
             <certificates src="@raw/ifef_sslcom_tls_issuing_rsa_ca_r1" />
         </trust-anchors>
     </domain-config>
+    <!-- These sedes serve only their leaf TLS certificate (observed 2026-11-06), omitting the issuer
+         named below. Each issuer was validated to a root in the Android system store; restore only
+         that missing link for these exact hosts. -->
+    <!-- FNMT AC Componentes Informaticos (root AC RAIZ FNMT-RCM) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">sede.airef.es</domain>
+        <domain includeSubdomains="false">sede.dip-caceres.es</domain>
+        <domain includeSubdomains="false">sede.ine.gob.es</domain>
+        <domain includeSubdomains="false">sede.isfas.gob.es</domain>
+        <domain includeSubdomains="false">sede.mites.gob.es</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/fnmt_ac_componentes_informaticos" />
+        </trust-anchors>
+    </domain-config>
+    <!-- FNMT AC SERVIDORES SEGUROS TIPO1 (root AC RAIZ FNMT-RCM SERVIDORES SEGUROS) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">sede.consejodetransparencia.gob.es</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/fnmt_ac_servidores_seguros_tipo1" />
+        </trust-anchors>
+    </domain-config>
+    <!-- GlobalSign GCC R3 EV TLS CA 2025 (root GlobalSign Root CA - R3) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">sede.imserso.gob.es</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/globalsign_gcc_r3_ev_tls_ca_2025" />
+        </trust-anchors>
+    </domain-config>
 </network-security-config>

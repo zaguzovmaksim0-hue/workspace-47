@@ -55,6 +55,8 @@ class SameOriginDirectClientAuthContractTest {
             "menorca-carpeta-ciutadana",
             "extremadura-pattex-client-auth",
             "diputacion-soria-sede-client-auth",
+            "diputacion-burgos-portal",
+            "diputacion-huesca-portal",
         )
     }
 }

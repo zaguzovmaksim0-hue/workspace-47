@@ -80,6 +80,7 @@ class JuntaWebViewClient(
     private val onExternalAppRequest: (WebView, ExternalAppLink) -> Boolean = { _, _ -> false },
 ) : WebViewClient() {
     private val observedTopLevelUrl = AtomicReference<String?>(null)
+    private val lastMainFrameRequest = AtomicReference<MainFrameRequest?>(null)
     private val pendingInPlaceClientAuth = AtomicReference<PendingInPlaceClientAuth?>(null)
     private val preconfirmedInPlaceSource = AtomicReference<PreconfirmedInPlaceSource?>(null)
     override fun shouldOverrideUrlLoading(
@@ -91,6 +92,7 @@ class JuntaWebViewClient(
             request.isForMainFrame,
             request.method,
             request.hasGesture() && !request.isRedirect,
+            request.isRedirect,
         )
 
     @Deprecated("Legacy callback retained for old WebView implementations")
@@ -103,6 +105,7 @@ class JuntaWebViewClient(
         isModernMainFrame: Boolean,
         method: String,
         hasUserGesture: Boolean = false,
+        isRedirect: Boolean = false,
     ): Boolean {
         if (!isCurrentWebView(view)) return true
         if (isModernMainFrame && method.equals(GET_METHOD, ignoreCase = true)) {
@@ -205,10 +208,15 @@ class JuntaWebViewClient(
                 targetUrl = targetUrl,
                 currentEpoch = currentNavigationEpoch(),
                 isModernMainFrameRequest = isModernMainFrame,
+                redirectingRequestUrl = redirectingMainFrameRequestUrl(isModernMainFrame, isRedirect),
             )?.let { authorized ->
                 onClientAuthTarget(authorized)
                 return true
             }
+        }
+        if (isModernMainFrame && isRedirect) {
+            // shouldInterceptRequest is not called for redirect hops, so the next hop's origin is this target.
+            lastMainFrameRequest.set(MainFrameRequest(targetUrl, currentNavigationEpoch()))
         }
         return when (val decision = navigationPolicy.decide(targetUrl, currentUrl)) {
             NavigationDecision.AllowInWebView -> {
@@ -465,6 +473,11 @@ class JuntaWebViewClient(
                 }
             }
             recordVeaAuthReturnDiagnostic(request.url.toString())
+            // Any other main-frame request (e.g. a POST) replaces the source: its redirect must not borrow a GET.
+            lastMainFrameRequest.set(
+                MainFrameRequest(request.url.toString(), currentNavigationEpoch())
+                    .takeIf { request.method.equals(GET_METHOD, ignoreCase = true) },
+            )
             logger.recordNavigationEvent(
                 code = DiagnosticEventCode.NETWORK_REQUEST,
                 rawUrl = request.url.toString(),
@@ -486,6 +499,15 @@ class JuntaWebViewClient(
         }
         return null
     }
+
+    // WebView reports a server redirect without its origin URL. Before any page commits, the redirecting
+    // document is the last main-frame GET this navigation requested; a later navigation start makes it stale.
+    private fun redirectingMainFrameRequestUrl(isModernMainFrame: Boolean, isRedirect: Boolean): String? {
+        if (!isModernMainFrame || !isRedirect) return null
+        return lastMainFrameRequest.get()?.takeIf { it.navigationEpoch == currentNavigationEpoch() }?.url
+    }
+
+    private data class MainFrameRequest(val url: String, val navigationEpoch: Long)
 
     override fun onReceivedSslError(
         view: WebView,
