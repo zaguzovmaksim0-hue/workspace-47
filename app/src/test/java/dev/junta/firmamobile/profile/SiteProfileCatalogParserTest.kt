@@ -842,11 +842,18 @@ class SiteProfileCatalogParserTest {
             "\"requestPath\":\"/wlpl/OVCT-CXEW/DialogoRepresentacion\"," +
                 "\"fixedQueryParameters\":{\"ref\":\"/wlpl/BUGC-JDIT/MdcAcceso\",\"unexpected\":\"1\"}"
 
+        // PATTEX is a DIRECT profile outside the fixed-query allowlist.
+        val pattexPathAndQuery =
+            "\"requestPath\":\"/PATTEX/accesoCertificadoSEDE.jsf\",\"fixedQueryParameters\":{}"
+        val pattexWithQuery =
+            "\"requestPath\":\"/PATTEX/accesoCertificadoSEDE.jsf\",\"fixedQueryParameters\":{\"unexpected\":\"1\"}"
+
         assertTrue(BuiltInSiteProfiles.JSON.contains(aeatPathAndQuery))
-        assertThrows(IllegalArgumentException::class.java) {
-            SiteProfileCatalogParser.parse(
-                BuiltInSiteProfiles.JSON.replaceFirst(aeatPathAndQuery, expanded),
-            )
+        assertTrue(BuiltInSiteProfiles.JSON.contains(pattexPathAndQuery))
+        listOf(aeatPathAndQuery to expanded, pattexPathAndQuery to pattexWithQuery).forEach { (original, mutated) ->
+            assertThrows(IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON.replaceFirst(original, mutated))
+            }
         }
     }
 
