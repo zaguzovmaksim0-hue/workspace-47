@@ -335,9 +335,34 @@ class RealE2eInstrumentedTest {
                 clickGestionaClaveLogin(scenario, GESTIONA_CLAVE_ORIGINS.getValue(portalId))
                 clickClaveAfirmaProvider(scenario)
             }
-            // MUGEJU and AIREF auto-post their SAML request to Cl@ve; only the certificate IdP choice remains.
+            // Cáceres: "Acceder" on the procedure -> login page -> Cl@ve logo (image-only link) -> AFIRMA.
+            CACERES_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CACERES_START_URL,
+                    expectedLabel = CACERES_ACCESS_LABEL,
+                    expectedHref = CACERES_ACCESS_HREF,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CACERES_LOGIN_URL,
+                    expectedLabel = "",
+                    expectedHref = CACERES_CLAVE_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            // CSN: the hidden login-menu link starts Cl@ve with AFIRMA preselected; no provider choice follows.
+            CSN_PORTAL_ID -> clickExactLabeledAnchor(
+                scenario = scenario,
+                expectedCurrentUrl = CSN_HOME_URL,
+                expectedLabel = CSN_CERT_LABEL,
+                expectedHref = CSN_CERT_HREF,
+                waitForExpectedUrl = true,
+            )
+            // MUGEJU, AIREF and Cádiz auto-post their SAML request to Cl@ve; only the certificate IdP choice remains.
             // AIREF: login only, the MiniApplet signature is the filing.
-            MUGEJU_PORTAL_ID, AIREF_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
+            MUGEJU_PORTAL_ID, AIREF_PORTAL_ID, CADIZ_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
             // JCCM: login only, the AutoScript signature of the Solicitud Genérica is the filing.
             JCCM_PORTAL_ID -> {
                 clickExactAuthButton(
@@ -2461,6 +2486,19 @@ class RealE2eInstrumentedTest {
         const val MALAGA_LOCAL_CLAVE_URL = "https://clave.malaga.es/clave.php"
         const val MALAGA_CLAVE_SUBMIT_VALUE = "Acceder con cl@ve"
         const val GESTIONA_CLAVE_LABEL = "Acceso con sistema Cl@ve"
+        const val CADIZ_PORTAL_ID = "diputacion-cadiz-portal"
+        const val CACERES_PORTAL_ID = "diputacion-caceres-portal"
+        const val CACERES_START_URL = "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341"
+        const val CACERES_ACCESS_LABEL = "Acceder"
+        const val CACERES_ACCESS_HREF = "./LoginLDAPFrontAction.do?red=MzQxI2V4cGdlbiNJTlNUQU5DSUEgR0VORVJBTCBOT1JNQUxJWkFEQQ=="
+        const val CACERES_LOGIN_URL = "https://sede.dip-caceres.es/carpetaCiudadano/" +
+            "LoginLDAPFrontAction.do?red=MzQxI2V4cGdlbiNJTlNUQU5DSUEgR0VORVJBTCBOT1JNQUxJWkFEQQ=="
+        const val CACERES_CLAVE_HREF = "LoginClave2Front.do"
+        const val CSN_PORTAL_ID = "age-consejo-de-seguridad-nuclear-csn"
+        const val CSN_HOME_URL = "https://sede.csn.gob.es/Sede20/home.html"
+        const val CSN_CERT_LABEL = "ACCESO CON CERTIFICADO DIGITAL O DNI-E"
+        // The site emits the empty port verbatim; the anchor href is matched as written.
+        const val CSN_CERT_HREF = "https://sede.csn.gob.es:/Sede20/clave/peticioncert"
         val GESTIONA_CLAVE_ORIGINS = mapOf(
             "diputacion-avila-portal" to "https://diputacionavila.sedelectronica.es",
             "diputacion-alicante-portal" to "https://diputacionalicante.sedelectronica.es",
