@@ -54,16 +54,17 @@ const runOne = async (probe) => {
   return entry;
 };
 let next = 0;
-await Promise.all(Array.from({ length: 4 }, async () => {
+await Promise.all(Array.from({ length: 6 }, async () => {
   while (next < probes.length) {
     const index = next++;
     const probe = probes[index];
     // A hung page must not cost the whole dump: cap each probe and flush results after every one.
     results[index] = await Promise.race([
       runOne(probe),
-      new Promise(resolve => setTimeout(() => resolve({ name: probe.name, error: 'probe-timeout' }), 150000)),
+      new Promise(resolve => setTimeout(() => resolve({ name: probe.name, error: 'probe-timeout' }), 90000)),
     ]);
     fs.writeFileSync('probe-out/dom.json', JSON.stringify(results, null, 1));
+    console.log(index, probe.name, results[index].error || 'ok');
   }
 }));
 fs.writeFileSync('probe-out/dom.json', JSON.stringify(results, null, 1));
