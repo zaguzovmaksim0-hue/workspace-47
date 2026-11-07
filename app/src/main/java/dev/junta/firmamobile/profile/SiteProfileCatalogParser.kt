@@ -438,13 +438,18 @@ object SiteProfileCatalogParser {
         require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
         require(profile.activation == ProfileActivation.QA_ONLY)
         require(profile.startUrl == URI(SEGURIDAD_SOCIAL_AUTOFIRMA_START_URL))
-        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(SEGURIDAD_SOCIAL_ORIGIN)))
+        require(
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(SEGURIDAD_SOCIAL_ORIGIN), ExactOrigin.parse(IMPORTASS_IDP_ORIGIN),
+            ),
+        )
         require(profile.redirectOrigins.isEmpty())
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
         require(profile.operationPolicies.isEmpty())
-        require(profile.capabilities.isEmpty())
-        require(profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
+        require(profile.clientAuthPolicy == socialSecurityClientAuthPolicy())
     }
 
     private fun certificateRules(value: JValue): CertificateFilterRules {
@@ -471,6 +476,7 @@ object SiteProfileCatalogParser {
         val endpointUrlOwners = mutableMapOf<URI, ProfileId>()
         val endpointOwners = mutableMapOf<EndpointId, ProfileId>()
         catalog.profiles.forEach { p ->
+            validateOwnTlsLoginProfile(p)
             if (p.profileId.value == UGR_PROFILE_ID) {
                 validateUgrProfile(p)
             }
@@ -750,6 +756,7 @@ object SiteProfileCatalogParser {
                             EXTREMADURA_PROFILE_ID,
                             FUERTEVENTURA_PROFILE_ID,
                             REG_AGE_PROFILE_ID,
+                            MADRID_CUENTA_DIGITAL_PROFILE_ID,
                         ) || p.profileId.value in CLAVE_DIRECT_PINS -> p.initiatorOrigins + p.redirectOrigins
                         p.profileId.value == TARRAGONA_PROFILE_ID &&
                             policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ->
@@ -1136,7 +1143,7 @@ object SiteProfileCatalogParser {
             ),
         )
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == SANIDAD_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-11-07") })
     }
 
     // A profile id without a TLS contract (navigation-only owner) grants nothing the pins would guard.
@@ -1400,6 +1407,19 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-11-06") })
     }
 
+    private fun socialSecurityClientAuthPolicy() = ClientAuthPolicy(
+        transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+        requestOrigins = setOf(ExactOrigin.parse(IMPORTASS_REQUEST_ORIGIN)),
+        sourceUrls = setOf(URI(IMPORTASS_POST_SOURCE_URL)),
+        requestPath = IMPORTASS_REQUEST_PATH,
+        requestMethod = HttpMethod.POST,
+        sourceFixedQueryParameters = mapOf("seleccion" to "IPCE"),
+        fixedQueryParameters = emptyMap(),
+        requiredEphemeralQueryParameters = emptySet(),
+        allowEmptyIssuerList = false,
+        grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
+    )
+
     private fun validateImportassProfile(profile: SiteProfile) {
         require(profile.profileVersion == IMPORTASS_PROFILE_VERSION)
         require(profile.displayName == IMPORTASS_DISPLAY_NAME)
@@ -1416,29 +1436,7 @@ object SiteProfileCatalogParser {
         require(profile.operationPolicies.isEmpty())
         require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA", "EC"), true))
-        require(
-            profile.clientAuthPolicy == ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
-                requestOrigins = setOf(ExactOrigin.parse(IMPORTASS_REQUEST_ORIGIN)),
-                sourceUrls = setOf(URI(IMPORTASS_SOURCE_URL)),
-                requestPath = IMPORTASS_REQUEST_PATH,
-                fixedQueryParameters = emptyMap(),
-                requiredEphemeralQueryParameters = emptySet(),
-                allowEmptyIssuerList = false,
-                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
-                requireOfferedKeyTypeMatch = true,
-                requireTlsClientAuthExtendedKeyUsage = true,
-                requestPort = HTTPS_PORT,
-                requestMethod = HttpMethod.GET,
-                sourceFixedQueryParameters = emptyMap(),
-                sourceRequiredEphemeralQueryParameters = emptySet(),
-                linkedEphemeralQueryParameters = emptySet(),
-                linkedEphemeralQueryParameterMappings = emptyMap(),
-                sourceBase64UrlConstraints = emptyMap(),
-                requestContinuationUrlConstraints = emptySet(),
-                returnUrlConstraints = emptySet(),
-            ),
-        )
+        require(profile.clientAuthPolicy == socialSecurityClientAuthPolicy())
         require(profile.evidence.map { it.url.toASCIIString() }.toSet() == IMPORTASS_EVIDENCE_URLS)
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-21") })
     }
@@ -3073,6 +3071,14 @@ object SiteProfileCatalogParser {
         firstIsRedirectOrigin: Boolean,
         secondIsRedirectOrigin: Boolean,
     ): Boolean =
+        (!firstIsRedirectOrigin && !secondIsRedirectOrigin &&
+            setOf(firstOwner.value, secondOwner.value) ==
+                setOf(SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID, IMPORTASS_PROFILE_ID) &&
+            origin.serialized in setOf(IMPORTASS_IDP_ORIGIN, IMPORTASS_REQUEST_ORIGIN)) ||
+            (!firstIsRedirectOrigin && !secondIsRedirectOrigin &&
+                setOf(firstOwner.value, secondOwner.value) == setOf(
+                    MADRID_CUENTA_DIGITAL_PROFILE_ID, "comunidad-madrid-gestiona2-public-navigation",
+                ) && origin.serialized == "https://gestiona2.comunidad.madrid") ||
         (setOf(firstOwner.value, secondOwner.value).let { owners ->
             owners.size == 2 &&
                 when (origin.serialized) {
@@ -3431,7 +3437,7 @@ object SiteProfileCatalogParser {
         "/SIGEM_AutenticacionWeb/validacionCertificado.do"
     private val SANIDAD_FIXED_QUERY = linkedMapOf(
         "REDIRECCION" to "RegistroTelematico",
-        "tramiteId" to "TRAM_TARDESCONPLAN",
+        "tramiteId" to "TRAM_TEMPRANAATENCION",
         "ENTIDAD_ID" to "000",
         "LANG" to "es",
         "COUNTRY" to "ES",
@@ -3441,7 +3447,7 @@ object SiteProfileCatalogParser {
         "https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm",
         "https://sede.mscbs.gob.es/diseno/js/form_gen.js",
         "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
-            "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
+            "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TEMPRANAATENCION&" +
             "ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
     )
     private const val VEA_PEG_PROFILE_ID = "junta-andalucia-vea-peg"
@@ -4027,6 +4033,7 @@ object SiteProfileCatalogParser {
     private const val IMPORTASS_PORTAL_ORIGIN = "https://portal.seg-social.gob.es"
     private const val IMPORTASS_IDP_ORIGIN = "https://idp.seg-social.es"
     private const val IMPORTASS_REQUEST_ORIGIN = "https://ipce.seg-social.es"
+    private const val IMPORTASS_POST_SOURCE_URL = "https://idp.seg-social.es/PGIS/Login"
     private const val IMPORTASS_SOURCE_URL = "https://idp.seg-social.es/PGIS/Login?seleccion=IPCE"
     private const val IMPORTASS_REQUEST_PATH = "/IPCE/Login"
     private val IMPORTASS_EVIDENCE_URLS = setOf(

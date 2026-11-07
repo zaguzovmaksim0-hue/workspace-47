@@ -890,7 +890,7 @@ class SiteProfileCatalogParserTest {
     @Test
     fun rejectsAnyExpansionOfTheSanidadSameOriginClientTlsContract() {
         val mutations = listOf(
-            "\"tramiteId\":\"TRAM_TARDESCONPLAN\"" to
+            "\"tramiteId\":\"TRAM_TEMPRANAATENCION\"" to
                 "\"tramiteId\":\"TRAM_OTHER\"",
             "\"sourceUrls\":[\"https://sede.mscbs.gob.es/registroElectronico/formularios.htm\"]" to
                 "\"sourceUrls\":[\"https://sede.mscbs.gob.es/registroElectronico/home.htm\"]",
@@ -2398,7 +2398,7 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `Madrid Cuenta Digital 53F1 profile exposes only exact QA browse navigation`() {
+    fun `Madrid Cuenta Digital 53F1 profile pins only exact QA certificate login`() {
         val profileId = ProfileId("comunidad-madrid-cuenta-digital-53f1")
         val start = URI("https://digital.comunidad.madrid/ext/53F1")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
@@ -2412,12 +2412,15 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertEquals(null, profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(HttpMethod.POST, policy.requestMethod)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
+        assertEquals(setOf("id"), policy.sourceRequiredEphemeralQueryParameters)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertEquals(false, profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(3, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-19" })
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(4, profile.evidence.size)
+        assertEquals(1, profile.evidence.count { it.reviewedOn.toString() == "2026-11-07" })
     }
 }
 

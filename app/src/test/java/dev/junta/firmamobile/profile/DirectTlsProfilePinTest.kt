@@ -3,8 +3,7 @@ package dev.junta.firmamobile.profile
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// These direct profiles carry their client-auth contract only in the JSON catalogue,
-// so the parser must pin every reviewed value on its own.
+// The parser's independent pins must reject changes to every reviewed TLS field.
 class DirectTlsProfilePinTest {
     private data class Mutation(val name: String, val profileId: String, val pattern: String, val replacement: String)
 
@@ -12,7 +11,12 @@ class DirectTlsProfilePinTest {
     private val importass = "tgss-importass-client-auth"
 
     private val mutations = listOf(
-        Mutation("aeat requestOrigins host", aeat, """"requestOrigins"\s*:\s*\["[^"]*"""", """"requestOrigins":["https://otro.example.es""""),
+        Mutation(
+            "aeat requestOrigins host",
+            aeat,
+            """"requestOrigins"\s*:\s*\[\s*"[^"]*"""",
+            """"requestOrigins":["https://otro.example.es"""",
+        ),
         Mutation("aeat requestPath", aeat, """"requestPath"\s*:\s*"[^"]*"""", """"requestPath":"/wlpl/OVCT-CXEW/Otro""""),
         Mutation("aeat grantTtlSeconds 15->14", aeat, """"grantTtlSeconds"\s*:\s*15""", """"grantTtlSeconds":14"""),
         Mutation("aeat allowEmptyIssuerList flip", aeat, """"allowEmptyIssuerList"\s*:\s*false""", """"allowEmptyIssuerList":true"""),
@@ -21,13 +25,28 @@ class DirectTlsProfilePinTest {
         Mutation("aeat requestPort 8443", aeat, """"grantTtlSeconds"\s*:\s*15""", """"grantTtlSeconds":15,"requestPort":8443"""),
         Mutation("aeat fixedQueryParameters ref", aeat, """"ref"\s*:\s*"/wlpl/BUGC-JDIT/MdcAcceso"""", """"ref":"/wlpl/OTRO/Servicio""""),
         Mutation("aeat fixedQueryParameters extra", aeat, """"fixedQueryParameters"\s*:\s*\{""", """"fixedQueryParameters":{"a":"b","""),
-        Mutation("importass requestOrigins host", importass, """"requestOrigins"\s*:\s*\["[^"]*"""", """"requestOrigins":["https://otro.example.es""""),
+        Mutation(
+            "importass requestOrigins host",
+            importass,
+            """"requestOrigins"\s*:\s*\[\s*"[^"]*"""",
+            """"requestOrigins":["https://otro.example.es"""",
+        ),
         Mutation("importass requestPath", importass, """"requestPath"\s*:\s*"[^"]*"""", """"requestPath":"/IPCE/Otro""""),
         Mutation("importass grantTtlSeconds 15->14", importass, """"grantTtlSeconds"\s*:\s*15""", """"grantTtlSeconds":14"""),
         Mutation("importass allowEmptyIssuerList flip", importass, """"allowEmptyIssuerList"\s*:\s*false""", """"allowEmptyIssuerList":true"""),
-        Mutation("importass sourceUrl IPCE->OTHER", importass, """("sourceUrls"\s*:\s*\["[^"]*)seleccion=IPCE""", "$1seleccion=OTHER"),
+        Mutation(
+            "importass source choice",
+            importass,
+            """"seleccion"\s*:\s*"IPCE"""",
+            """"seleccion":"OTHER"""",
+        ),
         Mutation("importass requestPort 443->8443", importass, """"requestPort"\s*:\s*443""", """"requestPort":8443"""),
-        Mutation("importass sourceFixedQueryParameters", importass, """"sourceFixedQueryParameters"\s*:\s*\{\}""", """"sourceFixedQueryParameters":{"a":"b"}"""),
+        Mutation(
+            "importass sourceFixedQueryParameters",
+            importass,
+            """"sourceFixedQueryParameters"\s*:\s*\{[^}]*}""",
+            """"sourceFixedQueryParameters":{"a":"b"}""",
+        ),
         Mutation("importass initiatorOrigins idp host", importass, """"https://idp\.seg-social\.es"\s*\]""", """"https://otro.example.es"]"""),
     )
 

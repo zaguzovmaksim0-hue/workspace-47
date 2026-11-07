@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 62,
+  "catalogVersion": 63,
   "profiles": [
     {
       "profileId": "junta-andalucia",
@@ -979,13 +979,13 @@
       "endpoints": [],
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://sede.mscbs.gob.es"],"sourceUrls":["https://sede.mscbs.gob.es/registroElectronico/formularios.htm"],"requestPath":"/SIGEM_AutenticacionWeb/validacionCertificado.do","fixedQueryParameters":{"REDIRECCION":"RegistroTelematico","tramiteId":"TRAM_TARDESCONPLAN","ENTIDAD_ID":"000","LANG":"es","COUNTRY":"ES"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
+      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://sede.mscbs.gob.es"],"sourceUrls":["https://sede.mscbs.gob.es/registroElectronico/formularios.htm"],"requestPath":"/SIGEM_AutenticacionWeb/validacionCertificado.do","fixedQueryParameters":{"REDIRECCION":"RegistroTelematico","tramiteId":"TRAM_TEMPRANAATENCION","ENTIDAD_ID":"000","LANG":"es","COUNTRY":"ES"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
-        {"url":"https://sede.mscbs.gob.es/registroElectronico/formularios.htm","reviewedOn":"2026-08-14"},
-        {"url":"https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm","reviewedOn":"2026-08-14"},
-        {"url":"https://sede.mscbs.gob.es/diseno/js/form_gen.js","reviewedOn":"2026-08-14"},
-        {"url":"https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES","reviewedOn":"2026-08-14"}
+        {"url":"https://sede.mscbs.gob.es/registroElectronico/formularios.htm","reviewedOn":"2026-11-07"},
+        {"url":"https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm","reviewedOn":"2026-11-07"},
+        {"url":"https://sede.mscbs.gob.es/diseno/js/form_gen.js","reviewedOn":"2026-11-07"},
+        {"url":"https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TEMPRANAATENCION&ENTIDAD_ID=000&LANG=es&COUNTRY=ES","reviewedOn":"2026-11-07"}
       ]
     },
     {
@@ -2209,13 +2209,31 @@
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": [],
-      "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "IN_PLACE_FROM_SOURCE",
+        "requestOrigins": [
+          "https://gestiona2.comunidad.madrid"
+        ],
+        "sourceUrls": [
+          "https://gestiona.comunidad.madrid/auto_login/seleccion-idp.jsf"
+        ],
+        "requestPath": "/auto_certificado/SelCertificado",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15,
+        "requestMethod": "POST",
+        "sourceRequiredEphemeralQueryParameters": [
+          "id"
+        ]
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
         {"url":"https://digital.comunidad.madrid/ext/53F1","reviewedOn":"2026-08-19"},
         {"url":"https://gestiona.comunidad.madrid/auto_login/acceso.jsf","reviewedOn":"2026-08-19"},
-        {"url":"https://gestiona2.comunidad.madrid/auto_certificado/SelCertificado","reviewedOn":"2026-08-19"}
+        {"url":"https://gestiona2.comunidad.madrid/auto_certificado/SelCertificado","reviewedOn":"2026-08-19"},
+        {"url":"https://gestiona.comunidad.madrid/auto_login/seleccion-idp.jsf","reviewedOn":"2026-11-07"}
       ]
     },
     {
@@ -3138,12 +3156,29 @@
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": [],
-      "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "REDIRECT_AFTER_SOURCE",
+        "requestOrigins": [
+          "https://authserver.diphuelva.es"
+        ],
+        "sourceUrls": [
+          "https://sede.diphuelva.es/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
+        ],
+        "requestPath": "/",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [
+          "ticket"
+        ],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
         {"url":"https://www.diphuelva.es/","reviewedOn":"2026-08-21"},
-        {"url":"https://sede.diphuelva.es/","reviewedOn":"2026-08-21"}
+        {"url":"https://sede.diphuelva.es/","reviewedOn":"2026-08-21"},
+        {"url":"https://sede.diphuelva.es/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp","reviewedOn":"2026-11-07"},
+        {"url":"https://authserver.diphuelva.es/","reviewedOn":"2026-11-07"}
       ]
     },
     {
@@ -3464,17 +3499,22 @@
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
       "clientAuthPolicy": {
-        "transitionMode": "DIRECT_FROM_SOURCE",
-        "requestOrigins": ["https://ipce.seg-social.es"],
-        "sourceUrls": ["https://idp.seg-social.es/PGIS/Login?seleccion=IPCE"],
-        "sourceFixedQueryParameters": {},
-        "sourceRequiredEphemeralQueryParameters": [],
-        "linkedEphemeralQueryParameters": [],
+        "transitionMode": "IN_PLACE_FROM_SOURCE",
+        "requestOrigins": [
+          "https://ipce.seg-social.es"
+        ],
+        "sourceUrls": [
+          "https://idp.seg-social.es/PGIS/Login"
+        ],
         "requestPath": "/IPCE/Login",
         "fixedQueryParameters": {},
         "requiredEphemeralQueryParameters": [],
         "allowEmptyIssuerList": false,
         "grantTtlSeconds": 15,
+        "requestMethod": "POST",
+        "sourceFixedQueryParameters": {
+          "seleccion": "IPCE"
+        },
         "requestPort": 443
       },
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
@@ -3975,19 +4015,39 @@
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es",
-      "initiatorOrigins": ["https://sede.seg-social.gob.es"],
+      "initiatorOrigins": ["https://sede.seg-social.gob.es","https://idp.seg-social.es"],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": [],
-      "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "IN_PLACE_FROM_SOURCE",
+        "requestOrigins": [
+          "https://ipce.seg-social.es"
+        ],
+        "sourceUrls": [
+          "https://idp.seg-social.es/PGIS/Login"
+        ],
+        "requestPath": "/IPCE/Login",
+        "fixedQueryParameters": {},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15,
+        "requestMethod": "POST",
+        "sourceFixedQueryParameters": {
+          "seleccion": "IPCE"
+        },
+        "requestPort": 443
+      },
+      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
         {"url":"https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es","reviewedOn":"2026-08-25"},
         {"url":"https://sede.seg-social.gob.es/wps/portal/sede/Seguridad/PortalRedirectorN3A?A=&N3=&idApp=826&idContenido=a061f401-c3ed-426e-9428-82bd9198c223&idPagina=com.ss.sede.RegistroElectronicoDeApoderamiento","reviewedOn":"2026-08-25"},
         {"url":"https://sede.seg-social.gob.es/binarios/es/1503Autofirma","reviewedOn":"2026-08-25"},
-        {"url":"https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es","reviewedOn":"2026-08-25"}
+        {"url":"https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RequisitosTecnicos/requisitos%2Bde%2Bfirma%2Belectronica/autofirma?changeLanguage=es","reviewedOn":"2026-08-25"},
+        {"url":"https://idp.seg-social.es/PGIS/Login?seleccion=IPCE","reviewedOn":"2026-11-07"},
+        {"url":"https://ipce.seg-social.es/IPCE/Login","reviewedOn":"2026-11-07"}
       ]
     },
     {
@@ -4150,6 +4210,12 @@
     {"origin":"https://valid.aoc.cat","firstOwner":"catalunya-seu-registre-client-auth","laterOwners":["diputacion-tarragona-sede"],"redirectRoles":["NEITHER","LATER","FIRST","BOTH"],"evidence":{"url":"https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/","reviewedOn":"2026-08-19"}},
     {"origin":"https://valid.aoc.cat","firstOwner":"catalunya-seu-registre-client-auth","laterOwners":["diputacion-barcelona-solicitud-generica-2057","catalunya-peticio-generica-client-auth"],"redirectRoles":["BOTH"],"evidence":{"url":"https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/","reviewedOn":"2026-08-19"}},
     {"origin":"https://ws235.juntadeandalucia.es","firstOwner":"carne-joven-andalucia","laterOwners":["junta-andalucia-vea-peg"],"redirectRoles":["NEITHER"],"evidence":{"url":"https://www.juntadeandalucia.es/servicios/sede/tramites/procedimientos/detalle/24721.html","reviewedOn":"2026-07-18"}},
-    {"origin":"https://ws235.juntadeandalucia.es","firstOwner":"junta-andalucia-vea-peg","laterOwners":["carne-joven-andalucia"],"redirectRoles":["NEITHER"],"evidence":{"url":"https://www.juntadeandalucia.es/servicios/sede/tramites.html","reviewedOn":"2026-08-28"}}
+    {"origin":"https://ws235.juntadeandalucia.es","firstOwner":"junta-andalucia-vea-peg","laterOwners":["carne-joven-andalucia"],"redirectRoles":["NEITHER"],"evidence":{"url":"https://www.juntadeandalucia.es/servicios/sede/tramites.html","reviewedOn":"2026-08-28"}},
+    {"origin":"https://idp.seg-social.es","firstOwner":"tgss-importass-client-auth","laterOwners":["seguridad-social-sede-autofirma"],"redirectRoles":["NEITHER"],"evidence":{"url":"https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda","reviewedOn":"2026-08-21"}},
+    {"origin":"https://idp.seg-social.es","firstOwner":"seguridad-social-sede-autofirma","laterOwners":["tgss-importass-client-auth"],"redirectRoles":["NEITHER"],"evidence":{"url":"https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es","reviewedOn":"2026-08-25"}},
+    {"origin":"https://ipce.seg-social.es","firstOwner":"tgss-importass-client-auth","laterOwners":["seguridad-social-sede-autofirma"],"redirectRoles":["NEITHER"],"evidence":{"url":"https://portal.seg-social.gob.es/wps/portal/importass/importass/ayuda","reviewedOn":"2026-08-21"}},
+    {"origin":"https://ipce.seg-social.es","firstOwner":"seguridad-social-sede-autofirma","laterOwners":["tgss-importass-client-auth"],"redirectRoles":["NEITHER"],"evidence":{"url":"https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?changeLanguage=es","reviewedOn":"2026-08-25"}},
+    {"origin":"https://gestiona2.comunidad.madrid","firstOwner":"comunidad-madrid-gestiona2-public-navigation","laterOwners":["comunidad-madrid-cuenta-digital-53f1"],"redirectRoles":["NEITHER"],"evidence":{"url":"https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094","reviewedOn":"2026-08-25"}},
+    {"origin":"https://gestiona2.comunidad.madrid","firstOwner":"comunidad-madrid-cuenta-digital-53f1","laterOwners":["comunidad-madrid-gestiona2-public-navigation"],"redirectRoles":["NEITHER"],"evidence":{"url":"https://digital.comunidad.madrid/ext/53F1","reviewedOn":"2026-08-19"}}
   ]
 }

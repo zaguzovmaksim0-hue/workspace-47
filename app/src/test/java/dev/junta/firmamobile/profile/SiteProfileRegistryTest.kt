@@ -505,7 +505,7 @@ class SiteProfileRegistryTest {
     }
 
     @Test
-    fun `Madrid Cuenta Digital 53F1 keeps gestiona as redirect only and gestiona2 untrusted`() {
+    fun `Madrid Cuenta Digital 53F1 keeps gestiona as redirect and pins gestiona2 only for client auth`() {
         val profileId = ProfileId("comunidad-madrid-cuenta-digital-53f1")
         val start = URI("https://digital.comunidad.madrid/ext/53F1")
         val login = URI("https://gestiona.comunidad.madrid/auto_login/acceso.jsf")
@@ -513,9 +513,16 @@ class SiteProfileRegistryTest {
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, login)?.trustMode)
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, postTls))
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, postTls)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("$postTls/other"))?.trustMode,
+        )
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://digital.comunidad.madrid.evil.example/ext/53F1")))
     }
 
