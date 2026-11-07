@@ -12,6 +12,8 @@ const context = await browser.newContext({
   locale: 'es-ES',
   userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
 });
+// Never reach the certificate step itself: abort every request to the Cl@ve identity endpoint.
+await context.route(/pasarela-ident\.clave\.gob\.es/, route => route.abort());
 const dump = () => {
   const vis = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
   const text = (el) => (el.innerText || el.value || el.getAttribute('aria-label') || el.title || '').trim().replace(/\s+/g, ' ').slice(0, 90);

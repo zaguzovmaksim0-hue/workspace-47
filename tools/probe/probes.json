@@ -1,127 +1,125 @@
 [
- {
-  "name": "age-fondo-espanol-de-garantia-agraria-o-a-fega",
-  "url": "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02",
-  "wait": 6000
- },
- {
-  "name": "age-instituto-social-de-las-fuerzas-armadas-isfas",
-  "url": "https://sede.isfas.gob.es/",
-  "wait": 6000
- },
- {
-  "name": "asturias-miprincipado-sede",
-  "url": "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
-  "wait": 6000
- },
- {
-  "name": "asturias-sede-tramite-autofirma",
-  "url": "https://sede.asturias.es/ast/-/dboid-6269000011903512107573",
-  "wait": 6000
- },
- {
-  "name": "cantabria-registro-electronico-comun",
-  "url": "https://rec.cantabria.es/rec/bienvenida.htm",
-  "wait": 6000
- },
- {
-  "name": "cantabria-sede",
-  "url": "https://sede.cantabria.es/sede/",
-  "wait": 6000
- },
- {
-  "name": "ceuta-sede",
-  "url": "https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI",
-  "wait": 6000
- },
- {
-  "name": "diputacion-malaga-sede",
-  "url": "https://sede.malaga.es/instancia-general/nueva-instancia-general/",
-  "wait": 6000
- },
- {
-  "name": "diputacion-salamanca-sede",
-  "url": "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
-  "wait": 6000
- },
- {
-  "name": "diputacion-segovia-sede",
-  "url": "https://sede.dipsegovia.es/registro",
-  "wait": 6000
- },
- {
-  "name": "diputacion-valencia-sede",
-  "url": "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml",
-  "wait": 6000
- },
- {
-  "name": "diputacion-zamora-sede",
-  "url": "https://diputaciondezamora.sedelectronica.es/info.0",
-  "wait": 6000
- },
- {
-  "name": "diputacion-zaragoza-sede",
-  "url": "https://dpz.sedelectronica.es/info.0",
-  "wait": 6000
- },
- {
-  "name": "eivissa-sede-electronica",
-  "url": "https://seu.conselldeivissa.es/",
-  "wait": 6000
- },
- {
-  "name": "el-hierro-portal-institucional",
-  "url": "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
-  "wait": 6000
- },
- {
-  "name": "el-hierro-sede-electronica",
-  "url": "https://elhierro.sedelectronica.es/info.0",
-  "wait": 6000
- },
- {
-  "name": "junta-andalucia-sede",
-  "url": "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA",
-  "wait": 6000
- },
- {
-  "name": "la-gomera-portal-institucional",
-  "url": "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
-  "wait": 6000
- },
- {
-  "name": "la-gomera-sede-electronica",
-  "url": "https://lagomera.sedelectronica.es/info.0",
-  "wait": 6000
- },
- {
-  "name": "la-palma-portal-institucional",
-  "url": "https://www.cabildodelapalma.es/",
-  "wait": 6000
- },
- {
-  "name": "la-palma-sede-electronica",
-  "url": "https://sedeelectronica.cabildodelapalma.es/",
-  "wait": 6000
- },
- {
-  "name": "lanzarote-sede-electronica",
-  "url": "https://cabildodelanzarote.sedelectronica.es/info.0",
-  "wait": 6000
- },
- {
-  "name": "navarra-sede-registro-general",
-  "url": "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico",
-  "wait": 6000
- },
- {
-  "name": "sevilla-sede",
-  "url": "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente",
-  "wait": 6000
- },
- {
-  "name": "diputacion-ourense-sede",
-  "url": "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES",
-  "wait": 6000
- }
+  {
+    "name": "age-instituto-social-de-las-fuerzas-armadas-isfas",
+    "url": "https://sede.isfas.gob.es/",
+    "wait": 6000,
+    "clicks": [
+      "button[onclick=\"identificarse();\"]:text-is(\"Identificarse\"):visible"
+    ]
+  },
+  {
+    "name": "diputacion-segovia-sede",
+    "url": "https://sede.dipsegovia.es/registro",
+    "wait": 6000,
+    "clicks": [
+      "a[href=\"#\"][onclick=\"submit();\"]:text-is(\"Acceso con sistema Cl@ve\"):visible"
+    ]
+  },
+  {
+    "name": "diputacion-zamora-sede--login-methods",
+    "url": "https://diputaciondezamora.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible"
+    ]
+  },
+  {
+    "name": "diputacion-zamora-sede",
+    "url": "https://diputaciondezamora.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible",
+      "a[href=\"#\"][onclick=\"submit();\"]:text-is(\"Acceso con sistema Cl@ve\"):visible"
+    ]
+  },
+  {
+    "name": "diputacion-zaragoza-sede--login-methods",
+    "url": "https://dpz.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible"
+    ]
+  },
+  {
+    "name": "diputacion-zaragoza-sede",
+    "url": "https://dpz.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible",
+      "a[href=\"#\"][onclick=\"submit();\"]:text-is(\"Acceso con sistema Cl@ve\"):visible"
+    ]
+  },
+  {
+    "name": "el-hierro-portal-institucional",
+    "url": "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
+    "wait": 6000,
+    "clicks": [
+      "a[href=\"#\"][onclick=\"submit();\"]:text-is(\"Acceso con sistema Cl@ve\"):visible"
+    ]
+  },
+  {
+    "name": "el-hierro-sede-electronica--login-methods",
+    "url": "https://elhierro.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible"
+    ]
+  },
+  {
+    "name": "el-hierro-sede-electronica",
+    "url": "https://elhierro.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible",
+      "a[href=\"#\"][onclick=\"submit();\"]:text-is(\"Acceso con sistema Cl@ve\"):visible"
+    ]
+  },
+  {
+    "name": "la-gomera-portal-institucional",
+    "url": "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+    "wait": 6000,
+    "clicks": [
+      "a[href=\"#\"][onclick=\"submit();\"]:text-is(\"Acceso con sistema Cl@ve\"):visible"
+    ]
+  },
+  {
+    "name": "la-gomera-sede-electronica--login-methods",
+    "url": "https://lagomera.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible"
+    ]
+  },
+  {
+    "name": "la-gomera-sede-electronica",
+    "url": "https://lagomera.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible",
+      "a[href=\"#\"][onclick=\"submit();\"]:text-is(\"Acceso con sistema Cl@ve\"):visible"
+    ]
+  },
+  {
+    "name": "la-palma-portal-institucional",
+    "url": "https://sedeelectronica.cabildodelapalma.es/sta/CarpetaPublic/Login?APP_CODE=STA&PAGE_CODE=PTS2_HOME",
+    "wait": 6000,
+    "clicks": []
+  },
+  {
+    "name": "lanzarote-sede-electronica--login-methods",
+    "url": "https://cabildodelanzarote.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible"
+    ]
+  },
+  {
+    "name": "lanzarote-sede-electronica",
+    "url": "https://cabildodelanzarote.sedelectronica.es/info.0",
+    "wait": 6000,
+    "clicks": [
+      "a[href^=\"?x=\"]:text-is(\"Identifícate\"):visible",
+      "a[href=\"#\"][onclick=\"submit();\"]:text-is(\"Acceso con sistema Cl@ve\"):visible"
+    ]
+  }
 ]
