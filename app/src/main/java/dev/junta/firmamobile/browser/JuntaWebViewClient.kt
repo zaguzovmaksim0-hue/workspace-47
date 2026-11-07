@@ -25,6 +25,7 @@ import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.strictClientAuthHttpsUri
 import dev.junta.firmamobile.profile.matchesSourceUrl
 import dev.junta.firmamobile.profile.matchesRequestUrl
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.net.URI
 import java.util.concurrent.atomic.AtomicReference
 
@@ -402,17 +403,15 @@ class JuntaWebViewClient(
             return
         }
         val pending = pendingInPlaceClientAuth.getAndSet(null)
-        if (pending == null || pending.navigationEpoch != currentNavigationEpoch() ||
-            pending.authorized.profileId != activeProfileId() || pending.authorized.isExpiredOrInvalid() ||
-            !request.host.equals(pending.authorized.target.host, ignoreCase = true) ||
-            request.port != pending.authorized.policy.requestPort
-        ) {
+        val fallbackStage = inPlaceFallbackStage(pending, request)
+        if (fallbackStage != null) {
+            logger.recordPortalCallback(stage = fallbackStage, host = request.host)
             // This is a real platform TLS challenge, not permission inferred
             // from a navigation recipe. The optional delegate requires consent.
             onInteractiveClientAuthChallenge(view, request)
             return
         }
-        onInPlaceClientAuthChallenge(pending.authorized, request)
+        onInPlaceClientAuthChallenge(checkNotNull(pending).authorized, request)
     }
 
     override fun onPageFinished(view: WebView, url: String) {
@@ -655,6 +654,25 @@ class JuntaWebViewClient(
         val sourceObserved: Boolean,
     )
 
+    // Names the first reason an in-place grant cannot answer this challenge; null when it can.
+    private fun inPlaceFallbackStage(pending: PendingInPlaceClientAuth?, request: ClientCertRequest): String? {
+        if (pending == null) return "client-auth-fallback-no-pending"
+        val authorized = pending.authorized
+        val nowNanos = MonotonicSecurityTime.nowNanos()
+        return when {
+            pending.navigationEpoch != currentNavigationEpoch() -> "client-auth-fallback-epoch"
+            authorized.profileId != activeProfileId() -> "client-auth-fallback-profile"
+            authorized.isExpiredOrInvalid(nowNanos) -> {
+                val elapsedSeconds = (nowNanos - authorized.observedAtMonotonicNanos) / NANOS_PER_SECOND
+                val bucket = EXPIRED_FALLBACK_BUCKETS.firstOrNull { elapsedSeconds < it.first }?.second ?: "gt60s"
+                "client-auth-fallback-expired-$bucket"
+            }
+            !request.host.equals(authorized.target.host, ignoreCase = true) -> "client-auth-fallback-host"
+            request.port != authorized.policy.requestPort -> "client-auth-fallback-port"
+            else -> null
+        }
+    }
+
     private data class PendingInPlaceClientAuth(
         val authorized: AuthorizedClientAuthTarget,
         val navigationEpoch: Long,
@@ -663,6 +681,8 @@ class JuntaWebViewClient(
 
     private companion object {
         const val HTTP_ERROR_START = 400
+        const val NANOS_PER_SECOND = 1_000_000_000L
+        val EXPIRED_FALLBACK_BUCKETS = listOf(15L to "lt15s", 30L to "15-30s", 60L to "30-60s")
         const val CHROMIUM_CONNECTION_TIMED_OUT = "net::ERR_CONNECTION_TIMED_OUT"
         const val BLANK_DOCUMENT_RESULT = "blank"
         val BLANK_DOCUMENT_PROBE = """
