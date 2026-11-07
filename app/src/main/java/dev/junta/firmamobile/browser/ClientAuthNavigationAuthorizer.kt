@@ -164,7 +164,7 @@ class ClientAuthNavigationAuthorizer internal constructor(
             previous.target == target && previous.epoch == currentEpoch &&
             !previous.isExpiredOrInvalid(nowNanos)
         ) return null
-        val lifetimeNanos = grantLifetimeNanos(policy)
+        val lifetimeNanos = inPlaceChallengeLifetimeNanos(policy)
         consumedInPlace = DirectConsumption(
             profileId = profile.profileId,
             source = source,
@@ -404,4 +404,19 @@ class ClientAuthNavigationAuthorizer internal constructor(
     private fun grantLifetimeNanos(policy: ClientAuthPolicy): Long =
         MonotonicSecurityTime.durationNanos(Duration.ofSeconds(policy.grantTtlSeconds.toLong()))
 
+    // Cl@ve sometimes answers the AuthenticateCitizen POST with its TLS challenge only after more than 15 s.
+    private fun inPlaceChallengeLifetimeNanos(policy: ClientAuthPolicy): Long =
+        if (policy.requestMethod == HttpMethod.POST && policy.requestOrigins == setOf(CLAVE_IDENT_ORIGIN)) {
+            maxOf(
+                grantLifetimeNanos(policy),
+                MonotonicSecurityTime.durationNanos(Duration.ofSeconds(CLAVE_POST_CHALLENGE_WINDOW_SECONDS)),
+            )
+        } else {
+            grantLifetimeNanos(policy)
+        }
+
+    private companion object {
+        const val CLAVE_POST_CHALLENGE_WINDOW_SECONDS = 30L
+        val CLAVE_IDENT_ORIGIN = ExactOrigin.parse("https://pasarela-ident.clave.gob.es")
+    }
 }

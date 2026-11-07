@@ -1859,9 +1859,9 @@ fun BrowserScreen(
             host = pending.authorized.target.host,
             certificateOwner = certificateState?.summary?.ownerName ?: stringResource(R.string.browser_no_unlocked_certificate),
             onContinue = {
+                // The grant window covers reaching this dialog; the user's decision time must not expire it.
                 if (pending.authorized.profileId != effectiveTopLevelProfileId ||
-                    pending.navigationEpoch != navigationEpoch.longValue ||
-                    pending.authorized.isExpiredOrInvalid()
+                    pending.navigationEpoch != navigationEpoch.longValue
                 ) {
                     pending.request.ignore()
                     pendingInPlaceClientAuth = null
@@ -1870,7 +1870,7 @@ fun BrowserScreen(
                     pendingInPlaceClientAuth = null
                     val handler = ClientAuthRequestHandler(
                         grant = ClientAuthGrant(
-                            authorized = pending.authorized,
+                            authorized = pending.authorized.refreshedAfterUserConfirmation(),
                             navigationEpoch = pending.navigationEpoch,
                         ),
                         identityProvider = clientCertificateIdentityProvider,
