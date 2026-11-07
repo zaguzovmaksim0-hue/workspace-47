@@ -37,6 +37,8 @@ class SharedOriginCharacterizationTest {
                 "reg-age-redsara", "diputacion-alicante-solicitud-general",
                 "diputacion-castellon-instancia-general", "lanzarote-instancia-general",
                 "diputacion-teruel-instancia-general", "csn-sede-public",
+                "enaire-sede-public", "iac-sede-public-navigation", "icac-sede-public-navigation",
+                "diputacion-granada-sede-public", "ico-sede-public-navigation",
             ),
             browse = listOf("ministerio-economia-instancia-generica"),
         ),
@@ -54,6 +56,8 @@ class SharedOriginCharacterizationTest {
                 "diputacion-teruel-instancia-general", "diputacion-guadalajara-instancia-general",
                 "ctbg-solicitud-informacion", "csn-sede-public", "diputacion-cadiz-solicitud-generica",
                 "diputacion-caceres-instancia-general",
+                "enaire-sede-public", "iac-sede-public-navigation", "icac-sede-public-navigation",
+                "diputacion-granada-sede-public", "ico-sede-public-navigation",
             ),
         ),
         Family(
@@ -296,6 +300,8 @@ class SharedOriginCharacterizationTest {
             "ctbg-solicitud-informacion", "catastro-solicitudes-genericas",
             "fega-solicitud-general-ofvsg02", "diputacion-caceres-instancia-general",
             "diputacion-guadalajara-instancia-general", "diputacion-cadiz-solicitud-generica",
+            "enaire-sede-public", "iac-sede-public-navigation", "icac-sede-public-navigation",
+            "diputacion-granada-sede-public", "ico-sede-public-navigation",
         )
         val origins = listOf("https://pasarela.clave.gob.es", "https://pasarela-ident.clave.gob.es")
         for (owner in onlyPublicGateway + bothGateways) for (origin in origins) for (redirect in listOf(false, true)) {

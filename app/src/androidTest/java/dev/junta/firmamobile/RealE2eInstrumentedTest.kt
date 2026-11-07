@@ -352,6 +352,54 @@ class RealE2eInstrumentedTest {
                 )
                 clickClaveAfirmaProvider(scenario)
             }
+            // *.sede.gob.es: shadow-DOM header "Iniciar sesión" -> optional /login page -> claveproxy -> Cl@ve.
+            in SEDE_GOB_CLAVE_HOSTS -> {
+                val host = SEDE_GOB_CLAVE_HOSTS.getValue(portalId)
+                val home = "https://$host/"
+                val claveproxy = "/claveproxy/clave/authenticate?returnUrl=https%3A%2F%2F$host%2F"
+                val login = "/login?returnUrl=https%3A%2F%2F$host%2F"
+                val loginPage = portalId in SEDE_GOB_LOGIN_PAGE_PORTALS
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = home,
+                    expectedLabel = SEDE_GOB_LOGIN_LABEL,
+                    expectedHref = if (loginPage) login else claveproxy,
+                    waitForExpectedUrl = true,
+                    shadowHostTag = "dnt-header-item",
+                )
+                if (loginPage) {
+                    clickExactLabeledAnchor(
+                        scenario = scenario,
+                        expectedCurrentUrl = "https://$host$login",
+                        expectedLabel = "",
+                        expectedHref = claveproxy,
+                        waitForExpectedUrl = true,
+                        shadowHostTag = "dnt-link",
+                    )
+                }
+                clickClaveAfirmaProvider(scenario)
+            }
+            // gsede (opencms) sedes: "Identificarse" -> autenticacion.jsp -> loginClave() posts to Cl@ve.
+            in GSEDE_CLAVE_PORTALS -> {
+                val gsede = GSEDE_CLAVE_PORTALS.getValue(portalId)
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = gsede.homeUrl,
+                    expectedLabel = GSEDE_IDENTIFY_LABEL,
+                    expectedHref = GSEDE_AUTHENTICATION_PATH,
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = gsede.origin + GSEDE_AUTHENTICATION_PATH,
+                    expectedElementId = null,
+                    expectedLabel = gsede.claveLabel,
+                    expectedAriaLabel = null,
+                    expectedOnClick = gsede.claveOnClick,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
             // CSN: the hidden login-menu link starts Cl@ve with AFIRMA preselected; no provider choice follows.
             CSN_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
@@ -1071,8 +1119,11 @@ class RealE2eInstrumentedTest {
         expectedLabel: String,
         expectedHref: String,
         waitForExpectedUrl: Boolean = false,
+        // Web-component sites (*.sede.gob.es) render the anchor inside an open shadow root of this host tag.
+        shadowHostTag: String? = null,
     ) {
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedShadowHost = JSONObject.quote(shadowHostTag.orEmpty())
         val quotedExpectedLabel = JSONObject.quote(expectedLabel)
         val quotedExpectedHref = JSONObject.quote(expectedHref)
         while (SystemClock.elapsedRealtime() < deadline) {
@@ -1103,10 +1154,15 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
-                      const elements = Array.from(document.querySelectorAll('a')).filter(element => {
+                      const host = $quotedShadowHost;
+                      const roots = host === '' ? [document] :
+                        Array.from(document.querySelectorAll(host)).map(h => h.shadowRoot).filter(Boolean);
+                      const anchors = roots.flatMap(root => Array.from(root.querySelectorAll('a')));
+                      const elements = anchors.filter(element => {
                         const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
-                        return label === $quotedExpectedLabel &&
-                          element.getAttribute('href') === $quotedExpectedHref;
+                        // A first visit without cookies gets ;jsessionid=... rewritten into every href (CSN).
+                        const href = (element.getAttribute('href') || '').replace(/;jsessionid=[^?#]*/i, '');
+                        return label === $quotedExpectedLabel && href === $quotedExpectedHref;
                       });
                       if (elements.length === 0) return 0;
                       if (elements.length !== 1) return 2;
@@ -2486,6 +2542,36 @@ class RealE2eInstrumentedTest {
         const val MALAGA_LOCAL_CLAVE_URL = "https://clave.malaga.es/clave.php"
         const val MALAGA_CLAVE_SUBMIT_VALUE = "Acceder con cl@ve"
         const val GESTIONA_CLAVE_LABEL = "Acceso con sistema Cl@ve"
+        const val SEDE_GOB_LOGIN_LABEL = "Iniciar sesión"
+        val SEDE_GOB_CLAVE_HOSTS = mapOf(
+            "age-enaire-entidad-publica-empresarial" to "enaire.sede.gob.es",
+            "age-instituto-de-astrofisica-de-canarias-iac" to "iac.sede.gob.es",
+            "age-instituto-de-contabilidad-y-auditoria-de-cuentas-icac" to "icac.sede.gob.es",
+        )
+        // IAC and ICAC open a /login page first; ENAIRE goes straight to claveproxy.
+        val SEDE_GOB_LOGIN_PAGE_PORTALS = setOf(
+            "age-instituto-de-astrofisica-de-canarias-iac",
+            "age-instituto-de-contabilidad-y-auditoria-de-cuentas-icac",
+        )
+        class GsedeClave(val origin: String, val homeUrl: String, val claveLabel: String, val claveOnClick: String)
+        const val GSEDE_IDENTIFY_LABEL = "Identificarse"
+        const val GSEDE_AUTHENTICATION_PATH =
+            "/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
+        val GSEDE_CLAVE_PORTALS = mapOf(
+            "diputacion-granada-portal" to GsedeClave(
+                origin = "https://sede.dipgra.es",
+                homeUrl = "https://sede.dipgra.es/opencms/system/modules/sede/elements/secciones/index",
+                claveLabel = "Acceder",
+                claveOnClick = "loginClave();",
+            ),
+            // ICO's Cl@ve button is an image; two buttons share id autButton, the onclick tells them apart.
+            "age-instituto-de-credito-oficial-ico" to GsedeClave(
+                origin = "https://sedeico.gob.es",
+                homeUrl = "https://sedeico.gob.es/opencms/system/modules/sede/index",
+                claveLabel = "",
+                claveOnClick = "waiting(); loginClave();",
+            ),
+        )
         const val CADIZ_PORTAL_ID = "diputacion-cadiz-portal"
         const val CACERES_PORTAL_ID = "diputacion-caceres-portal"
         const val CACERES_START_URL = "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341"

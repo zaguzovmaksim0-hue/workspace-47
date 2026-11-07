@@ -516,6 +516,17 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('CSN_CERT_HREF = "https://sede.csn.gob.es:/Sede20/clave/peticioncert"', source)
         self.assertIn('CSN_PORTAL_ID = "age-consejo-de-seguridad-nuclear-csn"', source)
 
+    def test_sede_gob_and_gsede_recipes_end_on_clave_without_scripted_navigation(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for head in ('in SEDE_GOB_CLAVE_HOSTS -> {', 'in GSEDE_CLAVE_PORTALS -> {'):
+            block = source.split(head, 1)[1].split('\n            }\n', 1)[0]
+            self.assertTrue(block.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+            for forbidden in ('loadUrl(', '.submit(', 'evaluateJavascript('):
+                self.assertNotIn(forbidden, block)
+        self.assertIn('"age-enaire-entidad-publica-empresarial" to "enaire.sede.gob.es"', source)
+        self.assertIn('claveOnClick = "waiting(); loginClave();"', source)
+        self.assertIn('claveOnClick = "loginClave();"', source)
+
     def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
         source = self.read(INSTRUMENTATION)
         block = source.split('in GESTIONA_CLAVE_ORIGINS -> {', 1)[1].split('\n            }\n', 1)[0]
