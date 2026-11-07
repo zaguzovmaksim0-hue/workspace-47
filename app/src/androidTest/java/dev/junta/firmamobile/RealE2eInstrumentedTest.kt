@@ -1155,8 +1155,11 @@ class RealE2eInstrumentedTest {
                     """
                     (() => {
                       const host = $quotedShadowHost;
-                      const roots = host === '' ? [document] :
-                        Array.from(document.querySelectorAll(host)).map(h => h.shadowRoot).filter(Boolean);
+                      // Header items nest another component (dnt-link) whose own shadow root holds the anchor.
+                      const deep = root => Array.from(root.querySelectorAll('*'))
+                        .flatMap(el => el.shadowRoot ? [el.shadowRoot, ...deep(el.shadowRoot)] : []);
+                      const roots = host === '' ? [document] : Array.from(document.querySelectorAll(host))
+                        .flatMap(h => h.shadowRoot ? [h.shadowRoot, ...deep(h.shadowRoot)] : []);
                       const anchors = roots.flatMap(root => Array.from(root.querySelectorAll('a')));
                       const elements = anchors.filter(element => {
                         const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
@@ -2561,7 +2564,8 @@ class RealE2eInstrumentedTest {
             "diputacion-granada-portal" to GsedeClave(
                 origin = "https://sede.dipgra.es",
                 homeUrl = "https://sede.dipgra.es/opencms/system/modules/sede/elements/secciones/index",
-                claveLabel = "Acceder",
+                // CSS text-transform: uppercase applies to innerText.
+                claveLabel = "ACCEDER",
                 claveOnClick = "loginClave();",
             ),
             // ICO's Cl@ve button is an image; two buttons share id autButton, the onclick tells them apart.
