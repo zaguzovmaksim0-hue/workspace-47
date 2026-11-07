@@ -32,7 +32,7 @@ class AirefOriginSourceTest {
     private val tlsTargetOrigin = "https://pasarela-ident.clave.gob.es"
     private val publicStartUrl =
         "$portalOrigin/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01"
-    private val sourceUrl = "$claveSourceOrigin/Proxy2/ServiceProvider"
+    private val sourceUrl = "$claveSourceOrigin/Proxy2/ServiceRedirect"
     private val targetUrl = "$tlsTargetOrigin/IdP2/AuthenticateCitizen"
 
     @Test
@@ -76,14 +76,20 @@ class AirefOriginSourceTest {
             TlsProfileMutation(
                 "clave source host",
                 profileId.value,
-                Regex.escape("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
-                "https://pasarela.clave.gob.es.evil.example/Proxy2/ServiceProvider",
+                Regex.escape("\"sourceUrls\": [\"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect\"]"),
+                "\"sourceUrls\": [\"https://pasarela.clave.gob.es.evil.example/Proxy2/ServiceRedirect\"]",
             ),
             TlsProfileMutation(
                 "clave source endpoint",
                 profileId.value,
-                Regex.escape("/Proxy2/ServiceProvider"),
-                "/Proxy2/ServiceRedirect",
+                Regex.escape("\"sourceUrls\": [\"https://pasarela.clave.gob.es/Proxy2/ServiceRedirect\"]"),
+                "\"sourceUrls\": [\"https://pasarela.clave.gob.es/Proxy2/ServiceProvider\"]",
+            ),
+            TlsProfileMutation(
+                "clave transition mode",
+                profileId.value,
+                Regex.escape("\"transitionMode\": \"IN_PLACE_FROM_SOURCE\""),
+                "\"transitionMode\": \"DIRECT_FROM_SOURCE\"",
             ),
             TlsProfileMutation(
                 "clave redirect host",

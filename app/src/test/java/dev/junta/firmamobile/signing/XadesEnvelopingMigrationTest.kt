@@ -47,7 +47,7 @@ class XadesEnvelopingMigrationTest(cdti: Boolean) {
                 fixture.sign(prepared).use { local ->
                     val mutations = listOf(
                         fixture.request(protocol = SigningProtocolId("wrong")),
-                        fixture.request(profile = "wrong"), fixture.request(version = 2),
+                        fixture.request(profile = "wrong"), fixture.request(version = 3),
                         fixture.request(description = "changed"),
                         fixture.request(origin = TrustedOrigin("http", fixture.host, 443)),
                         fixture.request(origin = TrustedOrigin("https", fixture.host + ".evil.example", 443)),
@@ -249,7 +249,7 @@ internal class XadesMigrationFixture(val cdti: Boolean) {
 
     fun request(
         data: ByteArray = this.data, extra: String = this.extra, protocol: SigningProtocolId = this.protocol,
-        profile: String = this.profile, version: Int = 1, description: String = this.description,
+        profile: String = this.profile, version: Int = if (cdti) 1 else 2, description: String = this.description,
         origin: TrustedOrigin = TrustedOrigin("https", host, 443),
         algorithm: SigningAlgorithm = this.algorithm, format: SigningFormat = SigningFormat.XADES,
         pageUrl: String? = page, raw: ByteArray? = null,

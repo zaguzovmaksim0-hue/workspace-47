@@ -25,14 +25,15 @@ class AirefXadesEnvelopingAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("airef-xades-enveloping-v1")
         const val PROFILE_ID = "airef-instancia-general"
-        const val PROFILE_VERSION = 1
+        // v2 changed only the Cl@ve client-auth hop; the signing contract is unchanged.
+        const val PROFILE_VERSION = 2
         const val SAFE_DESCRIPTION = "Firma de la solicitud de Instancia General de la AIReF"
         const val INITIATOR_ORIGIN = "https://sede.airef.es"
         const val PUBLIC_START_URL =
             "$INITIATOR_ORIGIN/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01"
         const val SIGNING_PATH = "/invesiteRE/action/solicitud/view"
         const val CLIENT_AUTH_SOURCE_ORIGIN = "https://pasarela.clave.gob.es"
-        const val CLIENT_AUTH_SOURCE_URL = "$CLIENT_AUTH_SOURCE_ORIGIN/Proxy2/ServiceProvider"
+        const val CLIENT_AUTH_SOURCE_URL = "$CLIENT_AUTH_SOURCE_ORIGIN/Proxy2/ServiceRedirect"
         const val CLIENT_AUTH_REQUEST_ORIGIN = "https://pasarela-ident.clave.gob.es"
         const val CLIENT_AUTH_REQUEST_PATH = "/IdP2/AuthenticateCitizen"
         const val PAYLOAD_BYTES = 32

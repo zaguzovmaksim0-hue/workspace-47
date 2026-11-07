@@ -346,9 +346,12 @@ class SigningAdapterGoldenCharacterizationTest(private val case: AdapterGoldenCa
             ";filter=nonexpired:\nmode=implicit\n"
     } else case.properties
 
-    // Tenerife moved to profile v2 when it gained the Cl@ve login hop.
-    private val caseVersion get() =
-        if (case.profile == TenerifeCadesDetachedAdapter.PROFILE_ID) TenerifeCadesDetachedAdapter.PROFILE_VERSION else 1
+    // Tenerife and AIReF moved to profile v2 when their Cl@ve login hop changed.
+    private val caseVersion get() = when (case.profile) {
+        TenerifeCadesDetachedAdapter.PROFILE_ID -> TenerifeCadesDetachedAdapter.PROFILE_VERSION
+        "airef-instancia-general" -> AirefXadesEnvelopingAdapter.PROFILE_VERSION
+        else -> 1
+    }
 
     private fun request(
         data: ByteArray = case.data,

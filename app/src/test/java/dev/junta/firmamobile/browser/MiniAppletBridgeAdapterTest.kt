@@ -839,7 +839,7 @@ class MiniAppletBridgeAdapterTest {
 
         result.request.normalized.use { request ->
             assertEquals(AIREF_PROFILE_ID, request.context.profileId)
-            assertEquals(1, request.context.profileVersion)
+            assertEquals(2, request.context.profileVersion)
             assertEquals("sede.airef.es", request.context.origin.host)
             assertEquals(52, request.context.navigationEpoch)
             assertEquals(AIREF_PROTOCOL_ID, request.protocolId.value)

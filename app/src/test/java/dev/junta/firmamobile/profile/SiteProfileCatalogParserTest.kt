@@ -481,7 +481,7 @@ class SiteProfileCatalogParserTest {
         val profileId = ProfileId("jccm-registro-generico")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("JCCM — Registro Electrónico / Solicitud Genérica", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -520,7 +520,8 @@ class SiteProfileCatalogParserTest {
         assertTrue(operation.allowedExtraProperties.isEmpty())
 
         val clientAuth = requireNotNull(profile.clientAuthPolicy)
-        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, clientAuth.transitionMode)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, clientAuth.transitionMode)
+        assertEquals(HttpMethod.POST, clientAuth.requestMethod)
         assertEquals(
             setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
             clientAuth.requestOrigins,

@@ -100,7 +100,7 @@ class ParameterizedXadesEnvelopingAdapterTest {
     }
 
     private fun contract(f: XadesMigrationFixture) = XadesEnvelopingContract(
-        id = f.protocol, profileId = f.profile, profileVersion = 1,
+        id = f.protocol, profileId = f.profile, profileVersion = if (f.cdti) 1 else 2,
         algorithm = f.algorithm, safeDescription = f.description,
         contextMatches = {
             it.origin.scheme == "https" && it.origin.host == f.host && it.origin.port == 443 &&

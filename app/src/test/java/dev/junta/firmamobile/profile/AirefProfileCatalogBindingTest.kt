@@ -55,7 +55,8 @@ class AirefProfileCatalogBindingTest {
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
 
-        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
+        assertEquals(HttpMethod.POST, policy.requestMethod)
         assertEquals(
             setOf(ExactOrigin.parse(AirefXadesEnvelopingAdapter.CLIENT_AUTH_REQUEST_ORIGIN)),
             policy.requestOrigins,
@@ -78,7 +79,15 @@ class AirefProfileCatalogBindingTest {
         assertNull(operation.endpointId)
         assertTrue(operation.fixedExtraProperties.isEmpty())
         assertTrue(operation.allowedExtraProperties.isEmpty())
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-18" })
+        assertEquals(
+            mapOf(
+                "https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/" to "2026-08-18",
+                startUrl.toASCIIString() to "2026-08-18",
+                "https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js" to "2026-08-18",
+                AirefXadesEnvelopingAdapter.CLIENT_AUTH_SOURCE_URL to "2026-11-07",
+            ),
+            profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() },
+        )
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
