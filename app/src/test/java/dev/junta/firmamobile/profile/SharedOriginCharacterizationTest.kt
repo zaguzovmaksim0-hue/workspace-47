@@ -39,10 +39,9 @@ class SharedOriginCharacterizationTest {
         ),
         Family(
             "https://pasarela-ident.clave.gob.es",
-            redirects = listOf("diputacion-avila-instancia-general"),
             browse = listOf("ministerio-economia-instancia-generica"),
             requests = listOf(
-                "educacion-convocatoria", "jccm-registro-generico", "airef-instancia-general",
+                "diputacion-avila-instancia-general", "educacion-convocatoria", "jccm-registro-generico", "airef-instancia-general",
                 "mugeju-remision-documentacion-client-auth", "asturias-miprincipado",
                 "diputacion-malaga-instancia-general", "catalunya-peticio-generica-client-auth",
                 "diputacion-ourense-sede", "diputacion-sevilla-sede",

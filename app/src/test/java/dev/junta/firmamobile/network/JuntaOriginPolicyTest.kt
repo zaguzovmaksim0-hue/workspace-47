@@ -693,7 +693,6 @@ class JuntaOriginPolicyTest {
             setOf(
                 "diputacionavila.sedelectronica.es",
                 "pasarela.clave.gob.es",
-                "pasarela-ident.clave.gob.es",
                 "pasarela-ident-sistemas.clave.gob.es",
             ),
             JuntaOriginPolicy.browserAllowedHosts(avila),

@@ -323,6 +323,11 @@ class RealE2eInstrumentedTest {
                 clickClaveAfirmaProvider(scenario)
             }
             MALAGA_PORTAL_ID -> runMalagaClaveCertificateRecipe(scenario)
+            // Gestiona redirects the instancia general to its identification page; Cl@ve is the only provider.
+            in GESTIONA_CLAVE_ORIGINS -> {
+                clickGestionaClaveLogin(scenario, GESTIONA_CLAVE_ORIGINS.getValue(portalId))
+                clickClaveAfirmaProvider(scenario)
+            }
             // MUGEJU auto-posts its SAML request to Cl@ve; only the certificate IdP choice remains.
             MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
             // CAIB sistramit redirects straight to Cl@ve. Login only: the PortaFIB signature is the filing.
@@ -833,6 +838,79 @@ class RealE2eInstrumentedTest {
             if (clicked) return
             SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickGestionaClaveLogin(
+        scenario: ActivityScenario<MainActivity>,
+        expectedOrigin: String,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        // The identification page carries an ephemeral, server-generated ?x= state.
+        val identificationPrefix = "$expectedOrigin/?x="
+        val quotedOrigin = JSONObject.quote(expectedOrigin)
+        val quotedServiceProvider = JSONObject.quote(CLAVE_SERVICE_PROVIDER_URL)
+        val quotedLabel = JSONObject.quote(GESTIONA_CLAVE_LABEL)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl == null || !currentUrl.startsWith(identificationPrefix)) {
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      if (location.origin !== $quotedOrigin || location.pathname !== '/') return 2;
+                      const forms = Array.from(document.querySelectorAll('form[name="claveForm"]'));
+                      if (forms.length === 0) return 0;
+                      if (forms.length !== 1) return 2;
+                      const form = forms[0];
+                      if ((form.getAttribute('method') || '').toLowerCase() !== 'post' ||
+                          form.action !== $quotedServiceProvider) return 2;
+                      const saml = form.querySelectorAll('input[type="hidden"][name="SAMLRequest"]');
+                      if (saml.length !== 1 || saml[0].value.length < 512 || saml[0].value.length > 32768) return 2;
+                      const links = Array.from(form.querySelectorAll('a')).filter(link =>
+                        link.getAttribute('onclick') === 'submit();' &&
+                          (link.innerText || '').trim().replace(/\s+/g, ' ') === $quotedLabel
+                      );
+                      if (links.length !== 1) return 2;
+                      links[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        val terminalFailureDeadline =
+            SystemClock.elapsedRealtime() + RECIPE_TERMINAL_GRACE_MILLIS
+        while (SystemClock.elapsedRealtime() < terminalFailureDeadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
@@ -2171,6 +2249,10 @@ class RealE2eInstrumentedTest {
             "https://sede.malaga.es/instancia-general/nueva-instancia-general/"
         const val MALAGA_LOCAL_CLAVE_URL = "https://clave.malaga.es/clave.php"
         const val MALAGA_CLAVE_SUBMIT_VALUE = "Acceder con cl@ve"
+        const val GESTIONA_CLAVE_LABEL = "Acceso con sistema Cl@ve"
+        val GESTIONA_CLAVE_ORIGINS = mapOf(
+            "diputacion-avila-portal" to "https://diputacionavila.sedelectronica.es",
+        )
         const val CAIB_SEU_PORTAL_ID = "caib-seu-electronica"
         const val CAIB_REGISTRE_PORTAL_ID = "caib-registre-electronic"
         const val TENERIFE_SEDE_PORTAL_ID = "tenerife-sede-electronica"
