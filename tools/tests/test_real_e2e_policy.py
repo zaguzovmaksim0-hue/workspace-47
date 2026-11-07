@@ -447,7 +447,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         source = self.read(INSTRUMENTATION)
         jccm = source.split('JCCM_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
         self.assertIn('clickExactAuthButton(', jccm)
-        self.assertTrue(jccm.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+        self.assertTrue(jccm.rstrip().endswith('clickClaveAfirmaProvider(scenario, timeoutMillis = JCCM_ALTCHA_TIMEOUT_MILLIS)'))
         self.assertIn('JCCM_CLAVE_BUTTON_ID = "boton_presentar_solicitud_clave"', source)
         self.assertIn('JCCM_CLAVE_BUTTON_ONCLICK = "cargar_documentos_clave(); return false;"', source)
         coruna = source.split('CORUNA_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]

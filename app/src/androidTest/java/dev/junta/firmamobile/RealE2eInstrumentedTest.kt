@@ -347,7 +347,8 @@ class RealE2eInstrumentedTest {
                     expectedValue = JCCM_CLAVE_BUTTON_VALUE,
                     expectedOnClick = JCCM_CLAVE_BUTTON_ONCLICK,
                 )
-                clickClaveAfirmaProvider(scenario)
+                // sso.jccm.es runs ALTCHA proof-of-work before Cl@ve: ~20 s on a phone, >45 s on CI.
+                clickClaveAfirmaProvider(scenario, timeoutMillis = JCCM_ALTCHA_TIMEOUT_MILLIS)
             }
             // A Coruña: portada -> sede -> Solicitude Xeral -> tramitador -> Cl@ve, each hop an exact link.
             CORUNA_PORTAL_ID -> {
@@ -565,8 +566,9 @@ class RealE2eInstrumentedTest {
 
     private fun clickClaveAfirmaProvider(
         scenario: ActivityScenario<MainActivity>,
+        timeoutMillis: Long = UI_TIMEOUT_MILLIS,
     ) {
-        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val deadline = SystemClock.elapsedRealtime() + timeoutMillis
         val quotedServiceProvider = JSONObject.quote(CLAVE_SERVICE_PROVIDER_URL)
         val quotedServiceRedirect = JSONObject.quote(CLAVE_SERVICE_REDIRECT_URL)
         val quotedAfirmaOnClick = JSONObject.quote(CLAVE_AFIRMA_ONCLICK)
@@ -2460,6 +2462,7 @@ class RealE2eInstrumentedTest {
         const val UNIZAR_AUTH_HANDLER = "lanza"
         val REAL_CERT_URI: Uri = Uri.parse("content://dev.junta.firmamobile.real-e2e/identity.p12")
         const val UI_TIMEOUT_MILLIS = 30_000L
+        const val JCCM_ALTCHA_TIMEOUT_MILLIS = 150_000L
         const val CLIENT_AUTH_DIALOG_TAG = "client-auth-confirmation"
         const val CLIENT_AUTH_CONTINUE_TAG = "client-auth-confirmation-continue"
         const val CLIENT_AUTH_CANCEL_TAG = "client-auth-confirmation-cancel"
