@@ -141,7 +141,7 @@ class RealE2eInstrumentedTest {
                     probeStage = ProbeStage.WAIT_FOR_WEBVIEW
                     waitForWebView(portalId, result)
                     probeStage = ProbeStage.APPLY_RECIPE
-                    applyPortalRecipe(scenario, portalId)
+                    applyPortalRecipe(scenario, portalId, profile.profileId.value)
                     probeStage = ProbeStage.OBSERVE_PORTAL
                     observePortal(
                         scenario = scenario,
@@ -208,7 +208,14 @@ class RealE2eInstrumentedTest {
     private fun applyPortalRecipe(
         scenario: ActivityScenario<MainActivity>,
         portalId: String,
+        profileId: String,
     ) {
+        // REC and all its AGE aliases: login only, the XAdES signature of the registry summary is the filing.
+        if (profileId == REG_AGE_PROFILE_ID) {
+            clickRecClaveLogin(scenario)
+            clickClaveAfirmaProvider(scenario)
+            return
+        }
         when (portalId) {
             CARNE_JOVEN_PORTAL_ID -> clickExactAnchor(
                 scenario = scenario,
@@ -554,6 +561,8 @@ class RealE2eInstrumentedTest {
                     """
                     (() => {
                       if (location.href !== $quotedServiceProvider) return 2;
+                      // A slow Cl@ve page exposes the form before its selectedIdP script; wait instead of failing.
+                      if (document.readyState !== 'complete') return 0;
                       const forms = Array.from(document.querySelectorAll('form[name="idpRedirect"]'));
                       if (forms.length !== 1) return forms.length === 0 ? 0 : 2;
                       const form = forms[0];
@@ -1253,6 +1262,72 @@ class RealE2eInstrumentedTest {
         actualUrl == expectedUrl ||
             (expectedUrl.endsWith("/") && actualUrl == expectedUrl.dropLast(1)) ||
             (!expectedUrl.endsWith("/") && actualUrl == "$expectedUrl/")
+
+    // The REC header "Iniciar sesión" item requests a SAML login over XHR and posts its own Cl@ve form, so the
+    // recipe only clicks it and lets clickClaveAfirmaProvider wait for the ServiceProvider page.
+    private fun clickRecClaveLogin(
+        scenario: ActivityScenario<MainActivity>,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedLabel = JSONObject.quote(REC_LOGIN_LABEL)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl != null && currentUrl != REC_HOME_URL) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      if (location.href !== ${JSONObject.quote(REC_HOME_URL)}) return 2;
+                      if (document.readyState !== 'complete') return 0;
+                      const items = Array.from(document.querySelectorAll('dnt-header-item')).filter(element =>
+                        element.getAttribute('text') === $quotedLabel
+                      );
+                      if (items.length !== 1) return items.length === 0 ? 0 : 2;
+                      if (items[0].getAttribute('icon') !== 'Login' || items[0].getAttribute('href') !== '#' ||
+                          items[0].closest('dnt-modal')) return 2;
+                      if (!items[0].classList.contains('hydrated')) return 0;
+                      items[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        val terminalFailureDeadline =
+            SystemClock.elapsedRealtime() + RECIPE_TERMINAL_GRACE_MILLIS
+        while (SystemClock.elapsedRealtime() < terminalFailureDeadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
 
     private fun clickExactAuthButton(
         scenario: ActivityScenario<MainActivity>,
@@ -2255,6 +2330,9 @@ class RealE2eInstrumentedTest {
         )
         const val CAIB_SEU_PORTAL_ID = "caib-seu-electronica"
         const val CAIB_REGISTRE_PORTAL_ID = "caib-registre-electronic"
+        const val REG_AGE_PROFILE_ID = "reg-age-redsara"
+        const val REC_HOME_URL = "https://reg.redsara.es/es/"
+        const val REC_LOGIN_LABEL = "Iniciar sesión"
         const val TENERIFE_SEDE_PORTAL_ID = "tenerife-sede-electronica"
         const val TENERIFE_INSTITUCIONAL_PORTAL_ID = "tenerife-portal-institucional"
         const val TENERIFE_HOME_URL = "https://sede.tenerife.es/es"

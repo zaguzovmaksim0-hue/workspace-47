@@ -419,6 +419,12 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertNotIn('controls[0].contains(images[0])', recipe)
         self.assertIn('controls[0].click()', recipe)
 
+    def test_clave_afirma_step_waits_for_a_complete_service_provider_page(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source[source.index('private fun clickClaveAfirmaProvider('):]
+        helper = helper[:helper.index('const forms = Array.from(')]
+        self.assertIn("if (document.readyState !== 'complete') return 0;", helper)
+
     def test_mugeju_recipe_only_picks_the_clave_certificate_idp(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"', source)
@@ -442,6 +448,34 @@ class RealE2ePolicyTest(unittest.TestCase):
         ):
             self.assertIn(expected, helper)
         self.assertNotIn('loadUrl(', helper)
+
+    def test_rec_proves_only_the_clave_login_for_every_alias_and_never_files(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        dispatch = source.split('if (profileId == REG_AGE_PROFILE_ID) {', 1)[1].split('\n        }\n', 1)[0]
+        self.assertEqual(
+            [line.strip() for line in dispatch.strip().splitlines()],
+            ['clickRecClaveLogin(scenario)', 'clickClaveAfirmaProvider(scenario)', 'return'],
+        )
+        self.assertIn('applyPortalRecipe(scenario, portalId, profile.profileId.value)', source)
+        self.assertIn('REC_HOME_URL = "https://reg.redsara.es/es/"', source)
+        self.assertIn('REC_LOGIN_LABEL = "Iniciar sesión"', source)
+        helper = source[source.index('private fun clickRecClaveLogin('):]
+        helper = helper[:helper.index('private fun clickExactAuthButton(')]
+        for expected in (
+            "document.querySelectorAll('dnt-header-item')",
+            "element.getAttribute('text') === $quotedLabel",
+            'items.length !== 1',
+            "items[0].getAttribute('icon') !== 'Login'",
+            "items[0].closest('dnt-modal')",
+            'items[0].click()',
+            "document.readyState !== 'complete'",
+            'hasObservedTerminalNavigationFailure()',
+        ):
+            self.assertIn(expected, helper)
+        for forbidden in ('loadUrl(', '.submit(', 'claveForm', 'SAMLRequest'):
+            self.assertNotIn(forbidden, helper)
+        conseq = source.split('val CONSEQ_RECIPE_PROFILES = setOf(', 1)[1].split(')', 1)[0]
+        self.assertIn('"reg-age-redsara"', conseq)
 
     def test_tenerife_and_caib_prove_only_the_clave_login_and_never_file(self) -> None:
         source = self.read(INSTRUMENTATION)

@@ -34,6 +34,7 @@ class SharedOriginCharacterizationTest {
                 "diputacion-segovia-registro", "diputacion-palencia-solicitud-general",
                 "diputacion-ourense-sede", "diputacion-sevilla-sede",
                 "diputacion-a-coruna-solicitud-general", "tenerife-sede-electronica", "caib-portafib",
+                "reg-age-redsara",
             ),
             browse = listOf("ministerio-economia-instancia-generica"),
         ),
@@ -46,6 +47,7 @@ class SharedOriginCharacterizationTest {
                 "diputacion-malaga-instancia-general", "catalunya-peticio-generica-client-auth",
                 "diputacion-ourense-sede", "diputacion-sevilla-sede",
                 "diputacion-a-coruna-solicitud-general", "tenerife-sede-electronica", "caib-portafib",
+                "reg-age-redsara",
             ),
         ),
         Family(
@@ -153,7 +155,7 @@ class SharedOriginCharacterizationTest {
                 assertEquals(origin, resolved?.origin)
             }
             assertNull(
-                BuiltInSiteProfiles.qaRegistry.resolveForProfile(ProfileId("reg-age-redsara"), URI(family.origin)),
+                BuiltInSiteProfiles.qaRegistry.resolveForProfile(ProfileId("unizar-tramitador"), URI(family.origin)),
             )
         }
     }
