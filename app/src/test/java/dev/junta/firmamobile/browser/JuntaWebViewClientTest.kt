@@ -17,6 +17,7 @@ import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
+import dev.junta.firmamobile.security.MonotonicSecurityTime
 import dev.junta.firmamobile.security.SanitizedLogger
 import java.time.Clock
 import java.time.Duration
@@ -754,6 +755,46 @@ class JuntaWebViewClientTest {
         assertEquals(MALAGA_CLAVE_CERT_TARGET, captured?.target?.toASCIIString())
         assertSame(clientCert, capturedRequest)
         assertEquals(0, clientCert.ignores)
+    }
+
+    @Test
+    fun expiredClaveInPlaceGrantFallsBackToConsentAndLogsWhyAndHowLate() {
+        val profileId = ProfileId("diputacion-malaga-instancia-general")
+        var inPlaceCalls = 0
+        var interactiveCalls = 0
+        // The grant is observed 45 s in the past: beyond even the 30 s Cl@ve challenge window.
+        val lateClock = { MonotonicSecurityTime.nowNanos() - Duration.ofSeconds(45).toNanos() }
+        val malagaClient = JuntaWebViewClient(
+            callbacks = RecordingBrowserCallbacks(),
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(profileId),
+            clientAuthAuthorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, lateClock),
+            activeProfileId = { profileId },
+            currentNavigationEpoch = { 206L },
+            onInPlaceClientAuthChallenge = { _, _ -> inPlaceCalls++ },
+            onInteractiveClientAuthChallenge = { _, _ -> interactiveCalls++ },
+        )
+
+        malagaClient.onPageStarted(webView, MALAGA_CLAVE_SERVICE_REDIRECT, null)
+        assertNull(malagaClient.shouldInterceptRequest(webView, request(MALAGA_CLAVE_CERT_TARGET, method = "POST")))
+        malagaClient.onReceivedClientCertRequest(
+            webView,
+            RecordingClientCertRequest(requestHost = "pasarela-ident.clave.gob.es"),
+        )
+
+        assertEquals(0, inPlaceCalls)
+        assertEquals(1, interactiveCalls)
+        assertTrue(logger.exportText().contains("stage=client-auth-fallback-expired-30-60s"))
+    }
+
+    @Test
+    fun clientCertChallengeWithoutArmedGrantLogsNoPendingFallback() {
+        val request = RecordingClientCertRequest(requestHost = "pasarela-ident.clave.gob.es")
+
+        client.onReceivedClientCertRequest(webView, request)
+
+        assertEquals(1, request.ignores)
+        assertTrue(logger.exportText().contains("stage=client-auth-fallback-no-pending"))
     }
 
     @Test

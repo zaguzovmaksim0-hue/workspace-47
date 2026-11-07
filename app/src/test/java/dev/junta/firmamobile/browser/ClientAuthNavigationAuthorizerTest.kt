@@ -16,7 +16,9 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 import java.time.Duration
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClientAuthNavigationAuthorizerTest {
@@ -609,6 +611,53 @@ class ClientAuthNavigationAuthorizerTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun claveInPlacePostGrantOutlivesSlowTlsChallengeButSourceHopKeepsFifteenSeconds() {
+        val mugeju = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        assertNull(
+            mugeju.observeTopLevelResourceRequest(
+                MUGEJU_PROFILE, MUGEJU_SERVICE_PROVIDER, MUGEJU_SOURCE, "POST", 80, true,
+            ),
+        )
+        val authorized = checkNotNull(
+            mugeju.observeTopLevelResourceRequest(MUGEJU_PROFILE, MUGEJU_SOURCE, MUGEJU_TARGET, "POST", 81, true),
+        )
+        monotonic.advance(Duration.ofSeconds(29))
+        assertFalse(authorized.isExpiredOrInvalid(monotonic.nowNanos()))
+        monotonic.advance(Duration.ofSeconds(2))
+        assertTrue(authorized.isExpiredOrInvalid(monotonic.nowNanos()))
+
+        // The ServiceRedirect -> AuthenticateCitizen hop itself keeps the reviewed 15 s window.
+        fun armedThenRequestedAfter(delay: Duration): AuthorizedClientAuthTarget? {
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(
+                fresh.observeTopLevelResourceRequest(
+                    MUGEJU_PROFILE, MUGEJU_SERVICE_PROVIDER, MUGEJU_SOURCE, "POST", 90, true,
+                ),
+            )
+            monotonic.advance(delay)
+            return fresh.observeTopLevelResourceRequest(
+                MUGEJU_PROFILE, MUGEJU_SERVICE_PROVIDER, MUGEJU_TARGET, "POST", 91, true,
+            )
+        }
+        assertEquals(MUGEJU_PROFILE, armedThenRequestedAfter(Duration.ofSeconds(14))?.profileId)
+        assertNull(armedThenRequestedAfter(Duration.ofSeconds(16)))
+    }
+
+    @Test
+    fun nonClaveInPlacePostGrantKeepsItsPolicyTtl() {
+        val tarragona = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        val authorized = checkNotNull(
+            tarragona.observeTopLevelResourceRequest(
+                TARRAGONA_PROFILE, TARRAGONA_VALID_SOURCE, TARRAGONA_CERT_TARGET, "POST", 120, true,
+            ),
+        )
+        monotonic.advance(Duration.ofSeconds(14))
+        assertFalse(authorized.isExpiredOrInvalid(monotonic.nowNanos()))
+        monotonic.advance(Duration.ofSeconds(2))
+        assertTrue(authorized.isExpiredOrInvalid(monotonic.nowNanos()))
     }
 
     @Test
