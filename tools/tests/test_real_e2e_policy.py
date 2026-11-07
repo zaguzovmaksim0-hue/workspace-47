@@ -127,7 +127,9 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('adb_bounded exec-out run-as "$PACKAGE_NAME" cat "$RESULT_PATH"', runner)
         self.assertIn('adb_bounded exec-out run-as "$PACKAGE_NAME" cat files/qa-navigation.log', runner)
         self.assertIn('adb_bounded shell am force-stop "$PACKAGE_NAME"', runner)
-        self.assertIn('timeout --signal=TERM --kill-after=10s "${PORTAL_TIMEOUT_SECONDS}s" \\', runner)
+        self.assertIn('timeout --signal=TERM --kill-after=10s "${portal_timeout}s" \\', runner)
+        self.assertIn('portal_timeout="$PORTAL_TIMEOUT_SECONDS"', runner)
+        self.assertIn("readonly JCCM_PORTAL_TIMEOUT_SECONDS=330", runner)
         self.assertIn('      adb shell am instrument -w -r \\', runner)
         self.assertNotIn('\n  adb install -r ', runner)
         self.assertNotIn('\n    adb exec-out ', runner)
@@ -447,7 +449,7 @@ class RealE2ePolicyTest(unittest.TestCase):
         source = self.read(INSTRUMENTATION)
         jccm = source.split('JCCM_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
         self.assertIn('clickExactAuthButton(', jccm)
-        self.assertTrue(jccm.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+        self.assertTrue(jccm.rstrip().endswith('clickClaveAfirmaProvider(scenario, timeoutMillis = JCCM_ALTCHA_TIMEOUT_MILLIS)'))
         self.assertIn('JCCM_CLAVE_BUTTON_ID = "boton_presentar_solicitud_clave"', source)
         self.assertIn('JCCM_CLAVE_BUTTON_ONCLICK = "cargar_documentos_clave(); return false;"', source)
         coruna = source.split('CORUNA_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
@@ -459,6 +461,42 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('CORUNA_TRAMITADOR_URL', hops)
         for forbidden in ('loadUrl(', '.submit(', 'SAMLRequest'):
             self.assertNotIn(forbidden, jccm + coruna)
+
+    def test_soria_rioja_menorca_recipes_click_only_the_reviewed_certificate_control(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        soria = source.split('SORIA_PORTAL_ID -> clickExactButton(', 1)[1].split('\n            )\n', 1)[0]
+        self.assertIn('expectedCurrentUrl = SORIA_SOURCE_URL', soria)
+        self.assertIn('SORIA_CERT_BUTTON_ONCLICK = "pulsarCertificado();"', source)
+        rioja = source.split('LA_RIOJA_PORTAL_ID -> clickExactButton(', 1)[1].split('\n            )\n', 1)[0]
+        self.assertIn('matchUrlWithoutQuery = true', rioja)
+        self.assertIn('LA_RIOJA_CAS_LOGIN_URL = "https://ias1.larioja.org/casLR/login"', source)
+        self.assertIn(
+            'LA_RIOJA_CERT_BUTTON_ONCLICK = "loginClientCertSSL(\'https://ias1.larioja.org/clientcertSSL/login\')"',
+            source,
+        )
+        menorca = source.split('MENORCA_PORTAL_INSTITUCIONAL_ID, MENORCA_SEDE_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        self.assertEqual(menorca.count('clickExactLabeledAnchor('), 1)
+        self.assertIn('expectedTag = "input"', menorca)
+        self.assertIn('expectedType = "submit"', menorca)
+        self.assertIn('MENORCA_CERT_SUBMIT_ID = "ctl00_Content1_Button1"', source)
+        for forbidden in ('loadUrl(', '.submit(', 'clickClaveAfirmaProvider'):
+            self.assertNotIn(forbidden, soria + rioja + menorca)
+
+    def test_safe_auth_sign_recipes_click_only_the_reviewed_login_control(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        safe = source.split('val SAFE_AUTH_SIGN_PROFILES = setOf(', 1)[1].split(')', 1)[0]
+        for profile in ('"dgt-verificacion-equipo"', '"aragon-siraw"', '"transportes-qys-cert-login"',
+                        '"diputacion-lugo-sede"'):
+            self.assertIn(profile, safe)
+        blocks = []
+        for head in ('DGT_PORTAL_ID -> clickExactButton(', 'SIRAW_PORTAL_ID -> clickExactAuthButton(',
+                     'TRANSPORTES_PORTAL_ID -> clickExactButton(', 'LUGO_PORTAL_ID -> clickExactButton('):
+            blocks.append(source.split(head, 1)[1].split('\n            )\n', 1)[0])
+        self.assertIn('DGT_VERIFY_BUTTON_ONCLICK = "cargarAF()"', source)
+        self.assertIn('LUGO_CERT_BUTTON_ONCLICK = "waiting(); chargeClient();"', source)
+        self.assertIn('TRANSPORTES_SIGN_BUTTON_ONCLICK = "Sign_firmar();return false;"', source)
+        for forbidden in ('loadUrl(', '.submit(', 'clickClaveAfirmaProvider'):
+            self.assertNotIn(forbidden, ''.join(blocks))
 
     def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
         source = self.read(INSTRUMENTATION)

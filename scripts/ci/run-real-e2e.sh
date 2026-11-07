@@ -19,6 +19,8 @@ readonly CATALOG_FILE="$ROOT_DIR/app/src/main/res/raw/public_portal_catalog_v1.j
 readonly APP_LOCALE="es-ES"
 # 75s portal observation + 90s signing + 30s post-sign observation + 15s margin.
 readonly PORTAL_TIMEOUT_SECONDS=210
+# JCCM: 30s click + 150s ALTCHA proof-of-work wait + 75s observation + startup margin.
+readonly JCCM_PORTAL_TIMEOUT_SECONDS=330
 readonly ADB_TIMEOUT_SECONDS=30
 readonly ADB_INSTALL_TIMEOUT_SECONDS=120
 # android-emulator-runner starts AVD "test" on console port 5554; a lost emulator is restarted the
@@ -310,10 +312,14 @@ main() {
     adb_bounded shell am force-stop "$PACKAGE_NAME" >/dev/null 2>&1 || true
     adb_bounded shell run-as "$PACKAGE_NAME" rm -f "$RESULT_PATH" files/qa-navigation.log >/dev/null 2>&1 || true
 
+    portal_timeout="$PORTAL_TIMEOUT_SECONDS"
+    if [[ "$portal_id" == castilla-la-mancha-sede ]]; then
+      portal_timeout="$JCCM_PORTAL_TIMEOUT_SECONDS"
+    fi
     guest_since="$(guest_clock)"
     progress INSTRUMENT_START "$portal_id" "$index" "${#portal_ids[@]}"
     set +e
-    timeout --signal=TERM --kill-after=10s "${PORTAL_TIMEOUT_SECONDS}s" \
+    timeout --signal=TERM --kill-after=10s "${portal_timeout}s" \
       adb shell am instrument -w -r \
         -e realE2e true \
         -e realE2eDeep "$deep_arg" \
