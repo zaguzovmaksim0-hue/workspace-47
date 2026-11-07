@@ -335,8 +335,43 @@ class RealE2eInstrumentedTest {
                 clickGestionaClaveLogin(scenario, GESTIONA_CLAVE_ORIGINS.getValue(portalId))
                 clickClaveAfirmaProvider(scenario)
             }
-            // MUGEJU auto-posts its SAML request to Cl@ve; only the certificate IdP choice remains.
-            MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
+            // MUGEJU and AIREF auto-post their SAML request to Cl@ve; only the certificate IdP choice remains.
+            // AIREF: login only, the MiniApplet signature is the filing.
+            MUGEJU_PORTAL_ID, AIREF_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
+            // JCCM: login only, the AutoScript signature of the Solicitud Genérica is the filing.
+            JCCM_PORTAL_ID -> {
+                clickExactAuthButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = JCCM_ENTRY_URL,
+                    elementId = JCCM_CLAVE_BUTTON_ID,
+                    expectedValue = JCCM_CLAVE_BUTTON_VALUE,
+                    expectedOnClick = JCCM_CLAVE_BUTTON_ONCLICK,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            // A Coruña: portada -> sede -> Solicitude Xeral -> tramitador -> Cl@ve, each hop an exact link.
+            CORUNA_PORTAL_ID -> {
+                CORUNA_LINK_HOPS.forEach { hop ->
+                    clickExactLabeledAnchor(
+                        scenario = scenario,
+                        expectedCurrentUrl = hop.pageUrl,
+                        expectedLabel = hop.label,
+                        expectedHref = hop.href,
+                        waitForExpectedUrl = true,
+                    )
+                }
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = CORUNA_TRAMITADOR_URL,
+                    expectedElementId = CORUNA_CLAVE_BUTTON_ID,
+                    expectedLabel = CORUNA_CLAVE_BUTTON_LABEL,
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    waitForExpectedUrl = true,
+                    expectedType = null,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
             // CAIB sistramit redirects straight to Cl@ve. Login only: the PortaFIB signature is the filing.
             CAIB_SEU_PORTAL_ID, CAIB_REGISTRE_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
             // Tenerife: login only, the AutoScript signature is the filing.
@@ -1164,10 +1199,11 @@ class RealE2eInstrumentedTest {
         expectedOnClick: String?,
         waitForExpectedUrl: Boolean = false,
         waitForBadajozSignHook: Boolean = false,
-        expectedType: String = "button",
+        // null: the button carries no type attribute at all.
+        expectedType: String? = "button",
     ) {
         require(expectedLabel != null || expectedAriaLabel != null)
-        val quotedExpectedType = JSONObject.quote(expectedType)
+        val quotedExpectedType = expectedType?.let { JSONObject.quote(it) } ?: "null"
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedExpectedElementId = expectedElementId?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedLabel = expectedLabel?.let { JSONObject.quote(it) } ?: "null"
@@ -2121,6 +2157,8 @@ class RealE2eInstrumentedTest {
         }
     }
 
+    private data class RecipeLinkHop(val pageUrl: String, val label: String, val href: String)
+
     private data class SanitizedNavigation(
         val event: String,
         val host: String,
@@ -2229,6 +2267,9 @@ class RealE2eInstrumentedTest {
             // STA batch signature registers the instancia: prove the certificate login only, never file.
             "diputacion-burgos-portal",
             "diputacion-huesca-portal",
+            // Cl@ve login before a MiniApplet/AutoScript signature that files: prove the login only, never file.
+            "airef-instancia-general",
+            "jccm-registro-generico",
         )
         const val CARNE_JOVEN_AUTH_HREF =
             "/carneJoven/servlet/CallAuthenticationServlet"
@@ -2346,6 +2387,38 @@ class RealE2eInstrumentedTest {
         const val TENERIFE_LOGIN_HREF = "/es/personal/vista-general"
         const val TENERIFE_ACCESS_URL = "https://sede.tenerife.es/es/acceso?returnBack=personal%2Fvista-general"
         const val TENERIFE_CLAVE_BUTTON_LABEL = "Identificarme"
+        const val AIREF_PORTAL_ID = "age-autoridad-independiente-de-responsabilidad-fiscal-airef"
+        const val JCCM_PORTAL_ID = "castilla-la-mancha-sede"
+        const val JCCM_ENTRY_URL =
+            "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"
+        const val JCCM_CLAVE_BUTTON_ID = "boton_presentar_solicitud_clave"
+        const val JCCM_CLAVE_BUTTON_VALUE = "Presentar Solicitud"
+        const val JCCM_CLAVE_BUTTON_ONCLICK = "cargar_documentos_clave(); return false;"
+        const val CORUNA_PORTAL_ID = "diputacion-a-coruna-portal"
+        const val CORUNA_TRAMITADOR_URL =
+            "https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano" +
+                "&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL"
+        private val CORUNA_LINK_HOPS = listOf(
+            RecipeLinkHop("https://www.dacoruna.gal/portada", "Sede electrónica", "https://sede.dacoruna.gal/gl/"),
+            // sede.dacoruna.gal/gl/ redirects to /sxc/gl/.
+            RecipeLinkHop(
+                "https://sede.dacoruna.gal/sxc/gl/",
+                "SOLICITUDE XERAL",
+                "/sxc/gl/procedimientosytramites/index.html#solicitud_general",
+            ),
+            RecipeLinkHop(
+                "https://sede.dacoruna.gal/sxc/gl/procedimientosytramites/index.html#solicitud_general",
+                "Solicitude Xeral",
+                "/sxc/gl/procedimientosytramites/tramites/SolicitudGeneral_N",
+            ),
+            RecipeLinkHop(
+                "https://sede.dacoruna.gal/sxc/gl/procedimientosytramites/tramites/SolicitudGeneral_N",
+                "INICIAR TRÁMITE (On Line)",
+                CORUNA_TRAMITADOR_URL,
+            ),
+        )
+        const val CORUNA_CLAVE_BUTTON_ID = "acceso"
+        const val CORUNA_CLAVE_BUTTON_LABEL = "Entrar con Cl@ve"
         const val CLAVE_SERVICE_PROVIDER_URL =
             "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
         const val CLAVE_SERVICE_REDIRECT_URL =

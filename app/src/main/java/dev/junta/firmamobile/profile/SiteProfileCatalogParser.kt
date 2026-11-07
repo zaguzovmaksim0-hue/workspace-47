@@ -347,6 +347,8 @@ object SiteProfileCatalogParser {
                 val reviewedClavePostProfile = profileId.value in CLAVE_DIRECT_PINS || profileId.value in setOf(
                     MALAGA_PROFILE_ID,
                     MUGEJU_PROFILE_ID,
+                    AIREF_PROFILE_ID,
+                    JCCM_REGISTRO_PROFILE_ID,
                     TENERIFE_PROFILE_ID,
                     CAIB_PROFILE_ID,
                     REG_AGE_PROFILE_ID,
@@ -2120,10 +2122,11 @@ object SiteProfileCatalogParser {
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(
             profile.clientAuthPolicy == ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
                 requestOrigins = setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)),
                 sourceUrls = setOf(URI(AIREF_CLIENT_AUTH_SOURCE_URL)),
                 requestPath = AIREF_CLIENT_AUTH_REQUEST_PATH,
+                requestMethod = HttpMethod.POST,
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = true,
@@ -2131,8 +2134,7 @@ object SiteProfileCatalogParser {
                 requestPort = HTTPS_PORT,
             ),
         )
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == AIREF_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn } == AIREF_EVIDENCE_REVIEWS)
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
         require(
             profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
@@ -2835,7 +2837,8 @@ object SiteProfileCatalogParser {
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
         require(profile.evidence.isNotEmpty())
         val clientAuth = requireNotNull(profile.clientAuthPolicy)
-        require(clientAuth.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE)
+        require(clientAuth.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE)
+        require(clientAuth.requestMethod == HttpMethod.POST)
         require(clientAuth.requestOrigins == setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)))
         require(clientAuth.sourceUrls == setOf(URI(JCCM_REGISTRO_CLIENT_AUTH_SOURCE_URL)))
         require(clientAuth.requestPath == JCCM_REGISTRO_CLIENT_AUTH_PATH)
@@ -3916,20 +3919,22 @@ object SiteProfileCatalogParser {
     private const val CATASTRO_PROFILE_ID = "catastro-solicitudes-genericas"
     private const val FEGA_PROFILE_ID = "fega-solicitud-general-ofvsg02"
     private const val CACERES_PROFILE_ID = "diputacion-caceres-instancia-general"
-    private const val AIREF_PROFILE_VERSION = 1
+    // v2: Cl@ve's AFIRMA choice POSTs to ServiceRedirect, which auto-POSTs to AuthenticateCitizen.
+    private const val AIREF_PROFILE_VERSION = 2
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"
     private const val AIREF_START_URL =
         "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01"
     private const val AIREF_ORIGIN = "https://sede.airef.es"
     private const val AIREF_CLAVE_ORIGIN = "https://pasarela.clave.gob.es"
     private const val AIREF_CLIENT_AUTH_ORIGIN = "https://pasarela-ident.clave.gob.es"
-    private const val AIREF_CLIENT_AUTH_SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+    private const val AIREF_CLIENT_AUTH_SOURCE_URL = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
     private const val AIREF_CLIENT_AUTH_REQUEST_PATH = "/IdP2/AuthenticateCitizen"
     private const val AIREF_SAFE_DESCRIPTION = "Firma de la solicitud de Instancia General de la AIReF"
-    private val AIREF_EVIDENCE_URLS = setOf(
-        "https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/",
-        AIREF_START_URL,
-        "https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js",
+    private val AIREF_EVIDENCE_REVIEWS = mapOf(
+        "https://sede.airef.es/catalogo-de-tramites-es/instancia-general-es/" to LocalDate.parse("2026-08-18"),
+        AIREF_START_URL to LocalDate.parse("2026-08-18"),
+        "https://sede.airef.es/invesiteRE/scripts/afirma/miniapplet.js" to LocalDate.parse("2026-08-18"),
+        AIREF_CLIENT_AUTH_SOURCE_URL to LocalDate.parse("2026-11-07"),
     )
     private const val DIPUTACION_BARCELONA_2057_PROFILE_ID = "diputacion-barcelona-solicitud-generica-2057"
     private const val CATALUNYA_PROFILE_ID = "catalunya-peticio-generica-client-auth"
@@ -4297,7 +4302,8 @@ object SiteProfileCatalogParser {
     )
     private const val UGR_PROFILE_ID = "ugr-certificado-login"
     private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
-    private const val JCCM_REGISTRO_PROFILE_VERSION = 1
+    // v2: the Cl@ve ServiceRedirect auto-POST to AuthenticateCitizen arms client TLS in place.
+    private const val JCCM_REGISTRO_PROFILE_VERSION = 2
     private const val JCCM_REGISTRO_DISPLAY_NAME = "JCCM — Registro Electrónico / Solicitud Genérica"
     private const val JCCM_REGISTRO_START_URL =
         "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ"

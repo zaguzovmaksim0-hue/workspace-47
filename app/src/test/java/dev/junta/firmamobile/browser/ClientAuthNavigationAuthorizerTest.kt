@@ -490,30 +490,38 @@ class ClientAuthNavigationAuthorizerTest {
     @Test
     fun exactAirefClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
         val airef = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
-        val authorized = airef.observeTopLevelNavigation(
-            AIREF_PROFILE, AIREF_SOURCE, AIREF_TARGET, 79, true,
+        // A plain navigation from Cl@ve no longer arms anything: the AFIRMA hop is a POST chain.
+        assertNull(airef.observeTopLevelNavigation(AIREF_PROFILE, AIREF_SERVICE_PROVIDER, AIREF_TARGET, 79, true))
+        assertNull(
+            airef.observeTopLevelResourceRequest(
+                AIREF_PROFILE, AIREF_SERVICE_PROVIDER, AIREF_SOURCE, "POST", 80, true,
+            ),
+        )
+        val authorized = airef.observeTopLevelResourceRequest(
+            AIREF_PROFILE, AIREF_SOURCE, AIREF_TARGET, "POST", 81, true,
         )
 
         assertEquals(AIREF_PROFILE, authorized?.profileId)
         assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
         assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
         assertNull(authorized?.target?.rawQuery)
-        assertNull(
-            airef.observeTopLevelNavigation(AIREF_PROFILE, AIREF_SOURCE, AIREF_TARGET, 79, true),
-        )
 
         listOf(
-            AIREF_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
-            "$AIREF_TARGET?extra=1",
-            AIREF_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
-            AIREF_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
-        ).forEachIndexed { index, invalidTarget ->
+            Triple(AIREF_SOURCE, AIREF_TARGET, "GET"),
+            Triple(AIREF_SOURCE, AIREF_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"), "POST"),
+            Triple(AIREF_SOURCE, "$AIREF_TARGET?extra=1", "POST"),
+            Triple(
+                AIREF_SOURCE,
+                AIREF_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
+                "POST",
+            ),
+            Triple(AIREF_SOURCE, AIREF_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"), "POST"),
+            Triple("https://evil.example/Proxy2/ServiceRedirect", AIREF_TARGET, "POST"),
+        ).forEachIndexed { index, (current, target, method) ->
             val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
             assertNull(
-                invalidTarget,
-                fresh.observeTopLevelNavigation(
-                    AIREF_PROFILE, AIREF_SOURCE, invalidTarget, 80L + index, true,
-                ),
+                "$current -> $target $method",
+                fresh.observeTopLevelResourceRequest(AIREF_PROFILE, current, target, method, 90L + index, true),
             )
         }
     }
@@ -1704,7 +1712,8 @@ class ClientAuthNavigationAuthorizerTest {
         const val EDUCATION_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
         const val EDUCATION_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val AIREF_PROFILE = ProfileId("airef-instancia-general")
-        const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val AIREF_SERVICE_PROVIDER = "https://pasarela.clave.gob.es/Proxy2/ServiceProvider"
+        const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
         const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val CLAVE_DIRECT_PROFILES = listOf(
             ProfileId("asturias-miprincipado"),

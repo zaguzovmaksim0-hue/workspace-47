@@ -89,7 +89,7 @@ class LegacyAirefXadesEnvelopingAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("airef-xades-enveloping-v1")
         const val PROFILE_ID = "airef-instancia-general"
-        const val PROFILE_VERSION = 1
+        const val PROFILE_VERSION = 2
         const val SAFE_DESCRIPTION = "Firma de la solicitud de Instancia General de la AIReF"
         const val PUBLIC_START_URL =
             "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01"

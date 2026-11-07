@@ -22,9 +22,21 @@ class SiteProfileRegistryTest {
 
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(clave))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(claveIdent))
+        // AIREF also arms client TLS on the ServiceRedirect POST; ServiceProvider is trusted only as a redirect hop.
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(airef, clave)?.trustMode,
+        )
         assertEquals(
             TrustMode.TRUSTED_BROWSE,
-            BuiltInSiteProfiles.qaRegistry.resolveForProfile(airef, clave)?.trustMode,
+            BuiltInSiteProfiles.qaRegistry.resolveRedirect(airef, clave)?.trustMode,
+        )
+        assertEquals(
+            TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                airef,
+                URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"),
+            )?.trustMode,
         )
         assertEquals(
             TrustMode.TRUSTED_CLIENT_AUTH,

@@ -441,7 +441,24 @@ class RealE2ePolicyTest(unittest.TestCase):
     def test_mugeju_recipe_only_picks_the_clave_certificate_idp(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"', source)
-        self.assertIn('MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('MUGEJU_PORTAL_ID, AIREF_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
+
+    def test_jccm_and_coruna_recipes_click_only_reviewed_controls_before_clave(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        jccm = source.split('JCCM_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        self.assertIn('clickExactAuthButton(', jccm)
+        self.assertTrue(jccm.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+        self.assertIn('JCCM_CLAVE_BUTTON_ID = "boton_presentar_solicitud_clave"', source)
+        self.assertIn('JCCM_CLAVE_BUTTON_ONCLICK = "cargar_documentos_clave(); return false;"', source)
+        coruna = source.split('CORUNA_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        self.assertIn('CORUNA_LINK_HOPS.forEach', coruna)
+        self.assertIn('expectedType = null', coruna)
+        self.assertTrue(coruna.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+        hops = source.split('val CORUNA_LINK_HOPS = listOf(', 1)[1].split('\n        )\n', 1)[0]
+        self.assertEqual(hops.count('RecipeLinkHop('), 4)
+        self.assertIn('CORUNA_TRAMITADOR_URL', hops)
+        for forbidden in ('loadUrl(', '.submit(', 'SAMLRequest'):
+            self.assertNotIn(forbidden, jccm + coruna)
 
     def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
         source = self.read(INSTRUMENTATION)
@@ -506,6 +523,8 @@ class RealE2ePolicyTest(unittest.TestCase):
             '"caib-portafib"',
             '"diputacion-burgos-portal"',
             '"diputacion-huesca-portal"',
+            '"airef-instancia-general"',
+            '"jccm-registro-generico"',
         ):
             self.assertIn(profile, conseq)
             # Consequential signing must never be driven automatically for these profiles.

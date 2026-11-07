@@ -922,7 +922,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.endpoints.isEmpty() &&
             profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH) &&
             clientAuth != null &&
-            clientAuth.transitionMode == dev.junta.firmamobile.profile.ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
+            clientAuth.transitionMode == dev.junta.firmamobile.profile.ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+            clientAuth.requestMethod == dev.junta.firmamobile.profile.HttpMethod.POST &&
             clientAuth.requestOrigins == setOf(ExactOrigin.parse(JCCM_REGISTRO_CLIENT_AUTH_ORIGIN)) &&
             clientAuth.sourceUrls == setOf(java.net.URI(JCCM_REGISTRO_CLIENT_AUTH_SOURCE_URL)) &&
             clientAuth.requestPath == JCCM_REGISTRO_CLIENT_AUTH_PATH &&
@@ -1361,7 +1362,8 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.endpoints.isEmpty() &&
             profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH) &&
             clientAuth != null &&
-            clientAuth.transitionMode == dev.junta.firmamobile.profile.ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
+            clientAuth.transitionMode == dev.junta.firmamobile.profile.ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE &&
+            clientAuth.requestMethod == dev.junta.firmamobile.profile.HttpMethod.POST &&
             clientAuth.requestOrigins == setOf(
                 ExactOrigin.parse(AirefXadesEnvelopingAdapter.CLIENT_AUTH_REQUEST_ORIGIN),
             ) &&
@@ -1819,7 +1821,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             "filters.2" to "keyusage.nonrepudiation:true;nonexpired:",
         )
         private const val JCCM_REGISTRO_PROFILE_ID = "jccm-registro-generico"
-        private const val JCCM_REGISTRO_PROFILE_VERSION = 1
+        private const val JCCM_REGISTRO_PROFILE_VERSION = 2
         private const val JCCM_REGISTRO_ORIGIN = "https://registrounicociudadanos.jccm.es"
         private val JCCM_REGISTRO_HOST = java.net.URI(JCCM_REGISTRO_ORIGIN).host
         private val JCCM_REGISTRO_START_URL =
