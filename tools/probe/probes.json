@@ -1,239 +1,127 @@
 [
  {
-  "name": "age-acceda",
-  "url": "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES"
- },
- {
-  "name": "tgss-importass",
-  "url": "https://portal.seg-social.gob.es/wps/myportal/importass/importass/personal/"
- },
- {
-  "name": "dgt-sede",
-  "url": "https://sede.dgt.gob.es/es/otros-tramites/verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/"
- },
- {
-  "name": "comunidad-madrid-gestiona2",
-  "url": "https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094"
- },
- {
-  "name": "aragon-siraw",
-  "url": "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw"
- },
- {
-  "name": "diputacion-valladolid-sede",
-  "url": "https://www.sede.diputaciondevalladolid.es/tgauth/login"
- },
- {
-  "name": "sevilla-sede",
-  "url": "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente"
- },
- {
-  "name": "age-autoridad-independiente-de-responsabilidad-fiscal-airef",
-  "url": "https://sede.airef.es/invesiteRE/action/inicio?authMethod=Clave&organismo=AIREF&tramite=AF-01"
- },
- {
-  "name": "age-comision-nacional-del-mercado-de-valores-cnmv",
-  "url": "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"
- },
- {
-  "name": "age-cuerpo-nacional-de-policia",
-  "url": "https://sede.policia.gob.es/"
- },
- {
   "name": "age-fondo-espanol-de-garantia-agraria-o-a-fega",
-  "url": "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02"
+  "url": "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02",
+  "wait": 6000
  },
  {
-  "name": "age-instituto-de-salud-carlos-iii",
-  "url": "https://sede.isciii.gob.es/cargaApplet.jsp?accion=generico&recurso.opcion=null"
- },
- {
-  "name": "age-ministerio-de-economia-comercio-y-empresa",
-  "url": "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG"
- },
- {
-  "name": "age-ministerio-de-sanidad",
-  "url": "https://sede.mscbs.gob.es/"
- },
- {
-  "name": "age-ministerio-de-trabajo-y-economia-social",
-  "url": "https://sede.mites.gob.es/"
- },
- {
-  "name": "age-ministerio-de-transportes-y-movilidad-sostenible",
-  "url": "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002"
- },
- {
-  "name": "age-portal-de-la-transparencia",
-  "url": "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524"
- },
- {
-  "name": "age-sede-electronica-de-los-tribunales-economico-administrativos-tea",
-  "url": "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
- },
- {
-  "name": "junta-andalucia-sede",
-  "url": "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA"
- },
- {
-  "name": "aragon-tramites-sede",
-  "url": "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion"
+  "name": "age-instituto-social-de-las-fuerzas-armadas-isfas",
+  "url": "https://sede.isfas.gob.es/",
+  "wait": 6000
  },
  {
   "name": "asturias-miprincipado-sede",
-  "url": "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites"
+  "url": "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
+  "wait": 6000
  },
  {
   "name": "asturias-sede-tramite-autofirma",
-  "url": "https://sede.asturias.es/ast/-/dboid-6269000011903512107573"
+  "url": "https://sede.asturias.es/ast/-/dboid-6269000011903512107573",
+  "wait": 6000
  },
  {
-  "name": "canarias-sede",
-  "url": "https://sede.gobiernodecanarias.org/sede/la_sede"
+  "name": "cantabria-registro-electronico-comun",
+  "url": "https://rec.cantabria.es/rec/bienvenida.htm",
+  "wait": 6000
  },
  {
   "name": "cantabria-sede",
-  "url": "https://rec.cantabria.es/rec/bienvenida.htm"
- },
- {
-  "name": "castilla-la-mancha-sede",
-  "url": "https://registrounicociudadanos.jccm.es/registrounicociudadanos/acceso.do?id=SJLZ",
-  "clicks": [
-   "#boton_presentar_solicitud_clave"
-  ]
- },
- {
-  "name": "catalunya-seu-electronica",
-  "url": "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/"
- },
- {
-  "name": "catalunya-tramits-peticio-generica",
-  "url": "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c"
+  "url": "https://sede.cantabria.es/sede/",
+  "wait": 6000
  },
  {
   "name": "ceuta-sede",
-  "url": "https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI"
- },
- {
-  "name": "melilla-sede",
-  "url": "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999"
- },
- {
-  "name": "gva-sede",
-  "url": "https://www.tramita.gva.es/ctt-att-atr/asistente/iniciarTramite.html?tramite=DGM_GEN&version=4&idioma=es&idProcGuc=15602&idSubfaseGuc=SOLICITUD&idCatGuc=PR"
- },
- {
-  "name": "extremadura-tramites",
-  "url": "https://tramites.juntaex.es/"
- },
- {
-  "name": "extremadura-portal-tributario",
-  "url": "https://pattex.juntaex.es/PATTEX/externos.jsf?info=060~user~pass~SEDE_ALTA~https://pattex.juntaex.es~codigo"
- },
- {
-  "name": "galicia-sede",
-  "url": "https://sede.xunta.gal/tramites-e-servizos/solicitude-xenerica"
- },
- {
-  "name": "navarra-sede-registro-general",
-  "url": "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico"
- },
- {
-  "name": "euskadi-sede-electronica",
-  "url": "https://www.euskadi.eus/web01-sedeform/es/x43kToolkitWar/form/fdp?procedureId=1017701&tipoPresentacion=19&language=es"
- },
- {
-  "name": "la-rioja-oficina-electronica",
-  "url": "https://ias1.larioja.org/oficinavirtual/presentacion?act_codi=24697"
- },
- {
-  "name": "menorca-portal-institucional",
-  "url": "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
- },
- {
-  "name": "mallorca-portal-institucional",
-  "url": "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"
- },
- {
-  "name": "eivissa-portal-institucional",
-  "url": "https://seu.conselldeivissa.es/"
- },
- {
-  "name": "la-palma-portal-institucional",
-  "url": "https://sedeelectronica.cabildodelapalma.es/"
- },
- {
-  "name": "fuerteventura-portal-institucional",
-  "url": "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
- },
- {
-  "name": "gran-canaria-portal-institucional",
-  "url": "https://sede.grancanaria.com/sede-privado/instancia-general?inicio"
- },
- {
-  "name": "diputacion-badajoz-portal",
-  "url": "https://sede.dip-badajoz.es"
- },
- {
-  "name": "diputacion-burgos-portal",
-  "url": "https://registro.diputaciondeburgos.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&DETALLE=6269000968832920507194&PAGE_CODE=CATALOGO"
- },
- {
-  "name": "diputacion-a-coruna-portal",
-  "url": "https://www.dacoruna.gal/portada"
- },
- {
-  "name": "diputacion-huesca-portal",
-  "url": "https://ovc24.dphuesca.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=OVC_HOME"
- },
- {
-  "name": "diputacion-jaen-sede",
-  "url": "https://sede.dipujaen.es/SolicitudGenerica"
- },
- {
-  "name": "diputacion-lleida-sede",
-  "url": "https://seu.diputaciolleida.cat"
- },
- {
-  "name": "diputacion-lugo-sede",
-  "url": "https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
+  "url": "https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI",
+  "wait": 6000
  },
  {
   "name": "diputacion-malaga-sede",
-  "url": "https://sede.malaga.es/instancia-general/nueva-instancia-general/"
- },
- {
-  "name": "diputacion-ourense-sede",
-  "url": "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES"
+  "url": "https://sede.malaga.es/instancia-general/nueva-instancia-general/",
+  "wait": 6000
  },
  {
   "name": "diputacion-salamanca-sede",
-  "url": "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE"
+  "url": "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
+  "wait": 6000
  },
  {
-  "name": "diputacion-soria-sede",
-  "url": "https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1"
- },
- {
-  "name": "diputacion-tarragona-sede",
-  "url": "https://seuelectronica.dipta.cat/tramits-online/fr/administracions/8004330008/procediments/DIP80_EGIST_00001/crearInstancia"
+  "name": "diputacion-segovia-sede",
+  "url": "https://sede.dipsegovia.es/registro",
+  "wait": 6000
  },
  {
   "name": "diputacion-valencia-sede",
-  "url": "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml"
+  "url": "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml",
+  "wait": 6000
  },
  {
-  "name": "educacion-convocatoria-46",
-  "url": "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
-  "clicks": [
-   "#login_texto_entrar"
-  ]
+  "name": "diputacion-zamora-sede",
+  "url": "https://diputaciondezamora.sedelectronica.es/info.0",
+  "wait": 6000
  },
  {
-  "name": "coruna-entrada",
-  "url": "https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano&idEntidad=diputacion&idExpediente=X004&fkIdioma=GL",
-  "clicks": [
-   "#acceso"
-  ]
+  "name": "diputacion-zaragoza-sede",
+  "url": "https://dpz.sedelectronica.es/info.0",
+  "wait": 6000
+ },
+ {
+  "name": "eivissa-sede-electronica",
+  "url": "https://seu.conselldeivissa.es/",
+  "wait": 6000
+ },
+ {
+  "name": "el-hierro-portal-institucional",
+  "url": "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
+  "wait": 6000
+ },
+ {
+  "name": "el-hierro-sede-electronica",
+  "url": "https://elhierro.sedelectronica.es/info.0",
+  "wait": 6000
+ },
+ {
+  "name": "junta-andalucia-sede",
+  "url": "https://veaja.cloud.juntadeandalucia.es/inicio/procedimiento-detalle/PEG_VEA",
+  "wait": 6000
+ },
+ {
+  "name": "la-gomera-portal-institucional",
+  "url": "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+  "wait": 6000
+ },
+ {
+  "name": "la-gomera-sede-electronica",
+  "url": "https://lagomera.sedelectronica.es/info.0",
+  "wait": 6000
+ },
+ {
+  "name": "la-palma-portal-institucional",
+  "url": "https://www.cabildodelapalma.es/",
+  "wait": 6000
+ },
+ {
+  "name": "la-palma-sede-electronica",
+  "url": "https://sedeelectronica.cabildodelapalma.es/",
+  "wait": 6000
+ },
+ {
+  "name": "lanzarote-sede-electronica",
+  "url": "https://cabildodelanzarote.sedelectronica.es/info.0",
+  "wait": 6000
+ },
+ {
+  "name": "navarra-sede-registro-general",
+  "url": "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico",
+  "wait": 6000
+ },
+ {
+  "name": "sevilla-sede",
+  "url": "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente",
+  "wait": 6000
+ },
+ {
+  "name": "diputacion-ourense-sede",
+  "url": "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES",
+  "wait": 6000
  }
 ]
