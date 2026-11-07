@@ -1160,8 +1160,9 @@ class RealE2eInstrumentedTest {
                       const anchors = roots.flatMap(root => Array.from(root.querySelectorAll('a')));
                       const elements = anchors.filter(element => {
                         const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
-                        return label === $quotedExpectedLabel &&
-                          element.getAttribute('href') === $quotedExpectedHref;
+                        // A first visit without cookies gets ;jsessionid=... rewritten into every href (CSN).
+                        const href = (element.getAttribute('href') || '').replace(/;jsessionid=[^?#]*/i, '');
+                        return label === $quotedExpectedLabel && href === $quotedExpectedHref;
                       });
                       if (elements.length === 0) return 0;
                       if (elements.length !== 1) return 2;
