@@ -5,9 +5,9 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 object SiteProfileCatalogParser {
-    const val MAX_CATALOG_CHARS = 262_144
-    private const val MAX_REVIEWED_ORIGIN_SHARES = 128
-    private const val MAX_LATER_ORIGIN_OWNERS = 32
+    const val MAX_CATALOG_CHARS = 1_048_576
+    private const val MAX_REVIEWED_ORIGIN_SHARES = 256
+    private const val MAX_LATER_ORIGIN_OWNERS = 96
     private const val MAX_DISPLAY_NAME_CHARS = 128
     private const val MAX_CONTENT_TYPE_CHARS = 128
     private const val MAX_SAFE_DESCRIPTION_CHARS = 160
