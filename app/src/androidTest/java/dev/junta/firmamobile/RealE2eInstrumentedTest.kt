@@ -560,7 +560,8 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
-                      if (location.href !== $quotedServiceProvider) return 2;
+                      // WebView.url switches before the document does; the Kotlin URL check rejects a real mismatch.
+                      if (location.href !== $quotedServiceProvider) return 0;
                       // A slow Cl@ve page exposes the form before its selectedIdP script; wait instead of failing.
                       if (document.readyState !== 'complete') return 0;
                       const forms = Array.from(document.querySelectorAll('form[name="idpRedirect"]'));
@@ -882,7 +883,8 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
-                      if (location.origin !== $quotedOrigin || location.pathname !== '/') return 2;
+                      // WebView.url switches before the document does; the Kotlin URL check rejects a real mismatch.
+                      if (location.origin !== $quotedOrigin || location.pathname !== '/') return 0;
                       const forms = Array.from(document.querySelectorAll('form[name="claveForm"]'));
                       if (forms.length === 0) return 0;
                       if (forms.length !== 1) return 2;
@@ -1293,7 +1295,8 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
-                      if (location.href !== ${JSONObject.quote(REC_HOME_URL)}) return 2;
+                      // WebView.url switches before the document does; the Kotlin URL check rejects a real mismatch.
+                      if (location.href !== ${JSONObject.quote(REC_HOME_URL)}) return 0;
                       if (document.readyState !== 'complete') return 0;
                       const items = Array.from(document.querySelectorAll('dnt-header-item')).filter(element =>
                         element.getAttribute('text') === $quotedLabel

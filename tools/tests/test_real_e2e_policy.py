@@ -425,6 +425,19 @@ class RealE2ePolicyTest(unittest.TestCase):
         helper = helper[:helper.index('const forms = Array.from(')]
         self.assertIn("if (document.readyState !== 'complete') return 0;", helper)
 
+    def test_clave_recipes_wait_while_the_document_lags_the_webview_url(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for helper_name, location_check in (
+            ('clickClaveAfirmaProvider', "if (location.href !== $quotedServiceProvider) return 0;"),
+            ('clickGestionaClaveLogin', "if (location.origin !== $quotedOrigin || location.pathname !== '/') return 0;"),
+            ('clickRecClaveLogin', "if (location.href !== ${JSONObject.quote(REC_HOME_URL)}) return 0;"),
+        ):
+            helper = source[source.index(f'private fun {helper_name}('):]
+            helper = helper[:helper.index('\n    private fun ', 1)]
+            self.assertIn(location_check, helper)
+            # The Kotlin side still rejects or times out on a real URL mismatch before any click.
+            self.assertIn('val currentUrl = webView.url', helper)
+
     def test_mugeju_recipe_only_picks_the_clave_certificate_idp(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"', source)
