@@ -1391,6 +1391,10 @@ fun BrowserScreen(
                                         pendingClientAuthTargetEpoch = navigationEpoch.longValue
                                         pendingClientAuthTarget = authorized
                                     } else {
+                                        logger.recordPortalCallback(
+                                            "client-auth-target-dropped-profile",
+                                            authorized.target.host.orEmpty(),
+                                        )
                                         carneJovenPreTlsRetryController.reset()
                                         clientAuthAuthorizer.invalidate()
                                     }

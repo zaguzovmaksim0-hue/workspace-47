@@ -479,6 +479,8 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('expectedTag = "input"', menorca)
         self.assertIn('expectedType = "submit"', menorca)
         self.assertIn('MENORCA_CERT_SUBMIT_ID = "ctl00_Content1_Button1"', source)
+        self.assertIn('MENORCA_PERSONAL_DATA_HREF = "/cime/InfoPersonal.aspx"', source)
+        self.assertNotIn('iniciartramit.aspx', source)
         for forbidden in ('loadUrl(', '.submit(', 'clickClaveAfirmaProvider'):
             self.assertNotIn(forbidden, soria + rioja + menorca)
 

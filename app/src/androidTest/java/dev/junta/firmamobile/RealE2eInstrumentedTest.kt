@@ -406,13 +406,14 @@ class RealE2eInstrumentedTest {
                 waitForExpectedUrl = true,
                 matchUrlWithoutQuery = true,
             )
-            // Menorca: "Tramitar" -> Carpeta Ciutadana login (return URL in query) -> "Certificat electrònic" submit.
+            // Menorca: "Les meves dades" -> Carpeta Ciutadana login (return URL in query) -> "Certificat electrònic" submit.
+            // "Tramitar" redirects to a login URL carrying raw ^ and ¿ characters, which the app rejects as INVALID_URL.
             MENORCA_PORTAL_INSTITUCIONAL_ID, MENORCA_SEDE_ID -> {
                 clickExactLabeledAnchor(
                     scenario = scenario,
                     expectedCurrentUrl = MENORCA_START_URL,
-                    expectedLabel = MENORCA_TRAMITAR_LABEL,
-                    expectedHref = MENORCA_TRAMITAR_HREF,
+                    expectedLabel = MENORCA_PERSONAL_DATA_LABEL,
+                    expectedHref = MENORCA_PERSONAL_DATA_HREF,
                 )
                 clickExactButton(
                     scenario = scenario,
@@ -2525,9 +2526,8 @@ class RealE2eInstrumentedTest {
         const val MENORCA_SEDE_ID = "menorca-sede-electronica"
         const val MENORCA_START_URL =
             "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
-        const val MENORCA_TRAMITAR_LABEL = "Tramitar"
-        const val MENORCA_TRAMITAR_HREF =
-            "https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1"
+        const val MENORCA_PERSONAL_DATA_LABEL = "Les meves dades"
+        const val MENORCA_PERSONAL_DATA_HREF = "/cime/InfoPersonal.aspx"
         const val MENORCA_LOGIN_URL = "https://www.carpetaciutadana.org/cime/Login/Login.aspx"
         const val MENORCA_CERT_SUBMIT_ID = "ctl00_Content1_Button1"
         const val MENORCA_CERT_SUBMIT_LABEL = "Certificat electrònic"
