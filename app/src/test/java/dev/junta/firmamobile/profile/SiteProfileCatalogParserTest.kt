@@ -1808,12 +1808,12 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `Diputacion Cadiz solicitud generica is QA navigation only to the observed Clave boundary`() {
+    fun `Diputacion Cadiz solicitud generica arms client TLS only on the reviewed Clave POST`() {
         val profileId = ProfileId("diputacion-cadiz-solicitud-generica")
         val start = URI("https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Diputación Provincial de Cádiz — Solicitud, escrito o comunicación genérica", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -1829,13 +1829,17 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
+        assertEquals(setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")), policy.sourceUrls)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")), policy.requestOrigins)
+        assertEquals("/IdP2/AuthenticateCitizen", policy.requestPath)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(4, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-21" })
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(6, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() in setOf("2026-08-21", "2026-11-07") })
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertEquals(
             TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(
@@ -1849,12 +1853,12 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `Diputacion Caceres Instancia General is QA navigation only to the observed Clave boundary`() {
+    fun `Diputacion Caceres Instancia General arms client TLS only on the reviewed Clave POST`() {
         val profileId = ProfileId("diputacion-caceres-instancia-general")
         val start = URI("https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Diputación Provincial de Cáceres — Instancia General Normalizada", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -1864,13 +1868,17 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
+        assertEquals(setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")), policy.sourceUrls)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")), policy.requestOrigins)
+        assertEquals("/IdP2/AuthenticateCitizen", policy.requestPath)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(5, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-21" })
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(8, profile.evidence.size)
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() in setOf("2026-08-21", "2026-11-07") })
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertEquals(
             TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(
@@ -1883,6 +1891,27 @@ class SiteProfileCatalogParserTest {
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.dip-caceres.es.evil.example/")))
     }
 
+
+    @Test
+    fun `CSN arms client TLS only on the AFIRMA POST that ServiceProvider itself sends`() {
+        val profileId = ProfileId("csn-sede-public")
+        val start = URI("https://sede.csn.gob.es/")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(2, profile.profileVersion)
+        assertEquals(setOf(ExactOrigin.parse("https://sede.csn.gob.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
+        // CSN preselects AFIRMA, so there is no ServiceRedirect hop.
+        assertEquals(setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")), policy.sourceUrls)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")), policy.requestOrigins)
+        assertEquals("/IdP2/AuthenticateCitizen", policy.requestPath)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
+    }
 
     @Test
     fun `MJusticia fundaciones launch is QA only and exposes no sensitive capability`() {

@@ -358,7 +358,11 @@ object SiteProfileCatalogParser {
                         requestMethod == HttpMethod.POST &&
                         requestPort == HTTPS_PORT &&
                         requestOrigins == setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)) &&
-                        sourceUrls == setOf(URI(MALAGA_CLIENT_AUTH_SOURCE_URL)) &&
+                        (
+                            sourceUrls == setOf(URI(MALAGA_CLIENT_AUTH_SOURCE_URL)) ||
+                                // CSN preselects AFIRMA: ServiceProvider itself auto-POSTs to AuthenticateCitizen.
+                                profileId.value in CLAVE_DIRECT_PINS && sourceUrls == setOf(URI(CLAVE_PROVIDER_URL))
+                        ) &&
                         requestPath == MALAGA_CLIENT_AUTH_REQUEST_PATH &&
                         fixed.isEmpty() && ephemeral.isEmpty()
                 require(
@@ -3092,6 +3096,7 @@ object SiteProfileCatalogParser {
                             CASTELLON_PROFILE_ID,
                             LANZAROTE_PROFILE_ID,
                             TERUEL_PROFILE_ID,
+                            CSN_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -3120,6 +3125,8 @@ object SiteProfileCatalogParser {
                             LANZAROTE_PROFILE_ID,
                             TERUEL_PROFILE_ID,
                             GUADALAJARA_PROFILE_ID,
+                            CSN_PROFILE_ID,
+                            CADIZ_PROFILE_ID,
                         )
                     }
                     else -> false
@@ -3583,6 +3590,71 @@ object SiteProfileCatalogParser {
                 CLAVE_PROVIDER_URL,
             ),
         ),
+        // Cádiz: the trámite page logs in through its SSO gateway, which posts straight to Cl@ve.
+        CADIZ_PROFILE_ID to ClaveDirectPin(
+            displayName = "Diputación Provincial de Cádiz — Solicitud, escrito o comunicación genérica",
+            startUrl = "https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761",
+            origins = ClaveOriginPins(
+                initiator = "https://sede.dipucadiz.es",
+                redirect = setOf("https://sso.dipucadiz.es", CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://sede.dipucadiz.es/web/sede/registro-electronico-comun",
+                "https://sede.dipucadiz.es/tramites-disponibles",
+                "https://sede.dipucadiz.es/group/sede/detalle-tramite?tramite=761",
+                CLAVE_PROVIDER_URL,
+            ) + claveEvidence("2026-11-07", CLAVE_REDIRECT_URL, CLAVE_IDENT_EVIDENCE_URL),
+        ),
+        // Cáceres: "Acceder" on the procedure opens the login page, whose Cl@ve logo posts to Cl@ve.
+        CACERES_PROFILE_ID to ClaveDirectPin(
+            displayName = "Diputación Provincial de Cáceres — Instancia General Normalizada",
+            startUrl = "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341",
+            origins = ClaveOriginPins(
+                initiator = "https://sede.dip-caceres.es",
+                redirect = setOf(CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://www.dip-caceres.es/",
+                "https://sede.dip-caceres.es/carpetaCiudadano/Init.do",
+                "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341",
+                CACERES_LOGIN_EVIDENCE_URL,
+                CLAVE_PROVIDER_URL,
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede.dip-caceres.es/carpetaCiudadano/LoginClave2Front.do",
+                CLAVE_REDIRECT_URL,
+                CLAVE_IDENT_EVIDENCE_URL,
+            ),
+        ),
+        CSN_PROFILE_ID to ClaveDirectPin(
+            displayName = "Consejo de Seguridad Nuclear — sede pública",
+            startUrl = "https://sede.csn.gob.es/",
+            origins = ClaveOriginPins(
+                initiator = "https://sede.csn.gob.es",
+                redirect = setOf(CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_PROVIDER_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-23",
+                "https://sede.csn.gob.es/",
+                "https://sede.csn.gob.es/Sede20/identificacion?tipoacceso=3",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede.csn.gob.es/Sede20/clave/peticioncert",
+                CLAVE_PROVIDER_URL,
+                CLAVE_IDENT_EVIDENCE_URL,
+            ),
+        ),
         CTBG_PROFILE_ID to gestionaClavePin(
             displayName = "Consejo de Transparencia y Buen Gobierno (CTBG) — Solicitud de Información",
             startUrl = "https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6",
@@ -4005,9 +4077,12 @@ object SiteProfileCatalogParser {
     private const val LANZAROTE_PUBLIC_NAVIGATION_PROFILE_ID = "lanzarote-sede-public-navigation"
     private const val LANZAROTE_PUBLIC_REDIRECT_ORIGIN = "https://lanzaroteylagraciosa.sedelectronica.es"
     private const val CTBG_PROFILE_ID = "ctbg-solicitud-informacion"
+    private const val CSN_PROFILE_ID = "csn-sede-public"
     private const val CATASTRO_PROFILE_ID = "catastro-solicitudes-genericas"
     private const val FEGA_PROFILE_ID = "fega-solicitud-general-ofvsg02"
     private const val CACERES_PROFILE_ID = "diputacion-caceres-instancia-general"
+    private const val CACERES_LOGIN_EVIDENCE_URL = "https://sede.dip-caceres.es/carpetaCiudadano/" +
+        "LoginLDAPFrontAction.do?red=MzQxI2V4cGdlbiNJTlNUQU5DSUEgR0VORVJBTCBOT1JNQUxJWkFEQQ=="
     // v2: Cl@ve's AFIRMA choice POSTs to ServiceRedirect, which auto-POSTs to AuthenticateCitizen.
     private const val AIREF_PROFILE_VERSION = 2
     private const val AIREF_DISPLAY_NAME = "AIReF — Instancia General"

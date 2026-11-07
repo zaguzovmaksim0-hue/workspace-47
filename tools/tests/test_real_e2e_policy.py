@@ -443,7 +443,8 @@ class RealE2ePolicyTest(unittest.TestCase):
     def test_mugeju_recipe_only_picks_the_clave_certificate_idp(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"', source)
-        self.assertIn('MUGEJU_PORTAL_ID, AIREF_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('MUGEJU_PORTAL_ID, AIREF_PORTAL_ID, CADIZ_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
+        self.assertIn('CADIZ_PORTAL_ID = "diputacion-cadiz-portal"', source)
 
     def test_jccm_and_coruna_recipes_click_only_reviewed_controls_before_clave(self) -> None:
         source = self.read(INSTRUMENTATION)
@@ -499,6 +500,21 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('TRANSPORTES_SIGN_BUTTON_ONCLICK = "Sign_firmar();return false;"', source)
         for forbidden in ('loadUrl(', '.submit(', 'clickClaveAfirmaProvider'):
             self.assertNotIn(forbidden, ''.join(blocks))
+
+    def test_caceres_recipe_follows_access_then_clave_logo(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        block = source.split('CACERES_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        self.assertIn('expectedHref = CACERES_ACCESS_HREF', block)
+        self.assertIn('expectedHref = CACERES_CLAVE_HREF', block)
+        self.assertTrue(block.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+        self.assertIn('CACERES_CLAVE_HREF = "LoginClave2Front.do"', source)
+
+    def test_csn_recipe_only_follows_the_reviewed_certificate_link(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        block = source.split('CSN_PORTAL_ID -> clickExactLabeledAnchor(', 1)[1].split('\n            )\n', 1)[0]
+        self.assertIn('expectedHref = CSN_CERT_HREF', block)
+        self.assertIn('CSN_CERT_HREF = "https://sede.csn.gob.es:/Sede20/clave/peticioncert"', source)
+        self.assertIn('CSN_PORTAL_ID = "age-consejo-de-seguridad-nuclear-csn"', source)
 
     def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
         source = self.read(INSTRUMENTATION)
