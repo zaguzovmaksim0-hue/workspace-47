@@ -1764,10 +1764,11 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `Diputacion Avila Instancia General is QA navigation only with observed Clave redirects`() {
+    fun `Diputacion Avila Instancia General arms client TLS only on the reviewed Clave POST`() {
         val profileId = ProfileId("diputacion-avila-instancia-general")
         val start = URI("https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+        val policy = checkNotNull(profile.clientAuthPolicy)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(start, profile.startUrl)
@@ -1775,19 +1776,21 @@ class SiteProfileCatalogParserTest {
         assertEquals(
             setOf(
                 ExactOrigin.parse("https://pasarela.clave.gob.es"),
-                ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
                 ExactOrigin.parse("https://pasarela-ident-sistemas.clave.gob.es"),
             ),
             profile.redirectOrigins,
         )
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
+        assertEquals(setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")), policy.sourceUrls)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")), policy.requestOrigins)
+        assertEquals("/IdP2/AuthenticateCitizen", policy.requestPath)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertEquals(false, profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(3, profile.evidence.size)
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(5, profile.evidence.size)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
     }

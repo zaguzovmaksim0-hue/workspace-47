@@ -424,6 +424,25 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('MUGEJU_PORTAL_ID = "age-mutualidad-general-judicial-mugeju"', source)
         self.assertIn('MUGEJU_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)
 
+    def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        block = source.split('in GESTIONA_CLAVE_ORIGINS -> {', 1)[1].split('\n            }\n', 1)[0]
+        self.assertIn('clickGestionaClaveLogin(scenario, GESTIONA_CLAVE_ORIGINS.getValue(portalId))', block)
+        self.assertTrue(block.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+        self.assertIn('GESTIONA_CLAVE_LABEL = "Acceso con sistema Cl@ve"', source)
+        self.assertIn('"diputacion-avila-portal" to "https://diputacionavila.sedelectronica.es"', source)
+        helper = source[source.index('private fun clickGestionaClaveLogin('):]
+        helper = helper[:helper.index('private fun clickExactLabeledAnchor(')]
+        for expected in (
+            'form[name="claveForm"]',
+            'CLAVE_SERVICE_PROVIDER_URL',
+            'input[type="hidden"][name="SAMLRequest"]',
+            "onclick') === 'submit();'",
+            'GESTIONA_CLAVE_LABEL',
+        ):
+            self.assertIn(expected, helper)
+        self.assertNotIn('loadUrl(', helper)
+
     def test_tenerife_and_caib_prove_only_the_clave_login_and_never_file(self) -> None:
         source = self.read(INSTRUMENTATION)
         self.assertIn('CAIB_SEU_PORTAL_ID, CAIB_REGISTRE_PORTAL_ID -> clickClaveAfirmaProvider(scenario)', source)

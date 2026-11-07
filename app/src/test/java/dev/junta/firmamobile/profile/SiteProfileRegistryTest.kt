@@ -72,7 +72,7 @@ class SiteProfileRegistryTest {
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(elHierro, clave)?.trustMode,
         )
         assertEquals(
-            TrustMode.BROWSE_ONLY,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(avila, claveIdent)?.trustMode,
         )
         assertEquals(

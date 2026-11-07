@@ -723,7 +723,7 @@ object SiteProfileCatalogParser {
                             CORUNA_PROFILE_ID,
                             TENERIFE_PROFILE_ID,
                             CAIB_PROFILE_ID,
-                        ) -> p.initiatorOrigins + p.redirectOrigins
+                        ) || p.profileId.value in CLAVE_DIRECT_PINS -> p.initiatorOrigins + p.redirectOrigins
                         p.profileId.value == TARRAGONA_PROFILE_ID &&
                             policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ->
                             p.trustedBrowseOrigins
@@ -3462,6 +3462,24 @@ object SiteProfileCatalogParser {
                 CLAVE_REDIRECT_URL,
                 CLAVE_IDENT_EVIDENCE_URL,
             ),
+        ),
+        // Gestiona: the instancia general redirects to its identification page, whose only provider is Cl@ve.
+        AVILA_PROFILE_ID to ClaveDirectPin(
+            displayName = "Diputación Provincial de Ávila — Instancia General",
+            startUrl = "https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            origins = ClaveOriginPins(
+                initiator = "https://diputacionavila.sedelectronica.es",
+                redirect = setOf(CLAVE_PASARELA_ORIGIN, "https://pasarela-ident-sistemas.clave.gob.es"),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-18",
+                "https://diputacionavila.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+                "https://diputacionavila.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+                CLAVE_PROVIDER_URL,
+            ) + claveEvidence("2026-11-07", CLAVE_REDIRECT_URL, CLAVE_IDENT_EVIDENCE_URL),
         ),
     )
     private const val CARNE_JOVEN_PROFILE_ID = "carne-joven-andalucia"
