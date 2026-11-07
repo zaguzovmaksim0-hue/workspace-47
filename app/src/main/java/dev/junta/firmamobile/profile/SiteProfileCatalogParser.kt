@@ -349,6 +349,7 @@ object SiteProfileCatalogParser {
                     MUGEJU_PROFILE_ID,
                     TENERIFE_PROFILE_ID,
                     CAIB_PROFILE_ID,
+                    REG_AGE_PROFILE_ID,
                 )
                 val reviewedUnparameterizedPostSource =
                     reviewedClavePostProfile &&
@@ -570,6 +571,9 @@ object SiteProfileCatalogParser {
             if (p.profileId.value == TENERIFE_PROFILE_ID) {
                 validateTenerifeProfile(p)
             }
+            if (p.profileId.value == REG_AGE_PROFILE_ID) {
+                validateRegAgeProfile(p)
+            }
             if (p.profileId.value == FUERTEVENTURA_PROFILE_ID) {
                 validateFuerteventuraProfile(p)
             }
@@ -680,6 +684,7 @@ object SiteProfileCatalogParser {
                         HUESCA_PROFILE_ID,
                         TENERIFE_PROFILE_ID,
                         CAIB_PROFILE_ID,
+                        REG_AGE_PROFILE_ID,
                     )
                 ) {
                     require(p.endpoints.isEmpty())
@@ -723,6 +728,7 @@ object SiteProfileCatalogParser {
                             CORUNA_PROFILE_ID,
                             TENERIFE_PROFILE_ID,
                             CAIB_PROFILE_ID,
+                            REG_AGE_PROFILE_ID,
                         ) || p.profileId.value in CLAVE_DIRECT_PINS -> p.initiatorOrigins + p.redirectOrigins
                         p.profileId.value == TARRAGONA_PROFILE_ID &&
                             policy.transitionMode == ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE ->
@@ -1917,6 +1923,22 @@ object SiteProfileCatalogParser {
         require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == TENERIFE_EVIDENCE)
     }
 
+    private fun validateRegAgeProfile(profile: SiteProfile) {
+        require(profile.profileVersion == REG_AGE_PROFILE_VERSION)
+        require(profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT)
+        require(profile.activation == ProfileActivation.QA_ONLY)
+        require(profile.startUrl.toASCIIString() == REG_AGE_START_URL)
+        require(profile.initiatorOrigins == setOf(ExactOrigin.parse(REG_AGE_ORIGIN)))
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(CLAVE_PASARELA_ORIGIN)))
+        require(profile.trustedBrowseOrigins.isEmpty())
+        require(profile.endpoints.isEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        require(profile.clientAuthPolicy == claveRedirectPostPolicy())
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == REG_AGE_EVIDENCE)
+    }
+
     private fun validateMelillaProfile(profile: SiteProfile) {
         require(profile.profileVersion == MELILLA_PROFILE_VERSION)
         require(profile.displayName == MELILLA_DISPLAY_NAME)
@@ -3047,6 +3069,7 @@ object SiteProfileCatalogParser {
                             CORUNA_PROFILE_ID,
                             TENERIFE_PROFILE_ID,
                             CAIB_PROFILE_ID,
+                            REG_AGE_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -3069,6 +3092,7 @@ object SiteProfileCatalogParser {
                             CORUNA_PROFILE_ID,
                             TENERIFE_PROFILE_ID,
                             CAIB_PROFILE_ID,
+                            REG_AGE_PROFILE_ID,
                         )
                     }
                     else -> false
@@ -3982,6 +4006,22 @@ object SiteProfileCatalogParser {
         TENERIFE_START_URL,
         "https://sede.tenerife.es/76.81426d6ba0b90ca6.js",
     ) + CLAVE_LOGIN_EVIDENCE
+    private const val REG_AGE_PROFILE_ID = "reg-age-redsara"
+    // v2: the REC signature is the filing itself, so REAL E2E proves only the Cl@ve certificate login.
+    private const val REG_AGE_PROFILE_VERSION = 2
+    private const val REG_AGE_START_URL = "https://reg.redsara.es/es/"
+    private const val REG_AGE_ORIGIN = "https://reg.redsara.es"
+    private val REG_AGE_EVIDENCE = claveEvidence(
+        "2026-07-18",
+        "https://reg.redsara.es/es/chunk-64DWZJJG.js",
+        "https://reg.redsara.es/es/scripts-IIDJLUBL.js",
+    ) + claveEvidence(
+        "2026-11-07",
+        "https://reg.redsara.es/es/main-FCUEJCON.js",
+        CLAVE_PROVIDER_URL,
+        CLAVE_REDIRECT_URL,
+        CLAVE_IDENT_EVIDENCE_URL,
+    )
     private const val MELILLA_PROFILE_ID = "melilla-sede"
     private const val MELILLA_PROFILE_VERSION = 1
     private const val MELILLA_DISPLAY_NAME = "Ciudad Autónoma de Melilla — Sede Electrónica"

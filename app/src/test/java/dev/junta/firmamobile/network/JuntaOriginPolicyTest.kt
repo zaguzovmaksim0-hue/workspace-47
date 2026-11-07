@@ -330,7 +330,7 @@ class JuntaOriginPolicyTest {
             ),
             JuntaOriginPolicy.browserAllowedHosts(junta),
         )
-        assertEquals(setOf("reg.redsara.es"), JuntaOriginPolicy.browserAllowedHosts(redSara))
+        assertEquals(setOf("reg.redsara.es", "pasarela.clave.gob.es"), JuntaOriginPolicy.browserAllowedHosts(redSara))
         assertEquals(setOf("tramita.unizar.es"), JuntaOriginPolicy.browserAllowedHosts(unizar))
         assertEquals(setOf("ws104.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(carneJoven))
         assertEquals(setOf("ws072.juntadeandalucia.es"), JuntaOriginPolicy.browserAllowedHosts(juntaOfvirtual))

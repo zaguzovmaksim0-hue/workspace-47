@@ -1031,7 +1031,7 @@ class SigningCoordinatorTest {
         protocolId = LocalXadesDetachedAdapter.ID,
         context = SigningContext(
             profileId = "reg-age-redsara",
-            profileVersion = 1,
+            profileVersion = 2,
             origin = origin,
             navigationId = NavigationId("123e4567-e89b-42d3-a456-426614174001"),
             navigationEpoch = navigationEpoch,
