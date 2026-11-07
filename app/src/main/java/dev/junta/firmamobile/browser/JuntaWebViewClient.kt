@@ -213,6 +213,8 @@ class JuntaWebViewClient(
                 isModernMainFrameRequest = isModernMainFrame,
                 redirectingRequestUrl = redirectingMainFrameRequestUrl(isModernMainFrame, isRedirect),
             )?.let { authorized ->
+                // Sanitized marker: separates a missing grant from a grant the confirmation UI then dropped.
+                logger.recordPortalCallback("client-auth-target-authorized", authorized.target.host.orEmpty())
                 onClientAuthTarget(authorized)
                 return true
             }

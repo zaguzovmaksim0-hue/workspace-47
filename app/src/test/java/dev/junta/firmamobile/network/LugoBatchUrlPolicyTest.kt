@@ -25,6 +25,21 @@ class LugoBatchUrlPolicyTest {
         assertNull(policy.validate(pre.replace("BatchPresigner", "BatchPostsigner"), LugoBatchOperation.PRESIGN))
     }
 
+    @Test
+    fun acceptsSingleNodePairWithoutSessionButNeverMixedWithMultiNode() {
+        val pre = "$ORIGIN/opencms/clientsigner/BatchPresigner"
+        val post = "$ORIGIN/opencms/clientsigner/BatchPostsigner"
+        val pair = policy.validatePair(pre, post)
+        assertNotNull(pair)
+        assertEquals(LugoBatchUrlPolicy.SINGLE_NODE_SESSION, pair?.first?.sessionId)
+
+        assertNull(policy.validatePair(pre, "$post/service/$SESSION"))
+        assertNull(policy.validate("$pre/", LugoBatchOperation.PRESIGN))
+        assertNull(policy.validate("$pre/service/", LugoBatchOperation.PRESIGN))
+        assertNull(policy.validate("$pre?x=1", LugoBatchOperation.PRESIGN))
+        assertNull(policy.validate(pre, LugoBatchOperation.POSTSIGN))
+    }
+
     private companion object {
         const val ORIGIN = LugoBatchUrlPolicy.ORIGIN
         const val SESSION = "A1B2C3D4E5F60718293A4B5C6D7E8F90"

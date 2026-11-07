@@ -13,7 +13,10 @@ data class LugoBatchUrlBinding(
     val url: URI,
 )
 
-/** Exact public clientSigner multi-node endpoint contract observed on Deputacion de Lugo. */
+/**
+ * Exact public clientSigner endpoint contract observed on Deputacion de Lugo. The multi-node form carries the
+ * session in the path; since JSESSIONID became HttpOnly the page sends the single-node form without it.
+ */
 class LugoBatchUrlPolicy {
     fun validate(rawUrl: String, expectedOperation: LugoBatchOperation): LugoBatchUrlBinding? {
         if (rawUrl.isEmpty() || rawUrl.length > MAX_URL_CHARS || rawUrl.any(Char::isISOControl)) return null
@@ -30,7 +33,7 @@ class LugoBatchUrlPolicy {
             else -> return null
         }
         if (operation != expectedOperation) return null
-        val sessionId = match.groupValues[2]
+        val sessionId = match.groupValues[2].ifEmpty { SINGLE_NODE_SESSION }
         return LugoBatchUrlBinding(operation, sessionId, uri)
     }
 
@@ -42,10 +45,11 @@ class LugoBatchUrlPolicy {
 
     companion object {
         const val ORIGIN = "https://sede.deputacionlugo.org"
+        const val SINGLE_NODE_SESSION = "single-node"
         private const val HOST = "sede.deputacionlugo.org"
         private const val MAX_URL_CHARS = 2_048
         private val PATH = Regex(
-            "/opencms/clientsigner/(BatchPresigner|BatchPostsigner)/service/([A-Fa-f0-9]{32})",
+            "/opencms/clientsigner/(BatchPresigner|BatchPostsigner)(?:/service/([A-Fa-f0-9]{32}))?",
         )
     }
 }
