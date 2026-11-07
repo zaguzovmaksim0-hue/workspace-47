@@ -460,6 +460,26 @@ class RealE2ePolicyTest(unittest.TestCase):
         for forbidden in ('loadUrl(', '.submit(', 'SAMLRequest'):
             self.assertNotIn(forbidden, jccm + coruna)
 
+    def test_soria_rioja_menorca_recipes_click_only_the_reviewed_certificate_control(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        soria = source.split('SORIA_PORTAL_ID -> clickExactButton(', 1)[1].split('\n            )\n', 1)[0]
+        self.assertIn('expectedCurrentUrl = SORIA_SOURCE_URL', soria)
+        self.assertIn('SORIA_CERT_BUTTON_ONCLICK = "pulsarCertificado();"', source)
+        rioja = source.split('LA_RIOJA_PORTAL_ID -> clickExactButton(', 1)[1].split('\n            )\n', 1)[0]
+        self.assertIn('matchUrlWithoutQuery = true', rioja)
+        self.assertIn('LA_RIOJA_CAS_LOGIN_URL = "https://ias1.larioja.org/casLR/login"', source)
+        self.assertIn(
+            'LA_RIOJA_CERT_BUTTON_ONCLICK = "loginClientCertSSL(\'https://ias1.larioja.org/clientcertSSL/login\')"',
+            source,
+        )
+        menorca = source.split('MENORCA_PORTAL_INSTITUCIONAL_ID, MENORCA_SEDE_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        self.assertEqual(menorca.count('clickExactLabeledAnchor('), 1)
+        self.assertIn('expectedTag = "input"', menorca)
+        self.assertIn('expectedType = "submit"', menorca)
+        self.assertIn('MENORCA_CERT_SUBMIT_ID = "ctl00_Content1_Button1"', source)
+        for forbidden in ('loadUrl(', '.submit(', 'clickClaveAfirmaProvider'):
+            self.assertNotIn(forbidden, soria + rioja + menorca)
+
     def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
         source = self.read(INSTRUMENTATION)
         block = source.split('in GESTIONA_CLAVE_ORIGINS -> {', 1)[1].split('\n            }\n', 1)[0]

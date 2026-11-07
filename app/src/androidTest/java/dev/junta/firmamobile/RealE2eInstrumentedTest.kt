@@ -350,6 +350,47 @@ class RealE2eInstrumentedTest {
                 // sso.jccm.es runs ALTCHA proof-of-work before Cl@ve: ~20 s on a phone, >45 s on CI.
                 clickClaveAfirmaProvider(scenario, timeoutMillis = JCCM_ALTCHA_TIMEOUT_MILLIS)
             }
+            // Soria: the source page's certificate "ACCEDER" button opens the reviewed client-TLS target.
+            SORIA_PORTAL_ID -> clickExactButton(
+                scenario = scenario,
+                expectedCurrentUrl = SORIA_SOURCE_URL,
+                expectedElementId = SORIA_CERT_BUTTON_ID,
+                expectedLabel = SORIA_CERT_BUTTON_LABEL,
+                expectedAriaLabel = null,
+                expectedOnClick = SORIA_CERT_BUTTON_ONCLICK,
+            )
+            // La Rioja: the trámite redirects to CAS with per-session param/TARGET; its certificate "Conectar".
+            LA_RIOJA_PORTAL_ID -> clickExactButton(
+                scenario = scenario,
+                expectedCurrentUrl = LA_RIOJA_CAS_LOGIN_URL,
+                expectedElementId = LA_RIOJA_CERT_BUTTON_ID,
+                expectedLabel = LA_RIOJA_CERT_BUTTON_LABEL,
+                expectedAriaLabel = null,
+                expectedOnClick = LA_RIOJA_CERT_BUTTON_ONCLICK,
+                waitForExpectedUrl = true,
+                matchUrlWithoutQuery = true,
+            )
+            // Menorca: "Tramitar" -> Carpeta Ciutadana login (return URL in query) -> "Certificat electrònic" submit.
+            MENORCA_PORTAL_INSTITUCIONAL_ID, MENORCA_SEDE_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = MENORCA_START_URL,
+                    expectedLabel = MENORCA_TRAMITAR_LABEL,
+                    expectedHref = MENORCA_TRAMITAR_HREF,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = MENORCA_LOGIN_URL,
+                    expectedElementId = MENORCA_CERT_SUBMIT_ID,
+                    expectedLabel = MENORCA_CERT_SUBMIT_LABEL,
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    waitForExpectedUrl = true,
+                    expectedType = "submit",
+                    matchUrlWithoutQuery = true,
+                    expectedTag = "input",
+                )
+            }
             // A Coruña: portada -> sede -> Solicitude Xeral -> tramitador -> Cl@ve, each hop an exact link.
             CORUNA_PORTAL_ID -> {
                 CORUNA_LINK_HOPS.forEach { hop ->
@@ -1203,8 +1244,14 @@ class RealE2eInstrumentedTest {
         waitForBadajozSignHook: Boolean = false,
         // null: the button carries no type attribute at all.
         expectedType: String? = "button",
+        // Pages whose URL carries per-session query values (CAS tickets, return URLs) match on origin + path.
+        matchUrlWithoutQuery: Boolean = false,
+        // "input": a submit input whose value is its label.
+        expectedTag: String = "button",
     ) {
         require(expectedLabel != null || expectedAriaLabel != null)
+        require(expectedTag == "button" || expectedTag == "input")
+        val quotedExpectedTag = JSONObject.quote(expectedTag)
         val quotedExpectedType = expectedType?.let { JSONObject.quote(it) } ?: "null"
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedExpectedElementId = expectedElementId?.let { JSONObject.quote(it) } ?: "null"
@@ -1229,7 +1276,8 @@ class RealE2eInstrumentedTest {
                     return@onActivity
                 }
                 val currentUrl = webView.url
-                if (currentUrl != null && !recipeUrlMatches(currentUrl, expectedCurrentUrl)) {
+                val comparedUrl = if (matchUrlWithoutQuery) currentUrl?.substringBefore('?') else currentUrl
+                if (comparedUrl != null && !recipeUrlMatches(comparedUrl, expectedCurrentUrl)) {
                     if (waitForExpectedUrl) {
                         waitingForExpectedUrl = true
                     } else {
@@ -1246,10 +1294,12 @@ class RealE2eInstrumentedTest {
                       const expectedAriaLabel = $quotedExpectedAriaLabel;
                       const expectedOnClick = $quotedExpectedOnClick;
                       const waitForBadajozSignHook = $quotedWaitForBadajozSignHook;
-                      const elements = Array.from(document.querySelectorAll('button')).filter(element => {
+                      const expectedTag = $quotedExpectedTag;
+                      const elements = Array.from(document.querySelectorAll(expectedTag)).filter(element => {
                         if (element.getAttribute('type') !== $quotedExpectedType) return false;
                         if (expectedId !== null && element.id !== expectedId) return false;
-                        const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
+                        const rawLabel = expectedTag === 'input' ? element.value : element.innerText;
+                        const label = (rawLabel || '').trim().replace(/\s+/g, ' ');
                         if (expectedLabel !== null && label !== expectedLabel) return false;
                         if (expectedAriaLabel !== null &&
                             element.getAttribute('aria-label') !== expectedAriaLabel) return false;
@@ -2402,6 +2452,27 @@ class RealE2eInstrumentedTest {
         const val JCCM_CLAVE_BUTTON_ID = "boton_presentar_solicitud_clave"
         const val JCCM_CLAVE_BUTTON_VALUE = "Presentar Solicitud"
         const val JCCM_CLAVE_BUTTON_ONCLICK = "cargar_documentos_clave(); return false;"
+        const val SORIA_PORTAL_ID = "diputacion-soria-sede"
+        const val SORIA_SOURCE_URL = "https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&" +
+            "redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1"
+        const val SORIA_CERT_BUTTON_ID = "b_certificado"
+        const val SORIA_CERT_BUTTON_LABEL = "ACCEDER"
+        const val SORIA_CERT_BUTTON_ONCLICK = "pulsarCertificado();"
+        const val LA_RIOJA_PORTAL_ID = "la-rioja-oficina-electronica"
+        const val LA_RIOJA_CAS_LOGIN_URL = "https://ias1.larioja.org/casLR/login"
+        const val LA_RIOJA_CERT_BUTTON_ID = "boton_certificado"
+        const val LA_RIOJA_CERT_BUTTON_LABEL = "Conectar"
+        const val LA_RIOJA_CERT_BUTTON_ONCLICK = "loginClientCertSSL('https://ias1.larioja.org/clientcertSSL/login')"
+        const val MENORCA_PORTAL_INSTITUCIONAL_ID = "menorca-portal-institucional"
+        const val MENORCA_SEDE_ID = "menorca-sede-electronica"
+        const val MENORCA_START_URL =
+            "https://www.carpetaciutadana.org/cime/gesserveis/Gestion.aspx?IDGESTION=990100262"
+        const val MENORCA_TRAMITAR_LABEL = "Tramitar"
+        const val MENORCA_TRAMITAR_HREF =
+            "https://www.carpetaciutadana.org/cime/solicituds/iniciartramit.aspx?TIPO=REGE&IDIOMA=1"
+        const val MENORCA_LOGIN_URL = "https://www.carpetaciutadana.org/cime/Login/Login.aspx"
+        const val MENORCA_CERT_SUBMIT_ID = "ctl00_Content1_Button1"
+        const val MENORCA_CERT_SUBMIT_LABEL = "Certificat electrònic"
         const val CORUNA_PORTAL_ID = "diputacion-a-coruna-portal"
         const val CORUNA_TRAMITADOR_URL =
             "https://sede.dacoruna.gal/tramitador/entrada?idLogica=accesoDirecto&entrada=ciudadano" +
