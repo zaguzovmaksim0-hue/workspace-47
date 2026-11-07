@@ -3096,6 +3096,11 @@ object SiteProfileCatalogParser {
                             CASTELLON_PROFILE_ID,
                             LANZAROTE_PROFILE_ID,
                             TERUEL_PROFILE_ID,
+                            ENAIRE_PROFILE_ID,
+                            IAC_PROFILE_ID,
+                            ICAC_PROFILE_ID,
+                            GRANADA_PROFILE_ID,
+                            ICO_PROFILE_ID,
                             CSN_PROFILE_ID,
                         )
                     }
@@ -3126,6 +3131,11 @@ object SiteProfileCatalogParser {
                             TERUEL_PROFILE_ID,
                             GUADALAJARA_PROFILE_ID,
                             CSN_PROFILE_ID,
+                            ENAIRE_PROFILE_ID,
+                            IAC_PROFILE_ID,
+                            ICAC_PROFILE_ID,
+                            GRANADA_PROFILE_ID,
+                            ICO_PROFILE_ID,
                             CADIZ_PROFILE_ID,
                         )
                     }
@@ -3634,6 +3644,74 @@ object SiteProfileCatalogParser {
                 CLAVE_IDENT_EVIDENCE_URL,
             ),
         ),
+        ENAIRE_PROFILE_ID to gestionaClavePin(
+            displayName = "ENAIRE — Sede electrónica pública",
+            startUrl = "https://enaire.sede.gob.es/",
+            evidence = claveEvidence(
+                "2026-08-24",
+                "https://enaire.sede.gob.es/",
+                "https://enaire.sede.gob.es/procedimientos",
+                "https://enaire.sede.gob.es/Requisitos",
+                "https://enaire.sede.gob.es/servicio?id=Validacion-de-certificados-y-firma",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://enaire.sede.gob.es/claveproxy/clave/authenticate" +
+                    "?returnUrl=https%3A%2F%2Fenaire.sede.gob.es%2F",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        IAC_PROFILE_ID to gestionaClavePin(
+            displayName = "Sede electrónica pública del Instituto de Astrofísica de Canarias",
+            startUrl = "https://iac.sede.gob.es/",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://iac.sede.gob.es/",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://iac.sede.gob.es/login?returnUrl=https%3A%2F%2Fiac.sede.gob.es%2F",
+                "https://iac.sede.gob.es/claveproxy/clave/authenticate?returnUrl=https%3A%2F%2Fiac.sede.gob.es%2F",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        ICAC_PROFILE_ID to gestionaClavePin(
+            displayName = "Sede electrónica pública del Instituto de Contabilidad y Auditoría de Cuentas",
+            startUrl = "https://icac.sede.gob.es/",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://icac.sede.gob.es/",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://icac.sede.gob.es/login?returnUrl=https%3A%2F%2Ficac.sede.gob.es%2F",
+                "https://icac.sede.gob.es/claveproxy/clave/authenticate?returnUrl=https%3A%2F%2Ficac.sede.gob.es%2F",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        GRANADA_PROFILE_ID to gestionaClavePin(
+            displayName = "Diputación Provincial de Granada — Sede electrónica",
+            startUrl = "https://sede.dipgra.es/",
+            evidence = claveEvidence(
+                "2026-08-23",
+                "https://www.dipgra.es/",
+                "https://sede.dipgra.es/",
+                "https://sede.dipgra.es/opencms/opencms/system/modules/gsede/elements/contenedores/certificados.html",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede.dipgra.es$GSEDE_AUTHENTICATION_PATH",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        ICO_PROFILE_ID to gestionaClavePin(
+            displayName = "Sede electrónica pública del Instituto de Crédito Oficial",
+            startUrl = "https://sedeico.gob.es/web/sedeico",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://sedeico.gob.es/web/sedeico",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sedeico.gob.es$GSEDE_AUTHENTICATION_PATH",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
         CSN_PROFILE_ID to ClaveDirectPin(
             displayName = "Consejo de Seguridad Nuclear — sede pública",
             startUrl = "https://sede.csn.gob.es/",
@@ -4078,6 +4156,13 @@ object SiteProfileCatalogParser {
     private const val LANZAROTE_PUBLIC_REDIRECT_ORIGIN = "https://lanzaroteylagraciosa.sedelectronica.es"
     private const val CTBG_PROFILE_ID = "ctbg-solicitud-informacion"
     private const val CSN_PROFILE_ID = "csn-sede-public"
+    private const val ICO_PROFILE_ID = "ico-sede-public-navigation"
+    private const val GSEDE_AUTHENTICATION_PATH =
+        "/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
+    private const val GRANADA_PROFILE_ID = "diputacion-granada-sede-public"
+    private const val ICAC_PROFILE_ID = "icac-sede-public-navigation"
+    private const val IAC_PROFILE_ID = "iac-sede-public-navigation"
+    private const val ENAIRE_PROFILE_ID = "enaire-sede-public"
     private const val CATASTRO_PROFILE_ID = "catastro-solicitudes-genericas"
     private const val FEGA_PROFILE_ID = "fega-solicitud-general-ofvsg02"
     private const val CACERES_PROFILE_ID = "diputacion-caceres-instancia-general"

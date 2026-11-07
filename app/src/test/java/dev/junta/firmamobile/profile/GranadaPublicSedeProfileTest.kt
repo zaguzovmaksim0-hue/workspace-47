@@ -4,10 +4,12 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import java.net.URI
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -29,32 +31,61 @@ class GranadaPublicSedeProfileTest {
     private val startUrl = URI("https://sede.dipgra.es/")
 
     @Test
-    fun qaProfilePinsOnlyTheStablePublicSedeWithoutSensitiveCapabilities() {
+    fun qaProfilePinsTheExactReviewedClaveClientAuthContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Diputación Provincial de Granada — Sede electrónica", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse("https://sede.dipgra.es")), profile.initiatorOrigins)
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(3, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-23" })
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(
+            ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+                sourceUrls = setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
+                requestPath = "/IdP2/AuthenticateCitizen",
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = 443,
+                requestMethod = HttpMethod.POST,
+            ),
+            profile.clientAuthPolicy,
+        )
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(
+            listOf(
+                "https://www.dipgra.es/",
+                "https://sede.dipgra.es/",
+                "https://sede.dipgra.es/opencms/opencms/system/modules/gsede/elements/contenedores/certificados.html",
+            ).map { EvidenceReference(URI(it), LocalDate.parse("2026-08-23")) } + listOf(
+                "https://sede.dipgra.es/opencms/system/modules/gsede/elements/" +
+                    "secciones/autenticacion/autenticacion.jsp",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ).map { EvidenceReference(URI(it), LocalDate.parse("2026-11-07")) },
+            profile.evidence,
+        )
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.dipgra.es.evil.example/")))
     }
 
     @Test
-    fun publicCatalogPromotesOnlyStableSedeNavigation() {
+    fun publicCatalogBindsQaClaveLoginAndKeepsE2ePending() {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0155" }
         assertEquals(portalId, entry.portalId)
@@ -73,7 +104,7 @@ class GranadaPublicSedeProfileTest {
         val qaPortal = qa.portals().single { it.portalId == portalId }
         val releasePortal = release.portals().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)

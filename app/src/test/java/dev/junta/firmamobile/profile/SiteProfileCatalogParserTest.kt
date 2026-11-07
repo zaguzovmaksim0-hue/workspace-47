@@ -1893,6 +1893,115 @@ class SiteProfileCatalogParserTest {
 
 
     @Test
+    fun enairePinsTheExactReviewedClaveV2Contract() {
+        val profileId = ProfileId("enaire-sede-public")
+        val start = URI("https://enaire.sede.gob.es/")
+        val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+
+        assertEquals(2, profile.profileVersion)
+        assertEquals("ENAIRE — Sede electrónica pública", profile.displayName)
+        assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
+        assertEquals(ProfileActivation.QA_ONLY, profile.activation)
+        assertEquals(start, profile.startUrl)
+        assertEquals(setOf(ExactOrigin.parse("https://enaire.sede.gob.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
+        assertTrue(profile.endpoints.isEmpty())
+        assertTrue(profile.operationPolicies.isEmpty())
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(
+            ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+                sourceUrls = setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
+                requestPath = "/IdP2/AuthenticateCitizen",
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = 443,
+                requestMethod = HttpMethod.POST,
+            ),
+            profile.clientAuthPolicy,
+        )
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(
+            listOf(
+                "https://enaire.sede.gob.es/",
+                "https://enaire.sede.gob.es/procedimientos",
+                "https://enaire.sede.gob.es/Requisitos",
+                "https://enaire.sede.gob.es/servicio?id=Validacion-de-certificados-y-firma",
+            ).map { EvidenceReference(URI(it), LocalDate.parse("2026-08-24")) } + listOf(
+                "https://enaire.sede.gob.es/claveproxy/clave/authenticate" +
+                    "?returnUrl=https%3A%2F%2Fenaire.sede.gob.es%2F",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ).map { EvidenceReference(URI(it), LocalDate.parse("2026-11-07")) },
+            profile.evidence,
+        )
+    }
+
+    @Test
+    fun claveV2ProfilesResolveReviewedQaUrlsAndRejectForeignOrigins() {
+        val profileIds = listOf(
+            "enaire-sede-public", "iac-sede-public-navigation", "icac-sede-public-navigation",
+            "diputacion-granada-sede-public", "ico-sede-public-navigation",
+        ).map(::ProfileId)
+        val qa = BuiltInSiteProfiles.qaRegistry
+        val release = BuiltInSiteProfiles.releaseRegistry
+        val source = URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")
+        val provider = URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")
+        val request = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")
+
+        assertNull(qa.resolve(source))
+        assertNull(qa.resolve(provider))
+        assertNull(qa.resolve(request))
+        profileIds.forEach { profileId ->
+            val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
+            val start = profile.startUrl
+            val host = start.host
+            assertEquals(profile, qa.profile(profileId))
+            assertNull(release.profile(profileId))
+            listOf(
+                start to TrustMode.TRUSTED_CLIENT_AUTH,
+                URI("https://$host/procedimientos") to TrustMode.TRUSTED_CLIENT_AUTH,
+                source to TrustMode.TRUSTED_BROWSE,
+                provider to TrustMode.BROWSE_ONLY,
+                request to TrustMode.TRUSTED_CLIENT_AUTH,
+            ).forEach { (url, trustMode) ->
+                assertEquals(
+                    "$profileId: $url",
+                    ResolvedSiteProfile(profile, ExactOrigin.parse("https://${url.host}"), trustMode),
+                    qa.resolveForProfile(profileId, url),
+                )
+                assertNull("$profileId: $url", release.resolveForProfile(profileId, url))
+            }
+            assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, qa.resolve(start)?.trustMode)
+            assertNull(release.resolve(start))
+            listOf(
+                "http://$host/",
+                "https://$host:8443/",
+                "https://user@$host/",
+                "https://$host.evil.example/",
+                "https://evil.$host/",
+                "https://pasarela.clave.gob.es.evil.example/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es.evil.example/IdP2/AuthenticateCitizen",
+                "https://unreviewed.example/",
+            ).forEach { url ->
+                assertNull("$profileId: $url", qa.resolveForProfile(profileId, URI(url)))
+            }
+            profileIds.filter { it != profileId }.forEach { otherId ->
+                val otherStart = checkNotNull(qa.profile(otherId)).startUrl
+                assertNull("$profileId: $otherStart", qa.resolveForProfile(profileId, otherStart))
+            }
+        }
+    }
+
+    @Test
     fun `CSN arms client TLS only on the AFIRMA POST that ServiceProvider itself sends`() {
         val profileId = ProfileId("csn-sede-public")
         val start = URI("https://sede.csn.gob.es/")

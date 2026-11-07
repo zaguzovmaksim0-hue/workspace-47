@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.network
 
 import android.net.Uri
+import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -998,10 +999,30 @@ class JuntaOriginPolicyTest {
         )
         assertEquals(setOf("ovac.conselldeformentera.cat"), JuntaOriginPolicy.browserAllowedHosts(formentera))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(formentera).isEmpty())
-        assertEquals(setOf("iac.sede.gob.es"), JuntaOriginPolicy.browserAllowedHosts(iac))
-        assertTrue(JuntaOriginPolicy.webMessageOriginRules(iac).isEmpty())
-        assertEquals(setOf("icac.sede.gob.es"), JuntaOriginPolicy.browserAllowedHosts(icac))
-        assertTrue(JuntaOriginPolicy.webMessageOriginRules(icac).isEmpty())
+        listOf(
+            iac to "iac.sede.gob.es",
+            icac to "icac.sede.gob.es",
+            ico to "sedeico.gob.es",
+            ProfileId("enaire-sede-public") to "enaire.sede.gob.es",
+            ProfileId("diputacion-granada-sede-public") to "sede.dipgra.es",
+        ).forEach { (profileId, host) ->
+            assertEquals(setOf(host, "pasarela.clave.gob.es"), JuntaOriginPolicy.browserAllowedHosts(profileId))
+            assertEquals(
+                setOf(ExactOrigin.parse("https://$host"), ExactOrigin.parse("https://pasarela.clave.gob.es")),
+                JuntaOriginPolicy.browserOrigins(profileId),
+            )
+            assertTrue(JuntaOriginPolicy.webMessageOriginRules(profileId).isEmpty())
+            listOf(
+                "https://$host/",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ).forEach { url ->
+                assertNull(url, JuntaOriginPolicy.signingOriginFor(Uri.parse(url), profileId))
+            }
+            assertNull(
+                JuntaOriginPolicy.originFor(Uri.parse("https://pasarela-ident.clave.gob.es/"), profileId),
+            )
+        }
         assertEquals(setOf("sede.transicionjusta.gob.es"), JuntaOriginPolicy.browserAllowedHosts(itj))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(itj).isEmpty())
         assertEquals(setOf("sede.red.gob.es"), JuntaOriginPolicy.browserAllowedHosts(redEs))
@@ -1011,8 +1032,6 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.browserAllowedHosts(formenteraInstitutional),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(formenteraInstitutional).isEmpty())
-        assertEquals(setOf("sedeico.gob.es"), JuntaOriginPolicy.browserAllowedHosts(ico))
-        assertTrue(JuntaOriginPolicy.webMessageOriginRules(ico).isEmpty())
         assertEquals(
             setOf("elhierro.sedelectronica.es"),
             JuntaOriginPolicy.browserAllowedHosts(elHierroPublicNavigation),

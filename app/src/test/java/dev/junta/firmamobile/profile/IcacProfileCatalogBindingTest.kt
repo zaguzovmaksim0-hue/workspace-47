@@ -5,6 +5,7 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
@@ -33,10 +34,10 @@ class IcacProfileCatalogBindingTest {
     private val startUrl = URI("https://icac.sede.gob.es/")
 
     @Test
-    fun profileConfigPreservesExactFailClosedNavigationContract() {
+    fun profileConfigPreservesExactClaveClientAuthContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(
             "Sede electrónica pública del Instituto de Contabilidad y Auditoría de Cuentas",
             profile.displayName,
@@ -48,22 +49,45 @@ class IcacProfileCatalogBindingTest {
             setOf(ExactOrigin.parse("https://icac.sede.gob.es")),
             profile.initiatorOrigins,
         )
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
-        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertTrue(!profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
         assertEquals(
-            listOf(EvidenceReference(startUrl, LocalDate.parse("2026-08-25"))),
+            ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+                sourceUrls = setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
+                requestPath = "/IdP2/AuthenticateCitizen",
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requireOfferedKeyTypeMatch = true,
+                requireTlsClientAuthExtendedKeyUsage = true,
+                requestPort = 443,
+                requestMethod = HttpMethod.POST,
+            ),
+            profile.clientAuthPolicy,
+        )
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(
+            listOf(EvidenceReference(startUrl, LocalDate.parse("2026-08-25"))) + listOf(
+                "https://icac.sede.gob.es/login?returnUrl=https%3A%2F%2Ficac.sede.gob.es%2F",
+                "https://icac.sede.gob.es/claveproxy/clave/authenticate" +
+                    "?returnUrl=https%3A%2F%2Ficac.sede.gob.es%2F",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ).map { EvidenceReference(URI(it), LocalDate.parse("2026-11-07")) },
             profile.evidence,
         )
     }
 
     @Test
-    fun registryResolvesOnlySameOriginBrowsePathsInQa() {
+    fun registryResolvesSameOriginClientAuthPathsOnlyInQa() {
         val releaseProfile = BuiltInSiteProfiles.releaseRegistry.profile(profileId)
         val qaProfile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
         assertNull(releaseProfile)
@@ -72,11 +96,11 @@ class IcacProfileCatalogBindingTest {
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode,
         )
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(URI("https://icac.sede.gob.es/procedimientos"))?.trustMode,
         )
 
@@ -103,17 +127,20 @@ class IcacProfileCatalogBindingTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(profileId).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse(startUrl.toString()), profileId))
         assertEquals(
-            setOf(ExactOrigin.parse("https://icac.sede.gob.es")),
+            setOf(
+                ExactOrigin.parse("https://icac.sede.gob.es"),
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
+            ),
             JuntaOriginPolicy.browserOrigins(profileId),
         )
         assertEquals(
-            setOf("icac.sede.gob.es"),
+            setOf("icac.sede.gob.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(profileId),
         )
     }
 
     @Test
-    fun catalogBindsIcacAsPendingNavigationAndResolvesLaunchOnlyForExactSeed() {
+    fun catalogBindsIcacAsPendingClaveLoginAndResolvesLaunchOnlyForExactSeed() {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0051" }
 
@@ -142,7 +169,7 @@ class IcacProfileCatalogBindingTest {
 
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(profileId, startUrl))
