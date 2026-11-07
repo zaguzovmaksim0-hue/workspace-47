@@ -488,7 +488,12 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('expectedType = "submit"', source)
         self.assertIn("if (element.getAttribute('type') !== $quotedExpectedType) return false;", source)
         conseq = source.split('val CONSEQ_RECIPE_PROFILES = setOf(', 1)[1].split(')', 1)[0]
-        for profile in ('"tenerife-sede-electronica"', '"caib-portafib"'):
+        for profile in (
+            '"tenerife-sede-electronica"',
+            '"caib-portafib"',
+            '"diputacion-burgos-portal"',
+            '"diputacion-huesca-portal"',
+        ):
             self.assertIn(profile, conseq)
             # Consequential signing must never be driven automatically for these profiles.
             safe = source.split('val SAFE_AUTH_SIGN_PROFILES = setOf(', 1)[1].split(')', 1)[0]

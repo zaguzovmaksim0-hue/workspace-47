@@ -2223,6 +2223,9 @@ class RealE2eInstrumentedTest {
             // Owner decision 2026-11-06: prove the Cl@ve certificate login only, never file.
             "tenerife-sede-electronica",
             "caib-portafib",
+            // STA batch signature registers the instancia: prove the certificate login only, never file.
+            "diputacion-burgos-portal",
+            "diputacion-huesca-portal",
         )
         const val CARNE_JOVEN_AUTH_HREF =
             "/carneJoven/servlet/CallAuthenticationServlet"
