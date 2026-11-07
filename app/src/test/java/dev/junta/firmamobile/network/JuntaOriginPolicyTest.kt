@@ -206,7 +206,6 @@ class JuntaOriginPolicyTest {
             "dpz.sedelectronica.es",
             "serviciosede.mineco.gob.es",
             "pasarela.clave.gob.es",
-            "pasarela-ident.clave.gob.es",
             "sede.asturias.es",
             "miprincipado.asturias.es",
             "tramita.asturias.es",
@@ -279,6 +278,7 @@ class JuntaOriginPolicyTest {
             "ov.dipalme.org",
             "sede.dipucr.es",
             "sede.dipucordoba.es",
+            "apis.dipucordoba.es",
             "dipcas.sedelectronica.es",
             "sede.dip-caceres.es",
             "sede.depourense.es",
@@ -463,7 +463,10 @@ class JuntaOriginPolicyTest {
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://www.sededgsfp.gob.es/"), dgsfp))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://www.sededgsfp.gob.es.evil.example/"), dgsfp))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://www.sededgsfp.gob.es:444/"), dgsfp))
-        assertEquals(setOf("sede.cnmv.gob.es"), JuntaOriginPolicy.browserAllowedHosts(cnmv))
+        assertEquals(
+            setOf("sede.cnmv.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(cnmv),
+        )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(cnmv).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"), cnmv))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://sede.cnmv.gob.es.evil.example/"), cnmv))
@@ -476,17 +479,26 @@ class JuntaOriginPolicyTest {
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones"), cnmc))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://tramites.cnmc.gob.es/formulario/21"), cnmc))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://tramitesclave.cnmc.gob.es/formulario/21"), cnmc))
-        assertEquals(setOf("sede.cabildofuer.es"), JuntaOriginPolicy.browserAllowedHosts(fuerteventura))
+        assertEquals(
+            setOf("sede.cabildofuer.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(fuerteventura),
+        )
         assertEquals(
             setOf("https://sede.cabildofuer.es"),
             JuntaOriginPolicy.webMessageOriginRules(fuerteventura),
         )
-        assertFalse(
+        assertTrue(
             JuntaOriginPolicy.isAllowed(
                 Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
                 fuerteventura,
             ),
         )
+        assertNull(JuntaOriginPolicy.signingOriginFor(
+            Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"), fuerteventura,
+        ))
+        assertFalse(JuntaOriginPolicy.isAllowed(
+            Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"), fuerteventura,
+        ))
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.funciona.gob.es/es/home"), funciona))
         assertEquals(
             setOf("sede.asturias.es", "miprincipado.asturias.es"),
@@ -545,7 +557,7 @@ class JuntaOriginPolicyTest {
             ),
         )
         assertEquals(
-            setOf("sedejudicial.justicia.es", "am.justicia.es"),
+            setOf("sedejudicial.justicia.es", "am.justicia.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(justicia),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(justicia).isEmpty())
@@ -561,12 +573,18 @@ class JuntaOriginPolicyTest {
                 justicia,
             ),
         )
-        assertFalse(
+        assertTrue(
             JuntaOriginPolicy.isAllowed(
                 Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
                 justicia,
             ),
         )
+        assertNull(JuntaOriginPolicy.signingOriginFor(
+            Uri.parse("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"), justicia,
+        ))
+        assertFalse(JuntaOriginPolicy.isAllowed(
+            Uri.parse("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"), justicia,
+        ))
         assertEquals(setOf("egoitza.gipuzkoa.eus"), JuntaOriginPolicy.browserAllowedHosts(gipuzkoa))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(gipuzkoa).isEmpty())
         assertNull(
@@ -587,7 +605,10 @@ class JuntaOriginPolicyTest {
         )
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://eidas2.izenpe.com/"), euskadi))
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://eidas.izenpe.com/"), euskadi))
-        assertEquals(setOf("sede2.mjusticia.gob.es"), JuntaOriginPolicy.browserAllowedHosts(mjusticia))
+        assertEquals(
+            setOf("sede2.mjusticia.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(mjusticia),
+        )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(mjusticia).isEmpty())
         assertNull(
             JuntaOriginPolicy.signingOriginFor(
@@ -749,7 +770,10 @@ class JuntaOriginPolicyTest {
                 huelva,
             ),
         )
-        assertEquals(setOf("ov.dipalme.org"), JuntaOriginPolicy.browserAllowedHosts(almeria))
+        assertEquals(
+            setOf("ov.dipalme.org", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(almeria),
+        )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(almeria).isEmpty())
         assertNull(
             JuntaOriginPolicy.signingOriginFor(
@@ -837,7 +861,10 @@ class JuntaOriginPolicyTest {
                 ctbg,
             ),
         )
-        assertEquals(setOf("sede.dipucordoba.es"), JuntaOriginPolicy.browserAllowedHosts(cordoba))
+        assertEquals(
+            setOf("sede.dipucordoba.es", "apis.dipucordoba.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(cordoba),
+        )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(cordoba).isEmpty())
         assertNull(
             JuntaOriginPolicy.signingOriginFor(
@@ -890,7 +917,7 @@ class JuntaOriginPolicyTest {
             ),
         )
         assertEquals(
-            setOf("tramites.juntaex.es"),
+            setOf("tramites.juntaex.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(extremadura),
         )
         assertEquals(
@@ -939,7 +966,7 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.webMessageOriginRules(ProfileId("caib-portafib")),
         )
         assertEquals(
-            setOf("transparencia.sede.gob.es"),
+            setOf("transparencia.sede.gob.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(transparencia),
         )
         assertEquals(
@@ -1025,7 +1052,10 @@ class JuntaOriginPolicyTest {
         }
         assertEquals(setOf("sede.transicionjusta.gob.es"), JuntaOriginPolicy.browserAllowedHosts(itj))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(itj).isEmpty())
-        assertEquals(setOf("sede.red.gob.es"), JuntaOriginPolicy.browserAllowedHosts(redEs))
+        assertEquals(
+            setOf("sede.red.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(redEs),
+        )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(redEs).isEmpty())
         assertEquals(
             setOf("www.consellinsulardeformentera.cat"),
@@ -1090,7 +1120,10 @@ class JuntaOriginPolicyTest {
             setOf("https://sede.administracionespublicas.gob.es"),
             JuntaOriginPolicy.webMessageOriginRules(acceda),
         )
-        assertEquals(setOf("sede.policia.gob.es"), JuntaOriginPolicy.browserAllowedHosts(policia))
+        assertEquals(
+            setOf("sede.policia.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(policia),
+        )
         assertEquals(setOf("sede.gobiernodecanarias.org"), JuntaOriginPolicy.browserAllowedHosts(canarias))
         assertEquals(
             setOf("https://sede.policia.gob.es"),

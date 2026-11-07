@@ -5,6 +5,7 @@ import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
 import dev.junta.firmamobile.catalog.PortalSupportStatus
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
@@ -41,23 +42,28 @@ class JusticiaSedeJudicialProfileCatalogBindingTest {
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse("https://sedejudicial.justicia.es")), profile.initiatorOrigins)
-        assertEquals(setOf(ExactOrigin.parse("https://am.justicia.es")), profile.redirectOrigins)
+        assertEquals(
+            setOf(ExactOrigin.parse("https://am.justicia.es"), ExactOrigin.parse("https://pasarela.clave.gob.es")),
+            profile.redirectOrigins,
+        )
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, profile.clientAuthPolicy?.transitionMode)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
 
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
         assertEquals(
             TrustMode.TRUSTED_BROWSE,
             BuiltInSiteProfiles.qaRegistry.resolveRedirect(profileId, justiceGateway)?.trustMode,
         )
-        assertNull(
+        assertEquals(
+            TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(
                 profileId,
                 URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
-            ),
+            )?.trustMode,
         )
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertNull(BuiltInProtocolAdapterRegistry.registry.resolve(profileId, ProtocolOperation.SIGN))
@@ -65,7 +71,7 @@ class JusticiaSedeJudicialProfileCatalogBindingTest {
     }
 
     @Test
-    fun `catalog binds private area in QA without inventing certificate or signing capabilities`() {
+    fun `catalog binds the private area to the reviewed QA certificate login`() {
         val catalog = loadBundledPublicPortalCatalog()
         val entry = catalog.entries.single { it.portalId == portalId }
         assertEquals(profileId, entry.profileId)
@@ -80,7 +86,7 @@ class JusticiaSedeJudicialProfileCatalogBindingTest {
         val qaPortal = qa.portals().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
 

@@ -34,19 +34,23 @@ class TransparenciaProfileCatalogBindingTest {
     fun qaProfilePinsOnlyTheAuthenticatedTransparenciaPadesTuple() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse(TransparenciaPadesAdapter.INITIATOR_ORIGIN)), profile.initiatorOrigins)
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
-        assertEquals(setOf(Capability.SIGN), profile.capabilities)
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, profile.clientAuthPolicy?.transitionMode)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-18" })
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(
+            setOf("2026-08-18", "2026-11-07"),
+            profile.evidence.map { it.reviewedOn.toString() }.toSet(),
+        )
 
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         assertEquals(ProtocolInputAdapterId("miniapplet-autoscript-v1"), operation.inputAdapterId)

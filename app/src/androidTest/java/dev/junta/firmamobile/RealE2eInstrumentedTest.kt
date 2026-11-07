@@ -335,6 +335,265 @@ class RealE2eInstrumentedTest {
                 clickGestionaClaveLogin(scenario, GESTIONA_CLAVE_ORIGINS.getValue(portalId))
                 clickClaveAfirmaProvider(scenario)
             }
+            CNMV_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CNMV_CARPETA_URL,
+                    expectedLabel = "",
+                    expectedHref = CNMV_CARPETA_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = CNMV_CLAVE_URL,
+                    expectedElementId = CNMV_CLAVE_ID,
+                    expectedLabel = "",
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    waitForExpectedUrl = true,
+                    expectedType = "image",
+                    expectedTag = "input",
+                    expectedSrc = CNMV_CLAVE_IMAGE_SRC,
+                    expectedFormName = "formData",
+                    expectedFormAction = CNMV_CLAVE_FORM_ACTION,
+                    requireNoOnClick = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            CSD_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CSD_OFICINA_URL,
+                    expectedLabel = "",
+                    expectedHref = CSD_OFICINA_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = CSD_CLAVE_URL,
+                    expectedElementId = CSD_CLAVE_ID,
+                    expectedLabel = "Validarse",
+                    expectedAriaLabel = "Validarse (Acceso con Plataforma Cl@ve)",
+                    expectedOnClick = "javascript:preshow();",
+                    waitForExpectedUrl = true,
+                    expectedType = "submit",
+                    expectedTag = "input",
+                    expectedFormName = "aspnetForm",
+                    expectedFormAction = CSD_CLAVE_FORM_ACTION,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            POLICIA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = POLICIA_CLAVE_URL,
+                    expectedLabel = "Solicitud genérica",
+                    expectedHref = POLICIA_CLAVE_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            CATASTRO_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CATASTRO_CLAVE_0_URL,
+                    expectedLabel = "Ir al formulario",
+                    expectedHref = CATASTRO_CLAVE_0_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CATASTRO_CLAVE_1_URL,
+                    expectedLabel = "Cl@ve: PIN24, Cl@ve permanente,...",
+                    expectedHref = CATASTRO_CLAVE_1_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            MINECO_PORTAL_ID -> {
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = MINECO_CLAVE_URL,
+                    expectedElementId = MINECO_CLAVE_ID,
+                    expectedLabel = "",
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    waitForExpectedUrl = true,
+                    expectedType = "image",
+                    expectedTag = "input",
+                    expectedSrc = MINECO_CLAVE_IMAGE_SRC,
+                    expectedFormName = "aspnetForm",
+                    expectedFormAction = MINECO_CLAVE_FORM_ACTION,
+                    requireNoOnClick = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            TRANSPARENCIA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = TRANSPARENCIA_CLAVE_URL,
+                    expectedLabel = "Acceder al procedimiento",
+                    expectedHref = TRANSPARENCIA_CLAVE_HREF,
+                    waitForExpectedUrl = true,
+                    shadowHostTag = "dnt-button",
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            RED_ES_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = RED_ES_CLAVE_0_URL,
+                    expectedLabel = "Mis trámites",
+                    expectedHref = RED_ES_CLAVE_0_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = RED_ES_CLAVE_1_URL,
+                    expectedLabel = "",
+                    expectedHref = RED_ES_CLAVE_1_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = RED_ES_CLAVE_URL,
+                    expectedElementId = null,
+                    expectedLabel = "Acceder",
+                    expectedAriaLabel = null,
+                    expectedOnClick = "mostrarEspera();accesoClave();",
+                    waitForExpectedUrl = true,
+                    expectedType = "button",
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            ALMERIA_PORTAL_ID -> {
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = ALMERIA_CLAVE_URL,
+                    expectedElementId = ALMERIA_CLAVE_ID,
+                    expectedLabel = "Acceso Cl@ve",
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    waitForExpectedUrl = true,
+                    expectedType = "submit",
+                    expectedFormName = "formularioExternoClave2",
+                    expectedFormAction = ALMERIA_CLAVE_FORM_ACTION,
+                    requireNoOnClick = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            CORDOBA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CORDOBA_CLAVE_URL,
+                    expectedLabel = "Ir al trámite con Cl@ve",
+                    expectedHref = CORDOBA_CLAVE_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            PALENCIA_PORTAL_ID -> {
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = PALENCIA_CLAVE_URL,
+                    expectedElementId = null,
+                    expectedLabel = "",
+                    expectedAriaLabel = null,
+                    expectedOnClick = PALENCIA_CLAVE_ONCLICK,
+                    waitForExpectedUrl = true,
+                    expectedType = null,
+                    expectedTag = "img",
+                    expectedSrc = PALENCIA_CLAVE_IMAGE_SRC,
+                    expectedFormName = "formClave",
+                    expectedFormAction = PALENCIA_CLAVE_FORM_ACTION,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            EDUCATION_PORTAL_ID -> {
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = EDUCATION_CLAVE_URL,
+                    expectedElementId = EDUCATION_CLAVE_ID,
+                    expectedLabel = "Acceder",
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    waitForExpectedUrl = true,
+                    expectedType = "submit",
+                    expectedTag = "input",
+                    expectedFormName = "tipoIdentificacionForm",
+                    expectedFormAction = EDUCATION_CLAVE_FORM_ACTION,
+                    requireNoOnClick = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            EXTREMADURA_ANTERIOR_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = EXTREMADURA_ANTERIOR_CLAVE_0_URL,
+                    expectedLabel = "Anotaciones de registro Consulta tus anotaciones de registro",
+                    expectedHref = EXTREMADURA_ANTERIOR_CLAVE_0_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = EXTREMADURA_ANTERIOR_CLAVE_1_URL,
+                    expectedLabel = "Acceso mediante el sistema CLAVE",
+                    expectedHref = EXTREMADURA_ANTERIOR_CLAVE_1_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            // Both catalog entries launch the same reviewed Registrar.do profile start.
+            FUERTEVENTURA_INSTITUCIONAL_PORTAL_ID, FUERTEVENTURA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = FUERTEVENTURA_ENTRY_URL,
+                    expectedLabel = "",
+                    expectedHref = "#",
+                    expectedOnClick = "submit();",
+                    expectedFormName = "claveForm",
+                    expectedFormAction = CLAVE_SERVICE_PROVIDER_URL,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+
+            JUSTICIA_PORTAL_ID -> {
+                clickClaveAfirmaProvider(scenario)
+            }
+            MADRID_SEDE_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = MADRID_SEDE_APPLICATION_URL,
+                    expectedLabel = "Solicitud o renovación digital de Tarjeta Azul",
+                    expectedHref = MADRID_SEDE_APPLICATION_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = MADRID_SEDE_CERT_URL,
+                    expectedLabel = "DNIe / Certificado",
+                    expectedHref = MADRID_SEDE_CERT_HREF,
+                    waitForExpectedUrl = true,
+                    matchUrlWithoutQuery = true,
+                )
+            }
+            MJUSTICIA_PORTAL_ID -> {
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = MJUSTICIA_CLAVE_URL,
+                    expectedElementId = MJUSTICIA_CLAVE_ID,
+                    expectedLabel = "Acceso con cl@ve",
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    waitForExpectedUrl = true,
+                    expectedType = "submit",
+                    expectedFormName = "formClave",
+                    expectedFormAction = MJUSTICIA_CLAVE_FORM_ACTION,
+                    requireNoOnClick = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
             // Cáceres: "Acceder" on the procedure -> login page -> Cl@ve logo (image-only link) -> AFIRMA.
             CACERES_PORTAL_ID -> {
                 clickExactLabeledAnchor(
@@ -1121,11 +1380,20 @@ class RealE2eInstrumentedTest {
         waitForExpectedUrl: Boolean = false,
         // Web-component sites (*.sede.gob.es) render the anchor inside an open shadow root of this host tag.
         shadowHostTag: String? = null,
+        matchUrlWithoutQuery: Boolean = false,
+        expectedOnClick: String? = null,
+        expectedFormName: String? = null,
+        expectedFormAction: String? = null,
     ) {
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedShadowHost = JSONObject.quote(shadowHostTag.orEmpty())
         val quotedExpectedLabel = JSONObject.quote(expectedLabel)
         val quotedExpectedHref = JSONObject.quote(expectedHref)
+        val quotedExpectedOnClick = expectedOnClick?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedUrl = JSONObject.quote(expectedCurrentUrl)
+        require((expectedFormName == null) == (expectedFormAction == null))
+        val quotedFormName = expectedFormName?.let { JSONObject.quote(it) } ?: "null"
+        val quotedFormAction = expectedFormAction?.let { JSONObject.quote(it) } ?: "null"
         while (SystemClock.elapsedRealtime() < deadline) {
             if (hasObservedTerminalNavigationFailure()) return
             val inspected = CountDownLatch(1)
@@ -1142,7 +1410,8 @@ class RealE2eInstrumentedTest {
                     return@onActivity
                 }
                 val currentUrl = webView.url
-                if (currentUrl != null && !recipeUrlMatches(currentUrl, expectedCurrentUrl)) {
+                val comparedUrl = if (matchUrlWithoutQuery) currentUrl?.substringBefore('?') else currentUrl
+                if (comparedUrl != null && !recipeUrlMatches(comparedUrl, expectedCurrentUrl)) {
                     if (waitForExpectedUrl) {
                         waitingForExpectedUrl = true
                     } else {
@@ -1154,6 +1423,11 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
+                      const documentUrl = $matchUrlWithoutQuery ? location.href.split('?')[0] : location.href;
+                      if (documentUrl !== $quotedExpectedUrl &&
+                          !(!$quotedExpectedUrl.endsWith('/') && documentUrl === $quotedExpectedUrl + '/') &&
+                          !($quotedExpectedUrl.endsWith('/') &&
+                            documentUrl === $quotedExpectedUrl.slice(0, -1))) return 0;
                       const host = $quotedShadowHost;
                       // Header items nest another component (dnt-link) whose own shadow root holds the anchor.
                       const deep = root => Array.from(root.querySelectorAll('*'))
@@ -1165,10 +1439,20 @@ class RealE2eInstrumentedTest {
                         const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
                         // A first visit without cookies gets ;jsessionid=... rewritten into every href (CSN).
                         const href = (element.getAttribute('href') || '').replace(/;jsessionid=[^?#]*/i, '');
-                        return label === $quotedExpectedLabel && href === $quotedExpectedHref;
+                        return label === $quotedExpectedLabel && href === $quotedExpectedHref &&
+                          ($quotedExpectedOnClick === null ||
+                            element.getAttribute('onclick') === $quotedExpectedOnClick);
                       });
                       if (elements.length === 0) return 0;
                       if (elements.length !== 1) return 2;
+                      if ($quotedFormName !== null) {
+                        const forms = Array.from(document.forms).filter(form =>
+                          form.name === $quotedFormName || form.id === $quotedFormName);
+                        if (forms.length !== 1 || forms[0].action !== $quotedFormAction ||
+                            (forms[0].getAttribute('method') || '').toLowerCase() !== 'post') return 2;
+                        if (!['', '_self', '_parent'].includes(
+                            (forms[0].getAttribute('target') || '').toLowerCase())) return 2;
+                      }
                       elements[0].click();
                       return 1;
                     })()
@@ -1369,9 +1653,13 @@ class RealE2eInstrumentedTest {
         matchUrlWithoutQuery: Boolean = false,
         // "input": a submit input whose value is its label.
         expectedTag: String = "button",
+        expectedSrc: String? = null,
+        expectedFormName: String? = null,
+        expectedFormAction: String? = null,
+        requireNoOnClick: Boolean = false,
     ) {
         require(expectedLabel != null || expectedAriaLabel != null)
-        require(expectedTag == "button" || expectedTag == "input")
+        require(expectedTag in setOf("button", "input", "img"))
         val quotedExpectedTag = JSONObject.quote(expectedTag)
         val quotedExpectedType = expectedType?.let { JSONObject.quote(it) } ?: "null"
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
@@ -1379,6 +1667,11 @@ class RealE2eInstrumentedTest {
         val quotedExpectedLabel = expectedLabel?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedAriaLabel = expectedAriaLabel?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedOnClick = expectedOnClick?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedSrc = expectedSrc?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedUrl = JSONObject.quote(expectedCurrentUrl)
+        require((expectedFormName == null) == (expectedFormAction == null))
+        val quotedFormName = expectedFormName?.let { JSONObject.quote(it) } ?: "null"
+        val quotedFormAction = expectedFormAction?.let { JSONObject.quote(it) } ?: "null"
         val quotedWaitForBadajozSignHook = waitForBadajozSignHook.toString()
         while (SystemClock.elapsedRealtime() < deadline) {
             if (hasObservedTerminalNavigationFailure()) return
@@ -1410,6 +1703,11 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
+                      const documentUrl = $matchUrlWithoutQuery ? location.href.split('?')[0] : location.href;
+                      if (documentUrl !== $quotedExpectedUrl &&
+                          !(!$quotedExpectedUrl.endsWith('/') && documentUrl === $quotedExpectedUrl + '/') &&
+                          !($quotedExpectedUrl.endsWith('/') &&
+                            documentUrl === $quotedExpectedUrl.slice(0, -1))) return 0;
                       const expectedId = $quotedExpectedElementId;
                       const expectedLabel = $quotedExpectedLabel;
                       const expectedAriaLabel = $quotedExpectedAriaLabel;
@@ -1419,6 +1717,9 @@ class RealE2eInstrumentedTest {
                       const elements = Array.from(document.querySelectorAll(expectedTag)).filter(element => {
                         if (element.getAttribute('type') !== $quotedExpectedType) return false;
                         if (expectedId !== null && element.id !== expectedId) return false;
+                        if ($quotedExpectedSrc !== null &&
+                            element.getAttribute('src') !== $quotedExpectedSrc) return false;
+                        if ($requireNoOnClick && element.getAttribute('onclick') !== null) return false;
                         const rawLabel = expectedTag === 'input' ? element.value : element.innerText;
                         const label = (rawLabel || '').trim().replace(/\s+/g, ' ');
                         if (expectedLabel !== null && label !== expectedLabel) return false;
@@ -1429,6 +1730,17 @@ class RealE2eInstrumentedTest {
                       });
                       if (elements.length === 0) return 0;
                       if (elements.length !== 1) return 2;
+                      if ($quotedFormName !== null) {
+                        const forms = Array.from(document.forms).filter(form =>
+                          form.name === $quotedFormName || form.id === $quotedFormName);
+                        if (forms.length !== 1 || forms[0].action !== $quotedFormAction ||
+                            (forms[0].getAttribute('method') || '').toLowerCase() !== 'post' ||
+                            (expectedTag !== 'img' && elements[0].form !== forms[0])) return 2;
+                        if (!['', '_self', '_parent'].includes(
+                            (forms[0].getAttribute('target') || '').toLowerCase())) return 2;
+                        if (['formaction', 'formmethod', 'formtarget'].some(
+                            name => elements[0].getAttribute(name) !== null)) return 2;
+                      }
                       if (waitForBadajozSignHook && (
                           window.__jfmBadajozSignHookReady !== true ||
                           typeof window.MiniApplet?.sign !== 'function'
@@ -2443,6 +2755,11 @@ class RealE2eInstrumentedTest {
             // Cl@ve login before a MiniApplet/AutoScript signature that files: prove the login only, never file.
             "airef-instancia-general",
             "jccm-registro-generico",
+            "policia-solicitud-generica",
+            "ministerio-economia-instancia-generica",
+            "age-portal-de-la-transparencia",
+            "extremadura-tramites",
+            "fuerteventura-sede-electronica",
         )
         const val CARNE_JOVEN_AUTH_HREF =
             "/carneJoven/servlet/CallAuthenticationServlet"
@@ -2576,6 +2893,103 @@ class RealE2eInstrumentedTest {
                 claveOnClick = "waiting(); loginClave();",
             ),
         )
+        const val CNMV_PORTAL_ID = "age-comision-nacional-del-mercado-de-valores-cnmv"
+        const val CNMV_CLAVE_FORM_ACTION =
+            "https://sede.cnmv.gob.es/sedecnmv/IdenCiudadana/LoginCarpCiudadana.aspx"
+        const val CNMV_CARPETA_URL = "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"
+        const val CNMV_CARPETA_HREF = "IdenCiudadana/LoginCarpCiudadana.aspx"
+        const val CNMV_CLAVE_URL = "https://sede.cnmv.gob.es/sedecnmv/IdenCiudadana/LoginCarpCiudadana.aspx"
+        const val CNMV_CLAVE_ID = "btn_Clave"
+        const val CNMV_CLAVE_IMAGE_SRC = "../imagenes/clave.png"
+        const val CSD_PORTAL_ID = "age-consejo-superior-de-deportes"
+        const val CSD_CLAVE_FORM_ACTION =
+            "https://sede.csd.gob.es/oficinavirtual/Default.aspx"
+        const val CSD_OFICINA_URL = "https://sede.csd.gob.es/"
+        const val CSD_OFICINA_HREF = "https://sede.csd.gob.es/oficinavirtual/Default.aspx"
+        const val CSD_CLAVE_URL = "https://sede.csd.gob.es/oficinavirtual/Default.aspx"
+        const val CSD_CLAVE_ID = "ctl00_ContentPlaceHolder1_BtnClave"
+        const val POLICIA_PORTAL_ID = "age-cuerpo-nacional-de-policia"
+        const val POLICIA_CLAVE_URL = "https://sede.policia.gob.es/portalCiudadano/_es/index.php"
+        const val POLICIA_CLAVE_HREF = "/sede/pages/procedimientos/solicitudGenerica.xhtml"
+        const val CATASTRO_PORTAL_ID = "age-direccion-general-del-catastro"
+        const val CATASTRO_CLAVE_0_URL = "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22"
+        const val CATASTRO_CLAVE_0_HREF = "JavaScript:ElegirAcceso2('22');"
+        const val CATASTRO_CLAVE_1_URL = "https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22"
+        const val CATASTRO_CLAVE_1_HREF = "../Accesos/SECAccPIN.aspx?Dest=22&del=&mun=&final=&RefC=&texp=REGI"
+        const val MINECO_PORTAL_ID = "age-ministerio-de-economia-comercio-y-empresa"
+        const val MINECO_CLAVE_FORM_ACTION =
+            "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG"
+        const val MINECO_CLAVE_URL = "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG"
+        const val MINECO_CLAVE_ID = "ctl00_ctl00_MainContentPlaceHolder_ucIdentificacion_btnIdentificacion"
+        const val MINECO_CLAVE_IMAGE_SRC = "images/clave.jpg"
+        const val TRANSPARENCIA_PORTAL_ID = "age-portal-de-la-transparencia"
+        const val TRANSPARENCIA_CLAVE_URL =
+            "https://transparencia.sede.gob.es/procedimiento/portada" +
+                "?idProc=133628&idAmb=101524"
+        const val TRANSPARENCIA_CLAVE_HREF =
+            "/claveproxy/clave/authenticate" +
+                "?returnUrl=https%3A%2F%2Ftransparencia.sede.gob.es%2Fprocedimiento%2Fformulario" +
+                    "%3FidProc%3D133628%26idAmb%3D101524"
+        const val RED_ES_PORTAL_ID = "age-red-es"
+        const val RED_ES_CLAVE_0_URL = "https://sede.red.gob.es/"
+        const val RED_ES_CLAVE_0_HREF = "/es/carpeta-del-ciudadano/mis-tramites"
+        const val RED_ES_CLAVE_1_URL = "https://sede.red.gob.es/es/carpeta-del-ciudadano/mis-tramites"
+        const val RED_ES_CLAVE_1_HREF = "https://sede.red.gob.es/oficina/solicitudes/solicitudes.do"
+        const val RED_ES_CLAVE_URL = "https://sede.red.gob.es/oficina/solicitudes/solicitudes.do"
+        const val ALMERIA_PORTAL_ID = "diputacion-almeria-portal"
+        const val ALMERIA_CLAVE_FORM_ACTION =
+            "https://ov.dipalme.org/SP2/TiWorksRequest"
+        const val ALMERIA_CLAVE_URL =
+            "https://ov.dipalme.org/TiProceeding/ciudadano" +
+                "?entrada=ciudadano&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000"
+        const val ALMERIA_CLAVE_ID = "firmar"
+        const val CORDOBA_PORTAL_ID = "diputacion-cordoba-portal"
+        const val CORDOBA_CLAVE_URL =
+            "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/" +
+                "solicitud-generica"
+        const val CORDOBA_CLAVE_HREF = "www.dipucordoba.es"
+        const val PALENCIA_PORTAL_ID = "diputacion-palencia-sede"
+        const val PALENCIA_CLAVE_FORM_ACTION =
+            "https://sede.diputaciondepalencia.es/SPProxy2/IndexPage"
+        const val PALENCIA_CLAVE_URL = "https://sede.diputaciondepalencia.es/opensiac/certlogin/enter.action"
+        const val PALENCIA_CLAVE_IMAGE_SRC = "/opensiac/images/clave_w_32.jpg"
+        const val PALENCIA_CLAVE_ONCLICK = "document.formClave.submit()"
+        const val EDUCATION_PORTAL_ID = "educacion-convocatoria-46"
+        const val EDUCATION_CLAVE_FORM_ACTION =
+            "https://sede.educacion.gob.es/sede/login/loginClaveEduToken.jjsp"
+        const val EDUCATION_CLAVE_URL =
+            "https://sede.educacion.gob.es/sede/login/loginConv.jjsp" +
+                "?iA=no&idConvocatoria=46"
+        const val EDUCATION_CLAVE_ID = "login_texto_entrar"
+        const val EXTREMADURA_ANTERIOR_PORTAL_ID = "extremadura-sede-anterior"
+        const val EXTREMADURA_ANTERIOR_CLAVE_0_URL =
+            "https://tramites.juntaex.es/sta/CarpetaPublic/?APP_CODE=STA&PAGE_CODE=PTS2_HOME"
+        const val EXTREMADURA_ANTERIOR_CLAVE_0_HREF =
+            "/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=ANOTACIONES"
+        const val EXTREMADURA_ANTERIOR_CLAVE_1_URL =
+            "https://tramites.juntaex.es/sta/CarpetaPrivate/Login" +
+                "?APP_CODE=STA&PAGE_CODE=ANOTACIONES"
+        const val EXTREMADURA_ANTERIOR_CLAVE_1_HREF =
+            "/sta/CarpetaPrivate/Clave2Request" +
+                "?APP_CODE=STA&PAGE_CODE=ANOTACIONES"
+        const val FUERTEVENTURA_PORTAL_ID = "fuerteventura-sede-electronica"
+        const val FUERTEVENTURA_INSTITUCIONAL_PORTAL_ID = "fuerteventura-portal-institucional"
+        const val FUERTEVENTURA_ENTRY_URL = "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
+        const val JUSTICIA_PORTAL_ID = "justicia-sede-judicial"
+        const val MADRID_SEDE_PORTAL_ID = "madrid-sede"
+        const val MADRID_SEDE_APPLICATION_URL =
+            "https://sede.madrid.es/portal/site/tramites/" +
+                "menuitem.62876cb64654a55e2dbd7003a8a409a0/" +
+                    "?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD" +
+                    "&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD"
+        const val MADRID_SEDE_APPLICATION_HREF = "https://servcla.madrid.es/TAZUL_FTWEBINTER/"
+        const val MADRID_SEDE_CERT_URL = "https://cas.madrid.es/authenticationendpoint/login.do"
+        const val MADRID_SEDE_CERT_HREF = "#"
+        const val MJUSTICIA_PORTAL_ID = "mjusticia-sede"
+        const val MJUSTICIA_CLAVE_FORM_ACTION =
+            "https://sede2.mjusticia.gob.es/clave/iraclave"
+        const val MJUSTICIA_CLAVE_URL = "https://sede2.mjusticia.gob.es/login/index/idp/75"
+        const val MJUSTICIA_CLAVE_ID = "submitBtnClave"
         const val CADIZ_PORTAL_ID = "diputacion-cadiz-portal"
         const val CACERES_PORTAL_ID = "diputacion-caceres-portal"
         const val CACERES_START_URL = "https://sede.dip-caceres.es/carpetaCiudadano/fichaprocedimiento.do?idproc=341"

@@ -105,7 +105,7 @@ class ExtremaduraBatchProtocolAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("extremadura-batch-autoscript-v1")
         private const val PROFILE_ID = "extremadura-tramites"
-        private const val PROFILE_VERSION = 1
+        private const val PROFILE_VERSION = 2
     }
 }
 

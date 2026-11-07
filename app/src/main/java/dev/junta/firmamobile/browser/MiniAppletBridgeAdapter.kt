@@ -1087,6 +1087,10 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == MitesCertificateLoginCadesAdapter.ID.value
 
+    private fun hasExactClaveLoginPolicy(profile: SiteProfile): Boolean =
+        profile.clientAuthPolicy != null && profile.clientAuthPolicy ==
+            BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profile.profileId }.clientAuthPolicy
+
     private fun isExactTransparenciaContract(
         profile: SiteProfile,
         origin: ExactOrigin,
@@ -1102,13 +1106,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.startUrl.toASCIIString() == TransparenciaPadesAdapter.PUBLIC_START_URL &&
             origin.serialized == TransparenciaPadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(TransparenciaPadesAdapter.INITIATOR_ORIGIN)) &&
-            profile.redirectOrigins.isEmpty() &&
+            profile.redirectOrigins == setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")) &&
             profile.trustedBrowseOrigins.isEmpty() &&
             profile.endpoints.isEmpty() &&
-            profile.capabilities == setOf(Capability.SIGN) &&
-            profile.clientAuthPolicy == null &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH) &&
+            hasExactClaveLoginPolicy(profile) &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
-            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
             profile.operationPolicies.size == 1 &&
             operation.operation == ProtocolOperation.SIGN &&
             operation.safeDescription == TransparenciaPadesAdapter.SAFE_DESCRIPTION &&
@@ -1245,13 +1249,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.startUrl.toASCIIString() == FuerteventuraPadesAdapter.PUBLIC_START_URL &&
             origin.serialized == FuerteventuraPadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(FuerteventuraPadesAdapter.INITIATOR_ORIGIN)) &&
-            profile.redirectOrigins.isEmpty() &&
+            profile.redirectOrigins == setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")) &&
             profile.trustedBrowseOrigins.isEmpty() &&
             profile.endpoints.isEmpty() &&
-            profile.capabilities == setOf(Capability.SIGN) &&
-            profile.clientAuthPolicy == null &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH) &&
+            hasExactClaveLoginPolicy(profile) &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
-            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
             profile.operationPolicies.size == 1 &&
             operation.operation == ProtocolOperation.SIGN &&
             operation.safeDescription == FuerteventuraPadesAdapter.SAFE_DESCRIPTION &&
@@ -1282,13 +1286,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             profile.startUrl.toASCIIString() == MinecoPadesAdapter.PUBLIC_START_URL &&
             origin.serialized == MinecoPadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(MinecoPadesAdapter.INITIATOR_ORIGIN)) &&
-            profile.redirectOrigins.isEmpty() &&
-            profile.trustedBrowseOrigins == MinecoPadesAdapter.TRUSTED_BROWSE_ORIGINS &&
+            profile.redirectOrigins == setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")) &&
+            profile.trustedBrowseOrigins.isEmpty() &&
             profile.endpoints.isEmpty() &&
-            profile.capabilities == setOf(Capability.SIGN) &&
-            profile.clientAuthPolicy == null &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH) &&
+            hasExactClaveLoginPolicy(profile) &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
-            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
             profile.operationPolicies.size == 1 &&
             operation.operation == ProtocolOperation.SIGN &&
             operation.safeDescription == MinecoPadesAdapter.SAFE_DESCRIPTION &&
@@ -1500,13 +1504,13 @@ internal class ProfileMiniAppletBridgeAdapter(
             origin.serialized == POLICIA_ORIGIN &&
             currentPageUrl == POLICIA_PROCEDURE_PAGE &&
             profile.initiatorOrigins == setOf(ExactOrigin.parse(POLICIA_ORIGIN)) &&
-            profile.redirectOrigins.isEmpty() &&
+            profile.redirectOrigins == setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")) &&
             profile.trustedBrowseOrigins.isEmpty() &&
             profile.endpoints.isEmpty() &&
-            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
-            profile.clientAuthPolicy == null &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH) &&
+            hasExactClaveLoginPolicy(profile) &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
-            !profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
             profile.operationPolicies.size == 1 &&
             operation.operation == ProtocolOperation.SIGN &&
             operation.safeDescription == POLICIA_SAFE_DESCRIPTION &&
@@ -1808,7 +1812,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         private const val SEVILLA_ATSE_PROTOCOL_ID = "sevilla-atse-xades-enveloping-v1"
         private const val SEVILLA_ATSE_CHALLENGE_BYTES = 40
         private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
-        private const val POLICIA_PROFILE_VERSION = 1
+        private const val POLICIA_PROFILE_VERSION = 2
         private val POLICIA_START_URL = PoliciaXadesDetachedAdapter.START_URL
         private val POLICIA_PROCEDURE_PAGE = PoliciaXadesDetachedAdapter.PROCEDURE_PAGE
         private val POLICIA_ORIGIN = PoliciaXadesDetachedAdapter.ORIGIN

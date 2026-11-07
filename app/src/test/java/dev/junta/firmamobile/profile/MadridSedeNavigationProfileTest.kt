@@ -9,6 +9,7 @@ import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
 import dev.junta.firmamobile.catalog.PortalMechanism
 import dev.junta.firmamobile.catalog.PortalSupportStatus
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import java.net.URI
@@ -43,7 +44,7 @@ class MadridSedeNavigationProfileTest {
     fun qaProfilePinsOnlyObservedMunicipalOidcNavigationOrigins() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Ayuntamiento de Madrid — Tarjeta Azul / acceso OIDC", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -53,46 +54,55 @@ class MadridSedeNavigationProfileTest {
             setOf(
                 ExactOrigin.parse("https://servcla.madrid.es"),
                 ExactOrigin.parse("https://cas.madrid.es"),
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
             ),
             profile.redirectOrigins,
         )
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
         assertTrue(profile.operationPolicies.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, profile.clientAuthPolicy?.transitionMode)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(3, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-19" })
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(6, profile.evidence.size)
+        assertEquals(
+            setOf("2026-08-19", "2026-11-07"),
+            profile.evidence.map { it.reviewedOn.toString() }.toSet(),
+        )
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
         assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(applicationUrl)?.trustMode)
         assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(casUrl)?.trustMode)
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, claveUrl))
+        assertEquals(
+            TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, claveUrl)?.trustMode,
+        )
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
     }
 
     @Test
-    fun navigationAllowsMunicipalOidcChainButKeepsSharedClaveOutsideProfileTrust() {
+    fun navigationAllowsTheMunicipalOidcChainAndReviewedClaveBrowseOrigin() {
         val policy = JuntaNavigationPolicy(profileId, BuiltInSiteProfiles.qaRegistry)
 
         assertEquals(NavigationDecision.AllowInWebView, policy.decide(applicationUrl.toString(), startUrl.toString()))
         assertEquals(NavigationDecision.AllowInWebView, policy.decide(casUrl.toString(), applicationUrl.toString()))
         val claveDecision = policy.decide(claveUrl.toString(), casUrl.toString())
         assertEquals(NavigationDecision.AllowInWebView, claveDecision)
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, claveUrl))
+        assertEquals(
+            TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, claveUrl)?.trustMode,
+        )
         val resolution = dev.junta.firmamobile.browser.BrowserUrlPolicy(
             BuiltInSiteProfiles.qaRegistry, profileId,
         ).resolve(claveUrl.toASCIIString(), profileId)
-        assertEquals(TrustMode.BROWSE_ONLY, resolution.trustMode)
-        assertNull(resolution.site)
+        assertEquals(TrustMode.TRUSTED_BROWSE, resolution.trustMode)
+        assertEquals(profileId, resolution.site?.profile?.profileId)
     }
 
     @Test
-    fun publicCatalogBindsOnlyCertificateAccessRouteWithoutSigningOrClientTlsCapability() {
+    fun publicCatalogBindsThePendingCertificateRouteWithoutSigning() {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0017" }
 
@@ -118,7 +128,7 @@ class MadridSedeNavigationProfileTest {
 
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
         assertFalse(releasePortal.isEnabled)

@@ -80,7 +80,7 @@ class ExtremaduraBatchProtocolAdapterTest {
         protocolId = ExtremaduraBatchProtocolAdapter.ID,
         context = SigningContext(
             profileId = "extremadura-tramites",
-            profileVersion = 1,
+            profileVersion = 2,
             origin = origin,
             navigationId = NavigationId("extremadura-batch-test"),
             navigationEpoch = 7L,

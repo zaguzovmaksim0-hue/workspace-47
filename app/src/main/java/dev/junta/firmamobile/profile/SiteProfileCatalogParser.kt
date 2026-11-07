@@ -345,6 +345,12 @@ object SiteProfileCatalogParser {
                 require(linkedEphemeral.isEmpty() && linkedEphemeralMappings.isEmpty())
                 // Reviewed Cl@ve AFIRMA hop: ServiceRedirect auto-POSTs to AuthenticateCitizen without parameters.
                 val reviewedClavePostProfile = profileId.value in CLAVE_DIRECT_PINS || profileId.value in setOf(
+                    POLICIA_PROFILE_ID,
+                    MINECO_PROFILE_ID,
+                    TRANSPARENCIA_PROFILE_ID,
+                    EDUCATION_PROFILE_ID,
+                    EXTREMADURA_PROFILE_ID,
+                    FUERTEVENTURA_PROFILE_ID,
                     MALAGA_PROFILE_ID,
                     MUGEJU_PROFILE_ID,
                     AIREF_PROFILE_ID,
@@ -677,7 +683,7 @@ object SiteProfileCatalogParser {
             )
             require(Capability.CLIENT_TLS_AUTH in p.capabilities == (p.clientAuthPolicy != null))
             p.clientAuthPolicy?.let { policy ->
-                if (p.profileId.value == AIREF_PROFILE_ID) {
+                if (p.profileId.value in setOf(AIREF_PROFILE_ID, POLICIA_PROFILE_ID)) {
                     require(p.endpoints.isEmpty())
                     require(p.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
                     require(
@@ -685,6 +691,10 @@ object SiteProfileCatalogParser {
                             setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
                     )
                 } else if (p.profileId.value in setOf(
+                        MINECO_PROFILE_ID,
+                        TRANSPARENCIA_PROFILE_ID,
+                        EXTREMADURA_PROFILE_ID,
+                        FUERTEVENTURA_PROFILE_ID,
                         JCCM_REGISTRO_PROFILE_ID,
                         BURGOS_PROFILE_ID,
                         HUESCA_PROFILE_ID,
@@ -734,6 +744,11 @@ object SiteProfileCatalogParser {
                             CORUNA_PROFILE_ID,
                             TENERIFE_PROFILE_ID,
                             CAIB_PROFILE_ID,
+                            POLICIA_PROFILE_ID,
+                            MINECO_PROFILE_ID,
+                            TRANSPARENCIA_PROFILE_ID,
+                            EXTREMADURA_PROFILE_ID,
+                            FUERTEVENTURA_PROFILE_ID,
                             REG_AGE_PROFILE_ID,
                         ) || p.profileId.value in CLAVE_DIRECT_PINS -> p.initiatorOrigins + p.redirectOrigins
                         p.profileId.value == TARRAGONA_PROFILE_ID &&
@@ -1669,6 +1684,7 @@ object SiteProfileCatalogParser {
         require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
     }
 
+    // Cl@ve TLS and signing share the profile filter: v2 also requires digitalSignature for signing.
     private fun validateTransparenciaProfile(profile: SiteProfile) {
         require(profile.profileVersion == TRANSPARENCIA_PROFILE_VERSION)
         require(profile.displayName == TRANSPARENCIA_DISPLAY_NAME)
@@ -1676,12 +1692,12 @@ object SiteProfileCatalogParser {
         require(profile.activation == ProfileActivation.QA_ONLY)
         require(profile.startUrl.toASCIIString() == TRANSPARENCIA_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(TRANSPARENCIA_ORIGIN)))
-        require(profile.redirectOrigins.isEmpty())
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(CLAVE_PASARELA_ORIGIN)))
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
-        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        require(profile.clientAuthPolicy == claveRedirectPostPolicy())
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(
             profile.operationPolicies == mapOf(
                 ProtocolOperation.SIGN to OperationPolicy(
@@ -1700,8 +1716,8 @@ object SiteProfileCatalogParser {
                 ),
             ),
         )
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TRANSPARENCIA_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } ==
+            TRANSPARENCIA_CLAVE_EVIDENCE)
     }
 
     private fun validateFuerteventuraProfile(profile: SiteProfile) {
@@ -1711,12 +1727,14 @@ object SiteProfileCatalogParser {
         require(profile.activation == ProfileActivation.QA_ONLY)
         require(profile.startUrl.toASCIIString() == FUERTEVENTURA_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(FUERTEVENTURA_ORIGIN)))
-        require(profile.redirectOrigins.isEmpty())
+        require(profile.redirectOrigins == setOf(
+            ExactOrigin.parse("https://pasarela.clave.gob.es"),
+        ))
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
-        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        require(profile.clientAuthPolicy == claveRedirectPostPolicy())
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(
             profile.operationPolicies == mapOf(
                 ProtocolOperation.SIGN to OperationPolicy(
@@ -1735,8 +1753,8 @@ object SiteProfileCatalogParser {
                 ),
             ),
         )
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == FUERTEVENTURA_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-18") })
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } ==
+            FUERTEVENTURA_CLAVE_EVIDENCE)
     }
 
     private fun validateGranCanariaProfile(profile: SiteProfile) {
@@ -1781,12 +1799,12 @@ object SiteProfileCatalogParser {
         require(profile.activation == ProfileActivation.QA_ONLY)
         require(profile.startUrl.toASCIIString() == MINECO_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(MINECO_ORIGIN)))
-        require(profile.redirectOrigins.isEmpty())
-        require(profile.trustedBrowseOrigins == MINECO_BROWSE_ORIGINS)
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(CLAVE_PASARELA_ORIGIN)))
+        require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
-        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        require(profile.clientAuthPolicy == claveRedirectPostPolicy())
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(
             profile.operationPolicies == mapOf(
                 ProtocolOperation.SIGN to OperationPolicy(
@@ -1805,8 +1823,8 @@ object SiteProfileCatalogParser {
                 ),
             ),
         )
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == MINECO_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } ==
+            MINECO_CLAVE_EVIDENCE)
     }
 
     private fun validateXuntaProfile(profile: SiteProfile) {
@@ -2000,13 +2018,16 @@ object SiteProfileCatalogParser {
         require(profile.activation == ProfileActivation.QA_ONLY)
         require(profile.startUrl.toASCIIString() == EXTREMADURA_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(EXTREMADURA_ORIGIN)))
-        require(profile.redirectOrigins.isEmpty())
+        require(profile.redirectOrigins == setOf(
+            ExactOrigin.parse("https://pasarela.clave.gob.es"),
+        ))
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        require(profile.clientAuthPolicy == claveRedirectPostPolicy())
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
-        require(profile.evidence.isNotEmpty())
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } ==
+            EXTREMADURA_CLAVE_EVIDENCE)
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
         require(
             profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
@@ -2263,21 +2284,9 @@ object SiteProfileCatalogParser {
         require(profile.operationPolicies.isEmpty())
         require(profile.capabilities == setOf(Capability.CLIENT_TLS_AUTH))
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
-        require(
-            profile.clientAuthPolicy == ClientAuthPolicy(
-                transitionMode = ClientAuthTransitionMode.DIRECT_FROM_SOURCE,
-                requestOrigins = setOf(ExactOrigin.parse(AIREF_CLIENT_AUTH_ORIGIN)),
-                sourceUrls = setOf(URI(EDUCATION_CLIENT_AUTH_SOURCE_URL)),
-                requestPath = AIREF_CLIENT_AUTH_REQUEST_PATH,
-                fixedQueryParameters = emptyMap(),
-                requiredEphemeralQueryParameters = emptySet(),
-                allowEmptyIssuerList = true,
-                grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
-                requestPort = HTTPS_PORT,
-            ),
-        )
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == EDUCATION_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-19") })
+        require(profile.clientAuthPolicy == claveRedirectPostPolicy())
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } ==
+            EDUCATION_CLAVE_EVIDENCE)
     }
 
     private fun validatePoliciaProfile(profile: SiteProfile) {
@@ -2287,13 +2296,14 @@ object SiteProfileCatalogParser {
         require(profile.activation == ProfileActivation.QA_ONLY)
         require(profile.startUrl.toASCIIString() == POLICIA_START_URL)
         require(profile.initiatorOrigins == setOf(ExactOrigin.parse(POLICIA_ORIGIN)))
-        require(profile.redirectOrigins.isEmpty())
+        require(profile.redirectOrigins == setOf(ExactOrigin.parse(CLAVE_PASARELA_ORIGIN)))
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1))
-        require(profile.clientAuthPolicy == null)
-        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), false))
-        require(profile.evidence.isNotEmpty())
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH))
+        require(profile.clientAuthPolicy == claveRedirectPostPolicy())
+        require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } ==
+            POLICIA_CLAVE_EVIDENCE)
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
         require(
             profile.operationPolicies.getValue(ProtocolOperation.SIGN) == OperationPolicy(
@@ -3102,6 +3112,18 @@ object SiteProfileCatalogParser {
                             GRANADA_PROFILE_ID,
                             ICO_PROFILE_ID,
                             CSN_PROFILE_ID,
+                            CNMV_PROFILE_ID,
+                            CSD_PROFILE_ID,
+                            POLICIA_PROFILE_ID,
+                            TRANSPARENCIA_PROFILE_ID,
+                            RED_ES_PROFILE_ID,
+                            ALMERIA_PROFILE_ID,
+                            CORDOBA_PROFILE_ID,
+                            EXTREMADURA_PROFILE_ID,
+                            FUERTEVENTURA_PROFILE_ID,
+                            JUSTICIA_PROFILE_ID,
+                            MADRID_SEDE_PROFILE_ID,
+                            MJUSTICIA_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -3137,6 +3159,19 @@ object SiteProfileCatalogParser {
                             GRANADA_PROFILE_ID,
                             ICO_PROFILE_ID,
                             CADIZ_PROFILE_ID,
+                            CNMV_PROFILE_ID,
+                            CSD_PROFILE_ID,
+                            POLICIA_PROFILE_ID,
+                            TRANSPARENCIA_PROFILE_ID,
+                            RED_ES_PROFILE_ID,
+                            ALMERIA_PROFILE_ID,
+                            CORDOBA_PROFILE_ID,
+                            PALENCIA_PROFILE_ID,
+                            EXTREMADURA_PROFILE_ID,
+                            FUERTEVENTURA_PROFILE_ID,
+                            JUSTICIA_PROFILE_ID,
+                            MADRID_SEDE_PROFILE_ID,
+                            MJUSTICIA_PROFILE_ID,
                         )
                     }
                     else -> false
@@ -3712,6 +3747,211 @@ object SiteProfileCatalogParser {
                 CLAVE_PROVIDER_URL,
             ),
         ),
+        CNMV_PROFILE_ID to gestionaClavePin(
+            displayName = "CNMV Sede electrónica pública",
+            startUrl = "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
+            evidence = claveEvidence(
+                "2026-08-23",
+                "https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede.cnmv.gob.es/sedecnmv/IdenCiudadana/LoginCarpCiudadana.aspx",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        CSD_PROFILE_ID to gestionaClavePin(
+            displayName = "Consejo Superior de Deportes — Sede / Oficina Virtual pública",
+            startUrl = "https://sede.csd.gob.es/",
+            evidence = claveEvidence(
+                "2026-08-23",
+                "https://sede.csd.gob.es/",
+                "https://sede.csd.gob.es/oficinavirtual/CatalogoProcedimientos.aspx?botonSeleccionado=0&idioma=es",
+                "https://sede.csd.gob.es/oficinavirtual/Default.aspx",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        CATASTRO_PROFILE_ID to gestionaClavePin(
+            displayName = "Dirección General del Catastro — Otras solicitudes y escritos genéricos",
+            startUrl = "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22",
+            evidence = claveEvidence(
+                "2026-08-24",
+                "https://www.sedecatastro.gob.es/",
+                "https://www.sedecatastro.gob.es/Accesos/SECAccTramites.aspx",
+                "https://www.sedecatastro.gob.es/Accesos/SECAccProcedimientos.aspx?Dest=22",
+                "https://www.sedecatastro.gob.es/Accesos/SECAccDNI.aspx?Dest=22",
+                "https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&texp=REGI",
+                "https://pasarela.clave.gob.es/Proxy2/ResponseRedirect",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://www.sedecatastro.gob.es/Accesos/SECAccPIN.aspx?Dest=22&del=&mun=&final=&RefC=&texp=REGI",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        RED_ES_PROFILE_ID to gestionaClavePin(
+            displayName = "Sede electrónica pública de Red.es",
+            startUrl = "https://sede.red.gob.es/",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://sede.red.gob.es/",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede.red.gob.es/es/carpeta-del-ciudadano/mis-tramites",
+                "https://sede.red.gob.es/oficina/solicitudes/solicitudes.do",
+                "https://sede.red.gob.es/oficina/autenticacion/autenticacion.do",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        ALMERIA_PROFILE_ID to gestionaClavePin(
+            displayName = "Diputación Provincial de Almería — Solicitud General",
+            startUrl = "https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano&idLogica=accesoDirecto" +
+                "&idExpediente=800210_SolicitudGeneral&idEntidad=400000",
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://www.dipalme.org/Servicios/cmsdipro/index.nsf/index.xsp?p=sededipalme",
+                "https://www.dipalme.org/Servicios/cmsdipro/index.nsf" +
+                    "/servicios_view_entidad_rol_grupo_b.xsp?p=sededipalme&rol=rpc",
+                "https://ov.dipalme.org/TiProceeding/ciudadano?entrada=ciudadano" +
+                    "&idLogica=accesoDirecto&idExpediente=800210_SolicitudGeneral&idEntidad=400000",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://ov.dipalme.org/SP2/TiWorksRequest",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        CORDOBA_PROFILE_ID to ClaveDirectPin(
+            displayName = "Diputación Provincial de Córdoba — Solicitud Genérica",
+            startUrl = "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica",
+            origins = ClaveOriginPins(
+                initiator = "https://sede.dipucordoba.es",
+                redirect = setOf(
+                    "https://apis.dipucordoba.es",
+                    "https://pasarela.clave.gob.es",
+                ),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://www.dipucordoba.es/tramites",
+                "https://sede.dipucordoba.es/diputacion/tramites",
+                "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://diputacion-ofvirtual.e-admin.es/apisolicitador/secureApp/sede/procedimiento/8876",
+                "https://apis.dipucordoba.es/apiclave/api/sessions",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        PALENCIA_PROFILE_ID to gestionaClavePin(
+            displayName = "Diputación Provincial de Palencia — Solicitud carácter general",
+            startUrl = "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action" +
+                "?tramitacionForm.id=5",
+            evidence = claveEvidence(
+                "2026-08-20",
+                "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitesinfo.action" +
+                    "?tramitesInfoForm.id=5",
+                "https://sede.diputaciondepalencia.es/opensiac/informacionpublica/tramitacion.action" +
+                    "?tramitacionForm.id=5",
+                "https://sede.diputaciondepalencia.es/opensiac/certlogin/enter.action",
+                "https://sede.diputaciondepalencia.es/SPProxy2/IndexPage",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        JUSTICIA_PROFILE_ID to ClaveDirectPin(
+            displayName = "Administración de Justicia — Sede Judicial Electrónica",
+            startUrl = "https://sedejudicial.justicia.es/group/guest/area-privada",
+            origins = ClaveOriginPins(
+                initiator = "https://sedejudicial.justicia.es",
+                redirect = setOf(
+                    "https://am.justicia.es",
+                    "https://pasarela.clave.gob.es",
+                ),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-19",
+                "https://sedejudicial.justicia.es/tramites",
+                "https://sedejudicial.justicia.es/group/guest/area-privada",
+                "https://am.justicia.es/selfservice-ext/saml2/sp/login/clave?issuer=https:/" +
+                    "/am.justicia.es/selfservice-ext/saml2/sp/login/clavenoeidas&RelayState=https%3A%2F" +
+                    "%2Fsedejudicial.justicia.es%2Fgroup%2Fguest%2Farea-privada",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sedejudicial.justicia.es/idp/login?postbackUrl=%2Fgroup%2Fguest%2Farea-privada",
+                "https://sedejudicial.justicia.es/selfservice-ext/login?postbackUrl=%2Fgroup%2Fguest%2Farea-privada",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        MADRID_SEDE_PROFILE_ID to ClaveDirectPin(
+            displayName = "Ayuntamiento de Madrid — Tarjeta Azul / acceso OIDC",
+            startUrl = "https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/" +
+                "?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD" +
+                "&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD",
+            origins = ClaveOriginPins(
+                initiator = "https://sede.madrid.es",
+                redirect = setOf(
+                    "https://servcla.madrid.es",
+                    "https://cas.madrid.es",
+                    "https://pasarela.clave.gob.es",
+                ),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_PROVIDER_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-19",
+                "https://sede.madrid.es/portal/site/tramites" +
+                    "/menuitem.62876cb64654a55e2dbd7003a8a409a0/" +
+                    "?vgnextchannel=23a99c5ffb020310VgnVCM100000171f5a0aRCRD" +
+                    "&vgnextoid=ac464e85763fd310VgnVCM1000000b205a0aRCRD",
+                "https://servcla.madrid.es/TAZUL_FTWEBINTER/",
+                "https://cas.madrid.es/authenticationendpoint/login.do",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://servcla.madrid.es/my.policy",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        MJUSTICIA_PROFILE_ID to gestionaClavePin(
+            displayName = "Ministerio de Justicia — Modificaciones estatutarias de fundaciones",
+            startUrl = "https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75",
+            evidence = claveEvidence(
+                "2026-08-19",
+                "https://sede.mjusticia.gob.es/tramites/organos-gobierno",
+                "https://sede2.mjusticia.gob.es/procedimientos/choose-ambit/idp/75",
+                "https://sede2.mjusticia.gob.es/login/index/idp/75",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede2.mjusticia.gob.es/clave/iraclave",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
         CSN_PROFILE_ID to ClaveDirectPin(
             displayName = "Consejo de Seguridad Nuclear — sede pública",
             startUrl = "https://sede.csn.gob.es/",
@@ -3926,7 +4166,7 @@ object SiteProfileCatalogParser {
         "https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/sfest.base.js",
     )
     private const val TRANSPARENCIA_PROFILE_ID = "age-portal-de-la-transparencia"
-    private const val TRANSPARENCIA_PROFILE_VERSION = 1
+    private const val TRANSPARENCIA_PROFILE_VERSION = 2
     private const val TRANSPARENCIA_DISPLAY_NAME = "Portal de la Transparencia — Derecho de acceso"
     private const val TRANSPARENCIA_START_URL =
         "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524"
@@ -3937,14 +4177,8 @@ object SiteProfileCatalogParser {
         "filters" to "nonexpired:true;",
         "headless" to "true",
     )
-    private val TRANSPARENCIA_EVIDENCE_URLS = setOf(
-        TRANSPARENCIA_START_URL,
-        "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/ac2-formularios.js",
-        "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/ac2-autofirmaFunctions.js",
-        "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/autoscript.js",
-    )
     private const val FUERTEVENTURA_PROFILE_ID = "fuerteventura-sede-electronica"
-    private const val FUERTEVENTURA_PROFILE_VERSION = 1
+    private const val FUERTEVENTURA_PROFILE_VERSION = 2
     private const val FUERTEVENTURA_DISPLAY_NAME =
         "Cabildo Insular de Fuerteventura — Sede electrónica"
     private const val FUERTEVENTURA_START_URL =
@@ -3965,11 +4199,6 @@ object SiteProfileCatalogParser {
         "signatureRotation" to "0",
         "includeQuestionMark" to "false",
         "obfuscateCertText" to "true",
-    )
-    private val FUERTEVENTURA_EVIDENCE_URLS = setOf(
-        FUERTEVENTURA_START_URL,
-        "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert",
-        "https://sede.cabildofuer.es/eAdmin/js/miniapplet.js",
     )
     private const val GRAN_CANARIA_PROFILE_ID = "gran-canaria-sede-electronica"
     private const val GRAN_CANARIA_PROFILE_VERSION = 1
@@ -3993,7 +4222,7 @@ object SiteProfileCatalogParser {
             "_Configuracion_WAR_SedeElectronicaportlet_INSTANCE_sede_tramites_ln=js",
     )
     private const val MINECO_PROFILE_ID = "ministerio-economia-instancia-generica"
-    private const val MINECO_PROFILE_VERSION = 1
+    private const val MINECO_PROFILE_VERSION = 2
     private const val MINECO_DISPLAY_NAME =
         "Ministerio de Economía, Comercio y Empresa — Instancia Genérica"
     private const val MINECO_START_URL =
@@ -4001,20 +4230,10 @@ object SiteProfileCatalogParser {
     private const val MINECO_ORIGIN = "https://serviciosede.mineco.gob.es"
     private const val MINECO_SAFE_DESCRIPTION =
         "Firma PAdES de Instancia Genérica del Ministerio de Economía, Comercio y Empresa"
-    private val MINECO_BROWSE_ORIGINS = setOf(
-        ExactOrigin.parse("https://pasarela.clave.gob.es"),
-        ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
-    )
     private val MINECO_EXTRA_PROPERTIES = linkedMapOf(
         "filters" to "signingCert:;nonexpired:",
         "expPolicy" to "FirmaAGE",
         "signatureSubFilter" to "ETSI.CAdES.detached",
-    )
-    private val MINECO_EVIDENCE_URLS = setOf(
-        MINECO_START_URL,
-        "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx",
-        "https://serviciosede.mineco.gob.es/FB/@miniFirma/js/autoscript.js",
-        "https://sede.mineco.gob.es/stfls/sede/Ficheros/manuales/Manual_IG.pdf",
     )
     private const val XUNTA_PROFILE_ID = "xunta-galicia-solicitude-xenerica"
     private const val XUNTA_PROFILE_VERSION = 1
@@ -4092,22 +4311,13 @@ object SiteProfileCatalogParser {
         "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen" to LocalDate.parse("2026-08-18"),
     )
     private const val EDUCATION_PROFILE_ID = "educacion-convocatoria"
-    private const val EDUCATION_PROFILE_VERSION = 2
+    private const val EDUCATION_PROFILE_VERSION = 3
     private const val EDUCATION_DISPLAY_NAME =
         "Ministerio de Educación — Convocatoria 46 — acceso con certificado"
     private const val EDUCATION_START_URL =
         "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46"
     private const val EDUCATION_ORIGIN = "https://sede.educacion.gob.es"
     private const val EDUCATION_CLAVE_EDU_ORIGIN = "https://www.educacion.gob.es"
-    private const val EDUCATION_CLIENT_AUTH_SOURCE_URL =
-        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
-    private val EDUCATION_EVIDENCE_URLS = setOf(
-        EDUCATION_START_URL,
-        "https://www.educacion.gob.es/claveedu/claveEduPeticion.form",
-        "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
-        EDUCATION_CLIENT_AUTH_SOURCE_URL,
-        "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
-    )
     private const val AIREF_PROFILE_ID = "airef-instancia-general"
     private const val OURENSE_PROFILE_ID = "diputacion-ourense-sede"
     private const val MALAGA_PROFILE_ID = "diputacion-malaga-instancia-general"
@@ -4155,7 +4365,101 @@ object SiteProfileCatalogParser {
     private const val LANZAROTE_PUBLIC_NAVIGATION_PROFILE_ID = "lanzarote-sede-public-navigation"
     private const val LANZAROTE_PUBLIC_REDIRECT_ORIGIN = "https://lanzaroteylagraciosa.sedelectronica.es"
     private const val CTBG_PROFILE_ID = "ctbg-solicitud-informacion"
+    private val POLICIA_CLAVE_EVIDENCE = claveEvidence(
+        "2026-08-15",
+        "https://sede.policia.gob.es/",
+        "https://sede.policia.gob.es/portalCiudadano/_es/solicitudGenerica.xhtml",
+    ) + claveEvidence(
+        "2026-11-07",
+        "https://sede.policia.gob.es/portalCiudadano/_es/index.php",
+        "https://sede.policia.gob.es/sede/pages/procedimientos/solicitudGenerica.xhtml",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+        "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+    )
+    private val MINECO_CLAVE_EVIDENCE = claveEvidence(
+        "2026-08-17",
+        "https://serviciosede.mineco.gob.es/FB/Home.aspx?control=161_IG",
+        "https://serviciosede.mineco.gob.es/FB/solicitud/firma.aspx",
+        "https://serviciosede.mineco.gob.es/FB/@miniFirma/js/autoscript.js",
+        "https://sede.mineco.gob.es/stfls/sede/Ficheros/manuales/Manual_IG.pdf",
+    ) + claveEvidence(
+        "2026-11-07",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+        "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+    )
+    private val TRANSPARENCIA_CLAVE_EVIDENCE = claveEvidence(
+        "2026-08-18",
+        "https://transparencia.sede.gob.es/procedimiento/portada?idProc=133628&idAmb=101524",
+        "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/ac2-formularios.js",
+        "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/ac2-autofirmaFunctions.js",
+        "https://transparencia.sede.gob.es/.resources/ac2-front/webresources/js/autofirma/autoscript.js",
+    ) + claveEvidence(
+        "2026-11-07",
+        "https://transparencia.sede.gob.es/claveproxy/clave/authenticate?returnUrl=https%3A%2F" +
+            "%2Ftransparencia.sede.gob.es%2Fprocedimiento%2Fformulario%3FidProc%3D133628%26idAmb%3D101524",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+        "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+    )
+    private val EDUCATION_CLAVE_EVIDENCE = claveEvidence(
+        "2026-08-19",
+        "https://sede.educacion.gob.es/sede/login/loginConv.jjsp?iA=no&idConvocatoria=46",
+        "https://www.educacion.gob.es/claveedu/claveEduPeticion.form",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+        "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+    ) + claveEvidence(
+        "2026-11-07",
+        "https://sede.educacion.gob.es/sede/login/loginClaveEduToken.jjsp",
+        "https://www.educacion.gob.es/claveedu/claveEduPeticionToken.form",
+    )
+    private val EXTREMADURA_CLAVE_EVIDENCE = claveEvidence(
+        "2026-08-13",
+        "https://tramites.juntaex.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=PTS2_REGGENERAL_INFO",
+        "https://tramites.juntaex.es/sta/resources/js/sta-autofirma-lote.js",
+        "https://tramites.juntaex.es/sta/resources/js/autoscript.js",
+        "https://tramites.juntaex.es/sta/pages/webapps/js/webAppsFwk.js?ver=2605.0.2",
+    ) + claveEvidence(
+        "2026-11-07",
+        "https://sede.juntaex.es/SEDE/",
+        "https://tramites.juntaex.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=ANOTACIONES",
+        "https://tramites.juntaex.es/sta/CarpetaPrivate/Clave2Request?APP_CODE=STA&PAGE_CODE=ANOTACIONES",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+        "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+    ) + claveEvidence(
+        "2026-11-07",
+        "https://tramites.juntaex.es/",
+        "https://tramites.juntaex.es/sta/",
+        "https://tramites.juntaex.es/sta/CarpetaPublic/?APP_CODE=STA&PAGE_CODE=PTS2_HOME",
+    )
+    private val FUERTEVENTURA_CLAVE_EVIDENCE = claveEvidence(
+        "2026-08-18",
+        "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=comenzar&tipoReg=1",
+        "https://sede.cabildofuer.es/eAdmin/Registrar.do?action=verYfirmar&modo=cert",
+        "https://sede.cabildofuer.es/eAdmin/js/miniapplet.js",
+    ) + claveEvidence(
+        "2026-11-07",
+        "https://www.cabildofuer.es/cabildo/",
+        "https://sede.cabildofuer.es/",
+        "https://sede.cabildofuer.es/eAdmin/index.html",
+        "https://sede.cabildofuer.es/eAdmin/Sede.do",
+        "https://sede.cabildofuer.es/eAdmin/Login.do?action=login",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+        "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+        "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+    )
     private const val CSN_PROFILE_ID = "csn-sede-public"
+    private const val CNMV_PROFILE_ID = "cnmv-sede-public-home"
+    private const val CSD_PROFILE_ID = "csd-sede-public"
+    private const val RED_ES_PROFILE_ID = "red-es-sede-public-navigation"
+    private const val ALMERIA_PROFILE_ID = "diputacion-almeria-solicitud-general"
+    private const val CORDOBA_PROFILE_ID = "diputacion-cordoba-solicitud-generica"
+    private const val JUSTICIA_PROFILE_ID = "justicia-sede-judicial-private-area"
+    private const val MADRID_SEDE_PROFILE_ID = "madrid-sede-tarjeta-azul"
+    private const val MJUSTICIA_PROFILE_ID = "mjusticia-fundaciones-idp75"
     private const val ICO_PROFILE_ID = "ico-sede-public-navigation"
     private const val GSEDE_AUTHENTICATION_PATH =
         "/opencms/system/modules/gsede/elements/secciones/autenticacion/autenticacion.jsp"
@@ -4244,7 +4548,7 @@ object SiteProfileCatalogParser {
         "$CATALUNYA_CERT_ORIGIN$CATALUNYA_CERT_REQUEST_PATH",
     )
     private const val POLICIA_PROFILE_ID = "policia-solicitud-generica"
-    private const val POLICIA_PROFILE_VERSION = 1
+    private const val POLICIA_PROFILE_VERSION = 2
     private const val POLICIA_DISPLAY_NAME = "Policía Nacional — Solicitud genérica"
     private const val POLICIA_START_URL = "https://sede.policia.gob.es/"
     private const val POLICIA_ORIGIN = "https://sede.policia.gob.es"
@@ -4285,7 +4589,7 @@ object SiteProfileCatalogParser {
     private const val MELILLA_ORIGIN = "https://sede.melilla.es"
     private const val MELILLA_SAFE_DESCRIPTION = "Firma por lotes en la Sede Electrónica de Melilla"
     private const val EXTREMADURA_PROFILE_ID = "extremadura-tramites"
-    private const val EXTREMADURA_PROFILE_VERSION = 1
+    private const val EXTREMADURA_PROFILE_VERSION = 2
     private const val EXTREMADURA_DISPLAY_NAME = "Junta de Extremadura — Trámites"
     private const val EXTREMADURA_START_URL = "https://tramites.juntaex.es/"
     private const val EXTREMADURA_ORIGIN = "https://tramites.juntaex.es"

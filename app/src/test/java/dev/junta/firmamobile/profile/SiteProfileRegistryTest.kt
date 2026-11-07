@@ -43,11 +43,11 @@ class SiteProfileRegistryTest {
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(airef, claveIdent)?.trustMode,
         )
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, clave)?.trustMode,
         )
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(mineco, claveIdent)?.trustMode,
         )
         // MUGEJU arms client TLS on the Cl@ve ServiceRedirect POST; ServiceProvider is trusted only as a redirect hop.
@@ -78,7 +78,10 @@ class SiteProfileRegistryTest {
             TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(palencia, clave)?.trustMode,
         )
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(palencia, claveIdent))
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(palencia, claveIdent)?.trustMode,
+        )
         assertEquals(
             TrustMode.BROWSE_ONLY,
             BuiltInSiteProfiles.qaRegistry.resolveForProfile(elHierro, clave)?.trustMode,
@@ -416,7 +419,7 @@ class SiteProfileRegistryTest {
     }
 
     @Test
-    fun `CNMV public Sede is browse-only trust in QA and near origins stay closed`() {
+    fun `CNMV public Sede has QA client-auth trust and near origins stay closed`() {
         val profileId = ProfileId("cnmv-sede-public-home")
         val start = URI("https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx")
 
@@ -426,8 +429,8 @@ class SiteProfileRegistryTest {
         assertNotNull(profile)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
-        assertEquals(emptySet<Capability>(), profile?.capabilities)
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.cnmv.gob.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.cnmv.gob.es:444/")))
     }

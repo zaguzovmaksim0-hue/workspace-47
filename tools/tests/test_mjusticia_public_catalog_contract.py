@@ -42,12 +42,13 @@ class MJusticiaPublicCatalogContractTest(unittest.TestCase):
         self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
         self.assertEqual("QA_ONLY", profile["activation"])
         self.assertEqual(["https://sede2.mjusticia.gob.es"], profile["initiatorOrigins"])
-        self.assertEqual([], profile["redirectOrigins"])
+        self.assertEqual(["https://pasarela.clave.gob.es"], profile["redirectOrigins"])
         self.assertEqual([], profile["trustedBrowseOrigins"])
         self.assertEqual([], profile["endpoints"])
         self.assertEqual([], profile["operationPolicies"])
-        self.assertEqual([], profile["capabilities"])
-        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
+        self.assertEqual("POST", profile["clientAuthPolicy"]["requestMethod"])
+        self.assertEqual("IN_PLACE_FROM_SOURCE", profile["clientAuthPolicy"]["transitionMode"])
 
 
 if __name__ == "__main__":

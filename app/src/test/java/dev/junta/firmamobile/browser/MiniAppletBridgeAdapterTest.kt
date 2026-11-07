@@ -19,6 +19,9 @@ import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuildTrustPolicy
 import dev.junta.firmamobile.profile.CallbackContractId
 import dev.junta.firmamobile.profile.Capability
+import dev.junta.firmamobile.profile.HttpMethod
+import dev.junta.firmamobile.profile.ClientAuthTransitionMode
+import dev.junta.firmamobile.profile.ClientAuthPolicy
 import dev.junta.firmamobile.profile.CertificateFilterRules
 import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.profile.ExactOrigin
@@ -973,7 +976,7 @@ class MiniAppletBridgeAdapterTest {
 
         result.request.normalized.use { request ->
             assertEquals(POLICIA_PROFILE_ID, request.context.profileId)
-            assertEquals(1, request.context.profileVersion)
+            assertEquals(2, request.context.profileVersion)
             assertEquals("sede.policia.gob.es", request.context.origin.host)
             assertEquals(52, request.context.navigationEpoch)
             assertEquals(POLICIA_PROTOCOL_ID, request.protocolId.value)
@@ -1670,13 +1673,13 @@ class MiniAppletBridgeAdapterTest {
     private fun policiaAdapter(): ProfileMiniAppletBridgeAdapter {
         val profile = SiteProfile(
             profileId = ProfileId(POLICIA_PROFILE_ID),
-            profileVersion = 1,
+            profileVersion = 2,
             displayName = "Policía Nacional — Solicitud genérica",
             compatibilityStatus = CompatibilityStatus.VERIFIED_CONTRACT,
             activation = ProfileActivation.QA_ONLY,
             startUrl = URI(POLICIA_START_URL),
             initiatorOrigins = setOf(ExactOrigin.parse(POLICIA_ORIGIN.toString())),
-            redirectOrigins = emptySet(),
+            redirectOrigins = setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")),
             trustedBrowseOrigins = emptySet(),
             endpoints = emptyMap(),
             operationPolicies = mapOf(
@@ -1699,9 +1702,20 @@ class MiniAppletBridgeAdapterTest {
                     allowedExtraProperties = emptySet(),
                 ),
             ),
-            capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1),
-            clientAuthPolicy = null,
-            certificateRules = CertificateFilterRules(setOf("RSA"), false),
+            capabilities = setOf(Capability.SIGN, Capability.LEGACY_SHA1, Capability.CLIENT_TLS_AUTH),
+            clientAuthPolicy = ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+                sourceUrls = setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
+                requestPath = "/IdP2/AuthenticateCitizen",
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+                requestPort = 443,
+                requestMethod = HttpMethod.POST,
+            ),
+            certificateRules = CertificateFilterRules(setOf("RSA"), true),
             evidence = emptyList(),
         )
         return ProfileMiniAppletBridgeAdapter(

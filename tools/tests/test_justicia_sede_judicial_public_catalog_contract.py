@@ -56,13 +56,16 @@ class JusticiaSedeJudicialPublicCatalogContractTest(unittest.TestCase):
         self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
         self.assertEqual("QA_ONLY", profile["activation"])
         self.assertEqual(["https://sedejudicial.justicia.es"], profile["initiatorOrigins"])
-        self.assertEqual(["https://am.justicia.es"], profile["redirectOrigins"])
+        self.assertEqual(
+            ["https://am.justicia.es", "https://pasarela.clave.gob.es"], profile["redirectOrigins"],
+        )
         self.assertEqual([], profile["trustedBrowseOrigins"])
         self.assertEqual([], profile["endpoints"])
         self.assertEqual([], profile["operationPolicies"])
-        self.assertEqual([], profile["capabilities"])
-        self.assertIsNone(profile["clientAuthPolicy"])
-        self.assertNotIn("https://pasarela.clave.gob.es", profile["redirectOrigins"])
+        self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
+        self.assertEqual("POST", profile["clientAuthPolicy"]["requestMethod"])
+        self.assertEqual("IN_PLACE_FROM_SOURCE", profile["clientAuthPolicy"]["transitionMode"])
+        self.assertIn("https://pasarela.clave.gob.es", profile["redirectOrigins"])
         self.assertNotIn("https://pasarela.clave.gob.es", profile["trustedBrowseOrigins"])
 
 

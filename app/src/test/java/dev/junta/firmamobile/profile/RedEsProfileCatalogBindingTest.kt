@@ -6,6 +6,7 @@ import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
 import dev.junta.firmamobile.catalog.PortalSupportStatus
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import dev.junta.firmamobile.network.JuntaOriginPolicy
@@ -33,10 +34,10 @@ class RedEsProfileCatalogBindingTest {
     private val startUrl = URI("https://sede.red.gob.es/")
 
     @Test
-    fun profileConfigPreservesExactFailClosedNavigationContract() {
+    fun profileConfigPreservesExactClaveClientAuthContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Sede electrónica pública de Red.es", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -45,22 +46,34 @@ class RedEsProfileCatalogBindingTest {
             setOf(ExactOrigin.parse("https://sede.red.gob.es")),
             profile.initiatorOrigins,
         )
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(
+            setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")),
+            profile.redirectOrigins,
+        )
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, profile.clientAuthPolicy?.transitionMode)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertTrue(!profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertEquals(
-            listOf(EvidenceReference(startUrl, LocalDate.parse("2026-08-25"))),
+            listOf(
+                "https://sede.red.gob.es/" to "2026-08-25",
+                "https://sede.red.gob.es/es/carpeta-del-ciudadano/mis-tramites" to "2026-11-07",
+                "https://sede.red.gob.es/oficina/solicitudes/solicitudes.do" to "2026-11-07",
+                "https://sede.red.gob.es/oficina/autenticacion/autenticacion.do" to "2026-11-07",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider" to "2026-11-07",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect" to "2026-11-07",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen" to "2026-11-07",
+            ).map { (url, date) -> EvidenceReference(URI(url), java.time.LocalDate.parse(date)) },
             profile.evidence,
         )
     }
 
     @Test
-    fun registryResolvesOnlySameOriginBrowsePathsInQa() {
+    fun registryResolvesSameOriginClientAuthPathsOnlyInQa() {
         val releaseProfile = BuiltInSiteProfiles.releaseRegistry.profile(profileId)
         val qaProfile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
         assertNull(releaseProfile)
@@ -69,11 +82,11 @@ class RedEsProfileCatalogBindingTest {
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode,
         )
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.red.gob.es/procedimientos"))?.trustMode,
         )
 
@@ -100,11 +113,11 @@ class RedEsProfileCatalogBindingTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(profileId).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse(startUrl.toString()), profileId))
         assertEquals(
-            setOf(ExactOrigin.parse("https://sede.red.gob.es")),
+            setOf(ExactOrigin.parse("https://sede.red.gob.es"), ExactOrigin.parse("https://pasarela.clave.gob.es")),
             JuntaOriginPolicy.browserOrigins(profileId),
         )
         assertEquals(
-            setOf("sede.red.gob.es"),
+            setOf("sede.red.gob.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(profileId),
         )
     }
@@ -139,7 +152,7 @@ class RedEsProfileCatalogBindingTest {
 
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(profileId, startUrl))

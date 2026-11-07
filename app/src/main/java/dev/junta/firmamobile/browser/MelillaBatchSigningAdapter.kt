@@ -62,7 +62,8 @@ internal class ExtremaduraBatchSigningAdapter(
         clock = clock,
         contract = StaBatchSigningContract(
             profileId = ExtremaduraBatchBridgeAdapter.PROFILE_ID,
-            profileVersion = 1,
+            profileVersion = 2,
+            capabilities = setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH),
             protocolId = ExtremaduraBatchProtocolAdapter.ID,
         ),
     )
