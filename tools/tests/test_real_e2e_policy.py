@@ -467,6 +467,15 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertTrue(block.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
         self.assertIn('GESTIONA_CLAVE_LABEL = "Acceso con sistema Cl@ve"', source)
         self.assertIn('"diputacion-avila-portal" to "https://diputacionavila.sedelectronica.es"', source)
+        for portal, origin in (
+            ("diputacion-alicante-portal", "https://diputacionalicante.sedelectronica.es"),
+            ("diputacion-castellon-portal", "https://dipcas.sedelectronica.es"),
+            ("lanzarote-portal-institucional", "https://lanzaroteylagraciosa.sedelectronica.es"),
+            ("diputacion-teruel-sede", "https://dpteruel.sedelectronica.es"),
+            ("diputacion-guadalajara-sede", "https://dguadalajara.sedelectronica.es"),
+            ("age-consejo-de-transparencia-y-buen-gobierno-ctbg", "https://sede.consejodetransparencia.gob.es"),
+        ):
+            self.assertIn(f'"{portal}" to "{origin}"', source)
         helper = source[source.index('private fun clickGestionaClaveLogin('):]
         helper = helper[:helper.index('private fun clickExactLabeledAnchor(')]
         for expected in (

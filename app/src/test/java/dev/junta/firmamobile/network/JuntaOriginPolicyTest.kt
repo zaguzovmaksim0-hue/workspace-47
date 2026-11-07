@@ -732,7 +732,7 @@ class JuntaOriginPolicyTest {
                 salamanca,
             ),
         )
-        assertEquals(setOf("dpteruel.sedelectronica.es"), JuntaOriginPolicy.browserAllowedHosts(teruel))
+        assertEquals(setOf("dpteruel.sedelectronica.es", "pasarela.clave.gob.es"), JuntaOriginPolicy.browserAllowedHosts(teruel))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(teruel).isEmpty())
         assertNull(
             JuntaOriginPolicy.signingOriginFor(
@@ -844,7 +844,7 @@ class JuntaOriginPolicyTest {
                 cordoba,
             ),
         )
-        assertEquals(setOf("dipcas.sedelectronica.es"), JuntaOriginPolicy.browserAllowedHosts(castellon))
+        assertEquals(setOf("dipcas.sedelectronica.es", "pasarela.clave.gob.es"), JuntaOriginPolicy.browserAllowedHosts(castellon))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(castellon).isEmpty())
         assertNull(
             JuntaOriginPolicy.signingOriginFor(

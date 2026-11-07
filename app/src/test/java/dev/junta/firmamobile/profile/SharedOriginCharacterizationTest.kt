@@ -34,7 +34,9 @@ class SharedOriginCharacterizationTest {
                 "diputacion-segovia-registro", "diputacion-palencia-solicitud-general",
                 "diputacion-ourense-sede", "diputacion-sevilla-sede",
                 "diputacion-a-coruna-solicitud-general", "tenerife-sede-electronica", "caib-portafib",
-                "reg-age-redsara",
+                "reg-age-redsara", "diputacion-alicante-solicitud-general",
+                "diputacion-castellon-instancia-general", "lanzarote-instancia-general",
+                "diputacion-teruel-instancia-general",
             ),
             browse = listOf("ministerio-economia-instancia-generica"),
         ),
@@ -47,7 +49,10 @@ class SharedOriginCharacterizationTest {
                 "diputacion-malaga-instancia-general", "catalunya-peticio-generica-client-auth",
                 "diputacion-ourense-sede", "diputacion-sevilla-sede",
                 "diputacion-a-coruna-solicitud-general", "tenerife-sede-electronica", "caib-portafib",
-                "reg-age-redsara",
+                "reg-age-redsara", "diputacion-alicante-solicitud-general",
+                "diputacion-castellon-instancia-general", "lanzarote-instancia-general",
+                "diputacion-teruel-instancia-general", "diputacion-guadalajara-instancia-general",
+                "ctbg-solicitud-informacion",
             ),
         ),
         Family(
@@ -281,15 +286,16 @@ class SharedOriginCharacterizationTest {
     }
 
     @Test
-    fun claveOwnerSetsDifferAndGuadalajaraDoesNotAuthorizeAnIdentSibling() {
+    fun claveOwnerSetsDifferAndPublicGatewayOwnersDoNotAuthorizeAnIdentSibling() {
         val mineco = profileJson("ministerio-economia-instancia-generica")
         val onlyPublicGateway = listOf(
-            "diputacion-guadalajara-instancia-general", "diputacion-cadiz-solicitud-generica",
+            "diputacion-cadiz-solicitud-generica",
             "diputacion-segovia-registro", "diputacion-palencia-solicitud-general", "el-hierro-solicitud-general",
         )
         val bothGateways = listOf(
             "ctbg-solicitud-informacion", "catastro-solicitudes-genericas",
             "fega-solicitud-general-ofvsg02", "diputacion-caceres-instancia-general",
+            "diputacion-guadalajara-instancia-general",
         )
         val origins = listOf("https://pasarela.clave.gob.es", "https://pasarela-ident.clave.gob.es")
         for (owner in onlyPublicGateway + bothGateways) for (origin in origins) for (redirect in listOf(false, true)) {
@@ -514,8 +520,7 @@ class SharedOriginCharacterizationTest {
     private fun fixtureRoles(origin: String, first: String, later: String): String {
         val family = families.singleOrNull { it.origin == origin } ?: return ""
         val additionalIdentOwners = if (origin == "https://pasarela-ident.clave.gob.es") {
-            listOf("ctbg-solicitud-informacion", "catastro-solicitudes-genericas",
-                "fega-solicitud-general-ofvsg02", "diputacion-caceres-instancia-general")
+            listOf("catastro-solicitudes-genericas", "fega-solicitud-general-ofvsg02", "diputacion-caceres-instancia-general")
         } else emptyList()
         val owners = family.owners + additionalIdentOwners
         return if (first !in owners || later !in owners) "" else roleCombinations(origin, first, later)

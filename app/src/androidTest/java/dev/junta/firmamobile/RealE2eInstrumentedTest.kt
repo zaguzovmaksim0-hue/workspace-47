@@ -2374,6 +2374,12 @@ class RealE2eInstrumentedTest {
         const val GESTIONA_CLAVE_LABEL = "Acceso con sistema Cl@ve"
         val GESTIONA_CLAVE_ORIGINS = mapOf(
             "diputacion-avila-portal" to "https://diputacionavila.sedelectronica.es",
+            "diputacion-alicante-portal" to "https://diputacionalicante.sedelectronica.es",
+            "diputacion-castellon-portal" to "https://dipcas.sedelectronica.es",
+            "lanzarote-portal-institucional" to "https://lanzaroteylagraciosa.sedelectronica.es",
+            "diputacion-teruel-sede" to "https://dpteruel.sedelectronica.es",
+            "diputacion-guadalajara-sede" to "https://dguadalajara.sedelectronica.es",
+            "age-consejo-de-transparencia-y-buen-gobierno-ctbg" to "https://sede.consejodetransparencia.gob.es",
         )
         const val CAIB_SEU_PORTAL_ID = "caib-seu-electronica"
         const val CAIB_REGISTRE_PORTAL_ID = "caib-registre-electronic"
