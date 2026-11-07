@@ -482,6 +482,22 @@ class RealE2ePolicyTest(unittest.TestCase):
         for forbidden in ('loadUrl(', '.submit(', 'clickClaveAfirmaProvider'):
             self.assertNotIn(forbidden, soria + rioja + menorca)
 
+    def test_safe_auth_sign_recipes_click_only_the_reviewed_login_control(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        safe = source.split('val SAFE_AUTH_SIGN_PROFILES = setOf(', 1)[1].split(')', 1)[0]
+        for profile in ('"dgt-verificacion-equipo"', '"aragon-siraw"', '"transportes-qys-cert-login"',
+                        '"diputacion-lugo-sede"'):
+            self.assertIn(profile, safe)
+        blocks = []
+        for head in ('DGT_PORTAL_ID -> clickExactButton(', 'SIRAW_PORTAL_ID -> clickExactAuthButton(',
+                     'TRANSPORTES_PORTAL_ID -> clickExactButton(', 'LUGO_PORTAL_ID -> clickExactButton('):
+            blocks.append(source.split(head, 1)[1].split('\n            )\n', 1)[0])
+        self.assertIn('DGT_VERIFY_BUTTON_ONCLICK = "cargarAF()"', source)
+        self.assertIn('LUGO_CERT_BUTTON_ONCLICK = "waiting(); chargeClient();"', source)
+        self.assertIn('TRANSPORTES_SIGN_BUTTON_ONCLICK = "Sign_firmar();return false;"', source)
+        for forbidden in ('loadUrl(', '.submit(', 'clickClaveAfirmaProvider'):
+            self.assertNotIn(forbidden, ''.join(blocks))
+
     def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
         source = self.read(INSTRUMENTATION)
         block = source.split('in GESTIONA_CLAVE_ORIGINS -> {', 1)[1].split('\n            }\n', 1)[0]

@@ -350,6 +350,42 @@ class RealE2eInstrumentedTest {
                 // sso.jccm.es runs ALTCHA proof-of-work before Cl@ve: ~20 s on a phone, >45 s on CI.
                 clickClaveAfirmaProvider(scenario, timeoutMillis = JCCM_ALTCHA_TIMEOUT_MILLIS)
             }
+            // Certificate logins that sign a reviewed auth challenge (SAFE_AUTH_SIGN_PROFILES): one exact click each.
+            DGT_PORTAL_ID -> clickExactButton(
+                scenario = scenario,
+                expectedCurrentUrl = DGT_VERIFY_URL,
+                expectedElementId = DGT_VERIFY_BUTTON_ID,
+                expectedLabel = DGT_VERIFY_BUTTON_LABEL,
+                expectedAriaLabel = null,
+                expectedOnClick = DGT_VERIFY_BUTTON_ONCLICK,
+                expectedType = null,
+            )
+            SIRAW_PORTAL_ID -> clickExactAuthButton(
+                scenario = scenario,
+                expectedCurrentUrl = SIRAW_LOGIN_URL,
+                elementId = SIRAW_CERT_BUTTON_ID,
+                expectedValue = SIRAW_CERT_BUTTON_VALUE,
+                expectedOnClick = SIRAW_CERT_BUTTON_ONCLICK,
+            )
+            TRANSPORTES_PORTAL_ID -> clickExactButton(
+                scenario = scenario,
+                expectedCurrentUrl = TRANSPORTES_AUTH_URL,
+                expectedElementId = TRANSPORTES_SIGN_BUTTON_ID,
+                expectedLabel = TRANSPORTES_SIGN_BUTTON_LABEL,
+                expectedAriaLabel = null,
+                expectedOnClick = TRANSPORTES_SIGN_BUTTON_ONCLICK,
+                waitForExpectedUrl = true,
+                expectedType = "submit",
+                expectedTag = "input",
+            )
+            LUGO_PORTAL_ID -> clickExactButton(
+                scenario = scenario,
+                expectedCurrentUrl = LUGO_AUTH_URL,
+                expectedElementId = LUGO_AUTH_BUTTON_ID,
+                expectedLabel = LUGO_CERT_BUTTON_LABEL,
+                expectedAriaLabel = null,
+                expectedOnClick = LUGO_CERT_BUTTON_ONCLICK,
+            )
             // Soria: the source page's certificate "ACCEDER" button opens the reviewed client-TLS target.
             SORIA_PORTAL_ID -> clickExactButton(
                 scenario = scenario,
@@ -2452,6 +2488,28 @@ class RealE2eInstrumentedTest {
         const val JCCM_CLAVE_BUTTON_ID = "boton_presentar_solicitud_clave"
         const val JCCM_CLAVE_BUTTON_VALUE = "Presentar Solicitud"
         const val JCCM_CLAVE_BUTTON_ONCLICK = "cargar_documentos_clave(); return false;"
+        const val DGT_PORTAL_ID = "dgt-sede"
+        const val DGT_VERIFY_URL = "https://sede.dgt.gob.es/es/otros-tramites/" +
+            "verificacion-de-equipos-firmas-y-certificados/verificacion-de-mi-equipo/"
+        const val DGT_VERIFY_BUTTON_ID = "botonFirmar"
+        const val DGT_VERIFY_BUTTON_LABEL = "Verificar mi equipo"
+        const val DGT_VERIFY_BUTTON_ONCLICK = "cargarAF()"
+        const val SIRAW_PORTAL_ID = "aragon-siraw"
+        const val SIRAW_LOGIN_URL = "https://aplicaciones.aragon.es/siraw/pages/login.xhtml?origen=siefw"
+        const val SIRAW_CERT_BUTTON_ID = "certificado"
+        const val SIRAW_CERT_BUTTON_VALUE = "Certificado"
+        const val SIRAW_CERT_BUTTON_ONCLICK = "waitMask(true, 'Procesando acceso, espere por favor, gracias...');"
+        const val TRANSPORTES_PORTAL_ID = "age-ministerio-de-transportes-y-movilidad-sostenible"
+        const val TRANSPORTES_AUTH_URL = "https://sede.transportes.gob.es/MFOM.genericprocedure.web/Autenticacion.aspx"
+        const val TRANSPORTES_SIGN_BUTTON_ID = "ctl00_ContentFormulario_controlAutenticacion_Sign_signButton"
+        const val TRANSPORTES_SIGN_BUTTON_LABEL = "Continuar"
+        const val TRANSPORTES_SIGN_BUTTON_ONCLICK = "Sign_firmar();return false;"
+        const val LUGO_PORTAL_ID = "diputacion-lugo-sede"
+        const val LUGO_AUTH_URL = "https://sede.deputacionlugo.org/opencms/system/modules/gsede/elements/" +
+            "secciones/autenticacion/autenticacion.jsp"
+        const val LUGO_AUTH_BUTTON_ID = "autButton"
+        const val LUGO_CERT_BUTTON_LABEL = "Acceder"
+        const val LUGO_CERT_BUTTON_ONCLICK = "waiting(); chargeClient();"
         const val SORIA_PORTAL_ID = "diputacion-soria-sede"
         const val SORIA_SOURCE_URL = "https://portaltramitador.dipsoria.es/web/inicioWebc.do?opcion=cargar&" +
             "redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%3D&entidad=SORIA&idioma=1"
