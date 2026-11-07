@@ -28,6 +28,7 @@ const dump = () => {
   const frames = Array.from(document.querySelectorAll('iframe')).map(f => f.getAttribute('src'));
   return { url: location.href, title: document.title, readyState: document.readyState, controls: controls.slice(0, 250), forms, frames };
 };
+fs.mkdirSync('probe-out', { recursive: true });
 const results = new Array(probes.length);
 const runOne = async (probe) => {
   const page = await context.newPage();
@@ -56,9 +57,15 @@ let next = 0;
 await Promise.all(Array.from({ length: 4 }, async () => {
   while (next < probes.length) {
     const index = next++;
-    results[index] = await runOne(probes[index]);
+    const probe = probes[index];
+    // A hung page must not cost the whole dump: cap each probe and flush results after every one.
+    results[index] = await Promise.race([
+      runOne(probe),
+      new Promise(resolve => setTimeout(() => resolve({ name: probe.name, error: 'probe-timeout' }), 150000)),
+    ]);
+    fs.writeFileSync('probe-out/dom.json', JSON.stringify(results, null, 1));
   }
 }));
-fs.mkdirSync('probe-out', { recursive: true });
 fs.writeFileSync('probe-out/dom.json', JSON.stringify(results, null, 1));
-await browser.close();
+await browser.close().catch(() => null);
+process.exit(0);

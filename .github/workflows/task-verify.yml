@@ -24,14 +24,16 @@ jobs:
         with:
           persist-credentials: false
       - name: Probe
+        timeout-minutes: 22
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
           cd tools/probe
           npm init -y >/dev/null
           npm install --no-audit --no-fund playwright-core@1.56.1 >/dev/null
+          ln -s "$PWD/probe-out" "$GITHUB_WORKSPACE/probe-out"
           node dom_probe.mjs
-          mv probe-out "$GITHUB_WORKSPACE/probe-out"
       - name: Upload
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
