@@ -5,9 +5,9 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 object SiteProfileCatalogParser {
-    const val MAX_CATALOG_CHARS = 262_144
-    private const val MAX_REVIEWED_ORIGIN_SHARES = 128
-    private const val MAX_LATER_ORIGIN_OWNERS = 32
+    const val MAX_CATALOG_CHARS = 1_048_576
+    private const val MAX_REVIEWED_ORIGIN_SHARES = 256
+    private const val MAX_LATER_ORIGIN_OWNERS = 96
     private const val MAX_DISPLAY_NAME_CHARS = 128
     private const val MAX_CONTENT_TYPE_CHARS = 128
     private const val MAX_SAFE_DESCRIPTION_CHARS = 160
@@ -1142,6 +1142,21 @@ object SiteProfileCatalogParser {
         val redirect: Set<String>,
         val trustedBrowse: Set<String>,
     )
+
+    // Gestiona instancia general: the identification page offers only the reviewed Cl@ve form (see Ávila).
+    private fun gestionaClavePin(displayName: String, startUrl: String, evidence: Map<String, String>) =
+        ClaveDirectPin(
+            displayName = displayName,
+            startUrl = startUrl,
+            origins = ClaveOriginPins(
+                initiator = "https://${URI(startUrl).host}",
+                redirect = setOf(CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = evidence + claveEvidence("2026-11-07", CLAVE_REDIRECT_URL, CLAVE_IDENT_EVIDENCE_URL),
+        )
 
     private class ClaveDirectPin(
         val displayName: String,
@@ -3070,6 +3085,10 @@ object SiteProfileCatalogParser {
                             TENERIFE_PROFILE_ID,
                             CAIB_PROFILE_ID,
                             REG_AGE_PROFILE_ID,
+                            ALICANTE_PROFILE_ID,
+                            CASTELLON_PROFILE_ID,
+                            LANZAROTE_PROFILE_ID,
+                            TERUEL_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -3093,6 +3112,11 @@ object SiteProfileCatalogParser {
                             TENERIFE_PROFILE_ID,
                             CAIB_PROFILE_ID,
                             REG_AGE_PROFILE_ID,
+                            ALICANTE_PROFILE_ID,
+                            CASTELLON_PROFILE_ID,
+                            LANZAROTE_PROFILE_ID,
+                            TERUEL_PROFILE_ID,
+                            GUADALAJARA_PROFILE_ID,
                         )
                     }
                     else -> false
@@ -3505,6 +3529,68 @@ object SiteProfileCatalogParser {
                 CLAVE_PROVIDER_URL,
             ) + claveEvidence("2026-11-07", CLAVE_REDIRECT_URL, CLAVE_IDENT_EVIDENCE_URL),
         ),
+        ALICANTE_PROFILE_ID to gestionaClavePin(
+            displayName = "Diputación de Alicante — Solicitud General",
+            startUrl = "https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb",
+            evidence = claveEvidence(
+                "2026-08-18",
+                "https://www.diputacionalicante.es/",
+                "https://diputacionalicante.sedelectronica.es/catalog/t/66192629-8b04-4cf8-a121-e2cb86cd45cb",
+                "https://diputacionalicante.sedelectronica.es/catalog/tw/66192629-8b04-4cf8-a121-e2cb86cd45cb",
+            ) + claveEvidence("2026-11-07", CLAVE_PROVIDER_URL),
+        ),
+        CASTELLON_PROFILE_ID to gestionaClavePin(
+            displayName = "Diputació de Castelló — Instancia General",
+            startUrl = "https://dipcas.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            evidence = claveEvidence(
+                "2026-08-23",
+                "https://www.dipcas.es/es/",
+                "https://dipcas.sedelectronica.es/info.0",
+                "https://dipcas.sedelectronica.es/dossier.0",
+                "https://dipcas.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+                "https://dipcas.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            ) + claveEvidence("2026-11-07", CLAVE_PROVIDER_URL),
+        ),
+        LANZAROTE_PROFILE_ID to gestionaClavePin(
+            displayName = "Cabildo Insular de Lanzarote — Instancia General",
+            startUrl = "https://lanzaroteylagraciosa.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://www.cabildodelanzarote.com/",
+                "https://lanzaroteylagraciosa.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+                "https://lanzaroteylagraciosa.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            ) + claveEvidence("2026-11-07", CLAVE_PROVIDER_URL),
+        ),
+        TERUEL_PROFILE_ID to gestionaClavePin(
+            displayName = "Diputación Provincial de Teruel — Instancia General",
+            startUrl = "https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://dpteruel.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+                "https://dpteruel.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            ) + claveEvidence("2026-11-07", CLAVE_PROVIDER_URL),
+        ),
+        GUADALAJARA_PROFILE_ID to gestionaClavePin(
+            displayName = "Diputación Provincial de Guadalajara — Instancia General",
+            startUrl = "https://dguadalajara.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://dguadalajara.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+                "https://dguadalajara.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        CTBG_PROFILE_ID to gestionaClavePin(
+            displayName = "Consejo de Transparencia y Buen Gobierno (CTBG) — Solicitud de Información",
+            startUrl = "https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6",
+            evidence = claveEvidence(
+                "2026-08-23",
+                "https://sede.consejodetransparencia.gob.es/dossier",
+                "https://sede.consejodetransparencia.gob.es/catalog/t/01b4b72b-7f21-4d7c-9576-e1d7871624a6",
+                "https://sede.consejodetransparencia.gob.es/catalog/tw/01b4b72b-7f21-4d7c-9576-e1d7871624a6",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
     )
     private const val CARNE_JOVEN_PROFILE_ID = "carne-joven-andalucia"
     private const val CARNE_JOVEN_DISPLAY_NAME = "Carné Joven Europeo de Andalucía"
@@ -3899,6 +3985,9 @@ object SiteProfileCatalogParser {
     private const val SEVILLA_DIPUTACION_PROFILE_ID = "diputacion-sevilla-sede"
     private const val CORUNA_PROFILE_ID = "diputacion-a-coruna-solicitud-general"
     private const val AVILA_PROFILE_ID = "diputacion-avila-instancia-general"
+    private const val ALICANTE_PROFILE_ID = "diputacion-alicante-solicitud-general"
+    private const val CASTELLON_PROFILE_ID = "diputacion-castellon-instancia-general"
+    private const val TERUEL_PROFILE_ID = "diputacion-teruel-instancia-general"
     private const val CADIZ_PROFILE_ID = "diputacion-cadiz-solicitud-generica"
     private const val GUADALAJARA_PROFILE_ID = "diputacion-guadalajara-instancia-general"
     private const val SEGOVIA_PROFILE_ID = "diputacion-segovia-registro"
