@@ -1687,6 +1687,7 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == CanariasCertificateLoginCadesAdapter.ID.value
 
+    // Split into page, profile and operation checks only to stay under detekt's complexity limit.
     private fun isExactAemetContract(
         profile: SiteProfile,
         origin: ExactOrigin,
@@ -1694,6 +1695,11 @@ internal class ProfileMiniAppletBridgeAdapter(
         signingProtocolId: String,
         currentPageUrl: String?,
     ): Boolean =
+        isExactAemetPage(profile, origin, currentPageUrl) &&
+            isExactAemetProfile(profile) &&
+            isExactAemetOperation(operation, signingProtocolId)
+
+    private fun isExactAemetPage(profile: SiteProfile, origin: ExactOrigin, currentPageUrl: String?): Boolean =
         currentPageUrl == AemetCertificateLoginCadesAdapter.SIGNING_PAGE_URL &&
             profile.profileId.value == AemetCertificateLoginCadesAdapter.PROFILE_ID &&
             profile.profileVersion == AemetCertificateLoginCadesAdapter.PROFILE_VERSION &&
@@ -1703,16 +1709,20 @@ internal class ProfileMiniAppletBridgeAdapter(
             origin.serialized == AemetCertificateLoginCadesAdapter.INITIATOR_ORIGIN &&
             profile.initiatorOrigins == setOf(
                 ExactOrigin.parse(AemetCertificateLoginCadesAdapter.INITIATOR_ORIGIN),
-            ) &&
-            profile.redirectOrigins.isEmpty() &&
+            )
+
+    private fun isExactAemetProfile(profile: SiteProfile): Boolean =
+        profile.redirectOrigins.isEmpty() &&
             profile.trustedBrowseOrigins.isEmpty() &&
             profile.endpoints.isEmpty() &&
             profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
             profile.clientAuthPolicy == null &&
             profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
             profile.certificateRules.requireDigitalSignatureKeyUsage &&
-            profile.operationPolicies.size == 1 &&
-            operation.operation == ProtocolOperation.SIGN &&
+            profile.operationPolicies.size == 1
+
+    private fun isExactAemetOperation(operation: OperationPolicy, signingProtocolId: String): Boolean =
+        operation.operation == ProtocolOperation.SIGN &&
             operation.safeDescription == AemetCertificateLoginCadesAdapter.SAFE_DESCRIPTION &&
             operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
             operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
