@@ -2947,14 +2947,6 @@ class RealE2eInstrumentedTest {
         profileId: String,
         requestId: UUID,
     ): SignConfirmationResult {
-        // The consent button arms on the Compose frame clock; per-poll frames on the main thread never reach
-        // CONSENT_ARM_DELAY_MS (runs 42521821357: E0). Advance it from the test thread once the dialog is shown,
-        // as SigningConfirmationInstrumentedTest does; the probe still checks the button is enabled before clicking.
-        if (runCatching { rule.waitUntil(CONSENT_DIALOG_WAIT_MILLIS) { taggedNodeVisible("signing-confirmation") } }
-                .isSuccess
-        ) {
-            rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
-        }
         return RealE2eSigningConfirmation.click(
             activity = owner.activity,
             requestId = requestId,
@@ -2962,6 +2954,8 @@ class RealE2eInstrumentedTest {
             ownsRequest = { owner.isCurrent(profileId) },
             timeoutMillis = UI_TIMEOUT_MILLIS,
             advanceFrame = { rule.mainClock.advanceTimeByFrame() },
+            // Runs 42521821357: E0 with per-poll frames only; arm from the test thread once the native probe sees it.
+            armConsent = { rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS) },
         )
     }
 
@@ -3884,7 +3878,6 @@ class RealE2eInstrumentedTest {
         const val SIRAW_CERT_BUTTON_ID = "certificado"
         const val SIRAW_CERT_BUTTON_VALUE = "Certificado"
         const val SIRAW_CERT_BUTTON_ONCLICK = "waitMask(true, 'Procesando acceso, espere por favor, gracias...');"
-        const val CONSENT_DIALOG_WAIT_MILLIS = 10_000L
         const val TRANSPORTES_PORTAL_ID = "age-ministerio-de-transportes-y-movilidad-sostenible"
         const val TRANSPORTES_AUTH_URL = "https://sede.transportes.gob.es/MFOM.genericprocedure.web/Autenticacion.aspx"
         const val TRANSPORTES_SIGN_BUTTON_ID = "ctl00_ContentFormulario_controlAutenticacion_Sign_signButton"

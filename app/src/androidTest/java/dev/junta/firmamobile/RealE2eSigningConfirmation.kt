@@ -55,7 +55,9 @@ internal object RealE2eSigningConfirmation {
         ownsRequest: () -> Boolean,
         timeoutMillis: Long = 30_000L,
         advanceFrame: () -> Unit = {},
+        armConsent: () -> Unit = {},
     ): SignConfirmationResult {
+        var armed = false
         val deadline = SystemClock.elapsedRealtime() + timeoutMillis
         var last = Attempt(SignConfirmationResult(SignConfirmationOutcome.NO_DIALOG, false, null, 0, 0, 0, "I"))
         while (SystemClock.elapsedRealtime() < deadline) {
@@ -70,6 +72,11 @@ internal object RealE2eSigningConfirmation {
             if (next == null) return last.result.copy(outcome = SignConfirmationOutcome.UI_QUERY_FAILED)
             last = next
             if (last.terminal) return last.result
+            // Consent arms on the frame clock; advancing it from the main-thread probe never reaches the delay.
+            if (!armed && last.result.outcome == SignConfirmationOutcome.DISABLED) {
+                armed = true
+                runCatching(armConsent)
+            }
             SystemClock.sleep(minOf(50L, (deadline - SystemClock.elapsedRealtime()).coerceAtLeast(0)))
         }
         return last.result
