@@ -121,7 +121,7 @@ class RealE2ePolicyTest(unittest.TestCase):
                 return Array.from({length: options.count ?? 1}, () => element);
               }};
               return [vm.runInNewContext(SCRIPT, {
-                document, location: {href: options.url || SOURCE}, window: {}
+                URL, document, location: {href: options.url || SOURCE}, window: {}
               }), clicks];
             }
             assert.deepEqual(run(), [1, 1]);
