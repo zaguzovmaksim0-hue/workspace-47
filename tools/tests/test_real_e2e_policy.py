@@ -719,6 +719,9 @@ class RealE2ePolicyTest(unittest.TestCase):
             "quotedFormName": "formClave",
             "quotedFormAction": "https://apis.dipucordoba.es/apiclave/api/sessions",
             "quotedCssClass": None,
+            "quotedAnchorType": None,
+            "quotedAnchorAriaLabel": None,
+            "quotedExpectedTitle": None,
         }
         scripts = {}
         for name, href in (("old", "www.dipucordoba.es"), ("reviewed", "")):
