@@ -27,8 +27,16 @@ import org.robolectric.annotation.SQLiteMode
 class TeaClientAuthProfileTest {
     private val profileId = ProfileId("tea-alegaciones-certificado")
     private val portalId = PortalId("age-sede-electronica-de-los-tribunales-economico-administrativos-tea")
-    private val startUrl = URI("https://sede.tea.hacienda.gob.es/TEA/alegaciones.html")
-    private val targetUrl = URI("https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0")
+    private val entryUrl = URI("https://sede.tea.hacienda.gob.es/TEA/alegaciones.html")
+    private val oldTargetUrl = URI("https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0")
+    private val startUrl = URI(
+        "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+            "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE",
+    )
+    private val targetUrl = URI(
+        "https://www1.tea.hacienda.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+            "?ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0",
+    )
 
     @Test
     fun qaProfilePinsTheObservedCrossOriginTls12AlegacionesTransitionAndReleaseStaysDisabled() {
@@ -50,16 +58,33 @@ class TeaClientAuthProfileTest {
         assertEquals(setOf(ExactOrigin.parse("https://www1.tea.hacienda.gob.es")), policy.requestOrigins)
         assertEquals(443, policy.requestPort)
         assertEquals(setOf(startUrl), policy.sourceUrls)
-        assertEquals("/wlpl/TEAC-TRAM/SedeTRAM", policy.requestPath)
-        assertEquals(linkedMapOf("tram" to "0"), policy.fixedQueryParameters)
+        assertEquals("/wlpl/OVCT-CXEW/DialogoRepresentacion", policy.requestPath)
+        assertEquals(linkedMapOf("ref" to "/wlpl/TEAC-TRAM/SedeTRAM?tram=0"), policy.fixedQueryParameters)
+        assertEquals(HttpMethod.GET, policy.requestMethod)
         assertTrue(policy.requiredEphemeralQueryParameters.isEmpty())
+        assertTrue(policy.sourceFixedQueryParameters.isEmpty())
+        assertTrue(policy.sourceRequiredEphemeralQueryParameters.isEmpty())
+        assertTrue(policy.linkedEphemeralQueryParameters.isEmpty())
+        assertTrue(policy.linkedEphemeralQueryParameterMappings.isEmpty())
+        assertTrue(policy.sourceBase64UrlConstraints.isEmpty())
+        assertTrue(policy.requestContinuationUrlConstraints.isEmpty())
+        assertTrue(policy.returnUrlConstraints.isEmpty())
+        assertTrue(policy.requireOfferedKeyTypeMatch)
+        assertTrue(policy.requireTlsClientAuthExtendedKeyUsage)
         assertFalse(policy.allowEmptyIssuerList)
         assertEquals(15, policy.grantTtlSeconds)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(2, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-14" })
-        assertTrue(profile.evidence.any { it.url == targetUrl })
+        assertEquals(4, profile.evidence.size)
+        assertEquals(
+            mapOf(entryUrl to "2026-08-14", oldTargetUrl to "2026-08-14",
+                startUrl to "2026-11-08", targetUrl to "2026-11-08"),
+            profile.evidence.associate { it.url to it.reviewedOn.toString() },
+        )
+        assertTrue(policy.matchesSourceUrl(startUrl))
+        assertFalse(policy.matchesSourceUrl(entryUrl))
+        assertTrue(policy.matchesRequestUrl(targetUrl))
+        assertFalse(policy.matchesRequestUrl(oldTargetUrl))
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
@@ -73,6 +98,8 @@ class TeaClientAuthProfileTest {
         val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0090" }
 
         assertEquals(portalId, entry.portalId)
+        assertEquals(entryUrl, entry.entryUrl)
+        assertEquals(startUrl, entry.launchUrl)
         assertEquals(profileId, entry.profileId)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, entry.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
@@ -81,10 +108,11 @@ class TeaClientAuthProfileTest {
         assertTrue(PortalMechanism.CERTIFICATE_ACCESS in entry.observedMechanisms)
         assertFalse(PortalMechanism.ELECTRONIC_SIGNATURE in entry.observedMechanisms)
         assertTrue(entry.observedSignatureFormats.isEmpty())
-        assertEquals("2026-08-14", entry.reviewedOn.toString())
+        assertEquals("2026-11-08", entry.reviewedOn.toString())
         assertTrue(entry.limitations.contains("TLS 1.2", ignoreCase = true))
         assertTrue(entry.limitations.contains("E2E", ignoreCase = true))
-        assertTrue(entry.limitations.contains("tram=0", ignoreCase = true))
+        assertTrue(entry.limitations.contains("ref=/wlpl/TEAC-TRAM/SedeTRAM?tram=0"))
+        assertTrue(entry.limitations.contains("selector", ignoreCase = true))
 
         val qa = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
         val release = PortalCatalogRepository(
@@ -98,6 +126,7 @@ class TeaClientAuthProfileTest {
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
+        assertNull(qaPortal.lastVerifiedOn)
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
         assertFalse(releasePortal.isEnabled)
         assertNull(release.resolveLaunch(releasePortal))

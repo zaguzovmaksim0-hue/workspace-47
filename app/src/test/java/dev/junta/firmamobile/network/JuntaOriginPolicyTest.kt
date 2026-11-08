@@ -128,6 +128,8 @@ class JuntaOriginPolicyTest {
     fun ownTlsLoginTargetsRemainOutsideBrowseAndNativeMessageTrust() {
         val targets = mapOf(
             "diputacion-huelva-sede-public" to "https://authserver.diphuelva.es",
+            "boe-sede-public-home" to "https://check-cert.extranet.boe.es",
+            "cmt-public-navigation" to "https://identificacionssl.sedipualba.es",
             "comunidad-madrid-cuenta-digital-53f1" to "https://gestiona2.comunidad.madrid",
             "seguridad-social-sede-autofirma" to "https://ipce.seg-social.es",
         )
@@ -264,12 +266,14 @@ class JuntaOriginPolicyTest {
             "cas.madrid.es",
             "egoitza.gipuzkoa.eus",
             "sede.diputaciondesalamanca.gob.es",
-            "sedefondoscomunitarios.gob.es",
+            "webpub2.igae.hacienda.gob.es",
+            "servicios.ine.es",
             "www.sededgsfp.gob.es",
             "sede2.mjusticia.gob.es",
             "sede.cnmv.gob.es",
             "sede.seguridadaerea.gob.es",
-            "www.boe.es",
+            "extranet.boe.es",
+            "check-cert.extranet.boe.es",
             "sede.cnmc.gob.es",
             "sede.adif.gob.es",
             "presidencia.jcyl.es",
@@ -448,7 +452,7 @@ class JuntaOriginPolicyTest {
             JuntaOriginPolicy.browserAllowedHosts(transportes),
         )
         assertEquals(
-            setOf("sede.transportes.gob.es"),
+            setOf("sede.transportes.gob.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(sepes),
         )
         assertNull(
@@ -469,7 +473,8 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("sede.oepm.gob.es"), JuntaOriginPolicy.browserAllowedHosts(oepm))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
         assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
-        assertEquals(setOf("sedefondoscomunitarios.gob.es"), JuntaOriginPolicy.browserAllowedHosts(fondosEuropeos))
+        assertEquals(setOf("webpub2.igae.hacienda.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(fondosEuropeos))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(fondosEuropeos).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sedefondoscomunitarios.gob.es/"), fondosEuropeos))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://tramitesfondoseuropeos.hacienda.gob.es/dossier"), fondosEuropeos))
@@ -494,10 +499,10 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(cnmv).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.cnmv.gob.es/sedecnmv/sedeelectronica.aspx"), cnmv))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://sede.cnmv.gob.es.evil.example/"), cnmv))
-        assertEquals(setOf("www.boe.es"), JuntaOriginPolicy.browserAllowedHosts(boe))
+        assertEquals(setOf("extranet.boe.es"), JuntaOriginPolicy.browserAllowedHosts(boe))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(boe).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://www.boe.es/informacion/index.php"), boe))
-        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://extranet.boe.es/quejas_el/"), boe))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://check-cert.extranet.boe.es/"), boe))
         assertEquals(setOf("sede.cnmc.gob.es"), JuntaOriginPolicy.browserAllowedHosts(cnmc))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(cnmc).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.cnmc.gob.es/tramites/general/remision-de-solicitudes-escritos-y-comunicaciones"), cnmc))
@@ -1056,6 +1061,7 @@ class JuntaOriginPolicyTest {
             ico to "sedeico.gob.es",
             ProfileId("enaire-sede-public") to "enaire.sede.gob.es",
             ProfileId("diputacion-granada-sede-public") to "sede.dipgra.es",
+            ProfileId("diputacion-pontevedra-instancia-xenerica") to "sede.depo.gal",
         ).forEach { (profileId, host) ->
             assertEquals(setOf(host, "pasarela.clave.gob.es"), JuntaOriginPolicy.browserAllowedHosts(profileId))
             assertEquals(
@@ -1092,12 +1098,12 @@ class JuntaOriginPolicyTest {
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(elHierroPublicNavigation).isEmpty())
         assertEquals(
-            setOf("sede.imserso.gob.es"),
+            setOf("sede.imserso.gob.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(imsersoPublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(imsersoPublicNavigation).isEmpty())
         assertEquals(
-            setOf("sede.ine.gob.es"),
+            setOf("sede.ine.gob.es", "servicios.ine.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(inePublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(inePublicNavigation).isEmpty())

@@ -8,6 +8,7 @@ import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -24,6 +25,53 @@ import org.robolectric.annotation.SQLiteMode
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SiteProfileCatalogParserTest {
 
+    @Test
+    fun teaSelectorPinRejectsUnreviewedRoutesEvidenceAndWeakenedCertificateRules() {
+        val mutations = listOf<(JSONObject) -> Unit>(
+            { it.put("profileVersion", 2) },
+            { it.put("activation", "ENABLED") },
+            { it.put("startUrl", "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html") },
+            { it.put("capabilities", org.json.JSONArray().put("CLIENT_TLS_AUTH").put("SIGN")) },
+            { it.getJSONObject("certificateRules").put("requireDigitalSignatureKeyUsage", false) },
+            { it.getJSONObject("certificateRules").put("allowedKeyAlgorithms", org.json.JSONArray().put("RSA")) },
+            { it.getJSONObject("clientAuthPolicy").put("requestPath", "/wlpl/TEAC-TRAM/SedeTRAM") },
+            { it.getJSONObject("clientAuthPolicy").put("requestMethod", "POST") },
+            { it.getJSONObject("clientAuthPolicy").put("requestPort", 8443) },
+            { it.getJSONObject("clientAuthPolicy").put("grantTtlSeconds", 30) },
+            { it.getJSONObject("clientAuthPolicy").put("allowEmptyIssuerList", true) },
+            { it.getJSONObject("clientAuthPolicy").put("requireOfferedKeyTypeMatch", false) },
+            { it.getJSONObject("clientAuthPolicy").put("requireTlsClientAuthExtendedKeyUsage", false) },
+            { it.getJSONObject("clientAuthPolicy").put("requestOrigins",
+                org.json.JSONArray().put("https://www6.tea.hacienda.gob.es")) },
+            { it.getJSONObject("clientAuthPolicy").put("requestOrigins",
+                org.json.JSONArray().put("https://www11.tea.hacienda.gob.es")) },
+            { it.getJSONObject("clientAuthPolicy").getJSONObject("fixedQueryParameters")
+                .put("ref", "/wlpl/TEAC-TRAM/SedeTRAM?tram=2") },
+            { it.getJSONObject("clientAuthPolicy").getJSONObject("sourceFixedQueryParameters").put("rep", "S") },
+            { it.getJSONArray("evidence").getJSONObject(0).put("reviewedOn", "2026-11-08") },
+            { it.getJSONArray("evidence").getJSONObject(2).put("reviewedOn", "2026-08-14") },
+            { it.getJSONArray("evidence").put(it.getJSONArray("evidence").getJSONObject(0)) },
+        )
+        val sourceMutations = listOf(
+            "rep=S" to "rep=N", "aut=CPE" to "aut=PE", "tram%3D0" to "tram%3D2",
+            "sede.tea.hacienda.gob.es" to "foreign.example",
+        ).map { (before, after) ->
+            { profile: JSONObject ->
+                val policy = profile.getJSONObject("clientAuthPolicy")
+                policy.put("sourceUrls", org.json.JSONArray().put(
+                    policy.getJSONArray("sourceUrls").getString(0).replace(before, after),
+                ))
+            }
+        }
+        (mutations + sourceMutations).forEachIndexed { index, mutate ->
+            val root = JSONObject(BuiltInSiteProfiles.JSON)
+            mutate(schemaV2Profile(root, "tea-alegaciones-certificado"))
+            assertThrows("mutation $index", IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(root.toString())
+            }
+        }
+    }
+
     private val waveAProfiles = listOf(
         "cnmv-sede-public-home", "csd-sede-public", "policia-solicitud-generica",
         "catastro-solicitudes-genericas", "ministerio-economia-instancia-generica",
@@ -37,6 +85,7 @@ class SiteProfileCatalogParserTest {
         "diputacion-segovia-registro", "el-hierro-solicitud-general", "la-gomera-instancia-general",
         "zamora-sede-public-navigation", "zaragoza-sede-public-navigation", "el-hierro-sede-public-navigation",
         "la-gomera-sede-public-navigation", "lanzarote-sede-public-navigation", "isfas-sede-public-navigation",
+        "diputacion-pontevedra-instancia-xenerica",
     )
 
     @Test
@@ -1531,31 +1580,35 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `SEPES Transportes public profile is QA only and exposes no sensitive capability`() {
+    fun `SEPES Sisgest consultation profile permits only QA client TLS`() {
         val profileId = ProfileId("sepes-transportes-public-complaints")
-        val start = URI("https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones")
+        val start = URI("https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(start, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse("https://sede.transportes.gob.es")), profile.initiatorOrigins)
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertNotNull(profile.clientAuthPolicy)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(3, profile.evidence.size)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(7, profile.evidence.size)
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(profileId, BuiltInSiteProfiles.qaRegistry.resolve(start)?.profile?.profileId)
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(start))
+        assertEquals(profileId, BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, start)?.profile?.profileId)
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, start)?.trustMode,
+        )
         assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://sede.transportes.gob.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://sede.transportes.gob.es:444/")))
     }
@@ -1575,60 +1628,60 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `BOE public Sede profile is QA only and keeps extranet outside trust`() {
+    fun `BOE certificate login pins its QA source and TLS target`() {
         val profileId = ProfileId("boe-sede-public-home")
-        val start = URI("https://www.boe.es/informacion/index.php")
+        val start = URI("https://extranet.boe.es/anuncios/")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(start, profile.startUrl)
-        assertEquals(setOf(ExactOrigin.parse("https://www.boe.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://extranet.boe.es")), profile.initiatorOrigins)
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertNotNull(profile.clientAuthPolicy)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(2, profile.evidence.size)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(5, profile.evidence.size)
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://extranet.boe.es/quejas_el/")))
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.boe.es/informacion/index.php")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.boe.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.boe.es:444/")))
     }
 
     @Test
-    fun `Fondos Europeos public Sede profile is QA only and exposes no sensitive capability`() {
+    fun `Fondos SIRIOWS profile permits only QA client TLS`() {
         val profileId = ProfileId("fondos-europeos-sede-public-home")
-        val start = URI("https://sedefondoscomunitarios.gob.es/")
+        val start = URI("https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(start, profile.startUrl)
-        assertEquals(setOf(ExactOrigin.parse("https://sedefondoscomunitarios.gob.es")), profile.initiatorOrigins)
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://webpub2.igae.hacienda.gob.es")), profile.initiatorOrigins)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertNotNull(profile.clientAuthPolicy)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(3, profile.evidence.size)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(7, profile.evidence.size)
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sedefondoscomunitarios.gob.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sedefondoscomunitarios.gob.es:444/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://tramitesfondoseuropeos.hacienda.gob.es/dossier")))

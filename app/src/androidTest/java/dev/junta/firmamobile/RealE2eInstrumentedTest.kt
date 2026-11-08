@@ -570,6 +570,47 @@ class RealE2eInstrumentedTest {
                 )
                 clickClaveAfirmaProvider(scenario)
             }
+            PONTEVEDRA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = PONTEVEDRA_ENTRY_URL,
+                    expectedLabel = "En liña",
+                    expectedHref = PONTEVEDRA_LOGIN_HREF,
+                    expectedCssClass = "rightformbutton",
+                    requireVisible = true,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = PONTEVEDRA_LOGIN_URL,
+                    expectedLabel = "Certificado dixital ou DNI electrónico",
+                    expectedHref = "#",
+                    expectedOnClick = PONTEVEDRA_CLAVE_ONCLICK,
+                    expectedFormName = "formclave",
+                    expectedFormAction = PONTEVEDRA_FORM_ACTION,
+                    requireFormContainment = true,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            EXTREMADURA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = EXTREMADURA_ANTERIOR_CLAVE_0_URL,
+                    expectedLabel = "Miespacio",
+                    expectedHref = EXTREMADURA_LOGIN_URL,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = EXTREMADURA_LOGIN_URL,
+                    expectedElementId = "link-clave",
+                    expectedLabel = "Acceso mediante el sistema CLAVE",
+                    expectedHref = EXTREMADURA_CLAVE_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
             EXTREMADURA_ANTERIOR_PORTAL_ID -> {
                 clickExactLabeledAnchor(
                     scenario = scenario,
@@ -749,6 +790,92 @@ class RealE2eInstrumentedTest {
                 clickClaveAfirmaProvider(scenario)
             }
             // CSN: the hidden login-menu link starts Cl@ve with AFIRMA preselected; no provider choice follows.
+            BOE_PORTAL_ID -> clickBoeCertificateAnchor(scenario)
+            CMT_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CMT_ENTRY_URL,
+                    expectedLabel = "Consulta de sus trámites",
+                    expectedHref = "https://sede.cmt.gob.es/carpetaciudadana.aspx",
+                )
+                clickSedipualbaServerCertificateOptionOnLoginPage(
+                    scenario, CMT_LOGIN_URL, SEDIPUALBA_SSL_OPTION_LABEL_ES,
+                )
+            }
+            FONDOS_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = FONDOS_LOGIN_URL,
+                    expectedLabel = "Acceso con Cl@ve",
+                    expectedHref = "javascript:__doPostBack('ImageButtonClave2','')",
+                    expectedOnClick = "VerCargando();",
+                    expectedFormName = "servForm",
+                    expectedFormAction = FONDOS_LOGIN_URL,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            IMSERSO_PORTAL_ID -> clickClaveAfirmaProvider(scenario)
+            INE_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = INE_ENTRY_URL,
+                    expectedLabel = "Más trámites",
+                    expectedHref = "#accFig1254735165102",
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = INE_ENTRY_URL + "#accFig1254735165102",
+                    expectedLabel = "Consulta del estado de tramitación",
+                    expectedHref = "/tramite/estado_tramitacion/",
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = "https://sede.ine.gob.es/tramite/estado_tramitacion/",
+                    expectedLabel = "Acceso al trámite",
+                    expectedHref = "/sigem-consulta-expediente/index.jsp?lang=es_ES",
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = "https://sede.ine.gob.es/sigem-consulta-expediente/index.jsp?lang=es_ES",
+                    expectedElementId = null,
+                    expectedLabel = "Autenticarse en Cl@ve",
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    expectedTag = "input",
+                    expectedType = "submit",
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            SEPES_PORTAL_ID -> {
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = SEPES_LOGIN_URL,
+                    expectedElementId = "ctl00_ContentFormulario_controlAutenticacion_Sign",
+                    expectedLabel = "Continuar",
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    expectedTag = "input",
+                    expectedType = "submit",
+                    requireNoOnClick = true,
+                    expectedFormName = "aspnetForm",
+                    expectedFormAction = SEPES_LOGIN_URL,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            TEA_PORTAL_ID -> clickExactButton(
+                scenario = scenario,
+                expectedCurrentUrl = TEA_SELECTOR_URL,
+                expectedElementId = null,
+                expectedLabel = "Certificado o DNI electrónico",
+                expectedAriaLabel = null,
+                expectedOnClick = null,
+                waitForExpectedUrl = true,
+                expectedType = "button",
+                expectedTag = "button",
+                requireNoOnClick = true,
+            )
             CSN_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = CSN_HOME_URL,
@@ -1428,6 +1555,43 @@ class RealE2eInstrumentedTest {
         )
     }
 
+    private fun clickBoeCertificateAnchor(scenario: ActivityScenario<MainActivity>) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                if (webView.url != BOE_ENTRY_URL) {
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(boeCertificateAnchorScript()) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
     // login.aspx opens the options page in a same-origin iframe; #optSsl then navigates window.top.
     private fun clickSedipualbaServerCertificateOption(
         scenario: ActivityScenario<MainActivity>,
@@ -1442,8 +1606,15 @@ class RealE2eInstrumentedTest {
             expectedLabel = loginLabel,
             expectedHref = expectedLoginUrl,
         )
+        clickSedipualbaServerCertificateOptionOnLoginPage(scenario, expectedLoginUrl, optionLabel)
+    }
+
+    private fun clickSedipualbaServerCertificateOptionOnLoginPage(
+        scenario: ActivityScenario<MainActivity>,
+        expectedLoginUrl: String,
+        optionLabel: String,
+    ) {
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
-        val quotedLabel = JSONObject.quote(optionLabel)
         while (SystemClock.elapsedRealtime() < deadline) {
             if (hasObservedTerminalNavigationFailure()) return
             val inspected = CountDownLatch(1)
@@ -1463,26 +1634,7 @@ class RealE2eInstrumentedTest {
                     return@onActivity
                 }
                 webView.evaluateJavascript(
-                    """
-                    (() => {
-                      const frame = document.getElementById('ventanaModal');
-                      if (!frame) return 0;
-                      let doc;
-                      try { doc = frame.contentDocument; } catch (e) { return 2; }
-                      if (!doc || !doc.location) return 0;
-                      if (doc.location.origin !== location.origin ||
-                        doc.location.pathname !== '$SEDIPUALBA_OPTIONS_PATH') return 0;
-                      const option = doc.getElementById('optSsl');
-                      if (!option) return 0;
-                      const images = option.querySelectorAll('img');
-                      const titles = option.querySelectorAll('.titulo-opcion span');
-                      if (images.length !== 1 || titles.length !== 1) return 2;
-                      const title = (titles[0].textContent || '').trim().replace(/\s+/g, ' ');
-                      if (images[0].getAttribute('alt') !== $quotedLabel || title !== $quotedLabel) return 2;
-                      option.click();
-                      return 1;
-                    })()
-                    """.trimIndent(),
+                    sedipualbaServerCertificateOptionScript(expectedLoginUrl, optionLabel),
                 ) { recipeCode ->
                     when (recipeCode) {
                         "1" -> clicked = true
@@ -1789,6 +1941,9 @@ class RealE2eInstrumentedTest {
         expectedFormName: String? = null,
         expectedFormAction: String? = null,
         expectedCssClass: String? = null,
+        expectedElementId: String? = null,
+        requireVisible: Boolean = false,
+        requireFormContainment: Boolean = false,
         expectedType: String? = null,
         expectedAriaLabel: String? = null,
         expectedTitle: String? = null,
@@ -1803,7 +1958,9 @@ class RealE2eInstrumentedTest {
         val quotedExpectedOnClick = expectedOnClick?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedUrl = JSONObject.quote(expectedCurrentUrl)
         val quotedCssClass = expectedCssClass?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedElementId = expectedElementId?.let { JSONObject.quote(it) } ?: "null"
         require((expectedFormName == null) == (expectedFormAction == null))
+        require(!requireFormContainment || expectedFormName != null)
         val quotedFormName = expectedFormName?.let { JSONObject.quote(it) } ?: "null"
         val quotedFormAction = expectedFormAction?.let { JSONObject.quote(it) } ?: "null"
         while (SystemClock.elapsedRealtime() < deadline) {
@@ -1856,7 +2013,9 @@ class RealE2eInstrumentedTest {
                         .flatMap(h => h.shadowRoot ? [h.shadowRoot, ...deep(h.shadowRoot)] : []);
                       const anchors = roots.flatMap(root => Array.from(root.querySelectorAll('a')));
                       const elements = anchors.filter(element => {
+                        if ($quotedExpectedElementId !== null && element.id !== $quotedExpectedElementId) return false;
                         if ($quotedCssClass !== null && !element.classList.contains($quotedCssClass)) return false;
+                        if ($requireVisible && element.getClientRects().length === 0) return false;
                         const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
                         // A first visit without cookies gets ;jsessionid=... rewritten into every href (CSN).
                         const href = (element.getAttribute('href') || '').replace(/;jsessionid=[^?#]*/i, '');
@@ -1876,6 +2035,7 @@ class RealE2eInstrumentedTest {
                         if (forms.length !== 1 ||
                             withoutSessionId(forms[0].action) !== $quotedFormAction ||
                             (forms[0].getAttribute('method') || '').toLowerCase() !== 'post') return 2;
+                        if ($requireFormContainment && !forms[0].contains(elements[0])) return 2;
                         if (!['', '_self', '_parent'].includes(
                             (forms[0].getAttribute('target') || '').toLowerCase())) return 2;
                       }
@@ -3250,6 +3410,24 @@ class RealE2eInstrumentedTest {
     }
 
     private companion object {
+        const val BOE_PORTAL_ID = "age-agencia-estatal-del-boletin-oficial-del-estado-boe"
+        const val BOE_ENTRY_URL = "https://extranet.boe.es/anuncios/"
+        const val CMT_PORTAL_ID = "age-comisionado-para-el-mercado-de-tabacos-cmt"
+        const val CMT_ENTRY_URL = "https://sede.cmt.gob.es/"
+        const val CMT_LOGIN_URL = "https://sede.cmt.gob.es/carpetaciudadana/login.aspx?returnUrl=" +
+            "https%3a%2f%2fsede.cmt.gob.es%2fcarpetaciudadana%2fcarpeta_ciudadana.aspx"
+        const val FONDOS_PORTAL_ID = "age-direccion-general-de-fondos-europeos"
+        const val FONDOS_LOGIN_URL =
+            "https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO"
+        const val IMSERSO_PORTAL_ID = "age-instituto-de-mayores-y-servicios-sociales-imserso"
+        const val INE_PORTAL_ID = "age-instituto-nacional-de-estadistica-ine"
+        const val INE_ENTRY_URL = "https://sede.ine.gob.es/es/index.htm"
+        const val SEPES_PORTAL_ID = "age-entidad-publica-empresarial-de-suelo-sepes"
+        const val SEPES_LOGIN_URL = "https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx"
+        const val TEA_PORTAL_ID = "age-sede-electronica-de-los-tribunales-economico-administrativos-tea"
+        const val TEA_SELECTOR_URL =
+            "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"
         const val REAL_E2E_ARGUMENT = "realE2e"
         const val DEEP_ARGUMENT = "realE2eDeep"
         const val PORTAL_ID_ARGUMENT = "portalId"
@@ -3399,7 +3577,6 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_MALLORCA_LOGIN_URL =
             "https://cim.secimallorca.net/carpetaciudadana/login.aspx?returnUrl=" +
                 "https%3a%2f%2fcim.secimallorca.net%2fsegex%2ftramite.aspx%3fidtramite%3d12082"
-        const val SEDIPUALBA_OPTIONS_PATH = "/segex/identificacion_opciones.aspx"
         const val SEDIPUALBA_LOGIN_LABEL_ES = "Iniciar sesi\u00f3n"
         const val SEDIPUALBA_LOGIN_LABEL_CA = "Iniciar sessi\u00f3"
         const val SEDIPUALBA_SSL_OPTION_LABEL_ES =
@@ -3542,6 +3719,21 @@ class RealE2eInstrumentedTest {
             "https://sede.educacion.gob.es/sede/login/loginConv.jjsp" +
                 "?iA=no&idConvocatoria=46"
         const val EDUCATION_CLAVE_ID = "login_texto_entrar"
+        const val PONTEVEDRA_PORTAL_ID = "diputacion-pontevedra-sede"
+        const val PONTEVEDRA_ENTRY_URL = "https://sede.depo.gal/web/public/catalog-detail/50709505"
+        const val PONTEVEDRA_LOGIN_HREF =
+            "/web/private/registry/external-registryinput-new.xhtml" +
+                "?idbduacproceduretype=50709505&ispresential=0"
+        const val PONTEVEDRA_LOGIN_URL = "https://sede.depo.gal" + PONTEVEDRA_LOGIN_HREF
+        const val PONTEVEDRA_FORM_ACTION = "https://sede.depo.gal/web/public/login/login.xhtml"
+        // shortcut: generated JSF id may change, revalidate the login DOM when Pontevedra changes the control.
+        const val PONTEVEDRA_CLAVE_ONCLICK =
+            "mojarra.jsfcljs(document.getElementById('formclave')," +
+                "{'formclave:j_idt231':'formclave:j_idt231'},'');return false"
+        const val EXTREMADURA_PORTAL_ID = "extremadura-tramites"
+        const val EXTREMADURA_LOGIN_URL =
+            "https://tramites.juntaex.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
+        const val EXTREMADURA_CLAVE_HREF = "/sta/CarpetaPrivate/Clave2Request?APP_CODE=STA&PAGE_CODE=HOME"
         const val EXTREMADURA_ANTERIOR_PORTAL_ID = "extremadura-sede-anterior"
         const val EXTREMADURA_ANTERIOR_CLAVE_0_URL =
             "https://tramites.juntaex.es/sta/CarpetaPublic/?APP_CODE=STA&PAGE_CODE=PTS2_HOME"
@@ -3804,3 +3996,52 @@ class RealE2eInstrumentedTest {
         )
     }
 }
+
+internal fun boeCertificateAnchorScript(): String = """
+    (() => {
+      if (document.location.href !== 'https://extranet.boe.es/anuncios/' ||
+          document.readyState !== 'complete') return 0;
+      const href = 'https://extranet.boe.es/id/check-cert.php?referer=https://extranet.boe.es/anuncios/';
+      const anchors = Array.from(document.querySelectorAll('a')).filter(a => a.getAttribute('href') === href);
+      if (anchors.length === 0) return 0;
+      if (anchors.length !== 1) return 2;
+      const anchor = anchors[0];
+      if ((anchor.textContent || '').trim().replace(/\s+/g, ' ') !== '' ||
+          anchor.getAttribute('onclick') !== null ||
+          !['', '_self'].includes((anchor.getAttribute('target') || '').toLowerCase())) return 2;
+      const images = anchor.querySelectorAll('img');
+      if (images.length !== 1 || images[0].getAttribute('name') !== 'certificado' ||
+          images[0].getAttribute('alt') !== 'Identificación con certificado electrónico' ||
+          images[0].getAttribute('src') !== '/imagenes/certificado_txt.png') return 2;
+      anchor.click();
+      return 1;
+    })()
+""".trimIndent()
+
+internal fun sedipualbaServerCertificateOptionScript(expectedLoginUrl: String, optionLabel: String): String = """
+    (() => {
+      if (document.location.href !== ${JSONObject.quote(expectedLoginUrl)} ||
+          document.readyState !== 'complete') return 0;
+      const frames = document.querySelectorAll('[id="ventanaModal"]');
+      if (frames.length === 0) return 0;
+      if (frames.length !== 1 || frames[0].tagName !== 'IFRAME') return 2;
+      let doc;
+      try { doc = frames[0].contentDocument; } catch (e) { return 2; }
+      if (!doc || !doc.location || doc.readyState !== 'complete') return 0;
+      if (doc.location.origin !== location.origin ||
+          doc.location.pathname !== '/segex/identificacion_opciones.aspx') return 0;
+      const options = doc.querySelectorAll('[id="optSsl"]');
+      if (options.length === 0) return 0;
+      if (options.length !== 1 || options[0].tagName !== 'TBODY') return 2;
+      const option = options[0];
+      if (!['', '_self'].includes((option.getAttribute('target') || '').toLowerCase())) return 2;
+      const images = option.querySelectorAll('img');
+      const titles = option.querySelectorAll('.titulo-opcion span');
+      if (images.length !== 1 || titles.length !== 1) return 2;
+      const title = (titles[0].textContent || '').trim().replace(/\s+/g, ' ');
+      const label = ${JSONObject.quote(optionLabel)};
+      if (images[0].getAttribute('alt') !== label || title !== label) return 2;
+      option.click();
+      return 1;
+    })()
+""".trimIndent()

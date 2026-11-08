@@ -42,6 +42,62 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
+    fun `wave F preserves inventory entries and binds exact QA login starts with an unprofiled primary route`() {
+        val routes = listOf(
+            Triple("boe-sede-public-home", "https://www.boe.es/informacion/index.php",
+                "https://extranet.boe.es/anuncios/"),
+            Triple("cmt-public-navigation", "https://sede.cmt.gob.es/", "https://sede.cmt.gob.es/"),
+            Triple("fondos-europeos-sede-public-home", "https://sedefondoscomunitarios.gob.es/",
+                "https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO"),
+            Triple("imserso-sede-public-navigation", "https://sede.imserso.gob.es/inicio",
+                "https://sede.imserso.gob.es/sedecdi?locale=es&action=consulta&representante=no&aut=si"),
+            Triple("ine-sede-public-navigation", "https://sede.ine.gob.es/es/index.htm",
+                "https://sede.ine.gob.es/es/index.htm"),
+            Triple("sepes-transportes-public-complaints",
+                "https://sede.transportes.gob.es/grupo-transportes/" +
+                    "entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
+                "https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx"),
+            Triple("tea-alegaciones-certificado", "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
+                "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+                    "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"),
+        )
+        routes.forEach { (id, entry, launch) ->
+            val profileId = ProfileId(id)
+            val portal = qaRepository.portals().single { it.profileId == profileId }
+            val metadata = publicCatalog.entries.single { it.portalId == portal.portalId }
+            assertEquals(java.net.URI(entry), metadata.entryUrl)
+            assertEquals(if (entry == launch) null else java.net.URI(launch), metadata.launchUrl)
+            assertEquals(PortalLaunchTarget(profileId, java.net.URI(launch)), qaRepository.resolveLaunch(portal))
+            assertEquals(
+                PortalOpenTarget.PublicWeb(java.net.URI(launch)),
+                qaRepository.resolveUniversalOpenTarget(portal),
+            )
+            val release = releaseRepository.portals().single { it.portalId == portal.portalId }
+            assertNull(releaseRepository.resolveLaunch(release))
+            assertEquals(
+                qaRepository.resolveUniversalOpenTarget(portal),
+                releaseRepository.resolveUniversalOpenTarget(release),
+            )
+            val attacks = listOfNotNull(
+                launch + "&extra=1", launch.replace("code=SIRIOWS", "code=OTHER").takeIf { it != launch },
+                launch.replace("ta=ANO", "ta=OTHER").takeIf { it != launch },
+                launch.replace("action=consulta", "action=solicitud").takeIf { it != launch },
+                launch.replace("rep=S", "rep=N").takeIf { it != launch },
+                launch.replace("aut=CPE", "aut=PE").takeIf { it != launch },
+                launch.replace("tram%3D0", "tram%3D2").takeIf { it != launch },
+                "https://unreviewed.example/login",
+            )
+            attacks.forEach { attack ->
+                val data = publicCatalog.copy(entries = publicCatalog.entries.map {
+                    if (it.portalId == portal.portalId) it.copy(launchUrl = java.net.URI(attack)) else it
+                })
+                val changed = PortalCatalogRepository(SiteProfileRegistry(catalog, BuildTrustPolicy.QA), catalog, data)
+                assertNull(attack, changed.resolveLaunch(portal.portalId, java.net.URI(entry)))
+            }
+        }
+    }
+
+    @Test
     fun `verification date comes only from an exactly bound verified profile`() {
         val items = qaRepository.portals()
         val verified = items.filter { it.lastVerifiedOn != null }
@@ -2101,15 +2157,23 @@ class PortalCatalogRepositoryTest {
         assertEquals(profileId, qaPortal.profileId)
         assertEquals(publicPage, qaPortal.entryUrl)
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertTrue(qaPortal.isEnabled)
-        assertEquals(PortalLaunchTarget(profileId, publicPage), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(
+                profileId,
+                java.net.URI("https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx"),
+            ),
+            qaRepository.resolveLaunch(qaPortal),
+        )
 
         val signingStart = java.net.URI("https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002")
+        assertNull(SiteProfileRegistry(catalog, BuildTrustPolicy.QA).resolve(signingStart))
         assertEquals(
             ProfileId("transportes-qys-cert-login"),
-            SiteProfileRegistry(catalog, BuildTrustPolicy.QA).resolve(signingStart)?.profile?.profileId,
+            SiteProfileRegistry(catalog, BuildTrustPolicy.QA)
+                .resolveForProfile(ProfileId("transportes-qys-cert-login"), signingStart)?.profile?.profileId,
         )
 
         val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
@@ -2120,7 +2184,9 @@ class PortalCatalogRepositoryTest {
         val tamperedCatalog = publicCatalog.copy(
             entries = publicCatalog.entries.map { entry ->
                 if (entry.portalId == portalId) {
-                    entry.copy(entryUrl = java.net.URI("https://sede.transportes.gob.es/Procedimiento/?procedureKey=7601"))
+                    entry.copy(
+                        launchUrl = java.net.URI("https://sede.transportes.gob.es/Procedimiento/?procedureKey=7601"),
+                    )
                 } else {
                     entry
                 }
@@ -2138,7 +2204,7 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `BOE public Sede opens only exact information page in QA while extranet remains fail closed`() {
+    fun `BOE preserves information entry and launches only exact QA identification`() {
         val portalId = PortalId("age-agencia-estatal-del-boletin-oficial-del-estado-boe")
         val profileId = ProfileId("boe-sede-public-home")
         val publicHome = java.net.URI("https://www.boe.es/informacion/index.php")
@@ -2147,11 +2213,17 @@ class PortalCatalogRepositoryTest {
         assertEquals(profileId, qaPortal.profileId)
         assertEquals(publicHome, qaPortal.entryUrl)
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertTrue(qaPortal.isEnabled)
-        assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(qaPortal))
-        assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(profileId, publicHome))
+        assertEquals(
+            PortalLaunchTarget(profileId, java.net.URI("https://extranet.boe.es/anuncios/")),
+            qaRepository.resolveLaunch(qaPortal),
+        )
+        assertEquals(
+            PortalLaunchTarget(profileId, java.net.URI("https://extranet.boe.es/anuncios/")),
+            qaRepository.resolveLaunch(profileId, publicHome),
+        )
 
         val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
@@ -2160,7 +2232,11 @@ class PortalCatalogRepositoryTest {
 
         val tamperedCatalog = publicCatalog.copy(
             entries = publicCatalog.entries.map { entry ->
-                if (entry.portalId == portalId) entry.copy(entryUrl = java.net.URI("https://extranet.boe.es/quejas_el/")) else entry
+                if (entry.portalId == portalId) {
+                    entry.copy(launchUrl = java.net.URI("https://extranet.boe.es/quejas_el/"))
+                } else {
+                    entry
+                }
             },
         )
         val tampered = PortalCatalogRepository(
@@ -2217,7 +2293,7 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `Fondos Europeos opens only exact public Sede in QA while external services remain fail closed`() {
+    fun `Fondos preserves public Sede entry and launches exact QA SIRIOWS`() {
         val portalId = PortalId("age-direccion-general-de-fondos-europeos")
         val profileId = ProfileId("fondos-europeos-sede-public-home")
         val publicHome = java.net.URI("https://sedefondoscomunitarios.gob.es/")
@@ -2226,10 +2302,16 @@ class PortalCatalogRepositoryTest {
         assertEquals(profileId, qaPortal.profileId)
         assertEquals(publicHome, qaPortal.entryUrl)
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertTrue(qaPortal.isEnabled)
-        assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(qaPortal))
+        assertEquals(
+            PortalLaunchTarget(
+                profileId,
+                java.net.URI("https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO"),
+            ),
+            qaRepository.resolveLaunch(qaPortal),
+        )
 
         val releasePortal = releaseRepository.portals().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
@@ -2237,7 +2319,11 @@ class PortalCatalogRepositoryTest {
         assertEquals(null, releaseRepository.resolveLaunch(releasePortal))
 
         val tamperedCatalog = publicCatalog.copy(entries = publicCatalog.entries.map { entry ->
-            if (entry.portalId == portalId) entry.copy(entryUrl = java.net.URI("https://tramitesfondoseuropeos.hacienda.gob.es/dossier")) else entry
+            if (entry.portalId == portalId) {
+                entry.copy(launchUrl = java.net.URI("https://tramitesfondoseuropeos.hacienda.gob.es/dossier"))
+            } else {
+                entry
+            }
         })
         val tampered = PortalCatalogRepository(SiteProfileRegistry(catalog, BuildTrustPolicy.QA), catalog, tamperedCatalog)
         val tamperedPortal = tampered.portals().single { it.portalId == portalId }

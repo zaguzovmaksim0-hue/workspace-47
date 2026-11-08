@@ -15,11 +15,37 @@ class ReviewedOriginSharesTest {
     @Test
     fun canonicalCatalogPublishesTypedDirectionalDeclarations() {
         val catalog = SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON)
-        assertEquals(151, catalog.reviewedOriginShares.size)
-        assertEquals(5882, catalog.reviewedOriginShares.sumOf { it.laterOwners.size })
+        assertEquals(166, catalog.reviewedOriginShares.size)
+        assertEquals(7020, catalog.reviewedOriginShares.sumOf { it.laterOwners.size })
         assertTrue(catalog.reviewedOriginShares.all { share ->
             share.firstOwner !in share.laterOwners && share.redirectRoles.isNotEmpty()
         })
+    }
+
+    @Test
+    fun cmtSharesOnlyTheFourReviewedSedipualbaRequestOwnersWithoutRedirectAuthority() {
+        val catalog = SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON)
+        val shares = catalog.reviewedOriginShares.filter {
+            it.origin.serialized == "https://identificacionssl.sedipualba.es" &&
+                it.firstOwner == ProfileId("cmt-public-navigation")
+        }
+        assertEquals(1, shares.size)
+        assertEquals(
+            setOf("diputacion-leon-sede", "diputacion-albacete-portal",
+                "consell-mallorca-sede", "diputacion-cuenca-portal").map(::ProfileId).toSet(),
+            shares.single().laterOwners,
+        )
+        assertEquals(setOf(RedirectOriginRoles.NEITHER), shares.single().redirectRoles)
+        val declaration = declarations.lines().first {
+            it.contains("\"firstOwner\":\"cmt-public-navigation\"")
+        }.trim().removeSuffix(",")
+        rejects(declarations.replaceFirst(declaration, declaration.replace("NEITHER", "BOTH")))
+        rejects(
+            declarations.replaceFirst(declaration, declaration.replace("diputacion-leon-sede", "boe-sede-public-home")),
+        )
+        val removed = declarations.replaceFirst(declaration, "").replace(Regex(",\\s*]$"), "]")
+        assertTrue(removed != declarations)
+        rejects(removed)
     }
 
     @Test

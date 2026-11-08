@@ -727,6 +727,7 @@ object SiteProfileCatalogParser {
                             p.profileId.value == ALBACETE_PROFILE_ID ||
                             p.profileId.value == CUENCA_PROFILE_ID ||
                             p.profileId.value == MALLORCA_PROFILE_ID ||
+                            p.profileId.value == "cmt-public-navigation" ||
                             p.profileId.value == GVA_PROFILE_ID ||
                             p.profileId.value == SORIA_PROFILE_ID ||
                             p.profileId.value == AEAT_MIS_DATOS_PROFILE_ID ||
@@ -1185,7 +1186,7 @@ object SiteProfileCatalogParser {
             ),
             sourceUrl = CLAVE_REDIRECT_URL,
             keyAlgorithms = setOf("RSA", "EC"),
-            evidence = evidence + claveEvidence("2026-11-07", CLAVE_REDIRECT_URL, CLAVE_IDENT_EVIDENCE_URL),
+            evidence = claveEvidence("2026-11-07", CLAVE_REDIRECT_URL, CLAVE_IDENT_EVIDENCE_URL) + evidence,
         )
 
     private class ClaveDirectPin(
@@ -1639,15 +1640,17 @@ object SiteProfileCatalogParser {
                 requestOrigins = setOf(ExactOrigin.parse(TEA_REQUEST_ORIGIN)),
                 sourceUrls = setOf(URI(TEA_SOURCE_URL)),
                 requestPath = TEA_REQUEST_PATH,
-                fixedQueryParameters = linkedMapOf("tram" to "0"),
+                fixedQueryParameters = linkedMapOf("ref" to "/wlpl/TEAC-TRAM/SedeTRAM?tram=0"),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
                 grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
                 requestPort = HTTPS_PORT,
             ),
         )
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TEA_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+        require(profile.evidence.size == TEA_EVIDENCE_REVIEWS.size)
+        require(
+            profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == TEA_EVIDENCE_REVIEWS,
+        )
     }
 
     private fun validateCanariasProfile(profile: SiteProfile) {
@@ -3079,6 +3082,12 @@ object SiteProfileCatalogParser {
         secondIsRedirectOrigin: Boolean,
     ): Boolean =
         (!firstIsRedirectOrigin && !secondIsRedirectOrigin &&
+            origin.serialized == SEDIPUALBA_CLIENT_AUTH_ORIGIN &&
+            setOf(firstOwner.value, secondOwner.value).let { owners ->
+                owners.size == 2 && "cmt-public-navigation" in owners &&
+                    owners.any { it in SEDIPUALBA_UNLINKED_IDTOKEN_PROFILE_IDS - "cmt-public-navigation" }
+            }) ||
+        (!firstIsRedirectOrigin && !secondIsRedirectOrigin &&
             setOf(firstOwner.value, secondOwner.value) ==
                 setOf(SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID, IMPORTASS_PROFILE_ID) &&
             origin.serialized in setOf(IMPORTASS_IDP_ORIGIN, IMPORTASS_REQUEST_ORIGIN)) ||
@@ -3134,6 +3143,7 @@ object SiteProfileCatalogParser {
                             AESA_PROFILE_ID,
                             DGSFP_PROFILE_ID,
                             CSN_PROFILE_ID,
+                            PONTEVEDRA_PROFILE_ID,
                             CNMV_PROFILE_ID,
                             CSD_PROFILE_ID,
                             POLICIA_PROFILE_ID,
@@ -3146,6 +3156,10 @@ object SiteProfileCatalogParser {
                             JUSTICIA_PROFILE_ID,
                             MADRID_SEDE_PROFILE_ID,
                             MJUSTICIA_PROFILE_ID,
+                            FONDOS_PROFILE_ID,
+                            IMSERSO_PROFILE_ID,
+                            INE_PROFILE_ID,
+                            SEPES_TRANSPORTES_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -3192,6 +3206,7 @@ object SiteProfileCatalogParser {
                             GRANADA_PROFILE_ID,
                             ICO_PROFILE_ID,
                             CADIZ_PROFILE_ID,
+                            PONTEVEDRA_PROFILE_ID,
                             CNMV_PROFILE_ID,
                             CSD_PROFILE_ID,
                             POLICIA_PROFILE_ID,
@@ -3205,6 +3220,10 @@ object SiteProfileCatalogParser {
                             JUSTICIA_PROFILE_ID,
                             MADRID_SEDE_PROFILE_ID,
                             MJUSTICIA_PROFILE_ID,
+                            FONDOS_PROFILE_ID,
+                            IMSERSO_PROFILE_ID,
+                            INE_PROFILE_ID,
+                            SEPES_TRANSPORTES_PROFILE_ID,
                         )
                     }
                     else -> false
@@ -3498,6 +3517,9 @@ object SiteProfileCatalogParser {
         "https://ws235-3.juntadeandalucia.es/authenticationFacade/4",
         "https://ws235-4.juntadeandalucia.es/authenticationFacade/5",
     ).associateWith { "2026-08-28" }
+    private const val FONDOS_PROFILE_ID = "fondos-europeos-sede-public-home"
+    private const val IMSERSO_PROFILE_ID = "imserso-sede-public-navigation"
+    private const val INE_PROFILE_ID = "ine-sede-public-navigation"
     private const val CLAVE_IDENT_ORIGIN = "https://pasarela-ident.clave.gob.es"
     private const val CLAVE_AUTHENTICATE_PATH = "/IdP2/AuthenticateCitizen"
     private const val CLAVE_IDENT_EVIDENCE_URL = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
@@ -3515,6 +3537,78 @@ object SiteProfileCatalogParser {
     private const val CLAVE_DIRECT_PROFILE_VERSION = 2
 
     private val CLAVE_DIRECT_PINS = mapOf(
+        FONDOS_PROFILE_ID to gestionaClavePin(
+            displayName = "Fondos Europeos — acceso SIRIOWS (Incentivos Regionales)",
+            startUrl = "https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO",
+            evidence = claveEvidence(
+                "2026-08-24",
+                "https://sedefondoscomunitarios.gob.es/",
+                "https://sedefondoscomunitarios.gob.es/sitios/sedeincentivosregionales/es-ES" +
+                "/serviciosElectronicos/Paginas/serviciosElectronicos.aspx",
+                "https://sedefondoscomunitarios.gob.es/sitios/sedeincentivosregionales/es-ES/Paginas" +
+                "/FirmaElectronica.aspx",
+            ) + claveEvidence(
+                "2026-11-08",
+                "https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        IMSERSO_PROFILE_ID to gestionaClavePin(
+            displayName = "IMSERSO — consulta de solicitudes",
+            startUrl = "https://sede.imserso.gob.es/sedecdi?locale=es&action=consulta&representante=no&aut=si",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://sede.imserso.gob.es/inicio",
+            ) + claveEvidence(
+                "2026-11-08",
+                "https://sede.imserso.gob.es/sedecdi?locale=es&action=consulta&representante=no&aut=si",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        INE_PROFILE_ID to ClaveDirectPin(
+            displayName = "INE — consulta del estado de tramitación",
+            startUrl = "https://sede.ine.gob.es/es/index.htm",
+            origins = ClaveOriginPins(
+                initiator = "https://sede.ine.gob.es",
+                redirect = setOf("https://servicios.ine.es", CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://sede.ine.gob.es/es/index.htm",
+            ) + claveEvidence(
+                "2026-11-08",
+                "https://sede.ine.gob.es/tramite/estado_tramitacion/",
+                "https://sede.ine.gob.es/sigem-consulta-expediente/index.jsp?lang=es_ES",
+                "https://servicios.ine.es/autenticacion-web/autenticacionClave.xhtml",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        SEPES_TRANSPORTES_PROFILE_ID to gestionaClavePin(
+            displayName = "SEPES / CASA 47 — consulta de trámites (Sede Transportes)",
+            startUrl = "https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx",
+            evidence = claveEvidence(
+                "2026-08-24",
+                "https://sede.transportes.gob.es/grupo-transportes" +
+                "/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
+                "https://sede.transportes.gob.es/Procedimiento/?procedureKey=7601",
+                "https://sede.transportes.gob.es/conoce-sede/normativa-de-la-sede",
+            ) + claveEvidence(
+                "2026-11-08",
+                "https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
         ASTURIAS_PROFILE_ID to ClaveDirectPin(
             displayName = "Principado de Asturias — MiPrincipado / Solicitud Genérica",
             startUrl = "https://miprincipado.asturias.es/-/dboid-6269000102616541907573" +
@@ -4151,6 +4245,22 @@ object SiteProfileCatalogParser {
                 CLAVE_PROVIDER_URL,
             ),
         ),
+        PONTEVEDRA_PROFILE_ID to gestionaClavePin(
+            displayName = "Deputación de Pontevedra — Instancia xenérica",
+            startUrl = "https://sede.depo.gal/web/public/catalog-detail/50709505",
+            evidence = claveEvidence(
+                "2026-08-20",
+                "https://sede.depo.gal/web/public/catalog-detail/50709505",
+                "https://sede.depo.gal/web/private/registry/external-registryinput-new.xhtml" +
+                    "?idbduacproceduretype=50709505&ispresential=0",
+                "https://sede.depo.gal/web/javax.faces.resource/afirma/common-js/firma.js",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede.depo.gal/web/public/login/login.xhtml",
+                "https://sede.depo.gal/web/public/login/redirect-clave.xhtml",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
         CSN_PROFILE_ID to ClaveDirectPin(
             displayName = "Consejo de Seguridad Nuclear — sede pública",
             startUrl = "https://sede.csn.gob.es/",
@@ -4324,13 +4434,18 @@ object SiteProfileCatalogParser {
     private const val TEA_PROFILE_ID = "tea-alegaciones-certificado"
     private const val TEA_PROFILE_VERSION = 1
     private const val TEA_DISPLAY_NAME = "TEA — Alegaciones con certificado"
-    private const val TEA_SOURCE_URL = "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+    private const val TEA_SOURCE_URL =
+        "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+            "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"
     private const val TEA_SOURCE_ORIGIN = "https://sede.tea.hacienda.gob.es"
     private const val TEA_REQUEST_ORIGIN = "https://www1.tea.hacienda.gob.es"
-    private const val TEA_REQUEST_PATH = "/wlpl/TEAC-TRAM/SedeTRAM"
-    private val TEA_EVIDENCE_URLS = setOf(
-        TEA_SOURCE_URL,
-        "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
+    private const val TEA_REQUEST_PATH = "/wlpl/OVCT-CXEW/DialogoRepresentacion"
+    private val TEA_EVIDENCE_REVIEWS = mapOf(
+        "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html" to "2026-08-14",
+        "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0" to "2026-08-14",
+        TEA_SOURCE_URL to "2026-11-08",
+        "https://www1.tea.hacienda.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+            "?ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0" to "2026-11-08",
     )
     private const val LLEIDA_PROFILE_ID = "diputacion-lleida-sede"
     private const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"
@@ -4523,6 +4638,7 @@ object SiteProfileCatalogParser {
     private const val MALAGA_PROFILE_ID = "diputacion-malaga-instancia-general"
     private const val SEDIPUALBA_ID_TOKEN = "idtoken"
     private val SEDIPUALBA_UNLINKED_IDTOKEN_PROFILE_IDS = setOf(
+        "cmt-public-navigation",
         "diputacion-albacete-portal",
         "diputacion-cuenca-portal",
         "diputacion-leon-sede",
@@ -4634,6 +4750,8 @@ object SiteProfileCatalogParser {
         "https://tramites.juntaex.es/",
         "https://tramites.juntaex.es/sta/",
         "https://tramites.juntaex.es/sta/CarpetaPublic/?APP_CODE=STA&PAGE_CODE=PTS2_HOME",
+        "https://tramites.juntaex.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME",
+        "https://tramites.juntaex.es/sta/CarpetaPrivate/Clave2Request?APP_CODE=STA&PAGE_CODE=HOME",
     )
     private val FUERTEVENTURA_CLAVE_EVIDENCE = claveEvidence(
         "2026-08-18",
@@ -4657,6 +4775,7 @@ object SiteProfileCatalogParser {
     private const val AESA_PROFILE_ID = "aesa-solicitud-general-public"
     private const val DGSFP_PROFILE_ID = "dgsfp-sede-public-home"
     private const val CSN_PROFILE_ID = "csn-sede-public"
+    private const val PONTEVEDRA_PROFILE_ID = "diputacion-pontevedra-instancia-xenerica"
     private const val CNMV_PROFILE_ID = "cnmv-sede-public-home"
     private const val CSD_PROFILE_ID = "csd-sede-public"
     private const val RED_ES_PROFILE_ID = "red-es-sede-public-navigation"

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "04ecc50b04aeb4edeb2b6cd031ac7fe750fc941bc75d26aae257438b699a5e20",
+  "sourceRevision": "82ad36243211315dbf10019f70623f7f67176d61af3818db66835ebf544e5f2a",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -750,25 +750,31 @@
       "portalId": "age-agencia-estatal-del-boletin-oficial-del-estado-boe",
       "inventoryId": "ES-PUB-0026",
       "profileId": "boe-sede-public-home",
-      "displayName": "Sede electrónica / información pública y trámites administrativos",
+      "displayName": "BOE — identificación de anuncios BOE/BORME",
       "organization": "Agencia Estatal del Boletín Oficial del Estado (BOE)",
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Navegación QA integrada exclusivamente a la página pública estable «La Sede Electrónica» de BOE.es. Los trámites administrativos que saltan a extranet.boe.es, la autenticación y cualquier firma quedan fuera del contrato implementado.",
+      "purpose": "BOE — identificación de anuncios BOE/BORME. Acceso QA_ONLY exclusivamente de identificación/consulta; sin firma, presentación, documentos ni pagos.",
       "entryUrl": "https://www.boe.es/informacion/index.php",
-      "observedMechanisms": [],
+      "launchUrl": "https://extranet.boe.es/anuncios/",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "BOE_SEDE_PUBLIC_NAVIGATION",
+      "protocolFamily": "CLIENT_TLS_AUTH",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11",
-        "BOE-SEDE-2026-08-23"
+        "BOE-SEDE-2026-08-23",
+        "WAVE-F-LOGIN-2026-11-08",
+        "PROBE-42464190557"
       ],
-      "reviewedOn": "2026-08-23",
-      "limitations": "Perfil nuevo VERIFIED_CONTRACT/QA_ONLY limitado al entry público exacto https://www.boe.es/informacion/index.php y sin capacidades sensibles. extranet.boe.es permanece fuera de trustedBrowseOrigins; firma, certificado operativo y presentación requieren un contrato separado."
+      "reviewedOn": "2026-11-08",
+      "limitations": "VERIFIED_CONTRACT/QA_ONLY de CLIENT_TLS_AUTH; entry_url histórico conservado. Solo el inicio exacto revisado y su transición de certificado están autorizados."
     },
     {
       "portalId": "age-autoridad-independiente-de-responsabilidad-fiscal-airef",
@@ -897,24 +903,29 @@
       "portalId": "age-comisionado-para-el-mercado-de-tabacos-cmt",
       "inventoryId": "ES-PUB-0031",
       "profileId": "cmt-public-navigation",
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "displayName": "CMT — consulta de sus trámites",
       "organization": "Comisionado para el Mercado de Tabacos (CMT)",
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Navegación pública QA-only a la Sede electrónica del CMT y a su catálogo público de servicios.",
+      "purpose": "CMT — consulta de sus trámites. Acceso QA_ONLY exclusivamente de identificación/consulta; sin firma, presentación, documentos ni pagos.",
       "entryUrl": "https://sede.cmt.gob.es/",
-      "observedMechanisms": [],
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "CMT_PUBLIC_NAVIGATION_BOUNDARY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
-        "D11"
+        "D11",
+        "WAVE-F-LOGIN-2026-11-08",
+        "PROBE-42464190557"
       ],
-      "reviewedOn": "2026-08-23",
-      "limitations": "Perfil QA_ONLY limitado al origen público exacto sede.cmt.gob.es; autenticación, client TLS, firma, formato, algoritmo, endpoints y presentación permanecen NO_VERIFICADO y el E2E sigue pendiente."
+      "reviewedOn": "2026-11-08",
+      "limitations": "VERIFIED_CONTRACT/QA_ONLY de CLIENT_TLS_AUTH; entry_url histórico conservado. Solo el inicio exacto revisado y su transición de certificado están autorizados."
     },
     {
       "portalId": "age-comision-nacional-de-los-mercados-y-la-competencia-cnmc",
@@ -1119,25 +1130,31 @@
       "portalId": "age-direccion-general-de-fondos-europeos",
       "inventoryId": "ES-PUB-0039",
       "profileId": "fondos-europeos-sede-public-home",
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "displayName": "Fondos Europeos — acceso SIRIOWS (Incentivos Regionales)",
       "organization": "Dirección General de Fondos Europeos",
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Navegación QA delimitada a la Sede pública oficial y su catálogo first-party; los servicios externos de Hacienda/RED SARA quedan fuera del trust implementado.",
+      "purpose": "Fondos Europeos — acceso SIRIOWS (Incentivos Regionales). Acceso QA_ONLY exclusivamente de identificación/consulta; sin firma, presentación, documentos ni pagos.",
       "entryUrl": "https://sedefondoscomunitarios.gob.es/",
-      "observedMechanisms": [],
+      "launchUrl": "https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "DGFE_PUBLIC_SEDE_NAVIGATION",
+      "protocolFamily": "CLIENT_TLS_AUTH",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11",
-        "DGFE-SEDE-2026-08-24"
+        "DGFE-SEDE-2026-08-24",
+        "WAVE-F-LOGIN-2026-11-08",
+        "PROBE-42464190557"
       ],
-      "reviewedOn": "2026-08-24",
-      "limitations": "La landing y páginas first-party están revalidadas y permiten un contrato QA-only de navegación pública. Autenticación, certificado, firma, notificaciones, RED SARA y tramitación externa requieren contratos separados y permanecen fuera del perfil."
+      "reviewedOn": "2026-11-08",
+      "limitations": "VERIFIED_CONTRACT/QA_ONLY de CLIENT_TLS_AUTH; entry_url histórico conservado. Solo el inicio exacto revisado y su transición de certificado están autorizados."
     },
     {
       "portalId": "age-direccion-general-de-la-guardia-civil",
@@ -1283,28 +1300,32 @@
       "portalId": "age-entidad-publica-empresarial-de-suelo-sepes",
       "inventoryId": "ES-PUB-0045",
       "profileId": "sepes-transportes-public-complaints",
-      "displayName": "Quejas y reclamaciones — SEPES / Sede Transportes",
+      "displayName": "SEPES / CASA 47 — consulta de trámites (Sede Transportes)",
       "organization": "Entidad Pública Empresarial de Suelo (SEPES)",
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Navegación QA exacta a la ficha pública vigente de Quejas y reclamaciones de SEPES dentro de la Sede del Ministerio de Transportes; autenticación, firma y presentación quedan fuera del contrato implementado.",
+      "purpose": "SEPES / CASA 47 — consulta de trámites (Sede Transportes). Acceso QA_ONLY exclusivamente de identificación/consulta; sin firma, presentación, documentos ni pagos.",
       "entryUrl": "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
+      "launchUrl": "https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx",
       "observedMechanisms": [
-        "ELECTRONIC_SIGNATURE"
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
       ],
       "observedSignatureFormats": [],
-      "protocolFamily": "SEPES_TRANSPORTES_PUBLIC_NAVIGATION",
+      "protocolFamily": "CLIENT_TLS_AUTH",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11",
         "SEPES-TRANSPORTES-2026-08-24",
-        "SEPES-TRANSPORTES-NORMATIVA-2026-08-24"
+        "SEPES-TRANSPORTES-NORMATIVA-2026-08-24",
+        "WAVE-F-LOGIN-2026-11-08",
+        "PROBE-42464190557"
       ],
-      "reviewedOn": "2026-08-24",
-      "limitations": "Existe una ruta oficial first-party vigente y TLS-válida ligada directamente a SEPES, suficiente para navegación QA. El launch procedureKey=7601 termina actualmente HTTP 500, así que no se modela autenticación o firma. El perfil Transportes existente id=7002 corresponde a otro procedimiento y su contrato SHA1/XAdES no se reutiliza; el origin heredado www.sepes.es mantiene un certificado caducado y no se usa ni se sortea."
+      "reviewedOn": "2026-11-08",
+      "limitations": "VERIFIED_CONTRACT/QA_ONLY de CLIENT_TLS_AUTH; entry_url histórico conservado. Consulta compartida de Sede Transportes, no soporte de /Procedimiento/?procedureKey=7601 ni de presentación de Quejas."
     },
     {
       "portalId": "age-fondo-de-garantia-salarial-fogasa",
@@ -1492,25 +1513,31 @@
       "portalId": "age-instituto-de-mayores-y-servicios-sociales-imserso",
       "inventoryId": "ES-PUB-0053",
       "profileId": "imserso-sede-public-navigation",
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "displayName": "IMSERSO — consulta de solicitudes",
       "organization": "Instituto de Mayores y Servicios Sociales (IMSERSO)",
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Navegación QA-only a la entrada pública exacta /inicio de la Sede electrónica del IMSERSO; autenticación, firma y presentación quedan fuera del contrato.",
+      "purpose": "IMSERSO — consulta de solicitudes. Acceso QA_ONLY exclusivamente de identificación/consulta; sin firma, presentación, documentos ni pagos.",
       "entryUrl": "https://sede.imserso.gob.es/inicio",
-      "observedMechanisms": [],
+      "launchUrl": "https://sede.imserso.gob.es/sedecdi?locale=es&action=consulta&representante=no&aut=si",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "AGE_PUBLIC_SEDE_NAVIGATION",
+      "protocolFamily": "CLIENT_TLS_AUTH",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11",
-        "IMSERSO-SEDE-NAV-2026-08-25"
+        "IMSERSO-SEDE-NAV-2026-08-25",
+        "WAVE-F-LOGIN-2026-11-08",
+        "PROBE-42464190557"
       ],
-      "reviewedOn": "2026-08-25",
-      "limitations": "Perfil QA-only limitado al launch exacto de /inicio; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
+      "reviewedOn": "2026-11-08",
+      "limitations": "VERIFIED_CONTRACT/QA_ONLY de CLIENT_TLS_AUTH; entry_url histórico conservado. Solo el inicio exacto revisado y su transición de certificado están autorizados."
     },
     {
       "portalId": "age-instituto-de-salud-carlos-iii",
@@ -1569,25 +1596,30 @@
       "portalId": "age-instituto-nacional-de-estadistica-ine",
       "inventoryId": "ES-PUB-0056",
       "profileId": "ine-sede-public-navigation",
-      "displayName": "Sede electrónica / entrada oficial del directorio AGE",
+      "displayName": "INE — consulta del estado de tramitación",
       "organization": "Instituto Nacional de Estadística (INE)",
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Navegación QA-only a la entrada pública exacta /es/index.htm de la Sede electrónica del INE; autenticación, firma y presentación quedan fuera del contrato.",
+      "purpose": "INE — consulta del estado de tramitación. Acceso QA_ONLY exclusivamente de identificación/consulta; sin firma, presentación, documentos ni pagos.",
       "entryUrl": "https://sede.ine.gob.es/es/index.htm",
-      "observedMechanisms": [],
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "AGE_PUBLIC_SEDE_NAVIGATION",
+      "protocolFamily": "CLIENT_TLS_AUTH",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11",
-        "INE-SEDE-NAV-2026-08-25"
+        "INE-SEDE-NAV-2026-08-25",
+        "WAVE-F-LOGIN-2026-11-08",
+        "PROBE-42464190557"
       ],
-      "reviewedOn": "2026-08-25",
-      "limitations": "Perfil QA-only limitado al launch exacto de /es/index.htm; no expone certificado, firma, autenticación ni envío de formularios, y E2E sigue pendiente."
+      "reviewedOn": "2026-11-08",
+      "limitations": "VERIFIED_CONTRACT/QA_ONLY de CLIENT_TLS_AUTH; entry_url histórico conservado. Solo el inicio exacto revisado y su transición de certificado están autorizados."
     },
     {
       "portalId": "age-instituto-para-la-transicion-justa-itj",
@@ -2500,8 +2532,9 @@
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Acceso con certificado TLS cliente a la entrada pública de Alegaciones TEA; no incluye firma documental ni presentación administrativa.",
+      "purpose": "Identificación con certificado TLS cliente desde el selector publicado para Alegaciones TEA; no incluye firma documental ni presentación administrativa.",
       "entryUrl": "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
+      "launchUrl": "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "CLIENT_TLS_AUTH"
@@ -2514,10 +2547,11 @@
       "evidenceIds": [
         "D11",
         "P24",
-        "P25"
+        "P25",
+        "TEA-SELECTOR-PROBE-42465852282"
       ],
-      "reviewedOn": "2026-08-14",
-      "limitations": "CLIENT_TLS_AUTH TLS 1.2 implementado solo en QA para la fuente, host, ruta y query tram=0 exactos. E2E físico pendiente; no se afirma firma electrónica, envío de alegaciones ni aceptación administrativa."
+      "reviewedOn": "2026-11-08",
+      "limitations": "CLIENT_TLS_AUTH TLS 1.2 implementado solo en QA desde el selector principal exacto, con rep=S/aut=CPE y ref=/wlpl/TEAC-TRAM/SedeTRAM?tram=0 fijo en DialogoRepresentacion. E2E físico pendiente; no se afirma firma electrónica, envío de alegaciones ni aceptación administrativa."
     },
     {
       "portalId": "age-tesoro-publico",
@@ -4817,7 +4851,7 @@
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "regionCode": "ES-GA",
       "territory": "Galicia",
-      "purpose": "Entrada QA-only a la Instancia xenérica 50709505 y navegación same-origin hasta el límite de identificación de la Sede.",
+      "purpose": "Entrada QA-only a la Instancia xenérica 50709505 y acceso de certificado vía Cl@ve, sin firma documental ni registro.",
       "entryUrl": "https://sede.depo.gal/web/public/catalog-detail/50709505",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
@@ -4834,10 +4868,12 @@
         "DP29B",
         "PONTEVEDRA-INSTANCIA-2026-08-20",
         "PONTEVEDRA-LOGIN-2026-08-20",
-        "PONTEVEDRA-FIRMAJS-2026-08-20"
+        "PONTEVEDRA-FIRMAJS-2026-08-20",
+        "PONTEVEDRA-CLAVE-2026-11-08",
+        "PONTEVEDRA-CLAVE-PROVIDER-2026-11-08"
       ],
-      "reviewedOn": "2026-08-20",
-      "limitations": "Perfil QA-only limitado a la ficha pública exacta y navegación same-origin hasta el login. No expone bridge ClienteFirma, no afirma autenticación completada, ABI de firma documental, formato/algoritmo de la presentación, aceptación E2E ni registro final."
+      "reviewedOn": "2026-11-08",
+      "limitations": "Perfil QA-only con ficha pública exacta, login y CLIENT_TLS_AUTH de Cl@ve. No expone bridge ClienteFirma; faltan E2E Android y autenticación completada. No habilita firma documental, presentación ni registro final."
     },
     {
       "portalId": "diputacion-salamanca-sede",
