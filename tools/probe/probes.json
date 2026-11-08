@@ -1,10 +1,36 @@
 [
   {
-    "name": "clave-sp-get",
-    "url": "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
-    "wait": 5000,
-    "cap": 60000,
-    "net": true
+    "name": "wavef-dgoj-login-after-popup",
+    "url": "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S",
+    "wait": 8000,
+    "cap": 240000,
+    "clicks": [
+      "form#plogin input#plogin_login_texto_iniciar_sesion[type=\"submit\"]",
+      "input#lanzarPeticionClave__[type=\"submit\"]",
+      "button.idp-button[onclick*=\"selectedIdP('AFIRMA')\"]"
+    ],
+    "net": true,
+    "html": [
+      "h1",
+      "h2",
+      "input#plogin_login_texto_iniciar_sesion",
+      "input#lanzarPeticionClave__"
+    ]
+  },
+  {
+    "name": "wavef-tea-selector-after-popup",
+    "url": "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE",
+    "wait": 9000,
+    "cap": 150000,
+    "clicks": [
+      "button[type=\"button\"][name^=\"autoriza-\"][data-link]:has-text(\"Certificado o DNI electrónico\")"
+    ],
+    "net": true,
+    "html": [
+      "h1",
+      "h2",
+      "button[type=\"button\"][name^=\"autoriza-\"][data-link]"
+    ]
   },
   {
     "name": "clave-gestiona-segovia",
