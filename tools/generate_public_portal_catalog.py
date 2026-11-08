@@ -167,9 +167,14 @@ def _profile_bindings(
         records_by_entry_url.setdefault(entry_url, []).append(record)
 
     bindings: dict[str, str] = {}
+    launch_only_owners: set[int] = set()
     profile_by_start_url = {start_url: profile_id for profile_id, start_url in profiles}
     for profile_id, start_url in profiles:
         matches = records_by_entry_url.get(start_url, [])
+        if not matches:
+            matches = [record for record in records if record.get("launch_url") == start_url]
+            if len(matches) == 1:
+                launch_only_owners.add(id(matches[0]))
         if not matches:
             raise ValueError(f"profile {profile_id} has no inventory entry for exact startUrl")
         if len(matches) != 1:
@@ -193,6 +198,8 @@ def _profile_bindings(
         surface_key = str(record.get("surface_key", ""))
         if not surface_key:
             raise ValueError("alias launch_url belongs to an invalid inventory surface")
+        if id(record) in launch_only_owners:
+            continue
         if surface_key in bindings:
             raise ValueError(f"redundant alias launch_url on profile-owned surface: {surface_key}")
         bindings[surface_key] = profile_id

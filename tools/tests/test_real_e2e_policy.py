@@ -32,6 +32,119 @@ class RealE2ePolicyTest(unittest.TestCase):
             capture_output=True,
         )
 
+    def test_wave_f_login_recipes_keep_the_reviewed_controls_and_six_portal_boundary(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        wave = source.split("BOE_PORTAL_ID ->", 1)[1].split("CSN_PORTAL_ID ->", 1)[0]
+        for portal in ("CMT", "FONDOS", "IMSERSO", "INE", "SEPES"):
+            self.assertIn(f"{portal}_PORTAL_ID ->", wave)
+        for excluded in ("DGOJ", "TEA", "ITJ", "OEPM", "CYL", "FORMENTERA", "CNMC"):
+            self.assertNotIn(f"{excluded}_PORTAL_ID ->", wave)
+        self.assertEqual(4, wave.count("clickClaveAfirmaProvider(scenario)"))
+        for pin in ("Consulta de sus trámites", "Acceso con Cl@ve", "VerCargando();",
+                    "javascript:__doPostBack('ImageButtonClave2','')", 'expectedFormName = "servForm"',
+                    'expectedFormAction = FONDOS_LOGIN_URL', 'INE_ENTRY_URL + "#accFig1254735165102"',
+                    'expectedHref = "/tramite/estado_tramitacion/"', "Autenticarse en Cl@ve",
+                    'expectedType = "submit"', 'expectedTag = "input"',
+                    'expectedElementId = "ctl00_ContentFormulario_controlAutenticacion_Sign"',
+                    'expectedFormName = "aspnetForm"', 'expectedFormAction = SEPES_LOGIN_URL',
+                    "requireNoOnClick = true"):
+            self.assertIn(pin, wave)
+        ine = wave.split("INE_PORTAL_ID ->", 1)[1].split("SEPES_PORTAL_ID ->", 1)[0]
+        self.assertNotIn("expectedFormAction", ine)
+        for forbidden in ("loadUrl(", ".submit(", ".target =", "setAttribute('target'", "SAMLRequest"):
+            self.assertNotIn(forbidden, wave)
+        boe = source.split("internal fun boeCertificateAnchorScript()", 1)[1].split("internal fun", 1)[0]
+        for pin in ("document.location.href", "document.readyState", "anchors.length !== 1",
+                    "images.length !== 1", "certificado_txt.png", "Identificación con certificado electrónico",
+                    "getAttribute('onclick') !== null", "getAttribute('target')", "anchor.click()"):
+            self.assertIn(pin, boe)
+        cmt = source.split("internal fun sedipualbaServerCertificateOptionScript(", 1)[1]
+        for pin in ("document.location.href", "frames.length !== 1", "options.length !== 1",
+                    "images.length !== 1", "titles.length !== 1", "doc.location.origin !== location.origin",
+                    "/segex/identificacion_opciones.aspx", "option.click()"):
+            self.assertIn(pin, cmt)
+        fixture = self.read(INSTRUMENTATION.with_name("RealE2eWaveFRecipeInstrumentedTest.kt"))
+        self.assertIn("boeCertificateAnchorRequiresUniquePinnedImage", fixture)
+        self.assertIn("cmtOptionRequiresSameOriginFrame", fixture)
+        self.assertIn("shouldInterceptRequest", fixture)
+
+    def test_wave_f_dom_scripts_reject_ambiguity_and_wait_for_the_reviewed_frame(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        boe = textwrap.dedent(source.split('internal fun boeCertificateAnchorScript()', 1)[1]
+                              .split('"""', 2)[1]).strip()
+        cmt = textwrap.dedent(source.split('internal fun sedipualbaServerCertificateOptionScript(', 1)[1]
+                              .split('"""', 2)[1]).strip()
+        login = ('https://sede.cmt.gob.es/carpetaciudadana/login.aspx?returnUrl='
+                 'https%3a%2f%2fsede.cmt.gob.es%2fcarpetaciudadana%2fcarpeta_ciudadana.aspx')
+        label = 'Identificarse con certificado digital a través de nuestro servidor'
+        cmt = cmt.replace('${JSONObject.quote(expectedLoginUrl)}', json.dumps(login))
+        cmt = cmt.replace('${JSONObject.quote(optionLabel)}', json.dumps(label))
+        harness = r'''
+            const assert = require('node:assert/strict');
+            const vm = require('node:vm');
+            const copies = (n, value) => Array.from({length: n}, () => value);
+            function boe(options = {}) {
+              let clicks = 0;
+              const attrs = {name: 'certificado', alt: 'Identificación con certificado electrónico',
+                src: '/imagenes/certificado_txt.png', ...options.image};
+              const image = {getAttribute: name => attrs[name] ?? null};
+              const anchorAttrs = {
+                href: 'https://extranet.boe.es/id/check-cert.php?referer=https://extranet.boe.es/anuncios/',
+                ...options.anchor};
+              const anchor = {textContent: options.text || '', getAttribute: name => anchorAttrs[name] ?? null,
+                querySelectorAll(selector) { assert.equal(selector, 'img'); return copies(options.images ?? 1, image); },
+                click() { clicks++; }};
+              const document = {readyState: 'complete', location: {href: options.source || 'https://extranet.boe.es/anuncios/'},
+                querySelectorAll(selector) { assert.equal(selector, 'a'); return copies(options.anchors ?? 1, anchor); }};
+              return [vm.runInNewContext(BOE, {document}), clicks];
+            }
+            assert.deepEqual(boe(), [1, 1]);
+            for (const options of [{anchors: 2}, {images: 2}, {image: {alt: 'wrong'}},
+                {image: {src: '/wrong.png'}}, {image: {name: 'wrong'}}, {text: 'Cl@ve'},
+                {anchor: {onclick: ''}}, {anchor: {target: '_blank'}}])
+              assert.deepEqual(boe(options), [2, 0]);
+            assert.deepEqual(boe({source: 'https://extranet.boe.es/other/'}), [0, 0]);
+            function cmt(options = {}) {
+              let clicks = 0;
+              const image = {getAttribute: name => name === 'alt' ? (options.alt || LABEL) : null};
+              const title = {textContent: options.title || LABEL};
+              const option = {tagName: 'TBODY', getAttribute: name => name === 'target' ? options.target ?? null : null,
+                querySelectorAll(selector) {
+                  if (selector === 'img') return copies(options.images ?? 1, image);
+                  assert.equal(selector, '.titulo-opcion span'); return copies(options.titles ?? 1, title);
+                }, click() { clicks++; }};
+              const doc = {readyState: 'complete',
+                location: {origin: options.origin || 'https://sede.cmt.gob.es',
+                  pathname: options.path || '/segex/identificacion_opciones.aspx'},
+                querySelectorAll(selector) { assert.equal(selector, '[id="optSsl"]');
+                  return copies(options.options ?? 1, option); }};
+              const frame = {tagName: 'IFRAME', contentDocument: doc};
+              const document = {readyState: 'complete', location: {href: options.source || LOGIN},
+                querySelectorAll(selector) { assert.equal(selector, '[id="ventanaModal"]');
+                  return copies(options.frames ?? 1, frame); }};
+              const context = {document, location: {origin: 'https://sede.cmt.gob.es'}};
+              const result = vm.runInNewContext(CMT, context);
+              if (options.transition) {
+                assert.deepEqual([result, clicks], [0, 0]);
+                doc.location.pathname = '/segex/identificacion_opciones.aspx';
+                return [vm.runInNewContext(CMT, context), clicks];
+              }
+              return [result, clicks];
+            }
+            assert.deepEqual(cmt(), [1, 1]);
+            for (const options of [{frames: 2}, {options: 2}, {images: 2}, {titles: 2},
+                {alt: 'wrong'}, {title: 'Firmar electrónicamente'}, {target: '_blank'}])
+              assert.deepEqual(cmt(options), [2, 0]);
+            for (const options of [{origin: 'https://foreign.example'}, {path: '/other.aspx'},
+                {source: LOGIN.split('?')[0]}]) assert.deepEqual(cmt(options), [0, 0]);
+            assert.deepEqual(cmt({path: '/carpetaciudadana/carpeta_ciudadana_cliente_autenticacion.aspx',
+              transition: true}), [1, 1]);
+        '''
+        program = (f'const BOE={json.dumps(boe)}, CMT={json.dumps(cmt)}, '
+                   f'LOGIN={json.dumps(login)}, LABEL={json.dumps(label)};\n' + harness)
+        result = subprocess.run(['node', '-e', program], capture_output=True, text=True, check=False)
+        self.assertEqual(0, result.returncode, result.stderr)
+
     def test_real_e2e_is_manual_main_only_and_read_only(self) -> None:
         source = self.read(WORKFLOW)
         self.assertIn("workflow_dispatch:", source)

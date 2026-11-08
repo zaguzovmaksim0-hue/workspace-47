@@ -93,12 +93,12 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0039")
         self.assertEqual("fondos-europeos-sede-public-home", target["profileId"])
         self.assertEqual("https://sedefondoscomunitarios.gob.es/", target["entryUrl"])
-        self.assertNotIn("launchUrl", target)
-        self.assertEqual("DGFE_PUBLIC_SEDE_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO", target["launchUrl"])
+        self.assertEqual("CLIENT_TLS_AUTH", target["protocolFamily"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
 
     def test_cnmv_public_sede_binds_exact_qa_navigation_without_signing_capability(self) -> None:
@@ -119,16 +119,15 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("age-agencia-estatal-del-boletin-oficial-del-estado-boe", boe["portalId"])
         self.assertEqual("boe-sede-public-home", boe["profileId"])
         self.assertEqual("https://www.boe.es/informacion/index.php", boe["entryUrl"])
-        self.assertNotIn("launchUrl", boe)
-        self.assertEqual("BOE_SEDE_PUBLIC_NAVIGATION", boe["protocolFamily"])
+        self.assertEqual("https://extranet.boe.es/anuncios/", boe["launchUrl"])
+        self.assertEqual("CLIENT_TLS_AUTH", boe["protocolFamily"])
         self.assertEqual("E2E_PENDING", boe["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", boe["inventoryStatus"])
         self.assertEqual("REVIEWED", boe["discoveryState"])
-        self.assertEqual("2026-08-23", boe["reviewedOn"])
-        self.assertEqual([], boe["observedMechanisms"])
+        self.assertEqual("2026-11-08", boe["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], boe["observedMechanisms"])
         self.assertEqual([], boe["observedSignatureFormats"])
         self.assertIn("qa_only", boe["limitations"].lower())
-        self.assertIn("extranet.boe.es", boe["limitations"].lower())
 
     def test_cnmc_general_submission_page_binds_qa_navigation_without_sensitive_mechanisms(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -500,16 +499,14 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("imserso-sede-public-navigation", imserso["profileId"])
         self.assertEqual("ES-PUB-0053", imserso["inventoryId"])
         self.assertEqual("https://sede.imserso.gob.es/inicio", imserso["entryUrl"])
-        self.assertNotIn("launchUrl", imserso)
-        self.assertEqual("AGE_PUBLIC_SEDE_NAVIGATION", imserso["protocolFamily"])
+        self.assertEqual("https://sede.imserso.gob.es/sedecdi?locale=es&action=consulta&representante=no&aut=si", imserso["launchUrl"])
+        self.assertEqual("CLIENT_TLS_AUTH", imserso["protocolFamily"])
         self.assertEqual("E2E_PENDING", imserso["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", imserso["inventoryStatus"])
         self.assertEqual("REVIEWED", imserso["discoveryState"])
-        self.assertEqual("2026-08-25", imserso["reviewedOn"])
-        self.assertEqual([], imserso["observedMechanisms"])
+        self.assertEqual("2026-11-08", imserso["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], imserso["observedMechanisms"])
         self.assertEqual([], imserso["observedSignatureFormats"])
-        self.assertIn("qa-only", imserso["limitations"].lower())
-        self.assertIn("e2e", imserso["limitations"].lower())
 
     def test_ine_profile_binds_exact_pending_public_navigation_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -522,15 +519,13 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("ES-PUB-0056", ine["inventoryId"])
         self.assertEqual("https://sede.ine.gob.es/es/index.htm", ine["entryUrl"])
         self.assertNotIn("launchUrl", ine)
-        self.assertEqual("AGE_PUBLIC_SEDE_NAVIGATION", ine["protocolFamily"])
+        self.assertEqual("CLIENT_TLS_AUTH", ine["protocolFamily"])
         self.assertEqual("E2E_PENDING", ine["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", ine["inventoryStatus"])
         self.assertEqual("REVIEWED", ine["discoveryState"])
-        self.assertEqual("2026-08-25", ine["reviewedOn"])
-        self.assertEqual([], ine["observedMechanisms"])
+        self.assertEqual("2026-11-08", ine["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], ine["observedMechanisms"])
         self.assertEqual([], ine["observedSignatureFormats"])
-        self.assertIn("qa-only", ine["limitations"].lower())
-        self.assertIn("e2e", ine["limitations"].lower())
 
     def test_seguridad_social_autofirma_profile_binds_external_android_handoff_without_local_sign_claim(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
@@ -1762,15 +1757,17 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         )
 
 
-    def test_every_profile_binds_to_exactly_one_inventory_entry_by_start_url(self) -> None:
+    def test_every_profile_has_one_canonical_exact_entry_or_launch_owner(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
-        entries_by_url = {entry["entryUrl"]: entry for entry in catalog["entries"]}
+        entries = catalog["entries"]
+        self.assertEqual(183, len(entries))
+        self.assertEqual(len(entries), len({entry["entryUrl"] for entry in entries}))
         profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
-
-        self.assertEqual(len(catalog["entries"]), len(entries_by_url))
         for profile in profiles:
-            entry = entries_by_url[profile["startUrl"]]
-            self.assertEqual(profile["profileId"], entry["profileId"])
+            direct = [entry for entry in entries if entry["entryUrl"] == profile["startUrl"]]
+            owners = direct or [entry for entry in entries if entry.get("launchUrl") == profile["startUrl"]]
+            self.assertEqual(1, len(owners), profile["profileId"])
+            self.assertEqual(profile["profileId"], owners[0]["profileId"])
 
     def test_missing_inventory_match_fails_closed(self) -> None:
         inventory = SOURCE.read_text(encoding="utf-8")
@@ -2069,6 +2066,32 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
             path.write_text(mutated, encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "alias launch_url"):
                 GENERATOR.generate(path, SITE_PROFILES)
+
+    def test_exact_launch_only_owner_preserves_the_original_inventory_surface(self) -> None:
+        records = [{"surface_key": "reviewed-portal", "entry_url": "https://public.example/",
+                    "launch_url": "https://login.example/consultation"}]
+        self.assertEqual(
+            {"reviewed-portal": "reviewed-profile"},
+            GENERATOR._profile_bindings(records, [("reviewed-profile", "https://login.example/consultation")]),
+        )
+
+    def test_launch_only_binding_rejects_missing_ambiguous_and_redundant_owners(self) -> None:
+        start = "https://login.example/consultation"
+        record = {"surface_key": "reviewed-portal", "entry_url": "https://public.example/", "launch_url": start}
+        for records in ([], [record, dict(record, surface_key="second")], [dict(record, entry_url=start)]):
+            with self.subTest(records=records), self.assertRaises(ValueError):
+                GENERATOR._profile_bindings(records, [("reviewed-profile", start)])
+
+    def test_launch_only_binding_cannot_reuse_a_profile_owned_surface(self) -> None:
+        records = [
+            {"surface_key": "same-surface", "entry_url": "https://first.example/"},
+            {"surface_key": "same-surface", "entry_url": "https://public.example/",
+             "launch_url": "https://second.example/"},
+        ]
+        with self.assertRaisesRegex(ValueError, "multiple profiles map"):
+            GENERATOR._profile_bindings(
+                records, [("first", "https://first.example/"), ("second", "https://second.example/")],
+            )
 
     def test_duplicate_profile_start_url_fails_closed(self) -> None:
         profile_catalog = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))
@@ -2847,16 +2870,14 @@ records:
         self.assertEqual("cmt-public-navigation", target["profileId"])
         self.assertEqual("https://sede.cmt.gob.es/", target["entryUrl"])
         self.assertNotIn("launchUrl", target)
-        self.assertEqual("CMT_PUBLIC_NAVIGATION_BOUNDARY", target["protocolFamily"])
+        self.assertEqual("CLIENT_TLS_AUTH", target["protocolFamily"])
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual("2026-08-23", target["reviewedOn"])
-        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual("2026-11-08", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa_only", target["limitations"].lower())
-        self.assertIn("no_verificado", target["limitations"].lower())
-        self.assertIn("e2e", target["limitations"].lower())
 
         profiles = json.loads(SITE_PROFILES.read_text())["profiles"]
         profile = next(item for item in profiles if item["profileId"] == "cmt-public-navigation")
@@ -2868,11 +2889,11 @@ records:
         self.assertEqual([], profile["trustedBrowseOrigins"])
         self.assertEqual([], profile["endpoints"])
         self.assertEqual([], profile["operationPolicies"])
-        self.assertEqual([], profile["capabilities"])
-        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
+        self.assertEqual("99006", profile["clientAuthPolicy"]["fixedQueryParameters"]["entidad"])
         self.assertEqual({
             "allowedKeyAlgorithms": ["RSA", "EC"],
-            "requireDigitalSignatureKeyUsage": False,
+            "requireDigitalSignatureKeyUsage": True,
         }, profile["certificateRules"])
 
 
@@ -2905,16 +2926,15 @@ records:
             "https://sede.transportes.gob.es/grupo-transportes/entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
             target["entryUrl"],
         )
-        self.assertNotIn("launchUrl", target)
-        self.assertEqual("SEPES_TRANSPORTES_PUBLIC_NAVIGATION", target["protocolFamily"])
+        self.assertEqual("https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx", target["launchUrl"])
+        self.assertEqual("CLIENT_TLS_AUTH", target["protocolFamily"])
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual("2026-08-24", target["reviewedOn"])
-        self.assertEqual(["ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
+        self.assertEqual("2026-11-08", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("procedurekey=7601", target["limitations"].lower())
-        self.assertIn("id=7002", target["limitations"].lower())
 
     def test_dgsfp_public_sede_binds_exact_qa_navigation(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

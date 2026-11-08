@@ -1313,22 +1313,31 @@ class PublicPortalCatalogParserTest {
 
         assertEquals(ProfileId("sepes-transportes-public-complaints"), metadata.profileId)
         assertEquals(start, metadata.entryUrl)
-        assertNull(metadata.launchUrl)
-        assertEquals("SEPES_TRANSPORTES_PUBLIC_NAVIGATION", metadata.protocolFamily)
+        assertEquals(URI("https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx"), metadata.launchUrl)
+        assertEquals("CLIENT_TLS_AUTH", metadata.protocolFamily)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
         assertEquals("REVIEWED", metadata.discoveryState.name)
-        assertEquals(setOf(PortalMechanism.ELECTRONIC_SIGNATURE), metadata.observedMechanisms)
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.CLIENT_TLS_AUTH),
+            metadata.observedMechanisms,
+        )
         assertTrue(metadata.observedSignatureFormats.isEmpty())
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
-        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), portal.capabilities)
         assertTrue(portal.signatureFormats.isEmpty())
         assertTrue(portal.isEnabled)
-        assertEquals(PortalLaunchTarget(ProfileId("sepes-transportes-public-complaints"), start), repository.resolveLaunch(portal))
+        assertEquals(
+            PortalLaunchTarget(
+                ProfileId("sepes-transportes-public-complaints"),
+                URI("https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx"),
+            ),
+            repository.resolveLaunch(portal),
+        )
     }
 
     @Test
-    fun `BOE public Sede binds exact QA information page without sensitive capabilities`() {
+    fun `BOE preserves historical entry and binds QA identification launch`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val siteProfiles = BuiltInSiteProfiles.catalog
         val repository = PortalCatalogRepository(
@@ -1344,18 +1353,21 @@ class PublicPortalCatalogParserTest {
         assertEquals("ES-PUB-0026", metadata.inventoryId)
         assertEquals(ProfileId("boe-sede-public-home"), metadata.profileId)
         assertEquals(URI("https://www.boe.es/informacion/index.php"), metadata.entryUrl)
-        assertNull(metadata.launchUrl)
-        assertEquals("BOE_SEDE_PUBLIC_NAVIGATION", metadata.protocolFamily)
+        assertEquals(URI("https://extranet.boe.es/anuncios/"), metadata.launchUrl)
+        assertEquals("CLIENT_TLS_AUTH", metadata.protocolFamily)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
-        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.CLIENT_TLS_AUTH),
+            metadata.observedMechanisms,
+        )
         assertTrue(metadata.observedSignatureFormats.isEmpty())
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
-        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), portal.capabilities)
         assertTrue(portal.signatureFormats.isEmpty())
         assertTrue(portal.isEnabled)
         assertEquals(
-            PortalLaunchTarget(ProfileId("boe-sede-public-home"), URI("https://www.boe.es/informacion/index.php")),
+            PortalLaunchTarget(ProfileId("boe-sede-public-home"), URI("https://extranet.boe.es/anuncios/")),
             repository.resolveLaunch(portal),
         )
     }
@@ -1409,18 +1421,30 @@ class PublicPortalCatalogParserTest {
         assertEquals("ES-PUB-0039", metadata.inventoryId)
         assertEquals(ProfileId("fondos-europeos-sede-public-home"), metadata.profileId)
         assertEquals(URI("https://sedefondoscomunitarios.gob.es/"), metadata.entryUrl)
-        assertNull(metadata.launchUrl)
-        assertEquals("DGFE_PUBLIC_SEDE_NAVIGATION", metadata.protocolFamily)
+        assertEquals(
+            URI("https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO"),
+            metadata.launchUrl,
+        )
+        assertEquals("CLIENT_TLS_AUTH", metadata.protocolFamily)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, metadata.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, metadata.catalogStatus)
         assertEquals("REVIEWED", metadata.discoveryState.name)
-        assertTrue(metadata.observedMechanisms.isEmpty())
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.CLIENT_TLS_AUTH),
+            metadata.observedMechanisms,
+        )
         assertTrue(metadata.observedSignatureFormats.isEmpty())
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
-        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), portal.capabilities)
         assertTrue(portal.signatureFormats.isEmpty())
         assertTrue(portal.isEnabled)
-        assertEquals(PortalLaunchTarget(ProfileId("fondos-europeos-sede-public-home"), URI("https://sedefondoscomunitarios.gob.es/")), repository.resolveLaunch(portal))
+        assertEquals(
+            PortalLaunchTarget(
+                ProfileId("fondos-europeos-sede-public-home"),
+                URI("https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO"),
+            ),
+            repository.resolveLaunch(portal),
+        )
     }
 
     @Test

@@ -8,6 +8,7 @@ import dev.junta.firmamobile.profile.ClientAuthTransitionMode
 import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileActivation
+import dev.junta.firmamobile.profile.matchesRequestUrl
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.profile.ProfileId
 import java.net.URI
@@ -27,6 +28,84 @@ class ClientAuthNavigationAuthorizerTest {
         BuiltInSiteProfiles.qaRegistry,
         monotonic::nowNanos,
     )
+
+    @Test
+    fun waveFOwnTlsLoginsRequireTheReviewedTopLevelSourceAndKeepOneShotGrants() {
+        val flows = listOf(
+            Triple("boe-sede-public-home",
+                "https://extranet.boe.es/id/check-cert.php?referer=https://extranet.boe.es/anuncios/",
+                "https://check-cert.extranet.boe.es/"),
+            Triple("cmt-public-navigation",
+                "https://sede.cmt.gob.es/carpetaciudadana/login.aspx?returnUrl=" +
+                    "https%3a%2f%2fsede.cmt.gob.es%2fcarpetaciudadana%2fcarpeta_ciudadana.aspx",
+                "https://identificacionssl.sedipualba.es/" +
+                    "?idtoken=20261108-AbCdEf0123456789_fixtureToken&idioma=es&entidad=99006"),
+        )
+        flows.forEach { (id, source, target) ->
+            val profileId = ProfileId(id)
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            val start = BuiltInSiteProfiles.qaRegistry.profile(profileId)!!.startUrl.toString()
+            assertNull(fresh.observeTopLevelNavigation(profileId, start, target, 4, true))
+            assertNull(fresh.observeTopLevelNavigation(profileId, target, target, 4, true))
+            assertNull(fresh.observeTopLevelNavigation(null, source, target, 4, true))
+            assertNull(fresh.observeTopLevelNavigation(profileId, source, target, 4, false))
+            assertNull(fresh.observeTopLevelResourceRequest(profileId, source, target, "GET", 4, false))
+            assertNull(fresh.observeTopLevelResourceRequest(profileId, source, target, "POST", 4, true))
+            assertNull(fresh.observeTopLevelNavigation(profileId, source, target, Long.MAX_VALUE, true))
+            assertNull(fresh.observeTopLevelNavigation(profileId, source + "&extra=1", target, 4, true))
+            val grant = fresh.observeTopLevelNavigation(profileId, start, target, 4, true, source)
+            assertEquals(profileId, grant?.profileId)
+            assertEquals(URI(source), grant?.source)
+            assertEquals(URI(target), grant?.target)
+            assertNull(fresh.observeTopLevelNavigation(profileId, source, target, 4, true))
+            assertFalse(grant!!.isExpiredOrInvalid(monotonic.nowNanos()))
+            monotonic.advance(Duration.ofSeconds(16))
+            assertTrue(grant.isExpiredOrInvalid(monotonic.nowNanos()))
+        }
+        val frame = "https://sede.cmt.gob.es/segex/identificacion_opciones.aspx"
+        assertNull(
+            authorizer.observeTopLevelNavigation(ProfileId("cmt-public-navigation"), frame, flows[1].third, 9, true),
+        )
+        assertNull(
+            authorizer.observeTopLevelNavigation(
+                ProfileId("diputacion-leon-sede"),
+                flows[1].second,
+                flows[1].third,
+                9,
+                true,
+            ),
+        )
+    }
+
+    @Test
+    fun staticTlsPathDoesNotSilentlyAcceptItjCookielessSessionSegments() {
+        val origin = "https://procedimientossedeitj.transicionjusta.gob.es"
+        val policy = BuiltInSiteProfiles.qaRegistry.profile(ProfileId("boe-sede-public-home"))!!
+            .clientAuthPolicy!!.copy(
+                requestOrigins = setOf(ExactOrigin.parse(origin)),
+                requestPath = "/vt/vtwebregistro/AccesoConCertificado.aspx",
+            )
+        assertTrue(policy.matchesRequestUrl(URI("$origin/vt/vtwebregistro/AccesoConCertificado.aspx")))
+        assertFalse(policy.matchesRequestUrl(URI("$origin/vt/vtwebregistro/(S(synthetic))/AccesoConCertificado.aspx")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.profile(ProfileId("itj-sede-public-navigation"))!!.clientAuthPolicy)
+    }
+
+    @Test
+    fun waveFClaveOwnersCannotTransferTheSelectedProfileOrGrantSigning() {
+        val source = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        val target = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        listOf("fondos-europeos-sede-public-home", "imserso-sede-public-navigation",
+            "ine-sede-public-navigation", "sepes-transportes-public-complaints").forEach { id ->
+            val profile = ProfileId(id)
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(fresh.observeTopLevelResourceRequest(null, source, target, "POST", 4, true))
+            assertNull(fresh.observeTopLevelResourceRequest(profile, source, target, "POST", 4, false))
+            val grant = fresh.observeTopLevelResourceRequest(profile, source, target, "POST", 4, true)
+            assertEquals(profile, grant?.profileId)
+            assertFalse(Capability.SIGN in BuiltInSiteProfiles.qaRegistry.profile(profile)!!.capabilities)
+            assertNull(fresh.observeTopLevelResourceRequest(profile, source, target, "POST", 4, true))
+        }
+    }
 
     @Test
     fun ownTlsPostLoginsKeepTheSelectedSourceMethodEpochAndSingleUseBoundary() {

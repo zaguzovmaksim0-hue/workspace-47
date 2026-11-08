@@ -59,6 +59,10 @@ class SharedOriginCharacterizationTest {
                 "la-gomera-sede-public-navigation",
                 "lanzarote-sede-public-navigation",
                 "isfas-sede-public-navigation",
+                "fondos-europeos-sede-public-home",
+                "imserso-sede-public-navigation",
+                "ine-sede-public-navigation",
+                "sepes-transportes-public-complaints",
             ),
         ),
         Family(
@@ -100,6 +104,10 @@ class SharedOriginCharacterizationTest {
                 "la-gomera-sede-public-navigation",
                 "lanzarote-sede-public-navigation",
                 "isfas-sede-public-navigation",
+                "fondos-europeos-sede-public-home",
+                "imserso-sede-public-navigation",
+                "ine-sede-public-navigation",
+                "sepes-transportes-public-complaints",
             ),
         ),
         Family(
@@ -128,7 +136,7 @@ class SharedOriginCharacterizationTest {
             "https://identificacionssl.sedipualba.es",
             requests = listOf(
                 "diputacion-leon-sede", "diputacion-albacete-portal",
-                "consell-mallorca-sede", "diputacion-cuenca-portal",
+                "consell-mallorca-sede", "diputacion-cuenca-portal", "cmt-public-navigation",
             ),
         ),
         Family(
@@ -236,7 +244,7 @@ class SharedOriginCharacterizationTest {
                 family.owners.drop(index + 1).forEach { second ->
                     listOf(listOf(first, second), listOf(second, first)).forEach { order ->
                         val sedipualbaSiblings = family.origin == "https://identificacionssl.sedipualba.es" &&
-                            "diputacion-leon-sede" !in order
+                            "diputacion-leon-sede" !in order && "cmt-public-navigation" !in order
                         // These profiles also collide at cert.valid.aoc.cat when testing valid.aoc.cat.
                         val reversedAoc = order == listOf(
                             "catalunya-seu-registre-client-auth", "diputacion-barcelona-solicitud-generica-2057",
@@ -634,8 +642,11 @@ class SharedOriginCharacterizationTest {
             "https://tramits.gencat.cat", "https://miprincipado.asturias.es", "https://gestiona.comunidad.madrid",
             "https://lanzaroteylagraciosa.sedelectronica.es" -> "\"FIRST\",\"LATER\""
             "https://ovt.gencat.cat" -> "\"BOTH\""
-            "https://identificacionssl.sedipualba.es" ->
-                if ("diputacion-leon-sede" in listOf(first, later)) ALL_ROLES else ""
+            "https://identificacionssl.sedipualba.es" -> when {
+                "cmt-public-navigation" in listOf(first, later) -> "\"NEITHER\""
+                "diputacion-leon-sede" in listOf(first, later) -> ALL_ROLES
+                else -> ""
+            }
             "https://gestiona2.comunidad.madrid", "https://idp.seg-social.es", "https://ipce.seg-social.es",
             "https://sede.transportes.gob.es", "https://ws235.juntadeandalucia.es",
             "https://elhierro.sedelectronica.es", "https://lagomera.sedelectronica.es" -> "\"NEITHER\""

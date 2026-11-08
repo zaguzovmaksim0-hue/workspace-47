@@ -32,6 +32,55 @@ class ClientAuthRequestHandlerTest {
     private val monotonic = MutableMonotonicClock(1_000_000_000L)
 
     @Test
+    fun waveFDirectGrantsRejectWrongEpochExpiryAndReplaysWithoutExportingTheKey() {
+        val flows = listOf(
+            Triple("boe-sede-public-home",
+                "https://extranet.boe.es/id/check-cert.php?referer=https://extranet.boe.es/anuncios/",
+                "https://check-cert.extranet.boe.es/"),
+            Triple("cmt-public-navigation",
+                "https://sede.cmt.gob.es/carpetaciudadana/login.aspx?returnUrl=" +
+                    "https%3a%2f%2fsede.cmt.gob.es%2fcarpetaciudadana%2fcarpeta_ciudadana.aspx",
+                "https://identificacionssl.sedipualba.es/" +
+                    "?idtoken=20261108-AbCdEf0123456789_fixtureToken&idioma=es&entidad=99006"),
+        )
+        flows.forEach { (id, source, target) ->
+            val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            val authorized = checkNotNull(
+                authorizer.observeTopLevelNavigation(ProfileId(id), source, target, 4, true),
+            )
+            fun handler(epoch: Long) = ClientAuthRequestHandler(
+                grant = ClientAuthGrant(authorized, 4),
+                identityProvider = { identity },
+                currentNavigationEpoch = { epoch },
+                clearClientCertPreferences = {},
+                clock = clock,
+                monotonicNanos = monotonic::nowNanos,
+            )
+            fun request() = RecordingRequest(
+                host = authorized.target.host, keyTypes = arrayOf("RSA"), principals = emptyArray(),
+            )
+            val wrongEpoch = request()
+            handler(5).handle(wrongEpoch)
+            assertEquals(0, wrongEpoch.proceeds)
+            assertEquals(1, wrongEpoch.ignores)
+            val current = handler(4)
+            val first = request()
+            current.handle(first)
+            assertEquals(1, first.proceeds)
+            val replay = request()
+            current.handle(replay)
+            assertEquals(0, replay.proceeds)
+            assertEquals(1, replay.ignores)
+            monotonic.advance(Duration.ofSeconds(16))
+            val expired = request()
+            handler(4).handle(expired)
+            assertEquals(0, expired.proceeds)
+            assertEquals(1, expired.ignores)
+            assertEquals(0, synthetic.encodedReads.get())
+        }
+    }
+
+    @Test
     fun aeatMatchingRsaIdentityAndIssuerProceedOnce() {
         val clears = AtomicInteger()
         val handler = aeatHandler(epoch = 30, clears = clears)
