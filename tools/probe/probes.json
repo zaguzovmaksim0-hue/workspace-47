@@ -1,121 +1,19 @@
 [
   {
-    "name": "b10probe-age-agencia-estatal-del-boletin-oficial-del-estado-boe",
-    "url": "https://extranet.boe.es/anuncios/",
+    "name": "clave-sp-get",
+    "url": "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+    "wait": 5000,
+    "cap": 60000,
+    "net": true
+  },
+  {
+    "name": "clave-gestiona-segovia",
+    "url": "https://sede.dipsegovia.es/registro",
     "wait": 6000,
     "cap": 90000,
+    "net": true,
     "clicks": [
-      "a[href=\"https://extranet.boe.es/id/check-cert.php?referer=https://extranet.boe.es/anuncios/\"]"
-    ],
-    "net": true,
-    "html": ["h1", "h2", "a[href*=\"/id/check-cert.php\"]"]
-  },
-  {
-    "name": "b10probe-age-comisionado-para-el-mercado-de-tabacos-cmt",
-    "url": "https://sede.cmt.gob.es/",
-    "wait": 8000,
-    "cap": 150000,
-    "clicks": [
-      "a#ctl00_ctl01_UcNavegadorSuperior_hlCarpetaCiudadana[href=\"https://sede.cmt.gob.es/carpetaciudadana.aspx\"]",
-      "iframe#ventanaModal >> internal:control=enter-frame >> tbody#optSsl"
-    ],
-    "net": true,
-    "html": ["a#ctl00_ctl01_UcNavegadorSuperior_hlCarpetaCiudadana", "h1", "h2"]
-  },
-  {
-    "name": "b10probe-age-direccion-general-de-fondos-europeos",
-    "url": "https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO",
-    "wait": 8000,
-    "cap": 150000,
-    "clicks": [
-      "a#ImageButtonClave2",
-      "button.idp-button[onclick*=\"selectedIdP('AFIRMA')\"]"
-    ],
-    "net": true,
-    "html": ["a#ImageButtonClave2", "h1", "h2"]
-  },
-  {
-    "name": "b10probe-age-instituto-de-mayores-y-servicios-sociales-imserso",
-    "url": "https://sede.imserso.gob.es/sedecdi?locale=es&action=consulta&representante=no&aut=si",
-    "wait": 8000,
-    "cap": 100000,
-    "clicks": [
-      "button.idp-button[onclick*=\"selectedIdP('AFIRMA')\"]"
-    ],
-    "net": true,
-    "html": ["button.idp-button[onclick*=\"AFIRMA\"]", "h1", "h2"]
-  },
-  {
-    "name": "b10probe-age-instituto-nacional-de-estadistica-ine",
-    "url": "https://sede.ine.gob.es/es/index.htm",
-    "wait": 6000,
-    "cap": 300000,
-    "clicks": [
-      "a[role=\"button\"][href=\"#accFig1254735165102\"]",
-      "a#tra1254734772917[href=\"/tramite/estado_tramitacion/\"]",
-      "a[href=\"/sigem-consulta-expediente/index.jsp?lang=es_ES\"]",
-      "form#frmPresentacion input[type=\"submit\"][value=\"Autenticarse en Cl@ve\"]",
-      "button.idp-button[onclick*=\"selectedIdP('AFIRMA')\"]"
-    ],
-    "net": true,
-    "html": ["a#tra1254734772917", "h1", "h2"]
-  },
-  {
-    "name": "b10probe-age-instituto-para-la-transicion-justa-itj",
-    "url": "https://sede.transicionjusta.gob.es/",
-    "wait": 7000,
-    "cap": 240000,
-    "clicks": [
-      "a.nav-link[href=\"https://sede.transicionjusta.gob.es/es/servicios-electronicos/procedimientos-en-linea.html\"]",
-      "a[href=\"https://sede.transicionjusta.gob.es/es/servicios-electronicos/procedimientos-en-linea/eg.html\"]",
-      "a[href=\"https://procedimientossedeitj.transicionjusta.gob.es/vt/vtwebregistro/Acceso.aspx?COD_TIPO_PROCEDIMIENTO=0\"]",
-      "a#lnkAccesoCertificado"
-    ],
-    "net": true,
-    "html": ["h1", "h2", "a.nav-link[href*=\"procedimientos-en-linea.html\"]"]
-  },
-  {
-    "name": "b10probe-age-oficina-espanola-de-patentes-y-marcas",
-    "url": "https://sede.oepm.gob.es/mio/",
-    "wait": 9000,
-    "cap": 160000,
-    "clicks": [
-      "a#btnLoginClave2",
-      "button.idp-button[onclick*=\"selectedIdP('AFIRMA')\"]"
-    ],
-    "net": true,
-    "html": ["a#btnLoginClave2", "h1", "h2"]
-  },
-  {
-    "name": "b10probe-castilla-leon-tramita",
-    "url": "https://www.ae.jcyl.es/carpetacyl/#/",
-    "wait": 10000,
-    "cap": 110000,
-    "clicks": [
-      "input#botonPorCertificado[type=\"button\"][value=\"Acceder con Certificado\"]"
-    ],
-    "net": true,
-    "html": ["input#botonPorCertificado", "h1", "h2"]
-  },
-  {
-    "name": "b10probe-formentera-portal-institucional",
-    "url": "https://ovac.conselldeformentera.cat/absis/idi/cco/idiccoweb/frm/ccofirm/cer/frmvalidarcertificado.aspx",
-    "wait": 8000,
-    "cap": 70000,
-    "clicks": [],
-    "net": true,
-    "html": ["title", "h1", "h2"]
-  },
-  {
-    "name": "b10probe-age-entidad-publica-empresarial-de-suelo-sepes",
-    "url": "https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx",
-    "wait": 8000,
-    "cap": 150000,
-    "clicks": [
-      "input#ctl00_ContentFormulario_controlAutenticacion_Sign[type=\"submit\"][value=\"Continuar\"]",
-      "button.idp-button[onclick*=\"selectedIdP('AFIRMA')\"]"
-    ],
-    "net": true,
-    "html": ["#ctl00_ContentFormulario_controlAutenticacion_Sign", "h1", "h2"]
+      "a:has-text(\"Acceso con sistema Cl@ve\")"
+    ]
   }
 ]
