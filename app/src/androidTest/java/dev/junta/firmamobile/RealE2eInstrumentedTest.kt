@@ -5,24 +5,21 @@ import android.os.SystemClock
 import android.webkit.CookieManager
 import android.webkit.WebStorage
 import android.webkit.WebView
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasAnyDescendant
-import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performSemanticsAction
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
 import dev.junta.firmamobile.certificate.CachedCertificateUnlock
 import dev.junta.firmamobile.certificate.CertificateDocumentAccess
@@ -35,7 +32,6 @@ import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.StoredCertificateReference
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.Capability
-import dev.junta.firmamobile.signing.SigningCoordinator
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningUiState
 import java.io.File
@@ -46,9 +42,9 @@ import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.Instant
+import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -551,6 +547,7 @@ class RealE2eInstrumentedTest {
                     expectedType = null,
                     expectedTag = "img",
                     expectedSrc = PALENCIA_CLAVE_IMAGE_SRC,
+                    matchPalenciaSessionPath = true,
                     expectedFormName = "formClave",
                     expectedFormAction = PALENCIA_CLAVE_FORM_ACTION,
                 )
@@ -930,6 +927,7 @@ class RealE2eInstrumentedTest {
                 expectedLabel = TRANSPORTES_SIGN_BUTTON_LABEL,
                 expectedAriaLabel = null,
                 expectedOnClick = TRANSPORTES_SIGN_BUTTON_ONCLICK,
+                waitForTransportesSignReady = true,
                 waitForExpectedUrl = true,
                 expectedType = "submit",
                 expectedTag = "input",
@@ -941,6 +939,7 @@ class RealE2eInstrumentedTest {
                 expectedLabel = LUGO_CERT_BUTTON_LABEL,
                 expectedAriaLabel = null,
                 expectedOnClick = LUGO_CERT_BUTTON_ONCLICK,
+                waitForLugoSignReady = true,
             )
             AEMET_PORTAL_ID -> {
                 clickExactLabeledAnchor(
@@ -2292,11 +2291,19 @@ class RealE2eInstrumentedTest {
         waitForAemetSignHook: Boolean = false,
         expectedName: String? = null,
         matchCanariasLoginAction: Boolean = false,
+        waitForTransportesSignReady: Boolean = false,
+        waitForLugoSignReady: Boolean = false,
+        matchPalenciaSessionPath: Boolean = false,
     ) {
         require(expectedLabel != null || expectedAriaLabel != null)
         require(expectedTag in setOf("button", "input", "img"))
         require(expectedHandlerName == null || JS_IDENTIFIER.matches(expectedHandlerName))
         require(expectedParentAnchorClass == null || expectedTag == "img")
+        require(!waitForTransportesSignReady || expectedCurrentUrl == TRANSPORTES_AUTH_URL)
+        require(!waitForLugoSignReady || expectedCurrentUrl == LUGO_AUTH_URL)
+        require(!matchPalenciaSessionPath || expectedCurrentUrl == PALENCIA_CLAVE_URL &&
+            expectedTag == "img" && expectedSrc == PALENCIA_CLAVE_IMAGE_SRC &&
+            expectedFormName == "formClave" && expectedFormAction == PALENCIA_CLAVE_FORM_ACTION)
         val quotedHandlerName = expectedHandlerName?.let { JSONObject.quote(it) } ?: "null"
         val quotedParentAnchorClass = expectedParentAnchorClass?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedName = expectedName?.let { JSONObject.quote(it) } ?: "null"
@@ -2371,7 +2378,7 @@ class RealE2eInstrumentedTest {
                         if ($quotedExpectedName !== null &&
                             element.getAttribute('name') !== $quotedExpectedName) return false;
                         if ($quotedExpectedSrc !== null &&
-                            element.getAttribute('src') !== $quotedExpectedSrc) return false;
+                            (element.getAttribute('src') || '').replace(/;jsessionid=[^/;?#]+/gi, '') !== $quotedExpectedSrc) return false;
                         if ($requireNoOnClick && element.getAttribute('onclick') !== null) return false;
                         const rawLabel = expectedTag === 'input' ? element.value : element.innerText;
                         const label = (rawLabel || '').trim().replace(/\s+/g, ' ');
@@ -2388,8 +2395,20 @@ class RealE2eInstrumentedTest {
                         if (anchor?.tagName !== 'A' || anchor.className !== $quotedParentAnchorClass ||
                             anchor.getAttribute('target') !== '_self') return 2;
                       }
-                      if ($quotedHandlerName !== null) {
-                        const handlerReady = typeof window[$quotedHandlerName] === 'function';
+                      if ($quotedHandlerName !== null || $waitForTransportesSignReady || $waitForLugoSignReady) {
+                        const handlerReady =
+                          ($quotedHandlerName === null || typeof window[$quotedHandlerName] === 'function') &&
+                          (!$waitForTransportesSignReady || (
+                            typeof window.Sign_firmar === 'function' && typeof window.SignParams === 'function' &&
+                            typeof window.SignResult === 'function' && typeof window.doSign === 'function' &&
+                            typeof window.MiniApplet?.sign === 'function' &&
+                            typeof window.MiniApplet?.isAndroid === 'function' &&
+                            typeof window.MiniApplet?.isIOS === 'function'
+                          )) && (!$waitForLugoSignReady || (
+                            typeof window.waiting === 'function' && typeof window.chargeClient === 'function' &&
+                            typeof window.authenticate === 'function' &&
+                            typeof window.AutoScript?.signBatch === 'function'
+                          ));
                         if (document.readyState !== 'complete' || !handlerReady) {
                           return {readyState: document.readyState, handlerReady, clicked: false};
                         }
@@ -2419,6 +2438,7 @@ class RealE2eInstrumentedTest {
                         if (!actionMatches ||
                             (forms[0].getAttribute('method') || '').toLowerCase() !== 'post' ||
                             (expectedTag !== 'img' && elements[0].form !== forms[0])) return 2;
+                        if ($matchPalenciaSessionPath && !forms[0].contains(elements[0])) return 2;
                         if (!['', '_self', '_parent'].includes(
                             (forms[0].getAttribute('target') || '').toLowerCase())) return 2;
                         if (['formaction', 'formmethod', 'formtarget'].some(
@@ -2437,7 +2457,8 @@ class RealE2eInstrumentedTest {
                         "1" -> clicked = true
                         "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
                         "3" -> waitingForBadajozSignHook = true
-                        else -> if (expectedHandlerName != null && recipeCode.startsWith("{")) {
+                        else -> if ((expectedHandlerName != null || waitForTransportesSignReady ||
+                                waitForLugoSignReady) && recipeCode.startsWith("{")) {
                             val state = JSONObject(recipeCode)
                             lastReadyState = state.optString("readyState").takeIf {
                                 it in setOf("loading", "interactive", "complete")
@@ -2459,7 +2480,7 @@ class RealE2eInstrumentedTest {
                 continue
             }
             if (clicked) {
-                if (expectedHandlerName != null) {
+                if (expectedHandlerName != null || waitForTransportesSignReady || waitForLugoSignReady) {
                     println("REAL_E2E_RECIPE_READINESS readyState=complete handlerReady=true clicked=true")
                 }
                 return
@@ -2473,7 +2494,7 @@ class RealE2eInstrumentedTest {
             SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
         if (hasObservedTerminalNavigationFailure()) return
-        if (expectedHandlerName != null) {
+        if (expectedHandlerName != null || waitForTransportesSignReady || waitForLugoSignReady) {
             println("REAL_E2E_RECIPE_READINESS readyState=$lastReadyState handlerReady=$handlerReady clicked=false")
         }
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
@@ -2490,6 +2511,7 @@ class RealE2eInstrumentedTest {
         actualUrl == expectedUrl ||
             (expectedUrl.endsWith("/") && actualUrl == expectedUrl.dropLast(1)) ||
             (!expectedUrl.endsWith("/") && actualUrl == "$expectedUrl/")
+
 
     // The REC header "Iniciar sesión" item requests a SAML login over XHR and posts its own Cl@ve form, so the
     // recipe only clicks it and lets clickClaveAfirmaProvider wait for the ServiceProvider page.
@@ -2648,7 +2670,7 @@ class RealE2eInstrumentedTest {
         var postSignTracker: PostSignTracker? = null
         val safeAuthSigning = deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES
         var signingCoordinator = if (safeAuthSigning) {
-            signingCoordinatorForScenario(scenario)
+            signingCoordinatorForScenario()
         } else {
             null
         }
@@ -2671,7 +2693,7 @@ class RealE2eInstrumentedTest {
                         it.contains("stage=PREPARE_READY")
                 }
             ) {
-                signingCoordinator = signingCoordinatorForScenario(scenario)
+                signingCoordinator = signingCoordinatorForScenario()
                 signingCoordinatorRefreshed = true
             }
 
@@ -2728,20 +2750,26 @@ class RealE2eInstrumentedTest {
                 result.level = maxOf(result.level, 4)
             }
 
+            val awaitingSigning = if (safeAuthSigning && !signingHandled) {
+                signingCoordinator?.state as? SigningUiState.AwaitingConfirmation
+            } else {
+                null
+            }
             val signingConfirmationVisible = if (safeAuthSigning) {
-                !signingHandled &&
-                    signingCoordinator?.state?.value is SigningUiState.AwaitingConfirmation
+                awaitingSigning != null
             } else {
                 rule.onAllNodesWithText("Solicitud de firma").fetchSemanticsNodes().isNotEmpty()
             }
             if (Capability.SIGN in profileCapabilities && !signingHandled &&
                 signingConfirmationVisible
             ) {
-                result.signingConfirmationObserved = true
-                result.level = maxOf(result.level, 3)
+                if (!safeAuthSigning) {
+                    result.signingConfirmationObserved = true
+                    result.level = maxOf(result.level, 3)
+                }
                 if (!deepEnabled && profileId == AEMET_PROFILE_ID) {
                     // AEMET's error callback submits its login form, so stop without delivering a callback.
-                    abandonAemetLoginAtBoundary(scenario)
+                    abandonAemetLoginAtBoundary()
                     result.signingCancelledAtBoundary = true
                     classify(profileCapabilities, result)
                     return
@@ -2749,12 +2777,22 @@ class RealE2eInstrumentedTest {
                 if (deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES) {
                     val preSignRecords = diagnosticRecords()
                     val signingEvidenceTracker = SigningEvidenceTracker(preSignRecords)
-                    check(clickSigningConfirmation()) {
-                        signingConfirmationClickTimeoutCode()
+                    val owner = requireNotNull(signingCoordinator)
+                    val requestId = requireNotNull(awaitingSigning).requestId
+                    val confirmation = clickSigningConfirmation(owner, profileId, requestId)
+                    result.signingConfirmationObserved = confirmation.dialogObserved
+                    result.signingConfirmed = confirmation.confirmed
+                    if (confirmation.dialogObserved) result.level = maxOf(result.level, 3)
+                    if (!confirmation.confirmed) {
+                        result.signingFailureCode = confirmation.failureCode?.name
+                        result.infrastructureError = confirmation.infrastructureCode
+                        result.classification = ProbeClassification.INFRASTRUCTURE_ERROR
+                        return
                     }
-                    result.signingConfirmed = true
                     val completedRecords = waitForSigningTerminalState(
-                        signingCoordinator = requireNotNull(signingCoordinator),
+                        signingCoordinator = owner,
+                        profileId = profileId,
+                        requestId = requestId,
                         tracker = signingEvidenceTracker,
                         result = result,
                     )
@@ -2800,35 +2838,48 @@ class RealE2eInstrumentedTest {
         classify(profileCapabilities, result)
     }
 
-    private fun abandonAemetLoginAtBoundary(scenario: ActivityScenario<MainActivity>) {
-        val coordinator = signingCoordinatorForScenario(scenario)
-        var abandoned = false
-        scenario.onActivity {
-            val pending = coordinator.state.value as? SigningUiState.AwaitingConfirmation
+    private fun abandonAemetLoginAtBoundary() {
+        val coordinator = signingCoordinatorForScenario()
+        val deadline = SystemClock.elapsedRealtime() + SIGNING_OWNER_TIMEOUT_MILLIS
+        val abandoned = onSigningMainUntil(deadline) {
+            check(coordinator.isCurrent(AEMET_PROFILE_ID)) { "REAL_E2E_SIGN_CONFIRM_OWNER_CHANGED" }
+            val pending = coordinator.state as? SigningUiState.AwaitingConfirmation
                 ?: error("REAL_E2E_SIGNING_REQUEST_MISSING")
-            abandoned = coordinator.cancel(SigningCancelReason.BACKGROUND, pending.requestId)
+            coordinator.orchestrator.cancelSigning(SigningCancelReason.BACKGROUND, pending.requestId)
+            coordinator.state is SigningUiState.Idle
         }
-        check(abandoned) { "REAL_E2E_SIGNING_ABANDON_FAILED" }
+        check(abandoned == true) { "REAL_E2E_SIGNING_ABANDON_FAILED" }
     }
 
     private fun waitForSigningTerminalState(
-        signingCoordinator: SigningCoordinator,
+        signingCoordinator: SigningProbeOwner,
+        profileId: String,
+        requestId: UUID,
         tracker: SigningEvidenceTracker,
         result: ProbeResult,
     ): List<String>? {
         val deadline = SystemClock.elapsedRealtime() + SIGNING_TIMEOUT_MILLIS
         while (SystemClock.elapsedRealtime() < deadline) {
             updateSigningEvidence(diagnosticRecords(), tracker, result)
-            when (val current = signingCoordinator.state.value) {
+            val current = onSigningMainUntil(deadline) {
+                check(signingCoordinator.isCurrent(profileId)) { "REAL_E2E_SIGN_CONFIRM_OWNER_CHANGED" }
+                signingCoordinator.state
+            } ?: error("REAL_E2E_SIGN_CONFIRM_UI_QUERY_FAILED")
+            check(current.requestIdOrNull() == requestId) {
+                if (current is SigningUiState.Idle) "REAL_E2E_SIGN_CONFIRM_IDLE"
+                else "REAL_E2E_SIGN_CONFIRM_REQUEST_CHANGED"
+            }
+            when (val observed = current) {
                 is SigningUiState.Completed -> {
                     result.signatureCompleted = true
                     result.level = maxOf(result.level, 4)
                     return diagnosticRecords()
                 }
                 is SigningUiState.Failed -> {
-                    result.signingFailureCode = current.code.name
+                    result.signingFailureCode = observed.code.name
                     return null
                 }
+                is SigningUiState.AwaitingConfirmation -> error("REAL_E2E_SIGN_CONFIRM_STATE_UNCHANGED")
                 else -> Unit
             }
             SystemClock.sleep(POLL_MILLIS)
@@ -2837,26 +2888,36 @@ class RealE2eInstrumentedTest {
         return null
     }
 
-    private fun signingCoordinatorForScenario(
-        scenario: ActivityScenario<MainActivity>,
-    ): SigningCoordinator {
-        // MainActivity owns the ordinary coordinator through SigningOrchestrator, which the
-        // Activity installs once its ready content is initialized. Wait briefly for that owner
-        // instead of failing the whole portal observation on a transient null.
+    private fun signingCoordinatorForScenario(): SigningProbeOwner {
+        // The Activity installs one owner for ordinary and batch login requests after content initialization.
         val deadline = SystemClock.elapsedRealtime() + SIGNING_OWNER_TIMEOUT_MILLIS
         while (true) {
-            var coordinator: SigningCoordinator? = null
-            scenario.onActivity { activity ->
+            val coordinator = onSigningMainUntil(deadline) {
+                val activity = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                    .filterIsInstance<MainActivity>().singleOrNull() ?: return@onSigningMainUntil null
                 val orchestrator = MainActivity::class.java.getDeclaredField("signing")
                     .apply { isAccessible = true }
-                    .get(activity) ?: return@onActivity
-                coordinator = orchestrator.javaClass.getDeclaredField("signingCoordinator")
-                    .apply { isAccessible = true }
-                    .get(orchestrator) as SigningCoordinator
+                    .get(activity) as? SigningOrchestrator ?: return@onSigningMainUntil null
+                SigningProbeOwner(activity, orchestrator)
             }
             coordinator?.let { return it }
             check(SystemClock.elapsedRealtime() < deadline) { "REAL_E2E_SIGNING_OWNER_MISSING" }
             SystemClock.sleep(POLL_MILLIS)
+        }
+    }
+
+    private class SigningProbeOwner(val activity: MainActivity, val orchestrator: SigningOrchestrator) {
+        val state: SigningUiState get() =
+            orchestrator.visibleState(orchestrator.ordinaryState.value, orchestrator.batchState.value)
+
+        fun isCurrent(profileId: String): Boolean {
+            val navigation = MainActivity::class.java.getDeclaredField("navigation").apply { isAccessible = true }
+                .get(activity) as AppNavigationState
+            val currentProfile = (navigation.destination as? AppDestination.Browser)?.profileId?.value
+            return activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
+                currentProfile == profileId &&
+                MainActivity::class.java.getDeclaredField("signing").apply { isAccessible = true }
+                    .get(activity) === orchestrator
         }
     }
 
@@ -2880,82 +2941,19 @@ class RealE2eInstrumentedTest {
         return true
     }
 
-    private fun clickSigningConfirmation(): Boolean {
-        val exactSigningLabel =
-            hasText("Firmar", substring = false, ignoreCase = false) or
-                hasAnyDescendant(
-                    hasText("Firmar", substring = false, ignoreCase = false),
-                )
-        val exactDialogButton =
-            exactSigningLabel and hasClickAction() and hasAnyAncestor(isDialog())
-        val exactTextButton = exactSigningLabel and hasClickAction()
-        // A missing or disabled button must still reach the snapshot below instead of a bare timeout.
-        runCatching {
-            rule.waitUntil(timeoutMillis = 5_000) {
-                rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = true)
-                    .fetchSemanticsNodes().isNotEmpty() ||
-                    rule.onAllNodes(exactDialogButton and isEnabled(), useUnmergedTree = false)
-                        .fetchSemanticsNodes().isNotEmpty() ||
-                    rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = true)
-                        .fetchSemanticsNodes().isNotEmpty() ||
-                    rule.onAllNodes(exactTextButton and isEnabled(), useUnmergedTree = false)
-                        .fetchSemanticsNodes().isNotEmpty()
-            }
-        }
-        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
-        while (SystemClock.elapsedRealtime() < deadline) {
-            if (performSigningConfirmationAction(exactDialogButton, useUnmergedTree = true)) {
-                return true
-            }
-            if (performSigningConfirmationAction(exactDialogButton, useUnmergedTree = false)) {
-                return true
-            }
-            // Material3 AlertDialog is hosted in a Popup. On some emulator/API combinations the
-            // popup's IsDialog semantics are not exposed as an ancestor, even though the native
-            // coordinator is already in AwaitingConfirmation and the exact button is visible.
-            // Keep this fallback safe by requiring one exact clickable label and a true callback.
-            if (performSigningConfirmationAction(exactTextButton, useUnmergedTree = true)) {
-                return true
-            }
-            if (performSigningConfirmationAction(exactTextButton, useUnmergedTree = false)) {
-                return true
-            }
-            SystemClock.sleep(POLL_MILLIS)
-        }
-        return false
-    }
-
-    // Sanitized UI snapshot for a failed confirmation click: how many exact "Firmar" buttons exist
-    // inside a dialog (D) or anywhere (T), and how many of those are enabled (E); counts only, no text.
-    private fun signingConfirmationClickTimeoutCode(): String {
-        val label = hasText("Firmar", substring = false, ignoreCase = false) or
-            hasAnyDescendant(hasText("Firmar", substring = false, ignoreCase = false))
-        fun count(matcher: SemanticsMatcher): Int = runCatching {
-            rule.onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().size
-        }.getOrDefault(-1)
-        val dialog = count(label and hasClickAction() and hasAnyAncestor(isDialog()))
-        val any = count(label and hasClickAction())
-        val enabled = count(label and hasClickAction() and isEnabled())
-        return SIGN_CONFIRM_CLICK_TIMEOUT_PREFIX + "D${dialog}_T${any}_E$enabled".replace("-", "X")
-    }
-
-    private fun performSigningConfirmationAction(
-        matcher: SemanticsMatcher,
-        useUnmergedTree: Boolean,
-    ): Boolean {
-        val callbackHandled = AtomicBoolean(false)
-        return runCatching {
-            val nodes = rule.onAllNodes(matcher, useUnmergedTree).fetchSemanticsNodes()
-            if (nodes.size != 1) {
-                false
-            } else {
-                rule.onNode(matcher, useUnmergedTree)
-                    .performSemanticsAction(SemanticsActions.OnClick) { onClick ->
-                        callbackHandled.set(onClick())
-                    }
-                callbackHandled.get()
-            }
-        }.getOrDefault(false)
+    private fun clickSigningConfirmation(
+        owner: SigningProbeOwner,
+        profileId: String,
+        requestId: UUID,
+    ): SignConfirmationResult {
+        return RealE2eSigningConfirmation.click(
+            activity = owner.activity,
+            requestId = requestId,
+            state = { owner.state },
+            ownsRequest = { owner.isCurrent(profileId) },
+            timeoutMillis = UI_TIMEOUT_MILLIS,
+            advanceFrame = { rule.mainClock.advanceTimeByFrame() },
+        )
     }
 
     private fun updateSigningEvidence(
@@ -3223,7 +3221,7 @@ class RealE2eInstrumentedTest {
         "REAL_E2E_RECIPE_PAGE_READY_TIMEOUT" -> "RECIPE_PAGE_READY_TIMEOUT"
         else -> {
             val message = throwable.message.orEmpty()
-            if (message.startsWith(SIGN_CONFIRM_CLICK_TIMEOUT_PREFIX)) {
+            if (message.startsWith(SIGN_CONFIRM_ERROR_PREFIX)) {
                 message.removePrefix("REAL_E2E_").takeIf { SAFE_ERROR_TOKEN.matches(it) }?.let { return it }
             }
             val type = throwable.javaClass.simpleName.takeIf { SAFE_ERROR_TOKEN.matches(it) }
@@ -4011,7 +4009,7 @@ class RealE2eInstrumentedTest {
         const val MAX_CLIENT_AUTH_CONFIRMATIONS = 8
         val PORTAL_ID_PATTERN = Regex("[a-z0-9][a-z0-9-]{0,95}")
         val SAFE_ERROR_TOKEN = Regex("[A-Za-z][A-Za-z0-9_]{0,63}")
-        const val SIGN_CONFIRM_CLICK_TIMEOUT_PREFIX = "REAL_E2E_SIGN_CONFIRM_CLICK_TIMEOUT_"
+        const val SIGN_CONFIRM_ERROR_PREFIX = "REAL_E2E_SIGN_CONFIRM_"
         val JS_IDENTIFIER = Regex("[A-Za-z_][A-Za-z0-9_]{0,63}")
         val SANITIZED_HOST = Regex("(?:^| )host=([a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?)(?: |$)")
         val SANITIZED_NAVIGATION_EVENT = Regex(

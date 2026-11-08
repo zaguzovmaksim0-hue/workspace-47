@@ -50,6 +50,8 @@ class SigningConfirmationDialogTest {
         }
 
         rule.onNodeWithText("Solicitud de firma").assertIsDisplayed()
+        rule.onNodeWithTag("signing-confirmation").assertIsDisplayed()
+        rule.onNodeWithTag("signing-confirmation-confirm").assertTextEquals("Firmar")
         rule.onNodeWithText("Sitio: www.juntadeandalucia.es").assertIsDisplayed()
         rule.onNodeWithText("Perfil: Junta de Andalucía").assertIsDisplayed()
         rule.onNodeWithText("Nivel de soporte: Verificada en escenario real").assertIsDisplayed()
@@ -83,7 +85,9 @@ class SigningConfirmationDialogTest {
         }
         rule.waitForIdle()
 
-        val confirm = rule.onNodeWithText("Firmar")
+        rule.onNodeWithTag("signing-confirmation").assertIsDisplayed()
+        val confirm = rule.onNodeWithTag("signing-confirmation-confirm")
+        confirm.assertTextEquals("Firmar")
         confirm.assertIsNotEnabled()
         rule.onNodeWithText("Cancelar").assertIsEnabled()
         rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS - 100)

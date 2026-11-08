@@ -415,6 +415,18 @@ class WebMessageBridge internal constructor(
         if (staBatchEnabled) {
             val runtime = checkNotNull(batchRuntime)
             val batchConsumer = checkNotNull(onMelillaBatchRequest)
+            val isLugoBatch = qaDiagnosticsEnabled && profileId.value == LugoBatchBridgeAdapter.PROFILE_ID &&
+                rawMessage.length <= LugoBatchBridgeAdapter.MAX_MESSAGE_CHARS &&
+                runCatching { JSONObject(rawMessage).optString("type") == LugoBatchBridgeAdapter.TYPE }
+                    .getOrDefault(false)
+            fun recordLugoBatch(stage: String, code: SigningErrorCode? = null) {
+                if (isLugoBatch) logger.recordMiniAppletBridge(
+                    stage = "LUGO_BATCH_$stage",
+                    originHost = sourceOrigin.host.orEmpty(),
+                    errorCode = code?.name,
+                )
+            }
+            recordLugoBatch("RECEIVED")
             when (
                 val batchResult = runtime.adapter.route(
                     rawMessage,
@@ -429,6 +441,7 @@ class WebMessageBridge internal constructor(
                         postMessage = replyProxy::postMessage,
                     )
                     if (reply == null) {
+                        recordLugoBatch("REJECTED", SigningErrorCode.PROTOCOL_FAILED)
                         runtime.adapter.abandon(batchResult.request.requestId)
                         replyStaBatchFailure(runtime,
                             replyProxy = replyProxy,
@@ -440,7 +453,10 @@ class WebMessageBridge internal constructor(
                         logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
                         return
                     }
-                    runCatching { batchConsumer(batchResult.request, reply) }.onFailure {
+                    runCatching { batchConsumer(batchResult.request, reply) }.onSuccess {
+                        recordLugoBatch("ACCEPTED")
+                    }.onFailure {
+                        recordLugoBatch("REJECTED", SigningErrorCode.PROTOCOL_FAILED)
                         logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
                         reply.failure(SigningErrorCode.PROTOCOL_FAILED)
                     }
@@ -455,6 +471,7 @@ class WebMessageBridge internal constructor(
                     return
                 }
                 is MelillaBatchBridgeRouteResult.Rejected -> {
+                    recordLugoBatch("REJECTED", batchResult.code)
                     logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
                     replyStaBatchFailure(runtime,
                         replyProxy = replyProxy,
@@ -568,9 +585,16 @@ class WebMessageBridge internal constructor(
         if (json.optString(SHIM_DIAGNOSTIC_TYPE_FIELD) != SHIM_DIAGNOSTIC_TYPE) {
             return false
         }
+        if (!isMainFrame) {
+            logger.recordMiniAppletBridge(
+                stage = "SHIM_DIAGNOSTIC_NON_MAIN_FRAME",
+                originHost = sourceOrigin.host.orEmpty(),
+            )
+            logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)
+            return true
+        }
         if (
-            !isMainFrame ||
-                json.length() != SHIM_DIAGNOSTIC_KEYS.size ||
+            json.length() != SHIM_DIAGNOSTIC_KEYS.size ||
                 SHIM_DIAGNOSTIC_KEYS.any { !json.has(it) }
         ) {
             logger.recordBrowserEvent(DiagnosticEventCode.WEB_MESSAGE_REJECTED)

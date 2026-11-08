@@ -32,6 +32,210 @@ class RealE2ePolicyTest(unittest.TestCase):
             capture_output=True,
         )
 
+    def exact_button_script(self, **overrides) -> str:
+        values = {
+            "matchUrlWithoutQuery": False,
+            "quotedExpectedUrl": "https://login.example/login",
+            "quotedExpectedElementId": "login",
+            "quotedExpectedLabel": "Acceder",
+            "quotedExpectedAriaLabel": None,
+            "quotedExpectedOnClick": "login();",
+            "quotedWaitForBadajozSignHook": False,
+            "quotedExpectedTag": "button",
+            "quotedParentAnchorClass": None,
+            "quotedHandlerName": None,
+            "requireVisible": False,
+            "waitForAemetSignHook": False,
+            "waitForTransportesSignReady": False,
+            "waitForLugoSignReady": False,
+            "matchPalenciaSessionPath": False,
+            "quotedExpectedName": None,
+            "matchCanariasLoginAction": False,
+            "quotedExpectedType": "button",
+            "quotedExpectedSrc": None,
+            "quotedFormName": None,
+            "quotedFormAction": None,
+            "requireNoOnClick": False,
+        }
+        values.update(overrides)
+        source = self.read(INSTRUMENTATION).split('internal fun clickExactButton(', 1)[1]
+        script = source.split('webView.evaluateJavascript(', 1)[1].split('"""', 2)[1]
+        return re.sub(r'\$(\w+)', lambda match: json.dumps(values[match[1]]), script)
+
+    def test_transportes_and_lugo_wait_for_complete_login_dependencies(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        for portal, flag in (('TRANSPORTES', 'waitForTransportesSignReady'), ('LUGO', 'waitForLugoSignReady')):
+            recipe = source.split(f'{portal}_PORTAL_ID -> clickExactButton(', 1)[1].split('\n            )', 1)[0]
+            self.assertIn(f'{flag} = true', recipe)
+            self.assertIn(f'require(!{flag} || expectedCurrentUrl == {portal}_AUTH_URL)', source)
+        scripts = {
+            "transportes": self.exact_button_script(waitForTransportesSignReady=True),
+            "lugo": self.exact_button_script(waitForLugoSignReady=True),
+        }
+        harness = r"""
+            const assert = require('node:assert/strict');
+            for (const [portal, script] of Object.entries(SCRIPTS)) {
+              let clicks = 0;
+              const element = {id: 'login', innerText: 'Acceder',
+                getAttribute: name => ({type: 'button', onclick: 'login();'}[name] ?? null),
+                click: () => clicks++};
+              const document = {readyState: 'loading', querySelectorAll: () => [element]};
+              const location = {href: 'https://login.example/login'};
+              const noop = () => {};
+              const window = portal === 'transportes' ? {
+                Sign_firmar: noop, SignParams: noop, SignResult: noop, doSign: noop,
+                MiniApplet: {sign: noop, isAndroid: noop, isIOS: noop}
+              } : {waiting: noop, chargeClient: noop, authenticate: noop, AutoScript: {signBatch: noop}};
+              const run = () => {clicks = 0; return [eval(script), clicks];};
+              assert.equal(run()[1], 0, portal + ': loading');
+              document.readyState = 'interactive';
+              assert.equal(run()[1], 0, portal + ': interactive');
+              document.readyState = 'complete';
+              for (const [owner, key] of portal === 'transportes' ? [
+                [window, 'Sign_firmar'], [window, 'SignParams'], [window, 'SignResult'], [window, 'doSign'],
+                [window.MiniApplet, 'sign'], [window.MiniApplet, 'isAndroid'], [window.MiniApplet, 'isIOS']
+              ] : [[window, 'waiting'], [window, 'chargeClient'], [window, 'authenticate'],
+                   [window.AutoScript, 'signBatch']]) {
+                delete owner[key];
+                assert.equal(run()[1], 0, portal + ': missing ' + key);
+                owner[key] = noop;
+              }
+              assert.deepEqual(run(), [1, 1], portal + ': ready');
+              for (const [key, value] of [['id', 'other'], ['innerText', 'Presentar']]) {
+                const previous = element[key]; element[key] = value;
+                assert.equal(run()[1], 0); element[key] = previous;
+              }
+              const getAttribute = element.getAttribute;
+              for (const [key, value] of [['type', 'submit'], ['onclick', 'file();']]) {
+                element.getAttribute = name => name === key ? value : getAttribute(name);
+                assert.equal(run()[1], 0);
+              }
+              element.getAttribute = getAttribute;
+              document.querySelectorAll = () => [element, element];
+              assert.deepEqual(run(), [2, 0]);
+              document.querySelectorAll = () => [element];
+              location.href = 'https://foreign.example/login';
+              assert.equal(run()[1], 0);
+            }
+        """.replace('SCRIPTS', json.dumps(scripts))
+        result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_palencia_session_path_opt_in_preserves_exact_page_image_and_form(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        recipe = source.split('PALENCIA_PORTAL_ID -> {', 1)[1].split('\n            }', 1)[0]
+        self.assertIn('matchPalenciaSessionPath = true', recipe)
+        self.assertEqual(1, source.count('matchPalenciaSessionPath = true'))
+        self.assertIn('require(!matchPalenciaSessionPath || expectedCurrentUrl == PALENCIA_CLAVE_URL', source)
+        page = 'https://sede.diputaciondepalencia.es/opensiac/certlogin/enter.action'
+        src = '/opensiac/images/clave_w_32.jpg'
+        values = dict(
+            quotedExpectedUrl=page, quotedExpectedElementId=None, quotedExpectedLabel='',
+            quotedExpectedOnClick='document.formClave.submit()', quotedExpectedTag='img',
+            quotedExpectedType=None, quotedExpectedSrc=src, quotedFormName='formClave',
+            quotedFormAction='https://sede.diputaciondepalencia.es/SPProxy2/IndexPage',
+        )
+        scripts = {
+            'strict': self.exact_button_script(**values),
+            'palencia': self.exact_button_script(**values, matchPalenciaSessionPath=True),
+        }
+        harness = r"""
+            const assert = require('node:assert/strict');
+            const page = PAGE, src = SRC;
+            const run = (script, change = {}) => {
+              let clicks = 0;
+              const form = {name: 'formClave', id: '',
+                action: change.action || 'https://sede.diputaciondepalencia.es/SPProxy2/IndexPage',
+                contains: () => !change.detached,
+                getAttribute: key => key === 'method' ? change.method || 'post' : change.target || null};
+              const image = {innerText: '',
+                getAttribute: key => ({src: change.src || src,
+                  onclick: change.onclick || 'document.formClave.submit()'}[key] ?? null),
+                click: () => clicks++};
+              const document = {forms: change.missing ? [] : change.duplicate ? [form, form] : [form],
+                querySelectorAll: () => change.duplicateImage ? [image, image] : [image]};
+              const location = {href: change.url || page};
+              const window = {};
+              return [eval(script), clicks];
+            };
+            for (const [kind, script] of Object.entries(SCRIPTS)) {
+              assert.deepEqual(run(script), [1, 1]);
+              for (const change of [
+                {url: page + ';jsessionid=SYNTHETIC.nodo1'},
+                {src: src + ';jsessionid=SYNTHETIC.nodo1'},
+                {url: page + ';jsessionid=' + 'A'.repeat(128), src: src + ';jsessionid=SYNTHETIC'},
+              ]) assert.deepEqual(run(script, change), [1, 1]);
+              for (const url of [
+                page + ';other=value', page + ';jsessionid=A/other', page + '%3Bjsessionid=SYNTHETIC',
+                page + '?x=1;jsessionid=A', page + '#;jsessionid=A',
+                page.replace('https:', 'http:'), page.replace('.es/', '.es:8443/'),
+                page.replace('sede.', 'foreign.'), page.replace('enter.action', 'other.action'),
+                page.replace('https://', 'https://foreign@'),
+              ]) assert.equal(run(script, {url})[1], 0, kind + ': wrong page');
+              for (const change of [
+                {src: src + ';other=value'}, {src: src + ';jsessionid=A/extra'},
+                {src: src + '?x=1'}, {src: src.replace('clave_w', 'other')},
+                {onclick: 'document.other.submit()'}, {missing: true}, {duplicate: true},
+                {duplicateImage: true}, {method: 'get'}, {target: '_blank'},
+                {action: 'https://foreign.example/SPProxy2/IndexPage'},
+              ]) assert.equal(run(script, change)[1], 0, kind + ': wrong target');
+              if (kind === 'palencia') assert.deepEqual(run(script, {detached: true}), [2, 0]);
+            }
+        """.replace('SCRIPTS', json.dumps(scripts))
+        harness = harness.replace('PAGE', json.dumps(page)).replace('SRC', json.dumps(src))
+        result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_badajoz_native_fixture_signs_only_one_synthetic_login_challenge(self) -> None:
+        source = self.read(INSTRUMENTATION.with_name('SigningConfirmationInstrumentedTest.kt'))
+        fixture = source.split('const val SYNTHETIC_BADAJOZ_LOGIN = """', 1)[1].split('"""', 1)[0]
+        script = fixture.split('<script>', 1)[1].split('</script>', 1)[0]
+        for forbidden in ('.submit(', 'fetch(', 'XMLHttpRequest', '<form', 'https://'):
+            self.assertNotIn(forbidden, fixture)
+        harness = r"""
+            const assert = require('node:assert/strict');
+            const window = globalThis;
+            const document = {title: 'SIGN_READY'};
+            eval(SCRIPT);
+            let calls = 0;
+            window.MiniApplet.sign = (data, algorithm, format, properties, success) => {
+              assert.equal(Buffer.from(data, 'base64').toString(),
+                '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
+              assert.equal(algorithm, 'SHA256withRSA');
+              assert.equal(format, 'Cades');
+              assert.equal(properties, 'policy=FirmaAGE\nheadless=true\nfilters=nonexpired:true;authCert:true');
+              calls++;
+              success();
+            };
+            pulsarFirmarIdentificate();
+            assert.equal(calls, 1);
+            assert.equal(document.title, 'SYNTHETIC_LOGIN_SIGNED');
+        """.replace('SCRIPT', json.dumps(script))
+        result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_confirmation_codes_and_lugo_diagnostics_remain_closed_and_sanitized(self) -> None:
+        confirmation = self.read(INSTRUMENTATION.with_name('RealE2eSigningConfirmation.kt'))
+        outcomes = confirmation.split('enum class SignConfirmationOutcome {', 1)[1].split('}', 1)[0]
+        for outcome in re.findall(r'\b[A-Z][A-Z_]+\b', outcomes):
+            for state in 'IASCTF':
+                self.assertRegex(f'SIGN_CONFIRM_{outcome}_D9_B9_E9_{state}', r'^[A-Za-z][A-Za-z0-9_]{0,63}$')
+        source = self.read(ROOT / 'app/src/main/java/dev/junta/firmamobile/browser/WebMessageBridge.kt')
+        shim_diagnostic = source.split('private fun receiveMiniAppletShimDiagnostic(', 1)[1]
+        iframe = shim_diagnostic.split('if (!isMainFrame) {', 1)[1].split('\n        }', 1)[0]
+        self.assertIn('stage = "SHIM_DIAGNOSTIC_NON_MAIN_FRAME"', iframe)
+        self.assertIn('DiagnosticEventCode.WEB_MESSAGE_REJECTED', iframe)
+        self.assertIn('return true', iframe)
+        receive = source.split('private fun receive(', 1)[1]
+        batch = receive.split('if (staBatchEnabled) {', 1)[1].split('\n        when (', 1)[0]
+        self.assertIn('profileId.value == LugoBatchBridgeAdapter.PROFILE_ID', batch)
+        self.assertIn('recordLugoBatch("RECEIVED")', batch)
+        self.assertIn('recordLugoBatch("ACCEPTED")', batch)
+        self.assertIn('recordLugoBatch("REJECTED", batchResult.code)', batch)
+        log = batch.split('fun recordLugoBatch(', 1)[1].split('\n            }', 1)[0]
+        for private_value in ('rawMessage', 'batchXml', 'requestId', 'documentId', 'extraProperties'):
+            self.assertNotIn(private_value, log)
+
     def test_wave_f_login_recipes_keep_the_reviewed_controls_and_eight_portal_boundary(self) -> None:
         source = self.read(INSTRUMENTATION)
         wave = source.split("BOE_PORTAL_ID ->", 1)[1].split("CSN_PORTAL_ID ->", 1)[0]
@@ -258,6 +462,8 @@ class RealE2ePolicyTest(unittest.TestCase):
             'quotedFormName': None, 'quotedFormAction': None,
             'matchCanariasLoginAction': False, 'quotedExpectedName': None, 'quotedHandlerName': None,
             'quotedParentAnchorClass': None, 'requireVisible': False, 'waitForAemetSignHook': False,
+            'waitForTransportesSignReady': False, 'waitForLugoSignReady': False,
+            'matchPalenciaSessionPath': False,
         }
         script = re.sub(r'\$(\w+)', lambda match: json.dumps(values[match[1]]), script)
         harness = r'''
@@ -1182,13 +1388,16 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('matchCanariasLoginAction = true', source)
         self.assertIn('expectedName = "autenticarComprobacion"', source)
         stop = source.split('if (!deepEnabled && profileId == AEMET_PROFILE_ID) {', 1)[1].split('\n                }', 1)[0]
-        self.assertIn('abandonAemetLoginAtBoundary(scenario)', stop)
+        self.assertIn('abandonAemetLoginAtBoundary()', stop)
         self.assertIn('classify(profileCapabilities, result)', stop)
         self.assertIn('return', stop)
         self.assertNotIn('performClick', stop)
         abandon = source.split('private fun abandonAemetLoginAtBoundary(', 1)[1].split('private fun ', 1)[0]
-        self.assertIn('coordinator.cancel(SigningCancelReason.BACKGROUND, pending.requestId)', abandon)
-        self.assertIn('check(abandoned)', abandon)
+        self.assertIn(
+            'coordinator.orchestrator.cancelSigning(SigningCancelReason.BACKGROUND, pending.requestId)', abandon,
+        )
+        self.assertIn('coordinator.state is SigningUiState.Idle', abandon)
+        self.assertIn('check(abandoned == true)', abandon)
         soria = source.split('SORIA_PORTAL_ID -> clickExactButton(', 1)[1].split('\n            )\n', 1)[0]
         self.assertIn('expectedHandlerName = "pulsarCertificado"', soria)
 
@@ -1208,8 +1417,11 @@ class RealE2ePolicyTest(unittest.TestCase):
             "requireVisible": False,
             "waitForAemetSignHook": False,
             "quotedExpectedName": None,
+            "waitForTransportesSignReady": False,
+            "waitForLugoSignReady": False,
             "matchCanariasLoginAction": False,
             "quotedAnchorType": None,
+            "matchPalenciaSessionPath": False,
             "quotedAnchorAriaLabel": None,
             "quotedExpectedTitle": None,
             "quotedExpectedType": "image",
@@ -1664,37 +1876,46 @@ class RealE2ePolicyTest(unittest.TestCase):
 
     def test_safe_auth_sign_avoids_compose_idle_for_webview_signing(self) -> None:
         source = self.read(INSTRUMENTATION)
+        confirmation = self.read(INSTRUMENTATION.with_name('RealE2eSigningConfirmation.kt'))
         self.assertIn("private fun signingCoordinatorForScenario(", source)
         self.assertIn("application().sanitizedLogger.snapshot()", source)
         self.assertIn("var signingCoordinator = if (safeAuthSigning)", source)
         self.assertIn("signingCoordinatorRefreshed", source)
         self.assertIn('it.contains("stage=PREPARE_READY")', source)
         self.assertIn("private fun clickSigningConfirmation(", source)
-        self.assertIn("hasAnyDescendant(", source)
-        self.assertIn("hasClickAction()", source)
-        self.assertIn("hasAnyAncestor(isDialog())", source)
-        self.assertIn("private fun performSigningConfirmationAction(", source)
-        self.assertIn("AtomicBoolean(false)", source)
-        self.assertIn("callbackHandled.set(onClick())", source)
-        self.assertIn("callbackHandled.get()", source)
-        self.assertIn("val exactTextButton", source)
-        self.assertIn("hasText(\"Firmar\", substring = false, ignoreCase = false)", source)
-        self.assertIn("useUnmergedTree = true", source)
-        self.assertIn("useUnmergedTree = false", source)
-        self.assertNotIn("val exactClickableButton", source)
+        for required in (
+            'WindowInspector.getGlobalWindowViews()', 'isAttachedToWindow', 'hasWindowFocus()',
+            'isLifecycleInResumedState', 'unmergedRootSemanticsNode', 'SemanticsProperties.TestTag',
+            'SemanticsProperties.Disabled', 'SemanticsActions.OnClick', 'buttons != 1',
+            'ownsRequest()', 'requestId != requestId', 'callbackAccepted = action() == true',
+            'CALLBACK_NOT_ACCEPTED', 'REQUEST_EXPIRED', 'OWNER_CHANGED', 'UI_QUERY_FAILED',
+            'STATE_UNCHANGED', 'SystemClock.elapsedRealtime()',
+        ):
+            self.assertIn(required, confirmation)
+        for forbidden in (
+            'fetchSemanticsNodes', 'performSemanticsAction', 'waitForIdle', 'onAllNodes',
+            'measureAndLayoutForTest', 'confirmSigning(', 'signingCoordinator.confirm(', 'hasText(',
+        ):
+            self.assertNotIn(forbidden, confirmation)
+        self.assertEqual(1, confirmation.count('SystemClock.elapsedRealtime() + timeoutMillis'))
+        self.assertEqual(1, confirmation.count('action() == true'))
         observation = source[source.index("private fun observePortal("):]
         observation = observation[:observation.index("private fun waitForSigningTerminalState(")]
-        self.assertIn("signingCoordinatorForScenario(scenario)", observation)
-        self.assertIn("signingCoordinator?.state?.value", observation)
-        self.assertIn("clickSigningConfirmation()", observation)
+        self.assertIn("signingCoordinatorForScenario()", observation)
+        self.assertIn("signingCoordinator?.state", observation)
+        self.assertIn("clickSigningConfirmation(", observation)
+        self.assertIn("result.signingConfirmationObserved = confirmation.dialogObserved", observation)
+        self.assertIn("result.signingConfirmed = confirmation.confirmed", observation)
         self.assertIn("if (!safeAuthSigning)", observation)
         signing_gate = observation[observation.index("val signingConfirmationVisible"):]
         signing_gate = signing_gate[:signing_gate.index("if (Capability.SIGN in profileCapabilities")]
         self.assertIn("if (safeAuthSigning)", signing_gate)
-        self.assertIn("signingCoordinator?.state?.value", signing_gate)
+        self.assertIn("awaitingSigning != null", signing_gate)
         signing_wait = source[source.index("private fun waitForSigningTerminalState("):]
         signing_wait = signing_wait[:signing_wait.index("private fun signingCoordinatorForScenario(")]
-        self.assertIn("signingCoordinator.state.value", signing_wait)
+        self.assertIn("signingCoordinator.state", signing_wait)
+        self.assertIn("requestId", signing_wait)
+        self.assertIn("isCurrent(profileId)", signing_wait)
 
     def test_instrumentation_reflection_targets_exist_in_app_sources(self) -> None:
         source = self.read(INSTRUMENTATION)
@@ -1710,7 +1931,12 @@ class RealE2ePolicyTest(unittest.TestCase):
         helper = source[source.index("private fun signingCoordinatorForScenario("):]
         helper = helper[:helper.index("private fun clickSigningConfirmation(")]
         self.assertIn('getDeclaredField("signing")', helper)
-        self.assertIn('orchestrator.javaClass.getDeclaredField("signingCoordinator")', helper)
+        self.assertIn('as? SigningOrchestrator', helper)
+        self.assertIn(
+            'orchestrator.visibleState(orchestrator.ordinaryState.value, orchestrator.batchState.value)', source,
+        )
+        self.assertIn('getDeclaredField("navigation")', source)
+        self.assertIn('currentProfile == profileId', source)
         self.assertIn("SIGNING_OWNER_TIMEOUT_MILLIS", helper)
         self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING"', helper)
         self.assertIn('"REAL_E2E_SIGNING_OWNER_MISSING" -> "SIGNING_OWNER_MISSING"', source)
@@ -1979,7 +2205,19 @@ class RealE2ePolicyTest(unittest.TestCase):
                 "timestamp=2026-09-01T19:38:26Z "
                 "event=MINIAPPLET_BRIDGE origin=sede.dip-badajoz.es "
                 "stage=REJECTED algorithm=invalid format=invalid "
-                "error=UNSUPPORTED_PROTOCOL\n",
+                "error=UNSUPPORTED_PROTOCOL\n"
+                "timestamp=2026-09-01T19:38:27Z "
+                "event=MINIAPPLET_BRIDGE origin=sede.deputacionlugo.org "
+                "stage=SHIM_DIAGNOSTIC_NON_MAIN_FRAME algorithm=invalid format=invalid\n"
+                "timestamp=2026-09-01T19:38:28Z "
+                "event=MINIAPPLET_BRIDGE origin=sede.deputacionlugo.org "
+                "stage=LUGO_BATCH_RECEIVED algorithm=invalid format=invalid\n"
+                "timestamp=2026-09-01T19:38:29Z "
+                "event=MINIAPPLET_BRIDGE origin=sede.deputacionlugo.org "
+                "stage=LUGO_BATCH_REJECTED algorithm=invalid format=invalid error=NAVIGATION_CHANGED\n"
+                "timestamp=2026-09-01T19:38:30Z "
+                "event=MINIAPPLET_BRIDGE origin=sede.deputacionlugo.org "
+                "stage=LUGO_BATCH_ACCEPTED algorithm=invalid format=invalid\n",
                 encoding="ascii",
             )
             accepted = self.helper("validate-log", "--log", str(path))
@@ -2040,10 +2278,10 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('window.__jfmBadajozSignHookReady !== true', source)
         self.assertIn('typeof window.MiniApplet?.sign !== \'function\'', source)
         self.assertIn('"3" -> waitingForBadajozSignHook = true', source)
-        self.assertIn('performSemanticsAction(SemanticsActions.OnClick)', source)
-        self.assertIn('hasText("Firmar", substring = false, ignoreCase = false)', source)
-        self.assertIn('callbackHandled.set(onClick())', source)
-        self.assertIn('callbackHandled.get()', source)
+        confirmation = self.read(INSTRUMENTATION.with_name('RealE2eSigningConfirmation.kt'))
+        self.assertIn('callbackAccepted = action() == true', confirmation)
+        self.assertIn('"signing-confirmation"', confirmation)
+        self.assertIn('"signing-confirmation-confirm"', confirmation)
 
     def test_select_emits_no_blank_record_for_empty_filtered_shard(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
