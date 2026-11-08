@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.profile
 
+import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import org.json.JSONObject
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -797,6 +798,8 @@ class SiteProfileCatalogParserTest {
             it.profileId == ProfileId("aragon-siraw")
         }
         assertEquals(ProfileId("aragon-siraw"), profile.profileId)
+        assertEquals(2, profile.profileVersion)
+        assertEquals(LocalCadesDetachedAdapter.PROFILE_VERSION, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_E2E, profile.compatibilityStatus)
         assertEquals(ProfileActivation.ENABLED, profile.activation)
         assertEquals(
