@@ -53,9 +53,33 @@ assert.equal(snapshot.forms[0].hidden[0].length, 21);
 assert.equal(snapshot.forms[0].sedeCsrf.nonEmpty, true);
 assert.ok(!JSON.stringify(sanitize(snapshot)).includes(secret));
 
-const probes = JSON.parse(fs.readFileSync(new URL('./probes.json', import.meta.url)));
-assert.equal(probes.length, 1);
-assert.equal(probes[0].name, 'wavef2-dgoj-login-clean-context');
+const control = (tagName, attrs) => ({
+  tagName, id: tagName === 'IMG' ? 'imgClave' : null, innerText: '', offsetWidth: 1,
+  getClientRects: () => [{}], getRootNode: () => ({}),
+  getAttribute: name => attrs[name] ?? null, hasAttribute: name => Object.hasOwn(attrs, name),
+});
+const image = control('IMG', { src: 'clave.png' });
+const parent = control('A', { class: 'text-center', target: '_self' });
+for (const element of [image, parent]) {
+  Object.defineProperty(element, 'outerHTML', { get: () => assert.fail('raw control markup read') });
+}
+const controlsRoot = { ...root, forms: [], querySelectorAll: selector =>
+  selector === 'img#imgClave' ? [image] : selector === 'a.text-center:has(> img#imgClave)' ? [parent] : [] };
+const controlSnapshot = vm.runInNewContext(`(${dump.toString()})`, {
+  document: controlsRoot, location: { href: 'https://example.test/login' },
+})(['img#imgClave', 'a.text-center:has(> img#imgClave)']);
+assert.equal(controlSnapshot.html[0][1][0].src, 'clave.png');
+assert.equal(controlSnapshot.html[1][1][0].target, '_self');
+assert.equal(controlSnapshot.html[1][1][0].href, null);
+assert.equal(controlSnapshot.html[0][1][0].onclick, null);
+
+const configured = JSON.parse(fs.readFileSync(new URL('./probes.json', import.meta.url)));
+assert.equal(configured.length, 1);
+assert.equal(configured[0].name, 'waved-dgsfp-login-structure');
+assert.deepEqual(configured[0].clicks, []);
+const probes = [{ name: 'wavef2-dgoj-login-clean-context',
+  url: 'https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S',
+  clicks: ['form#plogin input[type="submit"]'], net: true }];
 
 // Exercise the runner without Chrome or network access, including the unchanged route aborts.
 const contexts = [];

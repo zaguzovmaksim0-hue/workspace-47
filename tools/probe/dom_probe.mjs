@@ -41,7 +41,8 @@ export const dump = (selectors = []) => {
   const describe = el => ({
     tag: el.tagName, id: el.id || null, shadowHost: el.getRootNode().host ? el.getRootNode().host.tagName : null,
     routerlink: el.getAttribute('routerlink'), name: el.getAttribute('name'), type: el.getAttribute('type'), cls: (el.getAttribute('class') || '').slice(0, 60),
-    text: text(el), href: el.getAttribute('href'), onclick: el.hasAttribute('onclick') ? '<runtime>' : null,
+    text: text(el), href: el.getAttribute('href'), src: el.getAttribute('src'), target: el.getAttribute('target'),
+    onclick: el.hasAttribute('onclick') ? '<runtime>' : null,
     form: el.form ? formInfo(el.form) : null, visible: vis(el),
   });
   // Pierce open shadow roots: web-component sedes keep their login links there.
