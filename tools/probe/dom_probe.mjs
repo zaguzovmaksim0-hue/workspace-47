@@ -45,6 +45,13 @@ const runOne = async (probe) => {
     entry.status = response && response.status();
     await page.waitForTimeout(probe.wait ?? 4000);
     entry.steps.push(await page.evaluate(dump));
+    // Optional raw markup (light + open shadow DOM) of chosen elements, to see what a web component renders.
+    if (probe.html) entry.html = await page.evaluate((sels) => sels.map(sel => {
+      const roots = [document];
+      for (let i = 0; i < roots.length; i++) roots[i].querySelectorAll('*').forEach(el => el.shadowRoot && roots.push(el.shadowRoot));
+      return [sel, roots.flatMap(r => Array.from(r.querySelectorAll(sel))).slice(0, 3)
+        .map(el => el.outerHTML.slice(0, 1500) + (el.shadowRoot ? ' #shadow: ' + el.shadowRoot.innerHTML.slice(0, 2500) : ''))];
+    }), probe.html);
     for (const selector of probe.clicks ?? []) {
       await Promise.all([
         page.waitForNavigation({ waitUntil: 'load', timeout: 45000 }).catch(() => null),

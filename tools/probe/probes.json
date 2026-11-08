@@ -1,46 +1,63 @@
 [
   {
-    "name": "age-administrador-de-infraestructuras-ferroviarias-adif",
-    "url": "https://sede.adif.gob.es/",
-    "wait": 8000,
-    "clicks": []
-  },
-  {
-    "name": "age-agencia-estatal-de-seguridad-aerea-aesa",
-    "url": "https://sede.seguridadaerea.gob.es/oficina/tramites/altaSolicitud.do?id=4&codArea=SOLGEN",
-    "wait": 8000,
-    "clicks": [
-      "button#botonAccederClave[type=\"button\"]"
-    ]
-  },
-  {
-    "name": "age-direccion-general-de-la-guardia-civil",
-    "url": "https://sede.guardiacivil.gob.es/",
-    "wait": 8000,
-    "clicks": []
-  },
-  {
-    "name": "comunidad-madrid-sede",
-    "url": "https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm",
-    "wait": 6000,
-    "clicks": []
-  },
-  {
-    "name": "age-portal-funciona",
-    "url": "https://sede.funciona.gob.es/es/home",
-    "wait": 10000,
-    "clicks": [
-      "dnt-button[title-text=\"Acceder con Autentica\"]"
-    ]
-  },
-  {
-    "name": "age-ministerio-de-trabajo-mites-auth",
+    "name": "mites-area-privada",
     "url": "https://sede.mites.gob.es/",
     "wait": 25000,
-    "cap": 150000,
-    "clicks": [
+    "cap": 170000,
+    "html": [
       "dnt-header-item[routerlink=\"/auth\"]",
-      "[title-text*=\"Cl@ve\"]"
+      "dnt-horizontal-menu-item"
+    ],
+    "clicks": [
+      "a:text-is(\"Área Privada\")",
+      "app-login-clave dnt-button[type=\"primary-light\"]"
     ]
+  },
+  {
+    "name": "mites-header-item",
+    "url": "https://sede.mites.gob.es/",
+    "wait": 25000,
+    "cap": 170000,
+    "clicks": [
+      "dnt-header-item[routerlink=\"/auth\"] >> nth=0",
+      "app-login-clave dnt-button[type=\"primary-light\"]"
+    ]
+  },
+  {
+    "name": "age-administrador-de-infraestructuras-ferroviarias-adif",
+    "url": "https://sede.adif.gob.es/",
+    "wait": 10000,
+    "cap": 120000,
+    "clicks": [
+      "button:text-is(\"Identificarse\")"
+    ]
+  },
+  {
+    "name": "age-direccion-general-de-seguros-y-fondos-de-pensiones",
+    "url": "https://www.sededgsfp.gob.es/es/paginas/login.aspx",
+    "wait": 8000,
+    "clicks": [
+      "img#imgClave"
+    ]
+  },
+  {
+    "name": "gran-canaria-sede-electronica",
+    "url": "https://sede.grancanaria.com/sede-privado/instancia-general?inicio",
+    "wait": 10000
+  },
+  {
+    "name": "gran-canaria-portal-institucional",
+    "url": "https://cabildo.grancanaria.com/",
+    "wait": 10000
+  },
+  {
+    "name": "age-acceda",
+    "url": "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
+    "wait": 8000
+  },
+  {
+    "name": "eivissa-portal-institucional",
+    "url": "https://www.conselldeivissa.es/",
+    "wait": 8000
   }
 ]
