@@ -1,97 +1,34 @@
 [
  {
-  "name": "diputacion-pontevedra-sede",
-  "url": "https://sede.depo.gal/web/public/catalog-detail/50709505",
-  "wait": 5000,
-  "clicks": [
-   "a.rightformbutton[href*=\"external-registryinput-new.xhtml\"]",
-   "form#formclave a:has-text(\"Certificado dixital\")"
-  ]
- },
- {
-  "name": "melilla-sede",
-  "url": "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
-  "wait": 5000,
-  "clicks": [
-   "a[href=\"https://sede.melilla.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=PTS2_HOME\"]",
-   "a#link-clave"
-  ]
- },
- {
-  "name": "extremadura-tramites",
-  "url": "https://tramites.juntaex.es/",
-  "wait": 5000,
-  "clicks": [
-   "a[href=\"https://tramites.juntaex.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME\"]",
-   "a#link-clave"
-  ]
- },
- {
-  "name": "diputacion-ciudad-real-portal",
-  "url": "https://sede.dipucr.es/iniciaTramite/20",
-  "wait": 5000,
-  "clicks": [
-   "a[href^=\"https://se1.dipucr.es:4443/SIGEM_AutenticacionWeb/seleccionEntidad.do\"]"
-  ]
- },
- {
-  "name": "age-ministerio-de-trabajo-y-economia-social",
+  "name": "mites-home",
   "url": "https://sede.mites.gob.es/",
-  "wait": 9000,
-  "cap": 150000,
-  "clicks": [
-   "dnt-header-item[routerlink=\"/auth\"] a",
-   "app-login-clave dnt-button"
-  ]
- },
- {
-  "name": "catalunya-seu-electronica",
-  "url": "https://web.gencat.cat/ca/seu-electronica/serveis-de-la-seu/registre-electronic/",
-  "wait": 8000,
-  "cap": 170000,
-  "clicks": [
-   "a.btn-ini_tramit[href*=\"renderitzar.do\"]",
-   "input[type=\"button\"][value=\"Accedeix\"]"
-  ]
- },
- {
-  "name": "catalunya-tramits-peticio-generica",
-  "url": "https://tramits.gencat.cat/ca/tramits/tramits-temes/Peticio-generica?category=72461610-a82c-11e3-a972-000c29052e2c",
-  "wait": 8000,
-  "cap": 170000,
-  "clicks": [
-   "a.btn-ini_tramit[href*=\"renderitzar.do\"]",
-   "input[type=\"button\"][value=\"Accedeix\"]"
-  ]
- },
- {
-  "name": "diputacion-tarragona-sede",
-  "url": "https://seuelectronica.dipta.cat/tramits-online/fr/administracions/8004330008/procediments/DIP80_EGIST_00001/crearInstancia",
   "wait": 12000,
   "clicks": []
  },
  {
-  "name": "diputacion-barcelona-portal",
-  "url": "https://seuelectronica.diba.cat/es/sol%C2%B7licitud-gen%C3%A8rica",
+  "name": "mites-auth",
+  "url": "https://sede.mites.gob.es/auth",
+  "wait": 12000,
+  "clicks": []
+ },
+ {
+  "name": "ciudad-real-4443",
+  "url": "https://se1.dipucr.es:4443/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=DPCR_SRS&SESION_ID=&ENTIDAD_ID=005",
   "wait": 6000,
   "clicks": []
  },
  {
-  "name": "diputacion-girona-portal",
+  "name": "girona-valid-30s",
   "url": "https://seu-e.cat/tramits/8001760009/instancia-generica",
-  "wait": 6000,
+  "wait": 30000,
+  "cap": 100000,
   "clicks": []
  },
  {
-  "name": "diputacion-lleida-sede",
-  "url": "https://seu.diputaciolleida.cat",
-  "wait": 6000,
-  "clicks": []
- },
- {
-  "name": "comunidad-madrid-gestiona2",
-  "url": "https://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094",
-  "wait": 6000,
+  "name": "tarragona-valid-30s",
+  "url": "https://seuelectronica.dipta.cat/tramits-online/fr/administracions/8004330008/procediments/DIP80_EGIST_00001/crearInstancia",
+  "wait": 30000,
+  "cap": 100000,
   "clicks": []
  }
 ]

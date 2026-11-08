@@ -17,9 +17,14 @@ await context.route(/pasarela-ident\.clave\.gob\.es|cert\.valid\.aoc\.cat/, rout
 const dump = () => {
   const vis = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
   const text = (el) => (el.innerText || el.value || el.getAttribute('aria-label') || el.title || '').trim().replace(/\s+/g, ' ').slice(0, 90);
-  const controls = Array.from(document.querySelectorAll('a,button,input[type=submit],input[type=button],input[type=image],[onclick],[role=button]'))
+  // Pierce open shadow roots: web-component sedes keep their login links there.
+  const roots = [document];
+  for (let i = 0; i < roots.length; i++) roots[i].querySelectorAll('*').forEach(el => el.shadowRoot && roots.push(el.shadowRoot));
+  const sel = 'a,button,input[type=submit],input[type=button],input[type=image],[onclick],[role=button],[routerlink]';
+  const controls = roots.flatMap(r => Array.from(r.querySelectorAll(sel)))
     .map(el => ({
-      tag: el.tagName, id: el.id || null, name: el.getAttribute('name'), type: el.getAttribute('type'), cls: (el.getAttribute('class') || '').slice(0, 60),
+      tag: el.tagName, id: el.id || null, shadowHost: el.getRootNode().host ? el.getRootNode().host.tagName : null,
+      routerlink: el.getAttribute('routerlink'), name: el.getAttribute('name'), type: el.getAttribute('type'), cls: (el.getAttribute('class') || '').slice(0, 60),
       text: text(el), href: el.getAttribute('href'), onclick: (el.getAttribute('onclick') || '').slice(0, 160) || null,
       form: el.form ? { id: el.form.id || null, action: el.form.getAttribute('action'), method: el.form.getAttribute('method') } : null,
       visible: vis(el),
