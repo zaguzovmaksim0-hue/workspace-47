@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.ClientCertRequest
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -39,6 +40,8 @@ import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.certificate.CertificateSession
 import dev.junta.firmamobile.certificate.Pkcs12Loader
 import dev.junta.firmamobile.certificate.StoredCertificateReference
+import dev.junta.firmamobile.signing.SigningUiState
+import dev.junta.firmamobile.ui.CONSENT_ARM_DELAY_MS
 import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 import java.io.InputStream
@@ -55,6 +58,80 @@ import org.junit.runner.RunWith
 class SigningConfirmationInstrumentedTest {
     @get:Rule
     val rule = createEmptyComposeRule()
+
+    @Test
+    fun syntheticBadajozLoginDeliversItsLocalSignatureThroughIdleFreeNativeConsent() {
+        val uri = Uri.parse("content://dev.junta.firmamobile.tests/badajoz-login.p12")
+        val bytes = syntheticPkcs12()
+        try {
+            val reference = StoredCertificateReference(
+                uri, "synthetic-identity.p12", CertificateRepository.MIME_X_PKCS12, bytes.size.toLong(), null,
+            )
+            val repository = CertificateRepository(
+                SyntheticDocumentAccess(uri, bytes), MemoryReferenceStore(reference), Pkcs12Loader(),
+            )
+            TestCertificateDependencies.install(repository, CertificateSession()).use {
+                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                    lateinit var activity: MainActivity
+                    scenario.onActivity { activity = it }
+                    val strings = activity.resources
+                    rule.waitUntil(timeoutMillis = 15_000) {
+                        rule.onAllNodes(hasContentDescription(strings.getString(R.string.certificate_password)))
+                            .fetchSemanticsNodes().isNotEmpty()
+                    }
+                    rule.onNodeWithContentDescription(strings.getString(R.string.certificate_password))
+                        .performScrollTo().performTextInput(TEST_PASSPHRASE)
+                    rule.onNodeWithText(strings.getString(R.string.unlock_certificate)).performScrollTo().performClick()
+                    waitForText(strings.getString(R.string.continue_to_portal))
+                    rule.onNodeWithText(strings.getString(R.string.continue_to_portal)).performScrollTo().performClick()
+                    waitForText(strings.getString(R.string.catalog_title))
+                    openOvorionPortal(portalId = "diputacion-badajoz-portal")
+                    waitForWebView(scenario)
+                    scenario.onActivity {
+                        checkNotNull(findWebView(it.window.decorView)).apply {
+                            stopLoading()
+                            loadDataWithBaseURL(
+                                BADAJOZ_LOGIN_URL, SYNTHETIC_BADAJOZ_LOGIN, "text/html", "UTF-8", BADAJOZ_LOGIN_URL,
+                            )
+                        }
+                    }
+                    waitForWebViewTitle(scenario, SIGN_READY_TITLE)
+                    RealE2eInstrumentedTest().clickExactButton(
+                        scenario, BADAJOZ_LOGIN_URL, "firmar", "Certificado digital", null,
+                        "pulsarFirmarIdentificate();", waitForBadajozSignHook = true,
+                    )
+                    lateinit var signing: SigningOrchestrator
+                    rule.waitUntil(timeoutMillis = 15_000) {
+                        scenario.onActivity {
+                            signing = MainActivity::class.java.getDeclaredField("signing")
+                                .apply { isAccessible = true }.get(it) as SigningOrchestrator
+                        }
+                        signing.visibleState(signing.ordinaryState.value, signing.batchState.value) is
+                            SigningUiState.AwaitingConfirmation
+                    }
+                    val pending = signing.ordinaryState.value as SigningUiState.AwaitingConfirmation
+                    rule.onNodeWithTag("signing-confirmation").assertIsDisplayed()
+                    rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS)
+                    rule.onNodeWithTag("signing-confirmation-confirm").assertIsEnabled()
+                    val result = RealE2eSigningConfirmation.click(
+                        activity = activity,
+                        requestId = pending.requestId,
+                        state = { signing.visibleState(signing.ordinaryState.value, signing.batchState.value) },
+                        ownsRequest = {
+                            MainActivity::class.java.getDeclaredField("signing").apply { isAccessible = true }
+                                .get(activity) === signing
+                        },
+                    )
+                    assertTrue(result.infrastructureCode, result.confirmed)
+                    assertTrue(result.dialogObserved)
+                    waitForWebViewTitle(scenario, "SYNTHETIC_LOGIN_SIGNED")
+                    assertEquals(pending.requestId, (signing.ordinaryState.value as SigningUiState.Completed).requestId)
+                }
+            }
+        } finally {
+            bytes.fill(0)
+        }
+    }
 
     @Test
     fun trustedMiniAppletRequestWaitsForNativeConfirmationAndCancelReturnsClosedError() {
@@ -573,14 +650,14 @@ val strings = checkNotNull(activityContext).resources
         }
     }
 
-    private fun openOvorionPortal() {
+    private fun openOvorionPortal(portalId: String = OVORION_PORTAL_ID) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val command = listOf(
             "am", "broadcast", "--user", "0",
             "-a", "dev.junta.firmamobile.action.CATALOG_SMOKE",
             "-p", "dev.junta.firmamobile",
             "--es", "runId", "instrumentation-ovorion",
-            "--es", "portalId", OVORION_PORTAL_ID,
+            "--es", "portalId", portalId,
             "--es", "operation", "OPEN",
         ).joinToString(" ")
         val output = instrumentation.uiAutomation.executeShellCommand(command).use { descriptor ->
@@ -762,6 +839,20 @@ val strings = checkNotNull(activityContext).resources
         const val TRUSTED_BASE_URL =
             "https://www.juntadeandalucia.es/empleoformacionytrabajoautonomo/ovorion/auth/signInAutcertjs"
         const val SIGN_READY_TITLE = "SIGN_READY"
+        const val BADAJOZ_LOGIN_URL = "https://sede.dip-badajoz.es/portal/entidades.do?ent_id=10&idioma=1"
+        const val SYNTHETIC_BADAJOZ_LOGIN = """
+            <!doctype html><html><head><title>SIGN_READY</title><script>
+            window.MiniApplet = {sign: function() { document.title = 'ORIGINAL'; }};
+            function pulsarFirmarIdentificate() {
+              MiniApplet.sign(btoa('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
+                'SHA256withRSA', 'Cades',
+                'policy=FirmaAGE\nheadless=true\n' + 'filters=nonexpired:true;authCert:true',
+                function() { document.title = 'SYNTHETIC_LOGIN_SIGNED'; },
+                function() { document.title = 'SYNTHETIC_LOGIN_FAILED'; });
+            }
+            </script></head><body><button id="firmar" type="button"
+              onclick="pulsarFirmarIdentificate();">Certificado digital</button></body></html>
+        """
         const val RENDER_READY_TITLE = "RENDER_READY"
         val RENDER_COLOR: Int = Color.rgb(0, 94, 73)
         val TERMINAL_TITLES = setOf(

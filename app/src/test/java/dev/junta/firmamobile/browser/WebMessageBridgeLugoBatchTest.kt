@@ -68,7 +68,48 @@ class WebMessageBridgeLugoBatchTest {
         assertFalse(pendingReply.abandon())
     }
 
-    private fun WebMessageBridge.receiveForTest(rawMessage: String, sourceOrigin: String) {
+    @Test
+    fun iframeDiagnosticsAndBatchStayRejectedWithSeparateClosedStages() {
+        val logger = SanitizedLogger()
+        val accepted = mutableListOf<MelillaBatchRequest>()
+        val bridge = WebMessageBridge(
+            profileId = LUGO_PROFILE,
+            logger = logger,
+            onAfirmaRequest = {},
+            onMelillaBatchRequest = { request, _ -> accepted += request },
+            activeProfileId = { LUGO_PROFILE },
+            miniAppletMode = MiniAppletBridgeMode.FUNCTIONAL,
+            currentNavigationEpoch = { NAVIGATION_EPOCH },
+            currentOrigin = { LUGO_ORIGIN },
+            qaDiagnosticsEnabled = true,
+        )
+        bridge.receiveForTest(documentReadyEnvelope(), ORIGIN)
+        val diagnostic = JSONObject().put("type", "MINIAPPLET_SHIM_DIAGNOSTIC")
+            .put("stage", "SCRIPT_INSTALLED").toString()
+        bridge.receiveForTest(diagnostic, ORIGIN, isMainFrame = false)
+        assertTrue(accepted.isEmpty())
+        assertEquals(1, logger.snapshot().count { it.contains("stage=SHIM_DIAGNOSTIC_NON_MAIN_FRAME ") })
+        assertEquals(1, logger.snapshot().count { it.contains("event=WEB_MESSAGE_REJECTED") })
+        assertFalse(logger.snapshot().any { it.contains("stage=LUGO_BATCH_") })
+
+        bridge.receiveForTest(batchEnvelope(), ORIGIN, isMainFrame = false)
+        assertTrue(accepted.isEmpty())
+        assertTrue(logger.snapshot().any { it.contains("stage=LUGO_BATCH_RECEIVED ") })
+        assertTrue(logger.snapshot().any { it.contains("stage=LUGO_BATCH_REJECTED ") })
+        bridge.receiveForTest(batchEnvelope(), ORIGIN)
+        assertEquals(1, accepted.size)
+        assertTrue(logger.snapshot().any { it.contains("stage=LUGO_BATCH_ACCEPTED ") })
+        val records = logger.snapshot().joinToString("\n")
+        for (privateValue in listOf(SESSION, TRANSACTION_ID, HASH, REQUEST_ID.toString(), DOCUMENT_ID.toString())) {
+            assertFalse(records.contains(privateValue))
+        }
+    }
+
+    private fun WebMessageBridge.receiveForTest(
+        rawMessage: String,
+        sourceOrigin: String,
+        isMainFrame: Boolean = true,
+    ) {
         val method = WebMessageBridge::class.java.getDeclaredMethod(
             "receive",
             WebMessageCompat::class.java,
@@ -81,7 +122,7 @@ class WebMessageBridgeLugoBatchTest {
             this,
             WebMessageCompat(rawMessage),
             Uri.parse(sourceOrigin),
-            true,
+            isMainFrame,
             NoopReplyProxy,
         )
     }

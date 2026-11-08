@@ -131,7 +131,9 @@ class CertificateLoginWaveDTest(unittest.TestCase):
                       requireNoOnClick=False, quotedFormName=None, quotedFormAction=None,
                       quotedWaitForBadajozSignHook=False, quotedHandlerName="pulsarCertificado",
                       quotedParentAnchorClass=None, requireVisible=False, waitForAemetSignHook=False,
-                      quotedExpectedName=None, matchCanariasLoginAction=False)
+                      quotedExpectedName=None, matchCanariasLoginAction=False,
+                      waitForTransportesSignReady=False, waitForLugoSignReady=False,
+                      matchPalenciaSessionPath=False)
         rendered = re.sub(r"\$(\w+)", lambda m: json.dumps(values[m[1]]), script)
         self.node(r"""
             const assert = require('node:assert/strict');
@@ -187,7 +189,9 @@ class CertificateLoginWaveDTest(unittest.TestCase):
                       requireNoOnClick=False, quotedFormName="formData", quotedFormAction=action,
                       quotedWaitForBadajozSignHook=False, quotedHandlerName="firmar",
                       quotedParentAnchorClass=None, requireVisible=True, waitForAemetSignHook=False,
-                      quotedExpectedName=None, matchCanariasLoginAction=True)
+                      quotedExpectedName=None, matchCanariasLoginAction=True,
+                      waitForTransportesSignReady=False, waitForLugoSignReady=False,
+                      matchPalenciaSessionPath=False)
         rendered = re.sub(r"\$(\w+)", lambda m: json.dumps(values[m[1]]), script)
         self.node(r"""
             const assert = require('node:assert/strict');

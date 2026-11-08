@@ -32,6 +32,7 @@ internal fun SigningConfirmationDialog(
 ) {
     val confirmArmed = rememberConsentArmed(state.requestId)
     AlertDialog(
+        modifier = Modifier.testTag("signing-confirmation"),
         onDismissRequest = onCancel,
         properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
         title = { Text(stringResource(R.string.signing_confirmation_title)) },
@@ -69,7 +70,11 @@ internal fun SigningConfirmationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = confirmArmed) {
+            TextButton(
+                onClick = onConfirm,
+                enabled = confirmArmed,
+                modifier = Modifier.testTag("signing-confirmation-confirm"),
+            ) {
                 Text(stringResource(R.string.signing_confirm))
             }
         },
