@@ -32,9 +32,15 @@ class SiteProfileCatalogParserTest {
         "madrid-sede-tarjeta-azul", "mjusticia-fundaciones-idp75",
     )
 
+    private val waveCProfiles = listOf(
+        "diputacion-segovia-registro", "el-hierro-solicitud-general", "la-gomera-instancia-general",
+        "zamora-sede-public-navigation", "zaragoza-sede-public-navigation", "el-hierro-sede-public-navigation",
+        "la-gomera-sede-public-navigation", "lanzarote-sede-public-navigation", "isfas-sede-public-navigation",
+    )
+
     @Test
-    fun waveAProfilesPinOnlyTheReviewedClavePostAndKeepReleaseDisabled() {
-        waveAProfiles.forEach { id ->
+    fun reviewedClaveProfilesPinOnlyTheReviewedPostAndKeepReleaseDisabled() {
+        (waveAProfiles + waveCProfiles).forEach { id ->
             val profileId = ProfileId(id)
             val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
             val source = if (id == "madrid-sede-tarjeta-azul") "ServiceProvider" else "ServiceRedirect"
@@ -74,8 +80,8 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun waveAClientAuthPinsRejectAnUnreviewedRequestPath() {
-        waveAProfiles.forEach { id ->
+    fun reviewedClaveClientAuthPinsRejectAnUnreviewedRequestPath() {
+        (waveAProfiles + waveCProfiles).forEach { id ->
             val root = JSONObject(BuiltInSiteProfiles.JSON)
             schemaV2Profile(root, id).getJSONObject("clientAuthPolicy").put("requestPath", "/unreviewed")
             assertThrows(id, IllegalArgumentException::class.java) {
@@ -1818,7 +1824,7 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `El Hierro Solicitud general is QA navigation only with observed Clave handoff`() {
+    fun `El Hierro Solicitud general pins only the reviewed QA Clave certificate login`() {
         val profileId = ProfileId("el-hierro-solicitud-general")
         val start = URI("https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
@@ -1830,12 +1836,15 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(5, profile.evidence.size)
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(7, profile.evidence.size)
+        assertEquals(
+            TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, start)?.trustMode,
+        )
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
     }
@@ -2368,12 +2377,12 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `Segovia Registro profile stays bounded to public Registro and Clave navigation`() {
+    fun `Segovia Registro profile stays bounded to the reviewed QA Clave certificate login`() {
         val profileId = ProfileId("diputacion-segovia-registro")
         val start = URI("https://sede.dipsegovia.es/registro")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Diputación de Segovia — Registro electrónico", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -2383,15 +2392,15 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(5, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-21" })
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(7, profile.evidence.size)
+        assertTrue(profile.evidence.take(5).all { it.reviewedOn.toString() == "2026-08-21" })
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.dipsegovia.es.evil.example/registro")))

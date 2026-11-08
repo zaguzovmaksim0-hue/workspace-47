@@ -52,6 +52,13 @@ class SharedOriginCharacterizationTest {
                 "mjusticia-fundaciones-idp75",
                 "policia-solicitud-generica",
                 "red-es-sede-public-navigation",
+                "la-gomera-instancia-general",
+                "zamora-sede-public-navigation",
+                "zaragoza-sede-public-navigation",
+                "el-hierro-sede-public-navigation",
+                "la-gomera-sede-public-navigation",
+                "lanzarote-sede-public-navigation",
+                "isfas-sede-public-navigation",
             ),
         ),
         Family(
@@ -84,6 +91,15 @@ class SharedOriginCharacterizationTest {
                 "mjusticia-fundaciones-idp75",
                 "policia-solicitud-generica",
                 "red-es-sede-public-navigation",
+                "diputacion-segovia-registro",
+                "el-hierro-solicitud-general",
+                "la-gomera-instancia-general",
+                "zamora-sede-public-navigation",
+                "zaragoza-sede-public-navigation",
+                "el-hierro-sede-public-navigation",
+                "la-gomera-sede-public-navigation",
+                "lanzarote-sede-public-navigation",
+                "isfas-sede-public-navigation",
             ),
         ),
         Family(
@@ -334,12 +350,18 @@ class SharedOriginCharacterizationTest {
     }
 
     @Test
-    fun claveOwnerSetsDifferAndPublicGatewayOwnersDoNotAuthorizeAnIdentSibling() {
+    fun reviewedClaveNavigationAliasesShareOnlyOriginsAndNeverTlsAuthority() {
         val mineco = profileJson("ministerio-economia-instancia-generica")
-        val onlyPublicGateway = listOf(
-            "diputacion-segovia-registro", "el-hierro-solicitud-general",
-        )
         val bothGateways = listOf(
+            "diputacion-segovia-registro",
+            "el-hierro-solicitud-general",
+            "la-gomera-instancia-general",
+            "zamora-sede-public-navigation",
+            "zaragoza-sede-public-navigation",
+            "el-hierro-sede-public-navigation",
+            "la-gomera-sede-public-navigation",
+            "lanzarote-sede-public-navigation",
+            "isfas-sede-public-navigation",
             "diputacion-palencia-solicitud-general",
             "ctbg-solicitud-informacion", "catastro-solicitudes-genericas",
             "fega-solicitud-general-ofvsg02", "diputacion-caceres-instancia-general",
@@ -348,14 +370,42 @@ class SharedOriginCharacterizationTest {
             "diputacion-granada-sede-public", "ico-sede-public-navigation",
         )
         val origins = listOf("https://pasarela.clave.gob.es", "https://pasarela-ident.clave.gob.es")
-        for (owner in onlyPublicGateway + bothGateways) for (origin in origins) for (redirect in listOf(false, true)) {
+        for (owner in bothGateways) for (origin in origins) for (redirect in listOf(false, true)) {
             val peer = navigationProfile(owner, origin, redirect)
-            parse(listOf(peer))
+            val parsed = parse(listOf(peer)).profiles.single()
+            assertNull(parsed.clientAuthPolicy)
+            assertTrue(parsed.capabilities.isEmpty())
             assertBothOrders(
                 "$origin: $owner/$redirect",
                 listOf(mineco, peer),
-                accepted = owner !in onlyPublicGateway || origin != "https://pasarela-ident.clave.gob.es",
+                accepted = true,
             )
+        }
+    }
+
+    @Test
+    fun sharedGestionaTenantNeverTransfersClientTlsToANavigationOnlySibling() {
+        val pairs = listOf(
+            Triple("https://elhierro.sedelectronica.es", "el-hierro-solicitud-general",
+                "el-hierro-sede-public-navigation"),
+            Triple("https://lagomera.sedelectronica.es", "la-gomera-instancia-general",
+                "la-gomera-sede-public-navigation"),
+            Triple("https://lanzaroteylagraciosa.sedelectronica.es", "lanzarote-instancia-general",
+                "lanzarote-sede-public-navigation"),
+        )
+        val certificateUrl = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")
+        pairs.forEach { (origin, tlsOwner, navigationOwner) ->
+            val sibling = navigationProfile(
+                navigationOwner, origin, origin == "https://lanzaroteylagraciosa.sedelectronica.es",
+            )
+            val catalog = parse(listOf(profileJson(tlsOwner), sibling))
+            val registry = SiteProfileRegistry(catalog, BuildTrustPolicy.QA)
+            assertEquals(
+                TrustMode.TRUSTED_CLIENT_AUTH,
+                registry.resolveForProfile(ProfileId(tlsOwner), certificateUrl)?.trustMode,
+            )
+            assertNull(registry.resolveForProfile(ProfileId(navigationOwner), certificateUrl))
+            assertNull(registry.profile(ProfileId(navigationOwner))?.clientAuthPolicy)
         }
     }
 
