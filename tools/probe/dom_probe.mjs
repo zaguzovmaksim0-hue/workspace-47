@@ -40,6 +40,15 @@ const results = new Array(probes.length);
 const runOne = async (probe) => {
   const page = await context.newPage();
   const entry = { name: probe.name, steps: [] };
+  // Optional network/console trail: shows blocked chunks, failed redirects and afirma:// launches.
+  const net = [];
+  if (probe.net) {
+    page.on('requestfailed', r => net.push(['failed', r.resourceType(), r.url().slice(0, 300), (r.failure() || {}).errorText]));
+    page.on('response', r => { if (r.status() >= 300) net.push([r.status(), r.request().resourceType(), r.url().slice(0, 300)]); });
+    page.on('framenavigated', f => { if (f === page.mainFrame()) net.push(['nav', f.url().slice(0, 300)]); });
+    page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') net.push(['console', m.text().slice(0, 300)]); });
+    page.on('pageerror', e => net.push(['pageerror', String(e).slice(0, 300)]));
+  }
   try {
     const response = await page.goto(probe.url, { waitUntil: 'load', timeout: 45000 });
     entry.status = response && response.status();
@@ -64,6 +73,7 @@ const runOne = async (probe) => {
     entry.error = String(e).slice(0, 400);
     try { entry.steps.push(await page.evaluate(dump)); } catch (_) {}
   }
+  if (probe.net) entry.net = net.slice(0, 300);
   await page.close();
   return entry;
 };

@@ -1,37 +1,26 @@
 [
   {
-    "name": "mites-dnt-link",
+    "name": "mites-net",
     "url": "https://sede.mites.gob.es/",
     "wait": 25000,
     "cap": 170000,
-    "html": [
-      "dnt-link[to=\"/auth\"]"
-    ],
+    "net": true,
     "clicks": [
-      "dnt-header-item[routerlink=\"/auth\"] dnt-link a",
-      "app-login-clave dnt-button[type=\"primary-light\"]"
+      "dnt-header-item[routerlink=\"/auth\"] dnt-link a"
     ]
   },
   {
-    "name": "mites-dnt-link-host",
-    "url": "https://sede.mites.gob.es/",
-    "wait": 25000,
-    "cap": 170000,
-    "clicks": [
-      "dnt-link[to=\"/auth\"]",
-      "app-login-clave dnt-button[type=\"primary-light\"]"
-    ]
-  },
-  {
-    "name": "adif-identificarse",
+    "name": "adif-acceder",
     "url": "https://sede.adif.gob.es/",
     "wait": 10000,
-    "cap": 150000,
+    "cap": 170000,
+    "net": true,
     "html": [
       "button"
     ],
     "clicks": [
-      "button:has-text(\"Identificarse\")"
+      "button:has-text(\"Identificarse\")",
+      "button:has-text(\"Acceder\")"
     ]
   }
 ]
