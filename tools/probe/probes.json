@@ -1,15 +1,20 @@
 [
   {
-    "name": "waveafail-cordoba-clave",
-    "url": "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica",
-    "wait": 12000,
-    "cap": 140000,
+    "name": "wavef2-dgoj-login-clean-context",
+    "url": "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S",
+    "wait": 8000,
+    "cap": 240000,
+    "clicks": [
+      "form#plogin input#plogin_login_texto_iniciar_sesion[type=\"submit\"]",
+      "input#lanzarPeticionClave__[type=\"submit\"]",
+      "button.idp-button[onclick=\"JAVASCRIPT:selectedIdP('AFIRMA');idpRedirect.submit();\"]"
+    ],
     "net": true,
     "html": [
-      ".tramitoptions .tipoacceso"
-    ],
-    "clicks": [
-      "a.tipoacceso[href=\"www.dipucordoba.es\"]:has-text(\"Ir al trámite con Cl@ve\")"
+      "h1",
+      "h2",
+      "input#plogin_login_texto_iniciar_sesion[type=\"submit\"]",
+      "input#lanzarPeticionClave__[type=\"submit\"]"
     ]
   }
 ]
