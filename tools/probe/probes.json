@@ -1,126 +1,43 @@
 [
   {
-    "name": "adif-loginpdf",
-    "url": "https://sede.adif.gob.es/",
-    "wait": 12000,
-    "cap": 60000,
-    "net": true,
-    "save": "login-pdf",
+    "name": "transportes-qys-auth-continuar-after-load",
+    "url": "https://sede.transportes.gob.es/MFOM.genericprocedure.web/?id=7002",
+    "wait": 8000,
+    "cap": 150000,
     "clicks": [
-      "button:has-text(\"Identificarse\")",
-      "button:has-text(\"Acceder\")"
+      "#ctl00_ContentFormulario_controlAutenticacion_Sign_signButton[type=\"submit\"][value=\"Continuar\"][onclick=\"Sign_firmar();return false;\"]"
+    ],
+    "net": true,
+    "save": "^https://sede\\.transportes\\.gob\\.es/[^?#]*(?:\\.js|(?:Web|Script)Resource\\.axd)(?:\\?[^#]*)?$",
+    "html": [
+      "#ctl00_ContentFormulario_controlAutenticacion_Sign_signButton[type=\"submit\"][value=\"Continuar\"][onclick=\"Sign_firmar();return false;\"]",
+      "script[src*=\"/CIM/\"]",
+      "script[src*=\"autoscript\"]",
+      "form#aspnetForm script:not([src])",
+      "script:not([src]):nth-of-type(1)",
+      "script:not([src]):nth-of-type(2)",
+      "script:not([src]):nth-of-type(3)",
+      "script:not([src]):nth-of-type(4)",
+      "script:not([src]):nth-of-type(5)",
+      "script:not([src]):nth-of-type(6)",
+      "script:not([src]):nth-of-type(7)",
+      "script:not([src]):nth-of-type(8)",
+      "script:not([src]):nth-of-type(9)",
+      "script:not([src]):nth-of-type(10)",
+      "script:not([src]):nth-of-type(11)",
+      "script:not([src]):nth-of-type(12)",
+      "script:not([src]):nth-of-type(13)",
+      "script:not([src]):nth-of-type(14)",
+      "script:not([src]):nth-of-type(15)",
+      "script:not([src]):nth-of-type(16)",
+      "script:not([src]):nth-of-type(17)",
+      "script:not([src]):nth-of-type(18)",
+      "script:not([src]):nth-of-type(19)",
+      "script:not([src]):nth-of-type(20)",
+      "script:not([src]):nth-of-type(21)",
+      "script:not([src]):nth-of-type(22)",
+      "script:not([src]):nth-of-type(23)",
+      "script:not([src]):nth-of-type(24)"
     ]
-  },
-  {
-    "name": "reach-sevilla-sede",
-    "url": "https://www.sevilla.org/ovweb/ov-web-certificado/index.xhtml?modo=Contribuyente",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-age-fondo-espanol-de-garantia-agraria-o-a-fega",
-    "url": "https://www3.sede.fega.gob.es/ConRegExt/regmantenimientos/inicioAsientos.action?tramite=OFVSG02",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-asturias-miprincipado-sede",
-    "url": "https://miprincipado.asturias.es/-/dboid-6269000102616541907573?redirect=%2Fweb%2Fsede%2Ftodos-los-servicios-y-tramites",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-asturias-sede-tramite-autofirma",
-    "url": "https://sede.asturias.es/ast/-/dboid-6269000011903512107573",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-cantabria-sede",
-    "url": "https://sede.cantabria.es/sede/",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-cantabria-registro-electronico-comun",
-    "url": "https://rec.cantabria.es/rec/bienvenida.htm",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-ceuta-sede",
-    "url": "https://sede.ceuta.es/controlador/controlador?modulo=tramites&funcion=applet&tramite=ANI",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-navarra-sede-registro-general",
-    "url": "https://www.navarra.es/es/tramites/on/-/line/registro-general-electronico",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-eivissa-portal-institucional",
-    "url": "https://www.conselldeivissa.es/",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-eivissa-sede-electronica",
-    "url": "https://seu.conselldeivissa.es/",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-la-palma-portal-institucional",
-    "url": "https://www.cabildodelapalma.es/",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-la-palma-sede-electronica",
-    "url": "https://sedeelectronica.cabildodelapalma.es/",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-diputacion-malaga-sede",
-    "url": "https://sede.malaga.es/instancia-general/nueva-instancia-general/",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-diputacion-ourense-sede",
-    "url": "https://sede.depourense.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000946476474507610&lang=ES",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-diputacion-salamanca-sede",
-    "url": "https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
-  },
-  {
-    "name": "reach-diputacion-valencia-sede",
-    "url": "https://portafirmas.dival.es/signingpad/xhtml/login.xhtml",
-    "wait": 8000,
-    "cap": 20000,
-    "net": true
   }
 ]
