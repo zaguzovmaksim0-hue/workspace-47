@@ -1171,7 +1171,7 @@ object SiteProfileCatalogParser {
         val trustedBrowse: Set<String>,
     )
 
-    // Gestiona instancia general: the identification page offers only the reviewed Cl@ve form (see Ávila).
+    // Login-only choice pages arm the reviewed ServiceRedirect POST; each caller pins its own origins.
     private fun gestionaClavePin(displayName: String, startUrl: String, evidence: Map<String, String>) =
         ClaveDirectPin(
             displayName = displayName,
@@ -3084,6 +3084,13 @@ object SiteProfileCatalogParser {
                 when (origin.serialized) {
                     AIREF_CLAVE_ORIGIN -> owners.all {
                         it in setOf(
+                            ISFAS_PROFILE_ID,
+                            LANZAROTE_PUBLIC_NAVIGATION_PROFILE_ID,
+                            LA_GOMERA_PUBLIC_NAVIGATION_PROFILE_ID,
+                            EL_HIERRO_PUBLIC_NAVIGATION_PROFILE_ID,
+                            ZARAGOZA_PROFILE_ID,
+                            ZAMORA_PROFILE_ID,
+                            LA_GOMERA_PROFILE_ID,
                             MINECO_PROFILE_ID,
                             AIREF_PROFILE_ID,
                             ASTURIAS_PROFILE_ID,
@@ -3134,6 +3141,15 @@ object SiteProfileCatalogParser {
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
                         it in setOf(
+                            ISFAS_PROFILE_ID,
+                            LANZAROTE_PUBLIC_NAVIGATION_PROFILE_ID,
+                            LA_GOMERA_PUBLIC_NAVIGATION_PROFILE_ID,
+                            EL_HIERRO_PUBLIC_NAVIGATION_PROFILE_ID,
+                            ZARAGOZA_PROFILE_ID,
+                            ZAMORA_PROFILE_ID,
+                            LA_GOMERA_PROFILE_ID,
+                            EL_HIERRO_PROFILE_ID,
+                            SEGOVIA_PROFILE_ID,
                             MINECO_PROFILE_ID,
                             AIREF_PROFILE_ID,
                             ASTURIAS_PROFILE_ID,
@@ -3958,6 +3974,122 @@ object SiteProfileCatalogParser {
                 "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
             ),
         ),
+        SEGOVIA_PROFILE_ID to gestionaClavePin(
+            displayName = "Diputación de Segovia — Registro electrónico",
+            startUrl = "https://sede.dipsegovia.es/registro",
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://sede.dipsegovia.es/",
+                "https://sede.dipsegovia.es/registro",
+                "https://sede.dipsegovia.es/id-systems",
+                "https://sede.dipsegovia.es/signature-systems",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        EL_HIERRO_PROFILE_ID to gestionaClavePin(
+            displayName = "Cabildo Insular de El Hierro — Solicitud general",
+            startUrl = "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://www.elhierro.es/es",
+                "https://elhierro.sedelectronica.es/dossier",
+                "https://elhierro.sedelectronica.es/catalog/t/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
+                "https://elhierro.sedelectronica.es/catalog/tw/7944e884-3b98-48fc-abcd-d6db6ef8bd71",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        LA_GOMERA_PROFILE_ID to gestionaClavePin(
+            displayName = "Cabildo Insular de La Gomera — Instancia General",
+            startUrl = "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            evidence = claveEvidence(
+                "2026-08-21",
+                "https://www.lagomera.es/",
+                "https://lagomera.sedelectronica.es/catalog/t/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+                "https://lagomera.sedelectronica.es/catalog/tw/5161fa8d-970e-4b48-a506-b2ac34ceafe5",
+            ) + claveEvidence(
+                "2026-11-07",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        ZAMORA_PROFILE_ID to gestionaClavePin(
+            displayName = "Sede electrónica pública de la Diputación Provincial de Zamora",
+            startUrl = "https://diputaciondezamora.sedelectronica.es/info.0",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://diputaciondezamora.sedelectronica.es/info.0",
+            ) + claveEvidence(
+                "2026-11-07",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        ZARAGOZA_PROFILE_ID to gestionaClavePin(
+            displayName = "Sede electrónica pública de la Diputación Provincial de Zaragoza",
+            startUrl = "https://dpz.sedelectronica.es/info.0",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://dpz.sedelectronica.es/info.0",
+            ) + claveEvidence(
+                "2026-11-07",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        EL_HIERRO_PUBLIC_NAVIGATION_PROFILE_ID to gestionaClavePin(
+            displayName = "Sede electrónica pública del Cabildo Insular de El Hierro",
+            startUrl = "https://elhierro.sedelectronica.es/info.0",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://elhierro.sedelectronica.es/info.0",
+            ) + claveEvidence(
+                "2026-11-07",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        LA_GOMERA_PUBLIC_NAVIGATION_PROFILE_ID to gestionaClavePin(
+            displayName = "Sede electrónica pública del Cabildo Insular de La Gomera",
+            startUrl = "https://lagomera.sedelectronica.es/info.0",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://lagomera.sedelectronica.es/info.0",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://lagomera.sedelectronica.es/info.2",
+                "https://lagomera.sedelectronica.es/info.3",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        LANZAROTE_PUBLIC_NAVIGATION_PROFILE_ID to ClaveDirectPin(
+            displayName = "Sede electrónica pública del Cabildo Insular de Lanzarote",
+            startUrl = "https://cabildodelanzarote.sedelectronica.es/info.0",
+            origins = ClaveOriginPins(
+                initiator = "https://cabildodelanzarote.sedelectronica.es",
+                redirect = setOf(LANZAROTE_PUBLIC_REDIRECT_ORIGIN, CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://cabildodelanzarote.sedelectronica.es/info.0",
+                "https://lanzaroteylagraciosa.sedelectronica.es/info.0",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://lanzaroteylagraciosa.sedelectronica.es/info.2",
+                CLAVE_PROVIDER_URL,
+            ) + claveEvidence("2026-11-07", CLAVE_REDIRECT_URL, CLAVE_IDENT_EVIDENCE_URL),
+        ),
+        ISFAS_PROFILE_ID to gestionaClavePin(
+            displayName = "Sede electrónica pública del Instituto Social de las Fuerzas Armadas",
+            startUrl = "https://sede.isfas.gob.es/",
+            evidence = claveEvidence(
+                "2026-08-25",
+                "https://sede.isfas.gob.es/",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede.isfas.gob.es/sede-web/",
+                "https://sede.isfas.gob.es/sede-web/pages/autenticacion/identificarse.xhtml",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
         CSN_PROFILE_ID to ClaveDirectPin(
             displayName = "Consejo de Seguridad Nuclear — sede pública",
             startUrl = "https://sede.csn.gob.es/",
@@ -4458,6 +4590,9 @@ object SiteProfileCatalogParser {
         "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
         "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
     )
+    private const val ZAMORA_PROFILE_ID = "zamora-sede-public-navigation"
+    private const val ZARAGOZA_PROFILE_ID = "zaragoza-sede-public-navigation"
+    private const val ISFAS_PROFILE_ID = "isfas-sede-public-navigation"
     private const val CSN_PROFILE_ID = "csn-sede-public"
     private const val CNMV_PROFILE_ID = "cnmv-sede-public-home"
     private const val CSD_PROFILE_ID = "csd-sede-public"

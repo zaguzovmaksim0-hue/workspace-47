@@ -4,6 +4,7 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
@@ -29,7 +30,7 @@ class DiputacionSegoviaProfileCatalogBindingTest {
     private val startUrl = URI("https://sede.dipsegovia.es/registro")
 
     @Test
-    fun `QA profile exposes only the observed Registro and Clave navigation boundary`() {
+    fun `QA profile exposes only the reviewed Registro and Clave certificate login`() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -39,14 +40,14 @@ class DiputacionSegoviaProfileCatalogBindingTest {
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
     }
 
     @Test
-    fun `public catalog binds Segovia without inventing signing or client TLS capability`() {
+    fun `public catalog binds Segovia login while keeping signing unavailable`() {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0169" }
         assertEquals(portalId, entry.portalId)
@@ -62,7 +63,7 @@ class DiputacionSegoviaProfileCatalogBindingTest {
         val releasePortal = release.portals().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)

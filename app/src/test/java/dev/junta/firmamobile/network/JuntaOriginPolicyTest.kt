@@ -1083,7 +1083,7 @@ class JuntaOriginPolicyTest {
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(formenteraInstitutional).isEmpty())
         assertEquals(
-            setOf("elhierro.sedelectronica.es"),
+            setOf("elhierro.sedelectronica.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(elHierroPublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(elHierroPublicNavigation).isEmpty())
@@ -1098,7 +1098,7 @@ class JuntaOriginPolicyTest {
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(inePublicNavigation).isEmpty())
         assertEquals(
-            setOf("sede.isfas.gob.es"),
+            setOf("sede.isfas.gob.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(isfasPublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(isfasPublicNavigation).isEmpty())
@@ -1113,7 +1113,7 @@ class JuntaOriginPolicyTest {
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(soriaClientAuth).isEmpty())
         assertEquals(
-            setOf("lagomera.sedelectronica.es"),
+            setOf("lagomera.sedelectronica.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(laGomeraPublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(laGomeraPublicNavigation).isEmpty())
@@ -1121,17 +1121,18 @@ class JuntaOriginPolicyTest {
             setOf(
                 "cabildodelanzarote.sedelectronica.es",
                 "lanzaroteylagraciosa.sedelectronica.es",
+                "pasarela.clave.gob.es",
             ),
             JuntaOriginPolicy.browserAllowedHosts(lanzarotePublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(lanzarotePublicNavigation).isEmpty())
         assertEquals(
-            setOf("diputaciondezamora.sedelectronica.es"),
+            setOf("diputaciondezamora.sedelectronica.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(zamoraPublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(zamoraPublicNavigation).isEmpty())
         assertEquals(
-            setOf("dpz.sedelectronica.es"),
+            setOf("dpz.sedelectronica.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(zaragozaPublicNavigation),
         )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(zaragozaPublicNavigation).isEmpty())
