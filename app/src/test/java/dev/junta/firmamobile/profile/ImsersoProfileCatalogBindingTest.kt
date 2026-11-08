@@ -2,6 +2,8 @@ package dev.junta.firmamobile.profile
 
 import android.net.Uri
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
+import dev.junta.firmamobile.catalog.PortalMechanism
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
@@ -30,15 +32,16 @@ import org.robolectric.annotation.SQLiteMode
 class ImsersoProfileCatalogBindingTest {
     private val profileId = ProfileId("imserso-sede-public-navigation")
     private val portalId = PortalId("age-instituto-de-mayores-y-servicios-sociales-imserso")
-    private val startUrl = URI("https://sede.imserso.gob.es/inicio")
+    private val entryUrl = URI("https://sede.imserso.gob.es/inicio")
+    private val startUrl = URI("https://sede.imserso.gob.es/sedecdi?locale=es&action=consulta&representante=no&aut=si")
 
     @Test
-    fun profileConfigPreservesExactFailClosedNavigationContract() {
+    fun profileConfigPinsTheExactQaClaveLoginContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(
-            "Sede electrónica pública del Instituto de Mayores y Servicios Sociales",
+            "IMSERSO — consulta de solicitudes",
             profile.displayName,
         )
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
@@ -48,16 +51,47 @@ class ImsersoProfileCatalogBindingTest {
             setOf(ExactOrigin.parse("https://sede.imserso.gob.es")),
             profile.initiatorOrigins,
         )
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
-        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertTrue(!profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
         assertEquals(
-            listOf(EvidenceReference(startUrl, LocalDate.parse("2026-08-25"))),
+            ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+                sourceUrls = setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
+                requestMethod = HttpMethod.POST,
+                requestPath = "/IdP2/AuthenticateCitizen",
+                fixedQueryParameters = emptyMap(),
+                requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true,
+                grantTtlSeconds = 15,
+            ),
+            profile.clientAuthPolicy,
+        )
+        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(
+            listOf(
+                EvidenceReference(URI("https://sede.imserso.gob.es/inicio"), LocalDate.parse("2026-08-25")),
+                EvidenceReference(
+                    URI("https://sede.imserso.gob.es/sedecdi?locale=es&action=consulta&representante=no&aut=si"),
+                    LocalDate.parse("2026-11-08"),
+                ),
+                EvidenceReference(
+                    URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider"),
+                    LocalDate.parse("2026-11-08"),
+                ),
+                EvidenceReference(
+                    URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"),
+                    LocalDate.parse("2026-11-08"),
+                ),
+                EvidenceReference(
+                    URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
+                    LocalDate.parse("2026-11-08"),
+                ),
+            ),
             profile.evidence,
         )
     }
@@ -72,11 +106,11 @@ class ImsersoProfileCatalogBindingTest {
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode,
         )
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(
                 URI("https://sede.imserso.gob.es/es/procedimientos-servicios/centros"),
             )?.trustMode,
@@ -105,11 +139,11 @@ class ImsersoProfileCatalogBindingTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(profileId).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse(startUrl.toString()), profileId))
         assertEquals(
-            setOf(ExactOrigin.parse("https://sede.imserso.gob.es")),
+            setOf(ExactOrigin.parse("https://sede.imserso.gob.es"), ExactOrigin.parse("https://pasarela.clave.gob.es")),
             JuntaOriginPolicy.browserOrigins(profileId),
         )
         assertEquals(
-            setOf("sede.imserso.gob.es"),
+            setOf("sede.imserso.gob.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(profileId),
         )
     }
@@ -121,13 +155,16 @@ class ImsersoProfileCatalogBindingTest {
 
         assertEquals(portalId, entry.portalId)
         assertEquals(profileId, entry.profileId)
-        assertEquals(startUrl, entry.entryUrl)
-        assertEquals("AGE_PUBLIC_SEDE_NAVIGATION", entry.protocolFamily)
+        assertEquals(entryUrl, entry.entryUrl)
+        assertEquals(startUrl, entry.launchUrl)
+        assertEquals("CLIENT_TLS_AUTH", entry.protocolFamily)
         assertEquals(PortalInventoryStatus.IMPLEMENTED_NOT_E2E, entry.inventoryStatus)
         assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
-        assertTrue(entry.observedMechanisms.isEmpty())
+        assertEquals(
+            setOf(PortalMechanism.CERTIFICATE_ACCESS, PortalMechanism.CLIENT_TLS_AUTH), entry.observedMechanisms,
+        )
         assertTrue(entry.observedSignatureFormats.isEmpty())
-        assertEquals("2026-08-25", entry.reviewedOn.toString())
+        assertEquals("2026-11-08", entry.reviewedOn.toString())
 
         val qa = PortalCatalogRepository(
             BuiltInSiteProfiles.qaRegistry,
@@ -144,10 +181,10 @@ class ImsersoProfileCatalogBindingTest {
 
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
-        assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(profileId, startUrl))
+        assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(profileId, entryUrl))
 
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)
         assertTrue(!releasePortal.isEnabled)

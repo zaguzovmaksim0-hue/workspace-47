@@ -8,6 +8,7 @@ import dev.junta.firmamobile.profile.ClientAuthTransitionMode
 import dev.junta.firmamobile.profile.CompatibilityStatus
 import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileActivation
+import dev.junta.firmamobile.profile.matchesRequestUrl
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.profile.ProfileId
 import java.net.URI
@@ -27,6 +28,84 @@ class ClientAuthNavigationAuthorizerTest {
         BuiltInSiteProfiles.qaRegistry,
         monotonic::nowNanos,
     )
+
+    @Test
+    fun waveFOwnTlsLoginsRequireTheReviewedTopLevelSourceAndKeepOneShotGrants() {
+        val flows = listOf(
+            Triple("boe-sede-public-home",
+                "https://extranet.boe.es/id/check-cert.php?referer=https://extranet.boe.es/anuncios/",
+                "https://check-cert.extranet.boe.es/"),
+            Triple("cmt-public-navigation",
+                "https://sede.cmt.gob.es/carpetaciudadana/login.aspx?returnUrl=" +
+                    "https%3a%2f%2fsede.cmt.gob.es%2fcarpetaciudadana%2fcarpeta_ciudadana.aspx",
+                "https://identificacionssl.sedipualba.es/" +
+                    "?idtoken=20261108-AbCdEf0123456789_fixtureToken&idioma=es&entidad=99006"),
+        )
+        flows.forEach { (id, source, target) ->
+            val profileId = ProfileId(id)
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            val start = BuiltInSiteProfiles.qaRegistry.profile(profileId)!!.startUrl.toString()
+            assertNull(fresh.observeTopLevelNavigation(profileId, start, target, 4, true))
+            assertNull(fresh.observeTopLevelNavigation(profileId, target, target, 4, true))
+            assertNull(fresh.observeTopLevelNavigation(null, source, target, 4, true))
+            assertNull(fresh.observeTopLevelNavigation(profileId, source, target, 4, false))
+            assertNull(fresh.observeTopLevelResourceRequest(profileId, source, target, "GET", 4, false))
+            assertNull(fresh.observeTopLevelResourceRequest(profileId, source, target, "POST", 4, true))
+            assertNull(fresh.observeTopLevelNavigation(profileId, source, target, Long.MAX_VALUE, true))
+            assertNull(fresh.observeTopLevelNavigation(profileId, source + "&extra=1", target, 4, true))
+            val grant = fresh.observeTopLevelNavigation(profileId, start, target, 4, true, source)
+            assertEquals(profileId, grant?.profileId)
+            assertEquals(URI(source), grant?.source)
+            assertEquals(URI(target), grant?.target)
+            assertNull(fresh.observeTopLevelNavigation(profileId, source, target, 4, true))
+            assertFalse(grant!!.isExpiredOrInvalid(monotonic.nowNanos()))
+            monotonic.advance(Duration.ofSeconds(16))
+            assertTrue(grant.isExpiredOrInvalid(monotonic.nowNanos()))
+        }
+        val frame = "https://sede.cmt.gob.es/segex/identificacion_opciones.aspx"
+        assertNull(
+            authorizer.observeTopLevelNavigation(ProfileId("cmt-public-navigation"), frame, flows[1].third, 9, true),
+        )
+        assertNull(
+            authorizer.observeTopLevelNavigation(
+                ProfileId("diputacion-leon-sede"),
+                flows[1].second,
+                flows[1].third,
+                9,
+                true,
+            ),
+        )
+    }
+
+    @Test
+    fun staticTlsPathDoesNotSilentlyAcceptItjCookielessSessionSegments() {
+        val origin = "https://procedimientossedeitj.transicionjusta.gob.es"
+        val policy = BuiltInSiteProfiles.qaRegistry.profile(ProfileId("boe-sede-public-home"))!!
+            .clientAuthPolicy!!.copy(
+                requestOrigins = setOf(ExactOrigin.parse(origin)),
+                requestPath = "/vt/vtwebregistro/AccesoConCertificado.aspx",
+            )
+        assertTrue(policy.matchesRequestUrl(URI("$origin/vt/vtwebregistro/AccesoConCertificado.aspx")))
+        assertFalse(policy.matchesRequestUrl(URI("$origin/vt/vtwebregistro/(S(synthetic))/AccesoConCertificado.aspx")))
+        assertNull(BuiltInSiteProfiles.qaRegistry.profile(ProfileId("itj-sede-public-navigation"))!!.clientAuthPolicy)
+    }
+
+    @Test
+    fun waveFClaveOwnersCannotTransferTheSelectedProfileOrGrantSigning() {
+        val source = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        val target = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        listOf("fondos-europeos-sede-public-home", "imserso-sede-public-navigation",
+            "ine-sede-public-navigation", "sepes-transportes-public-complaints").forEach { id ->
+            val profile = ProfileId(id)
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(fresh.observeTopLevelResourceRequest(null, source, target, "POST", 4, true))
+            assertNull(fresh.observeTopLevelResourceRequest(profile, source, target, "POST", 4, false))
+            val grant = fresh.observeTopLevelResourceRequest(profile, source, target, "POST", 4, true)
+            assertEquals(profile, grant?.profileId)
+            assertFalse(Capability.SIGN in BuiltInSiteProfiles.qaRegistry.profile(profile)!!.capabilities)
+            assertNull(fresh.observeTopLevelResourceRequest(profile, source, target, "POST", 4, true))
+        }
+    }
 
     @Test
     fun initialEntryCannotGrantClientTlsBeforeAnObservedSource() {
@@ -449,23 +528,35 @@ class ClientAuthNavigationAuthorizerTest {
 
         assertEquals(TEA_PROFILE, result?.profileId)
         assertEquals("www1.tea.hacienda.gob.es", result?.target?.host)
-        assertEquals("/wlpl/TEAC-TRAM/SedeTRAM", result?.target?.rawPath)
-        assertEquals("tram=0", result?.target?.rawQuery)
+        assertEquals("/wlpl/OVCT-CXEW/DialogoRepresentacion", result?.target?.rawPath)
+        assertEquals("ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0", result?.target?.rawQuery)
+        assertEquals(URI(TEA_SOURCE), result?.source)
         assertNull(
             authorizer.observeTopLevelNavigation(
                 TEA_PROFILE, TEA_SOURCE, TEA_TARGET, 42, true,
             ),
         )
+        assertFalse(result!!.isExpiredOrInvalid(monotonic.nowNanos()))
+        monotonic.advance(Duration.ofSeconds(16))
+        assertTrue(result.isExpiredOrInvalid(monotonic.nowNanos()))
     }
 
     @Test
     fun teaAlegacionesDirectTransitionRejectsEverySourceAndTargetExpansion() {
         val invalidCalls = listOf<Pair<String, String>>(
-            TEA_SOURCE.replace("alegaciones.html", "solicitudes.html") to TEA_TARGET,
-            TEA_SOURCE to TEA_TARGET.replace("tram=0", "tram=2"),
+            "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html" to TEA_TARGET,
+            TEA_SOURCE.replace("rep=S", "rep=N") to TEA_TARGET,
+            TEA_SOURCE.replace("aut=CPE", "aut=PE") to TEA_TARGET,
+            TEA_SOURCE.replace("tram%3D0", "tram%3D2") to TEA_TARGET,
+            "$TEA_SOURCE&rep=S" to TEA_TARGET,
+            TEA_SOURCE.replace("sede.tea.hacienda.gob.es", "foreign.example") to TEA_TARGET,
+            TEA_SOURCE to TEA_TARGET.replace("tram%3D0", "tram%3D2"),
             TEA_SOURCE to "$TEA_TARGET&extra=1",
-            TEA_SOURCE to "$TEA_TARGET&tram=0",
-            TEA_SOURCE to TEA_TARGET.replace("/SedeTRAM", "/SedeTRAM/other"),
+            TEA_SOURCE to "$TEA_TARGET&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0",
+            TEA_SOURCE to "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
+            TEA_SOURCE to TEA_TARGET.replace("/DialogoRepresentacion", "/DialogoRepresentacion/other"),
+            TEA_SOURCE to TEA_TARGET.replace("www1.", "www6."),
+            TEA_SOURCE to TEA_TARGET.replace("www1.", "www11."),
             TEA_SOURCE to TEA_TARGET.replace("www1.tea.hacienda.gob.es", "www1.tea.hacienda.gob.es.evil.example"),
             TEA_SOURCE to TEA_TARGET.replace("www1.tea.hacienda.gob.es", "www1.tea.hacienda.gob.es:8443"),
         )
@@ -479,6 +570,18 @@ class ClientAuthNavigationAuthorizerTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun teaSelectorRequiresProfiledTopLevelNavigationAndRejectsResourceArming() {
+        assertNull(authorizer.observeTopLevelNavigation(null, TEA_SOURCE, TEA_TARGET, 42, true))
+        assertNull(authorizer.observeTopLevelNavigation(TEA_PROFILE, TEA_SOURCE, TEA_TARGET, 42, false))
+        assertNull(authorizer.observeTopLevelNavigation(TEA_PROFILE, null, TEA_TARGET, 42, true))
+        assertNull(authorizer.observeTopLevelNavigation(TEA_PROFILE, TEA_TARGET, TEA_TARGET, 42, true))
+        assertNull(authorizer.observeTopLevelNavigation(TEA_PROFILE, TEA_SOURCE, TEA_TARGET, Long.MAX_VALUE, true))
+        assertNull(authorizer.observeTopLevelResourceRequest(TEA_PROFILE, TEA_SOURCE, TEA_TARGET, "POST", 42, true))
+        assertNull(authorizer.observeTopLevelResourceRequest(TEA_PROFILE, TEA_SOURCE, TEA_TARGET, "GET", 42, false))
+        assertNull(authorizer.observeTopLevelNavigation(AEAT_PROFILE, TEA_SOURCE, TEA_TARGET, 42, true))
     }
 
     @Test
@@ -1922,9 +2025,11 @@ class ClientAuthNavigationAuthorizerTest {
         const val TOLEDO_TARGET =
             "https://diputacion.toledo.gob.es:843/SIGEM_AutenticacionWeb/validacionCertificado.do"
         const val TEA_SOURCE =
-            "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+            "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"
         const val TEA_TARGET =
-            "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0"
+            "https://www1.tea.hacienda.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+                "?ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0"
         const val SANIDAD_SOURCE =
             "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
         const val SANIDAD_TARGET =

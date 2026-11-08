@@ -11,6 +11,7 @@ import org.junit.Test
 class OwnTlsLoginProfileTest {
     private val addedIds = listOf(
         "diputacion-huelva-sede-public", "comunidad-madrid-cuenta-digital-53f1",
+        "boe-sede-public-home", "cmt-public-navigation",
     )
 
     @Test
@@ -24,7 +25,7 @@ class OwnTlsLoginProfileTest {
             val policy = profile.clientAuthPolicy!!
             assertEquals(443, policy.requestPort)
             assertEquals(15, policy.grantTtlSeconds)
-            assertFalse(policy.allowEmptyIssuerList)
+            assertEquals(id in setOf("boe-sede-public-home", "cmt-public-navigation"), policy.allowEmptyIssuerList)
             assertTrue(policy.requireOfferedKeyTypeMatch && policy.requireTlsClientAuthExtendedKeyUsage)
         }
     }
@@ -43,12 +44,14 @@ class OwnTlsLoginProfileTest {
             assertThrows("$id cannot exchange TLS for a native bridge", IllegalArgumentException::class.java) {
                 SiteProfileCatalogParser.parse(json.substring(0, start) + bridgeEscalation + json.substring(end))
             }
+            val allowsEmptyIssuer = id in setOf("boe-sede-public-home", "cmt-public-navigation")
             val mutations = listOf(
                 "\"requestPath\"\\s*:\\s*\"[^\"]*\"" to "\"requestPath\":\"/other\"",
                 "\"requestOrigins\"\\s*:\\s*\\[[^]]*]" to
                     "\"requestOrigins\":[\"https://unreviewed.example\"]",
                 "\"grantTtlSeconds\"\\s*:\\s*15" to "\"grantTtlSeconds\":60",
-                "\"allowEmptyIssuerList\"\\s*:\\s*false" to "\"allowEmptyIssuerList\":true",
+                "\"allowEmptyIssuerList\"\\s*:\\s*$allowsEmptyIssuer" to
+                    "\"allowEmptyIssuerList\":${!allowsEmptyIssuer}",
                 "\"requireDigitalSignatureKeyUsage\"\\s*:\\s*true" to
                     "\"requireDigitalSignatureKeyUsage\":false",
             )
