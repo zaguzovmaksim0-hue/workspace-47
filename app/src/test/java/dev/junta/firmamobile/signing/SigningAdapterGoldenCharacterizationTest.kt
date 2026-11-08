@@ -348,6 +348,7 @@ class SigningAdapterGoldenCharacterizationTest(private val case: AdapterGoldenCa
 
     // Tenerife and AIReF moved to profile v2 when their Cl@ve login hop changed.
     private val caseVersion get() = when (case.profile) {
+        LocalCadesDetachedAdapter.PROFILE_ID -> LocalCadesDetachedAdapter.PROFILE_VERSION
         TenerifeCadesDetachedAdapter.PROFILE_ID -> TenerifeCadesDetachedAdapter.PROFILE_VERSION
         "airef-instancia-general" -> AirefXadesEnvelopingAdapter.PROFILE_VERSION
         else -> 1

@@ -67,7 +67,7 @@ class LocalCadesDetachedAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("aragon-siraw-local-cades-v1")
         const val PROFILE_ID = "aragon-siraw"
-        const val PROFILE_VERSION = 1
+        const val PROFILE_VERSION = 2
         const val INITIATOR_ORIGIN = "https://aplicaciones.aragon.es"
         internal const val EXPECTED_EXTRA_PROPERTIES = "mode=explicit\nfilter=nonexpired"
         internal const val CHALLENGE_BYTES = 20
