@@ -80,7 +80,8 @@ class CertificateLoginWaveDTest(unittest.TestCase):
                       quotedExpectedLabel=label, quotedExpectedHref="identificacion",
                       quotedExpectedTitle=label, quotedAnchorType=None, quotedAnchorAriaLabel=None,
                       quotedExpectedOnClick=None, quotedFormName=None, quotedFormAction=None,
-                      quotedCssClass=None)
+                      quotedCssClass=None, quotedExpectedElementId=None, requireVisible=False,
+                      requireFormContainment=False)
         rendered = re.sub(r"\$(\w+)", lambda m: json.dumps(values[m[1]]), script)
         self.node(r"""
             const assert = require('node:assert/strict');

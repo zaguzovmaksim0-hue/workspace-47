@@ -77,6 +77,24 @@ class ExtremaduraProfileCatalogBindingTest {
     }
 
     @Test
+    fun bothPublicPortalsUseTheSameProfileAndReviewedHomeLoginEvidence() {
+        val entries = loadBundledPublicPortalCatalog().entries
+        val tramites = entries.single { it.portalId == PortalId("extremadura-tramites") }
+        val anterior = entries.single { it.portalId == PortalId("extremadura-sede-anterior") }
+        assertEquals(profileId, tramites.profileId)
+        assertEquals(profileId, anterior.profileId)
+        val profile = requireNotNull(BuiltInSiteProfiles.qaRegistry.profile(profileId))
+        val evidence = profile.evidence.map { it.url.toASCIIString() }.toSet()
+        assertTrue("https://tramites.juntaex.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME" in evidence)
+        assertTrue(
+            "https://tramites.juntaex.es/sta/CarpetaPrivate/Clave2Request?APP_CODE=STA&PAGE_CODE=HOME" in evidence,
+        )
+        assertTrue(BuiltInSiteProfiles.catalog.reviewedOriginShares.none {
+            it.origin == ExactOrigin.parse("https://tramites.juntaex.es")
+        })
+    }
+
+    @Test
     fun protocolRegistryBindsOnlyTheExtremaduraSignContract() {
         val binding = BuiltInProtocolAdapterRegistry.registry.resolve(profileId, ProtocolOperation.SIGN)
 

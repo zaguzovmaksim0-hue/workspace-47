@@ -5681,13 +5681,13 @@ records:
     endpoint: "NO_VERIFICADO"
     discovery_state: "REVIEWED"
     inventory_status: "IMPLEMENTED_NOT_E2E"
-    operation_summary: "Entrada QA-only a la Instancia xenérica 50709505 y navegación same-origin hasta el límite de identificación de la Sede."
-    protocol_evidence: "La ficha oficial vigente enlaza «En liña» a /web/private/registry/external-registryinput-new.xhtml?idbduacproceduretype=50709505&ispresential=0; sin sesión, esa ruta sirve el login oficial. El login carga ClienteFirma legacy y fija CMS + SHA1withRSA sobre un reto efímero de autenticación, pero ese ABI no se implementa ni se extrapola a la firma documental del trámite. Revalidado 2026-08-20; firma.js SHA-256 7aafcaa72a3d469bfe91412a71daa9654207ace4e2aee7601dabeb307230c226."
+    operation_summary: "Entrada QA-only a la Instancia xenérica 50709505 y acceso de certificado vía Cl@ve, sin firma documental ni registro."
+    protocol_evidence: "La ficha oficial vigente enlaza «En liña» a /web/private/registry/external-registryinput-new.xhtml?idbduacproceduretype=50709505&ispresential=0; sin sesión, esa ruta sirve el login oficial. El login carga ClienteFirma legacy y fija CMS + SHA1withRSA sobre un reto efímero de autenticación, pero ese ABI no se implementa ni se extrapola a la firma documental del trámite. Revalidado 2026-08-20; firma.js SHA-256 7aafcaa72a3d469bfe91412a71daa9654207ace4e2aee7601dabeb307230c226. La prueba pública Chrome 42459905561 acredita ficha → login → Cl@ve ServiceProvider con AFIRMA disponible; el perfil QA fija el POST ServiceRedirect → AuthenticateCitizen, sin confirmar autenticación Android."
     client_tls_auth: "NO_VERIFICADO"
-    evidence_ids: ["D06", "DP29A", "DP29B", "PONTEVEDRA-INSTANCIA-2026-08-20", "PONTEVEDRA-LOGIN-2026-08-20", "PONTEVEDRA-FIRMAJS-2026-08-20"]
-    reason: "Perfil QA-only limitado a la ficha pública exacta y navegación same-origin hasta el login. No expone bridge ClienteFirma, no afirma autenticación completada, ABI de firma documental, formato/algoritmo de la presentación, aceptación E2E ni registro final."
-    reviewed_at: "2026-08-20"
-    next_gate: "Validar físicamente la navegación ficha → login y observar el siguiente estado autorizado; detenerse antes de cualquier firma criptográfica de documento/declaración y antes del registro final."
+    evidence_ids: ["D06", "DP29A", "DP29B", "PONTEVEDRA-INSTANCIA-2026-08-20", "PONTEVEDRA-LOGIN-2026-08-20", "PONTEVEDRA-FIRMAJS-2026-08-20", "PONTEVEDRA-CLAVE-2026-11-08", "PONTEVEDRA-CLAVE-PROVIDER-2026-11-08"]
+    reason: "Perfil QA-only con ficha pública exacta, login y CLIENT_TLS_AUTH de Cl@ve. No expone bridge ClienteFirma; faltan E2E Android y autenticación completada. No habilita firma documental, presentación ni registro final."
+    reviewed_at: "2026-11-08"
+    next_gate: "Validar físicamente ficha → login → Cl@ve y el callback de certificado autorizado; detenerse antes de firma documental, presentación o registro final."
 
   - inventory_id: "ES-PUB-0168"
     surface_key: "diputacion-salamanca-sede"
@@ -6675,6 +6675,8 @@ availability, certificado, firma ni contrato técnico.
 [PONTEVEDRA-INSTANCIA-2026-08-20]: https://sede.depo.gal/web/public/catalog-detail/50709505
 [PONTEVEDRA-LOGIN-2026-08-20]: https://sede.depo.gal/web/private/registry/external-registryinput-new.xhtml?idbduacproceduretype=50709505&ispresential=0
 [PONTEVEDRA-FIRMAJS-2026-08-20]: https://sede.depo.gal/web/javax.faces.resource/afirma/common-js/firma.js
+[PONTEVEDRA-CLAVE-2026-11-08]: https://sede.depo.gal/web/public/login/login.xhtml
+[PONTEVEDRA-CLAVE-PROVIDER-2026-11-08]: https://pasarela.clave.gob.es/Proxy2/ServiceProvider
 [DP30A]: https://sede.diputaciondesalamanca.gob.es
 [DP30B]: https://sede.diputaciondesalamanca.gob.es/opencms/system/modules/gsede/elements/contenido/requisitos.jsp
 [SALAMANCA-IGN-2026-08-21]: https://sede.diputaciondesalamanca.gob.es/moad/oficina-moad/tramites/acceso.do?id=12183&entity=1496&siteCode=DIPT_SALAM_SEDE

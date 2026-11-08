@@ -570,6 +570,47 @@ class RealE2eInstrumentedTest {
                 )
                 clickClaveAfirmaProvider(scenario)
             }
+            PONTEVEDRA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = PONTEVEDRA_ENTRY_URL,
+                    expectedLabel = "En liña",
+                    expectedHref = PONTEVEDRA_LOGIN_HREF,
+                    expectedCssClass = "rightformbutton",
+                    requireVisible = true,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = PONTEVEDRA_LOGIN_URL,
+                    expectedLabel = "Certificado dixital ou DNI electrónico",
+                    expectedHref = "#",
+                    expectedOnClick = PONTEVEDRA_CLAVE_ONCLICK,
+                    expectedFormName = "formclave",
+                    expectedFormAction = PONTEVEDRA_FORM_ACTION,
+                    requireFormContainment = true,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            EXTREMADURA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = EXTREMADURA_ANTERIOR_CLAVE_0_URL,
+                    expectedLabel = "Miespacio",
+                    expectedHref = EXTREMADURA_LOGIN_URL,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = EXTREMADURA_LOGIN_URL,
+                    expectedElementId = "link-clave",
+                    expectedLabel = "Acceso mediante el sistema CLAVE",
+                    expectedHref = EXTREMADURA_CLAVE_HREF,
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
             EXTREMADURA_ANTERIOR_PORTAL_ID -> {
                 clickExactLabeledAnchor(
                     scenario = scenario,
@@ -1789,6 +1830,9 @@ class RealE2eInstrumentedTest {
         expectedFormName: String? = null,
         expectedFormAction: String? = null,
         expectedCssClass: String? = null,
+        expectedElementId: String? = null,
+        requireVisible: Boolean = false,
+        requireFormContainment: Boolean = false,
         expectedType: String? = null,
         expectedAriaLabel: String? = null,
         expectedTitle: String? = null,
@@ -1803,7 +1847,9 @@ class RealE2eInstrumentedTest {
         val quotedExpectedOnClick = expectedOnClick?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedUrl = JSONObject.quote(expectedCurrentUrl)
         val quotedCssClass = expectedCssClass?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedElementId = expectedElementId?.let { JSONObject.quote(it) } ?: "null"
         require((expectedFormName == null) == (expectedFormAction == null))
+        require(!requireFormContainment || expectedFormName != null)
         val quotedFormName = expectedFormName?.let { JSONObject.quote(it) } ?: "null"
         val quotedFormAction = expectedFormAction?.let { JSONObject.quote(it) } ?: "null"
         while (SystemClock.elapsedRealtime() < deadline) {
@@ -1856,7 +1902,9 @@ class RealE2eInstrumentedTest {
                         .flatMap(h => h.shadowRoot ? [h.shadowRoot, ...deep(h.shadowRoot)] : []);
                       const anchors = roots.flatMap(root => Array.from(root.querySelectorAll('a')));
                       const elements = anchors.filter(element => {
+                        if ($quotedExpectedElementId !== null && element.id !== $quotedExpectedElementId) return false;
                         if ($quotedCssClass !== null && !element.classList.contains($quotedCssClass)) return false;
+                        if ($requireVisible && element.getClientRects().length === 0) return false;
                         const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
                         // A first visit without cookies gets ;jsessionid=... rewritten into every href (CSN).
                         const href = (element.getAttribute('href') || '').replace(/;jsessionid=[^?#]*/i, '');
@@ -1876,6 +1924,7 @@ class RealE2eInstrumentedTest {
                         if (forms.length !== 1 ||
                             withoutSessionId(forms[0].action) !== $quotedFormAction ||
                             (forms[0].getAttribute('method') || '').toLowerCase() !== 'post') return 2;
+                        if ($requireFormContainment && !forms[0].contains(elements[0])) return 2;
                         if (!['', '_self', '_parent'].includes(
                             (forms[0].getAttribute('target') || '').toLowerCase())) return 2;
                       }
@@ -3542,6 +3591,21 @@ class RealE2eInstrumentedTest {
             "https://sede.educacion.gob.es/sede/login/loginConv.jjsp" +
                 "?iA=no&idConvocatoria=46"
         const val EDUCATION_CLAVE_ID = "login_texto_entrar"
+        const val PONTEVEDRA_PORTAL_ID = "diputacion-pontevedra-sede"
+        const val PONTEVEDRA_ENTRY_URL = "https://sede.depo.gal/web/public/catalog-detail/50709505"
+        const val PONTEVEDRA_LOGIN_HREF =
+            "/web/private/registry/external-registryinput-new.xhtml" +
+                "?idbduacproceduretype=50709505&ispresential=0"
+        const val PONTEVEDRA_LOGIN_URL = "https://sede.depo.gal" + PONTEVEDRA_LOGIN_HREF
+        const val PONTEVEDRA_FORM_ACTION = "https://sede.depo.gal/web/public/login/login.xhtml"
+        // shortcut: generated JSF id may change, revalidate the login DOM when Pontevedra changes the control.
+        const val PONTEVEDRA_CLAVE_ONCLICK =
+            "mojarra.jsfcljs(document.getElementById('formclave')," +
+                "{'formclave:j_idt231':'formclave:j_idt231'},'');return false"
+        const val EXTREMADURA_PORTAL_ID = "extremadura-tramites"
+        const val EXTREMADURA_LOGIN_URL =
+            "https://tramites.juntaex.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
+        const val EXTREMADURA_CLAVE_HREF = "/sta/CarpetaPrivate/Clave2Request?APP_CODE=STA&PAGE_CODE=HOME"
         const val EXTREMADURA_ANTERIOR_PORTAL_ID = "extremadura-sede-anterior"
         const val EXTREMADURA_ANTERIOR_CLAVE_0_URL =
             "https://tramites.juntaex.es/sta/CarpetaPublic/?APP_CODE=STA&PAGE_CODE=PTS2_HOME"
