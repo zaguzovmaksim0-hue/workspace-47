@@ -345,7 +345,7 @@ class RealE2ePolicyTest(unittest.TestCase):
               const form = element('FORM', {id: formName, name: formName, method: 'post', ...o.form});
               const rawAction = o.action ?? (second ? ACTION : PLOGIN + ';DGOJ_ID=synthetic-1');
               form.attrs.action = rawAction;
-              form.action = o.resolvedAction ?? (rawAction.startsWith('/') ? ORIGIN + rawAction : rawAction);
+              form.action = o.resolvedAction ?? new URL(rawAction, o.url ?? (second ? PLOGIN + ';DGOJ_ID=synthetic-1' : START)).href;
               const input = element(o.tag ?? 'INPUT', {id: inputId, type: 'submit',
                 name: second ? ' ' : 'login.texto.iniciar.sesion', ...o.input},
                 o.label ?? (second ? '' : 'Iniciar sesión'));
@@ -389,6 +389,10 @@ class RealE2ePolicyTest(unittest.TestCase):
               assert.deepEqual(run({second, label: second ? ' \t ' : '  Iniciar\n sesión  '}), [1, 1]);
               assert.deepEqual(run({second, action: second ? ACTION.slice(ORIGIN.length) :
                 PLOGIN.slice(ORIGIN.length) + ';DGOJ_ID=a'}), [1, 1]);
+              assert.deepEqual(run({second, action: second ? '../clave/lanzarPeticionClave.jjsp' :
+                'plogin.jjsp;DGOJ_ID=a'}), [1, 1]);
+              rejected({second, action: second ? '../clave/other.jjsp' : 'other.jjsp;DGOJ_ID=a'});
+              rejected({second, action: second ? 'lanzarPeticionClave.jjsp' : '../plogin.jjsp;DGOJ_ID=a'});
               for (const options of [{forms: 0}, {forms: 2}, {form: {id: 'wrong'}}, {form: {name: 'wrong'}},
                 {controls: 0}, {controls: 2}, {input: {id: 'wrong'}}, {wrongOwner: true}, {outside: true},
                 {tag: 'BUTTON'}, {input: {type: 'button'}}, {input: {name: 'wrong'}}, {label: 'Cl@ve'},
