@@ -95,7 +95,8 @@ class ClientAuthNavigationAuthorizerTest {
         val source = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
         val target = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         listOf("fondos-europeos-sede-public-home", "imserso-sede-public-navigation",
-            "ine-sede-public-navigation", "sepes-transportes-public-complaints").forEach { id ->
+            "ine-sede-public-navigation", "sepes-transportes-public-complaints", "dgoj-public-navigation")
+            .forEach { id ->
             val profile = ProfileId(id)
             val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
             assertNull(fresh.observeTopLevelResourceRequest(null, source, target, "POST", 4, true))
@@ -121,6 +122,51 @@ class ClientAuthNavigationAuthorizerTest {
                 profile.profileId.value,
                 initial.observeTopLevelResourceRequest(profile.profileId, null, entry, "GET", 1, true),
             )
+        }
+    }
+
+    @Test
+    fun dgojRequiresTheExactTopLevelClavePostWithoutSessionPathExceptions() {
+        val profile = ProfileId("dgoj-public-navigation")
+        val source = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
+        val target = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
+        val start = BuiltInSiteProfiles.qaRegistry.profile(profile)!!.startUrl.toString()
+        val invalidSources = listOf(null, start, target, "$source?extra=1", "$source;DGOJ_ID=synthetic",
+            source.replace("ServiceRedirect", "ServiceProvider"),
+            "https://sede.ordenacionjuego.gob.es/tramite/login/plogin.jjsp;DGOJ_ID=synthetic")
+        invalidSources.forEach { current ->
+            assertNull(authorizer.observeTopLevelResourceRequest(profile, current, target, "POST", 4, true))
+        }
+        val invalidTargets = listOf("$target?extra=1", "$target;DGOJ_ID=synthetic",
+            target.replace("AuthenticateCitizen", "Other"),
+            target.replace(".gob.es", ".gob.es:444"), target.replace(".gob.es", ".gob.es.evil.example"))
+        invalidTargets.forEach { changed ->
+            assertNull(authorizer.observeTopLevelResourceRequest(profile, source, changed, "POST", 4, true))
+        }
+        assertNull(authorizer.observeTopLevelResourceRequest(profile, source, target, "GET", 4, true))
+        assertNull(authorizer.observeTopLevelResourceRequest(profile, source, target, "POST", 4, false))
+        assertNull(authorizer.observeTopLevelResourceRequest(null, source, target, "POST", 4, true))
+        assertNull(authorizer.observeTopLevelResourceRequest(profile, source, target, "POST", Long.MAX_VALUE, true))
+        assertNull(authorizer.observeTopLevelNavigation(profile, source, target, 4, true))
+        assertNull(authorizer.observeTopLevelResourceRequest(
+            ProfileId("boe-sede-public-home"), source, target, "POST", 4, true,
+        ))
+        val grant = authorizer.observeTopLevelResourceRequest(profile, source, target, "POST", 4, true)
+        assertEquals(profile, grant?.profileId)
+        assertEquals(URI(source), grant?.source)
+        assertEquals(URI(target), grant?.target)
+        assertNull(authorizer.observeTopLevelResourceRequest(profile, source, target, "POST", 4, true))
+        assertFalse(grant!!.isExpiredOrInvalid(monotonic.nowNanos()))
+        monotonic.advance(Duration.ofSeconds(31))
+        assertTrue(grant.isExpiredOrInvalid(monotonic.nowNanos()))
+
+        for (attack in listOf("epoch", "expired", "profile")) {
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(fresh.observeTopLevelResourceRequest(profile, start, source, "POST", 10, true))
+            if (attack == "expired") monotonic.advance(Duration.ofSeconds(16))
+            val selected = if (attack == "profile") ProfileId("imserso-sede-public-navigation") else profile
+            val epoch = if (attack == "epoch") 12L else 11L
+            assertNull(fresh.observeTopLevelResourceRequest(selected, null, target, "POST", epoch, true))
         }
     }
 

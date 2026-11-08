@@ -32,6 +32,28 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `DGOJ retains its public entry and binds only the exact QA login launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val entry = catalog.entries.single { it.inventoryId == "ES-PUB-0041" }
+        val start = URI("https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S")
+        val profiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, profiles, catalog)
+        assertEquals(PortalId("age-direccion-general-de-ordenacion-del-juego"), entry.portalId)
+        assertEquals(URI("https://sede.ordenacionjuego.gob.es/"), entry.entryUrl)
+        assertEquals(ProfileId("dgoj-public-navigation"), entry.profileId)
+        assertEquals(start, entry.launchUrl)
+        assertEquals(PortalLaunchTarget(entry.profileId!!, start),
+            repository.resolveLaunch(entry.portalId, entry.entryUrl))
+        assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
+        listOf("$start&extra=1", start.toString().replace("iA=no", "iA=si"),
+            start.toString().replace("limpiarBusqueda=S", "limpiarBusqueda=N")).forEach { changedUrl ->
+            val changed = PublicPortalCatalogParser.parse(json.replace(start.toASCIIString(), changedUrl))
+            val mismatched = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, profiles, changed)
+            assertNull(mismatched.resolveLaunch(entry.portalId, entry.entryUrl))
+        }
+    }
+
+    @Test
     fun `TEA retains Alegaciones metadata and binds only the exact QA selector launch`() {
         val catalog = PublicPortalCatalogParser.parse(json)
         val entry = catalog.entries.single { it.inventoryId == "ES-PUB-0090" }

@@ -444,9 +444,9 @@ class SiteProfileRegistryTest {
     }
 
     @Test
-    fun `DGOJ public navigation stays browse-only in QA and external signing systems stay closed`() {
+    fun `DGOJ login stays QA only with selected client auth and no signing authority`() {
         val profileId = ProfileId("dgoj-public-navigation")
-        val start = URI("https://sede.ordenacionjuego.gob.es/")
+        val start = URI("https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S")
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
@@ -454,10 +454,19 @@ class SiteProfileRegistryTest {
         assertNotNull(profile)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
-        assertEquals(emptySet<Capability>(), profile?.capabilities)
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+            profileId, URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"),
+        )?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+            profileId, URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
+        )?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+            ProfileId("boe-sede-public-home"), URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"),
+        ))
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ordenacionjuego.gob.es/tramite/"))?.trustMode,
         )
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://clave.gob.es/")))
