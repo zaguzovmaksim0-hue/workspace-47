@@ -3516,7 +3516,7 @@ records:
         self.assertIn("post", target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
-    def test_segovia_registro_binds_exact_qa_navigation_without_signing_capability(self) -> None:
+    def test_segovia_registro_binds_exact_qa_clave_login_without_signing_capability(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0169")
         profiles = json.loads(SITE_PROFILES.read_text(encoding="utf-8"))["profiles"]
@@ -3524,6 +3524,7 @@ records:
 
         self.assertEqual("diputacion-segovia-sede", target["portalId"])
         self.assertEqual("diputacion-segovia-registro", target["profileId"])
+        self.assertEqual(2, profile["profileVersion"])
         self.assertEqual("https://sede.dipsegovia.es/registro", target["entryUrl"])
         self.assertNotIn("launchUrl", target)
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
@@ -3535,8 +3536,13 @@ records:
         self.assertEqual(["https://sede.dipsegovia.es"], profile["initiatorOrigins"])
         self.assertEqual(["https://pasarela.clave.gob.es"], profile["redirectOrigins"])
         self.assertEqual([], profile["trustedBrowseOrigins"])
-        self.assertEqual([], profile["capabilities"])
-        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
+        self.assertEqual([], profile["operationPolicies"])
+        self.assertEqual("POST", profile["clientAuthPolicy"]["requestMethod"])
+        self.assertEqual(
+            ["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
+            profile["clientAuthPolicy"]["sourceUrls"],
+        )
 
 
     def test_importass_client_tls_profile_binds_exact_ipce_boundary(self) -> None:

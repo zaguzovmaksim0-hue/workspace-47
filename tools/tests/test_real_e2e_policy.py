@@ -807,6 +807,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             "requireNoOnClick": True,
             "quotedShadowHost": "",
             "quotedExpectedHref": "#",
+            "quotedCssClass": "imagenIdentificarse",
         }
         scripts = {}
         for kind, name in (("button", "clickExactButton"), ("anchor", "clickExactLabeledAnchor")):
@@ -826,6 +827,7 @@ class RealE2ePolicyTest(unittest.TestCase):
               if (change.action) form.action = change.action;
               const element = {
                 id: 'clave', value: '', innerText: '', form: change.detached ? {} : form,
+                classList: {contains: name => name === 'imagenIdentificarse' && !change.wrongClass},
                 getAttribute: name => ({type: 'image', src: 'clave.png',
                   href: '#', onclick: change.onclick || (kind === 'anchor' ? 'submit();' : null),
                   formaction: change.formaction, formmethod: change.formmethod,
@@ -843,21 +845,142 @@ class RealE2ePolicyTest(unittest.TestCase):
             };
             assert.deepEqual(run(), [1, 1]);
             assert.deepEqual(run({url: 'https://login.example/login/'}), [1, 1]);
+            assert.deepEqual(run({url: 'https://login.example/login/;jsessionid=SYNTHETIC'}), [1, 1]);
+            assert.deepEqual(run({url: 'https://login.example/login;jsessionid=SYNTHETIC/'}), [1, 1]);
+            assert.deepEqual(run({action: 'https://login.example/login/;jsessionid=SYNTHETIC'}), [1, 1]);
             assert.deepEqual(run({target: '_parent'}), [1, 1]);
             for (const change of [
               {action: 'https://login.example/file'}, {action: 'https://foreign.example/login/'},
+              {action: 'https://login.example;jsessionid=.evil.test/login/'},
+              {action: 'https://login.example/login/?session=;jsessionid=SYNTHETIC'},
+              {action: 'https://login.example/login/#;jsessionid=SYNTHETIC'},
               {method: 'get'}, {missing: true}, {duplicate: true}, {target: '_blank'}
             ]) assert.deepEqual(run(change), [2, 0]);
             if (kind === 'button') for (const change of [
               {detached: true}, {formaction: '/file'}, {formmethod: 'get'}, {formtarget: '_blank'}
             ]) assert.deepEqual(run(change), [2, 0]);
+            if (kind === 'anchor') assert.deepEqual(run({wrongClass: true}), [0, 0]);
             assert.deepEqual(run({onclick: 'file();'}), [0, 0]);
             assert.deepEqual(run({url: 'https://login.example/stale'}), [0, 0]);
             assert.deepEqual(run({url: 'https://login.example/login//'}), [0, 0]);
+            for (const url of ['https://login.example;jsessionid=.evil.test/login/',
+              'https://login.example/login/?session=;jsessionid=SYNTHETIC',
+              'https://login.example/login/#;jsessionid=SYNTHETIC']) {
+              assert.deepEqual(run({url}), [0, 0], url);
+            }
             }
         """.replace('SCRIPTS', json.dumps(scripts))
         result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
         self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_gestiona_identificate_clicks_only_one_reviewed_ephemeral_anchor(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source.split('private fun clickGestionaIdentificate(', 1)[1].split('\n    private fun ', 1)[0]
+        script = helper.split('webView.evaluateJavascript(', 1)[1].split('"""', 2)[1]
+        values = {"quotedExpectedUrl": "https://tenant.example/info.0", "quotedLabel": "Identifícate"}
+        script = re.sub(r'\$(\w+)', lambda match: json.dumps(values[match[1]]), script)
+        harness = r"""
+            const assert = require('node:assert/strict');
+            const run = (change = {}) => {
+              let clicks = 0;
+              const element = {
+                innerText: change.label ?? '  Identifícate\n ',
+                getAttribute: name => name === 'href' ?
+                  (Object.hasOwn(change, 'href') ? change.href : '?x=synthetic-token') : null,
+                get href() {
+                  return new URL(this.getAttribute('href'), change.base || 'https://tenant.example/info.0').href;
+                },
+                click: () => clicks++
+              };
+              const document = {
+                querySelectorAll: selector => {
+                  assert.equal(selector, 'a');
+                  return change.missing ? [] : change.duplicate ? [element, element] : [element];
+                }
+              };
+              const location = {href: change.url || 'https://tenant.example/info.0'};
+              return [eval(SCRIPT), clicks];
+            };
+            assert.deepEqual(run(), [1, 1]);
+            assert.deepEqual(run({duplicate: true}), [2, 0]);
+            assert.deepEqual(run({missing: true}), [0, 0]);
+            assert.deepEqual(run({label: 'Presentar solicitud'}), [0, 0]);
+            assert.deepEqual(run({base: 'https://foreign.example/'}), [0, 0]);
+            assert.deepEqual(run({base: 'https://tenant.example/'}), [1, 1]);
+            for (const href of [null, '', '#', '?x=', 'https://foreign.example/?x=token',
+              '//foreign.example/?x=token', '?x=//foreign.example', '?x=javascript:alert(1)',
+              '?x=token&file=true', '?x=token#submit', '?x=token\\path', '?x=token space']) {
+              assert.deepEqual(run({href}), [0, 0], href);
+            }
+            for (const url of ['https://foreign.example/info.0', 'https://tenant.example/info.2',
+              'https://tenant.example/info.0?x=token', 'https://tenant.example/info.0/']) {
+              assert.deepEqual(run({url}), [0, 0], url);
+            }
+        """.replace('SCRIPT', json.dumps(script))
+        result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
+        self.assertEqual(0, result.returncode, result.stderr)
+        for forbidden in ('loadUrl(', '.submit(', 'SAMLRequest'):
+            self.assertNotIn(forbidden, helper)
+
+    def test_wave_c_recipes_prove_only_the_reviewed_clave_certificate_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        direct = source.split('val GESTIONA_CLAVE_ORIGINS = mapOf(', 1)[1].split('\n        )', 1)[0]
+        identify = source.split('val GESTIONA_IDENTIFICATE_ORIGINS = mapOf(', 1)[1].split('\n        )', 1)[0]
+        for portal, origin in {
+            "diputacion-segovia-sede": "https://sede.dipsegovia.es",
+            "el-hierro-portal-institucional": "https://elhierro.sedelectronica.es",
+            "la-gomera-portal-institucional": "https://lagomera.sedelectronica.es",
+        }.items():
+            self.assertIn(f'"{portal}" to "{origin}"', direct)
+        for portal, origin in {
+            "diputacion-zamora-sede": "https://diputaciondezamora.sedelectronica.es",
+            "diputacion-zaragoza-sede": "https://dpz.sedelectronica.es",
+            "el-hierro-sede-electronica": "https://elhierro.sedelectronica.es",
+            "la-gomera-sede-electronica": "https://lagomera.sedelectronica.es",
+            "lanzarote-sede-electronica": "https://lanzaroteylagraciosa.sedelectronica.es",
+        }.items():
+            self.assertIn(f'"{portal}" to "{origin}"', identify)
+        block = source.split('in GESTIONA_IDENTIFICATE_ORIGINS -> {', 1)[1].split('\n            }\n', 1)[0]
+        self.assertIn('clickGestionaIdentificate(scenario, origin)', block)
+        self.assertIn('clickGestionaClaveLogin(scenario, origin)', block)
+        self.assertTrue(block.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+        isfas = source.split('ISFAS_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        for expected in ('clickExactButton(', 'expectedLabel = "Identificarse"',
+                         'expectedOnClick = "identificarse();"', 'expectedFormName = "menuPrincipal"',
+                         'clickExactLabeledAnchor(', 'expectedLabel = "Cl@ve"', 'expectedHref = "#"',
+                         'expectedOnClick = ISFAS_CLAVE_ONCLICK', 'expectedFormName = "formWelcome"',
+                         'expectedCssClass = "imagenIdentificarse"'):
+            self.assertIn(expected, isfas)
+        self.assertTrue(isfas.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+        self.assertIn('ISFAS_PORTAL_ID = "age-instituto-social-de-las-fuerzas-armadas-isfas"', source)
+        self.assertIn("mojarra.jsfcljs(document.getElementById('formWelcome'),", source)
+        self.assertIn("{'j_idt85':'j_idt85'},'');return false", source)
+        for forbidden in ('loadUrl(', '.submit(', 'evaluateJavascript(', 'Tarjeta PKI'):
+            self.assertNotIn(forbidden, block + isfas)
+        self.assertNotIn('"la-palma-portal-institucional"', direct + identify)
+        profiles = {p['profileId']: p for p in json.loads(self.read(ROOT / 'config/site_profiles_v1.json'))['profiles']}
+        for profile_id in (
+            'diputacion-segovia-registro', 'el-hierro-solicitud-general', 'la-gomera-instancia-general',
+            'zamora-sede-public-navigation', 'zaragoza-sede-public-navigation', 'el-hierro-sede-public-navigation',
+            'la-gomera-sede-public-navigation', 'lanzarote-sede-public-navigation', 'isfas-sede-public-navigation',
+        ):
+            with self.subTest(profile=profile_id):
+                profile = profiles[profile_id]
+                self.assertEqual(2, profile['profileVersion'])
+                self.assertEqual('QA_ONLY', profile['activation'])
+                self.assertEqual(['CLIENT_TLS_AUTH'], profile['capabilities'])
+                self.assertEqual([], profile['operationPolicies'])
+                self.assertTrue(profile['certificateRules']['requireDigitalSignatureKeyUsage'])
+                policy = profile['clientAuthPolicy']
+                self.assertEqual('IN_PLACE_FROM_SOURCE', policy['transitionMode'])
+                self.assertEqual('POST', policy['requestMethod'])
+                self.assertEqual(['https://pasarela.clave.gob.es/Proxy2/ServiceRedirect'], policy['sourceUrls'])
+                self.assertEqual(['https://pasarela-ident.clave.gob.es'], policy['requestOrigins'])
+                self.assertEqual('/IdP2/AuthenticateCitizen', policy['requestPath'])
+                self.assertEqual(443, policy['requestPort'])
+                self.assertEqual(15, policy['grantTtlSeconds'])
+                self.assertEqual({}, policy['fixedQueryParameters'])
+                self.assertEqual([], policy['requiredEphemeralQueryParameters'])
 
     def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
         source = self.read(INSTRUMENTATION)

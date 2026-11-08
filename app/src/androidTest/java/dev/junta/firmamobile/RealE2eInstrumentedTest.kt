@@ -50,6 +50,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONArray
 import org.json.JSONObject
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -69,6 +70,18 @@ import org.junit.runner.RunWith
 class RealE2eInstrumentedTest {
     @get:Rule
     val rule = createEmptyComposeRule()
+
+    @Test
+    fun recipeSessionRewritingChangesOnlyThePath() {
+        val expected = "https://login.example/login/"
+        assertEquals(expected, recipeUrlWithoutSession("$expected;jsessionid=SYNTHETIC"))
+        assertEquals(expected, recipeUrlWithoutSession("https://login.example/login;JSESSIONID=SYNTHETIC/"))
+        listOf(
+            "https://login.example;jsessionid=.evil.test/login/",
+            "$expected?state=;jsessionid=SYNTHETIC",
+            "$expected#;jsessionid=SYNTHETIC",
+        ).forEach { url -> assertEquals(url, recipeUrlWithoutSession(url)) }
+    }
 
     @Test
     fun probeOneCatalogPortalWithRealCertificate() {
@@ -333,6 +346,37 @@ class RealE2eInstrumentedTest {
             // Gestiona redirects the instancia general to its identification page; Cl@ve is the only provider.
             in GESTIONA_CLAVE_ORIGINS -> {
                 clickGestionaClaveLogin(scenario, GESTIONA_CLAVE_ORIGINS.getValue(portalId))
+                clickClaveAfirmaProvider(scenario)
+            }
+            in GESTIONA_IDENTIFICATE_ORIGINS -> {
+                val origin = GESTIONA_IDENTIFICATE_ORIGINS.getValue(portalId)
+                clickGestionaIdentificate(scenario, origin)
+                clickGestionaClaveLogin(scenario, origin)
+                clickClaveAfirmaProvider(scenario)
+            }
+            ISFAS_PORTAL_ID -> {
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = ISFAS_HOME_URL,
+                    expectedElementId = null,
+                    expectedLabel = "Identificarse",
+                    expectedAriaLabel = null,
+                    expectedOnClick = "identificarse();",
+                    expectedFormName = "menuPrincipal",
+                    expectedFormAction = ISFAS_WELCOME_URL,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = ISFAS_IDENTIFY_URL,
+                    expectedLabel = "Cl@ve",
+                    expectedHref = "#",
+                    expectedOnClick = ISFAS_CLAVE_ONCLICK,
+                    expectedCssClass = "imagenIdentificarse",
+                    expectedFormName = "formWelcome",
+                    expectedFormAction = ISFAS_IDENTIFY_URL,
+                    waitForExpectedUrl = true,
+                )
                 clickClaveAfirmaProvider(scenario)
             }
             CNMV_PORTAL_ID -> {
@@ -1561,6 +1605,69 @@ class RealE2eInstrumentedTest {
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
+    private fun clickGestionaIdentificate(
+        scenario: ActivityScenario<MainActivity>,
+        expectedOrigin: String,
+    ) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val expectedUrl = "$expectedOrigin/info.0"
+        val quotedExpectedUrl = JSONObject.quote(expectedUrl)
+        val quotedLabel = JSONObject.quote("Identifícate")
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                if (webView.url != expectedUrl) {
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      if (location.href !== $quotedExpectedUrl) return 0;
+                      const elements = Array.from(document.querySelectorAll('a')).filter(element =>
+                        (element.innerText || '').trim().replace(/\s+/g, ' ') === $quotedLabel &&
+                          /^\?x=[^:/\\?#&\s]+$/.test(element.getAttribute('href') || '') &&
+                          new URL(element.href).origin === new URL($quotedExpectedUrl).origin
+                      );
+                      if (elements.length === 0) return 0;
+                      if (elements.length !== 1) return 2;
+                      elements[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        val terminalFailureDeadline = SystemClock.elapsedRealtime() + RECIPE_TERMINAL_GRACE_MILLIS
+        while (SystemClock.elapsedRealtime() < terminalFailureDeadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
     private fun clickExactLabeledAnchor(
         scenario: ActivityScenario<MainActivity>,
         expectedCurrentUrl: String,
@@ -1573,6 +1680,7 @@ class RealE2eInstrumentedTest {
         expectedOnClick: String? = null,
         expectedFormName: String? = null,
         expectedFormAction: String? = null,
+        expectedCssClass: String? = null,
     ) {
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedShadowHost = JSONObject.quote(shadowHostTag.orEmpty())
@@ -1580,6 +1688,7 @@ class RealE2eInstrumentedTest {
         val quotedExpectedHref = JSONObject.quote(expectedHref)
         val quotedExpectedOnClick = expectedOnClick?.let { JSONObject.quote(it) } ?: "null"
         val quotedExpectedUrl = JSONObject.quote(expectedCurrentUrl)
+        val quotedCssClass = expectedCssClass?.let { JSONObject.quote(it) } ?: "null"
         require((expectedFormName == null) == (expectedFormAction == null))
         val quotedFormName = expectedFormName?.let { JSONObject.quote(it) } ?: "null"
         val quotedFormAction = expectedFormAction?.let { JSONObject.quote(it) } ?: "null"
@@ -1600,7 +1709,7 @@ class RealE2eInstrumentedTest {
                 }
                 val currentUrl = webView.url
                 // Tomcat rewrites this login URL on the first visit before the session cookie exists.
-                val withoutSession = currentUrl?.replace(Regex(";jsessionid=[^/?#;]+", RegexOption.IGNORE_CASE), "")
+                val withoutSession = currentUrl?.let(::recipeUrlWithoutSession)
                 val comparedUrl = if (matchUrlWithoutQuery) withoutSession?.substringBefore('?') else withoutSession
                 if (comparedUrl != null && !recipeUrlMatches(comparedUrl, expectedCurrentUrl)) {
                     if (waitForExpectedUrl) {
@@ -1614,8 +1723,13 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
-                      let documentUrl = location.href.replace(/;jsessionid=[^/?#;]+/i, '');
-                      if ($matchUrlWithoutQuery) documentUrl = documentUrl.split('?')[0];
+                      const withoutSessionId = value => {
+                        const url = new URL(value);
+                        url.pathname = url.pathname.replace(/;jsessionid=[^/;]+/gi, '');
+                        return url.href;
+                      };
+                      const withoutSession = withoutSessionId(location.href);
+                      const documentUrl = $matchUrlWithoutQuery ? withoutSession.split('?')[0] : withoutSession;
                       if (documentUrl !== $quotedExpectedUrl &&
                           !(!$quotedExpectedUrl.endsWith('/') && documentUrl === $quotedExpectedUrl + '/') &&
                           !($quotedExpectedUrl.endsWith('/') &&
@@ -1628,6 +1742,7 @@ class RealE2eInstrumentedTest {
                         .flatMap(h => h.shadowRoot ? [h.shadowRoot, ...deep(h.shadowRoot)] : []);
                       const anchors = roots.flatMap(root => Array.from(root.querySelectorAll('a')));
                       const elements = anchors.filter(element => {
+                        if ($quotedCssClass !== null && !element.classList.contains($quotedCssClass)) return false;
                         const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
                         // A first visit without cookies gets ;jsessionid=... rewritten into every href (CSN).
                         const href = (element.getAttribute('href') || '').replace(/;jsessionid=[^?#]*/i, '');
@@ -1640,7 +1755,8 @@ class RealE2eInstrumentedTest {
                       if ($quotedFormName !== null) {
                         const forms = Array.from(document.forms).filter(form =>
                           form.name === $quotedFormName || form.id === $quotedFormName);
-                        if (forms.length !== 1 || forms[0].action !== $quotedFormAction ||
+                        if (forms.length !== 1 ||
+                            withoutSessionId(forms[0].action) !== $quotedFormAction ||
                             (forms[0].getAttribute('method') || '').toLowerCase() !== 'post') return 2;
                         if (!['', '_self', '_parent'].includes(
                             (forms[0].getAttribute('target') || '').toLowerCase())) return 2;
@@ -1882,7 +1998,8 @@ class RealE2eInstrumentedTest {
                     return@onActivity
                 }
                 val currentUrl = webView.url
-                val comparedUrl = if (matchUrlWithoutQuery) currentUrl?.substringBefore('?') else currentUrl
+                val withoutSession = currentUrl?.let(::recipeUrlWithoutSession)
+                val comparedUrl = if (matchUrlWithoutQuery) withoutSession?.substringBefore('?') else withoutSession
                 if (comparedUrl != null && !recipeUrlMatches(comparedUrl, expectedCurrentUrl)) {
                     if (waitForExpectedUrl) {
                         waitingForExpectedUrl = true
@@ -1895,7 +2012,13 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
-                      const documentUrl = $matchUrlWithoutQuery ? location.href.split('?')[0] : location.href;
+                      const withoutSessionId = value => {
+                        const url = new URL(value);
+                        url.pathname = url.pathname.replace(/;jsessionid=[^/;]+/gi, '');
+                        return url.href;
+                      };
+                      const withoutSession = withoutSessionId(location.href);
+                      const documentUrl = $matchUrlWithoutQuery ? withoutSession.split('?')[0] : withoutSession;
                       if (documentUrl !== $quotedExpectedUrl &&
                           !(!$quotedExpectedUrl.endsWith('/') && documentUrl === $quotedExpectedUrl + '/') &&
                           !($quotedExpectedUrl.endsWith('/') &&
@@ -1925,7 +2048,8 @@ class RealE2eInstrumentedTest {
                       if ($quotedFormName !== null) {
                         const forms = Array.from(document.forms).filter(form =>
                           form.name === $quotedFormName || form.id === $quotedFormName);
-                        if (forms.length !== 1 || forms[0].action !== $quotedFormAction ||
+                        if (forms.length !== 1 ||
+                            withoutSessionId(forms[0].action) !== $quotedFormAction ||
                             (forms[0].getAttribute('method') || '').toLowerCase() !== 'post' ||
                             (expectedTag !== 'img' && elements[0].form !== forms[0])) return 2;
                         if (!['', '_self', '_parent'].includes(
@@ -1971,6 +2095,13 @@ class RealE2eInstrumentedTest {
         }
         if (hasObservedTerminalNavigationFailure()) return
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun recipeUrlWithoutSession(value: String): String {
+        val url = Uri.parse(value)
+        return url.buildUpon()
+            .encodedPath(url.encodedPath?.replace(Regex(";jsessionid=[^/;]+", RegexOption.IGNORE_CASE), ""))
+            .build().toString()
     }
 
     private fun recipeUrlMatches(actualUrl: String, expectedUrl: String): Boolean =
@@ -3265,7 +3396,24 @@ class RealE2eInstrumentedTest {
             "diputacion-teruel-sede" to "https://dpteruel.sedelectronica.es",
             "diputacion-guadalajara-sede" to "https://dguadalajara.sedelectronica.es",
             "age-consejo-de-transparencia-y-buen-gobierno-ctbg" to "https://sede.consejodetransparencia.gob.es",
+            "diputacion-segovia-sede" to "https://sede.dipsegovia.es",
+            "el-hierro-portal-institucional" to "https://elhierro.sedelectronica.es",
+            "la-gomera-portal-institucional" to "https://lagomera.sedelectronica.es",
         )
+        val GESTIONA_IDENTIFICATE_ORIGINS = mapOf(
+            "diputacion-zamora-sede" to "https://diputaciondezamora.sedelectronica.es",
+            "diputacion-zaragoza-sede" to "https://dpz.sedelectronica.es",
+            "el-hierro-sede-electronica" to "https://elhierro.sedelectronica.es",
+            "la-gomera-sede-electronica" to "https://lagomera.sedelectronica.es",
+            "lanzarote-sede-electronica" to "https://lanzaroteylagraciosa.sedelectronica.es",
+        )
+        const val ISFAS_PORTAL_ID = "age-instituto-social-de-las-fuerzas-armadas-isfas"
+        const val ISFAS_HOME_URL = "https://sede.isfas.gob.es/sede-web/"
+        const val ISFAS_WELCOME_URL = "https://sede.isfas.gob.es/sede-web/welcome"
+        const val ISFAS_IDENTIFY_URL = "https://sede.isfas.gob.es/sede-web/pages/autenticacion/identificarse.xhtml"
+        // shortcut: j_idt85 is a generated JSF id; re-probe if the exact Cl@ve control changes.
+        const val ISFAS_CLAVE_ONCLICK = "mojarra.jsfcljs(document.getElementById('formWelcome')," +
+            "{'j_idt85':'j_idt85'},'');return false"
         const val CAIB_SEU_PORTAL_ID = "caib-seu-electronica"
         const val CAIB_REGISTRE_PORTAL_ID = "caib-registre-electronic"
         const val REG_AGE_PROFILE_ID = "reg-age-redsara"

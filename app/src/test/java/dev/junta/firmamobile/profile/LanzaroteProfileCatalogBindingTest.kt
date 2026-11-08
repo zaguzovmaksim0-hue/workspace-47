@@ -5,6 +5,7 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
@@ -38,7 +39,7 @@ class LanzaroteProfileCatalogBindingTest {
     fun profileConfigPreservesExactEntryAndExplicitRedirectContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(
             "Sede electrónica pública del Cabildo Insular de Lanzarote",
             profile.displayName,
@@ -50,20 +51,20 @@ class LanzaroteProfileCatalogBindingTest {
             setOf(ExactOrigin.parse("https://cabildodelanzarote.sedelectronica.es")),
             profile.initiatorOrigins,
         )
-        assertEquals(setOf(redirectOrigin), profile.redirectOrigins)
+        assertEquals(setOf(redirectOrigin, ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertTrue(!profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertEquals(
             listOf(
                 EvidenceReference(startUrl, LocalDate.parse("2026-08-25")),
                 EvidenceReference(redirectUrl, LocalDate.parse("2026-08-25")),
             ),
-            profile.evidence,
+            profile.evidence.filter { it.reviewedOn == LocalDate.parse("2026-08-25") },
         )
     }
 
@@ -77,7 +78,7 @@ class LanzaroteProfileCatalogBindingTest {
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode,
         )
         assertEquals(
@@ -116,6 +117,7 @@ class LanzaroteProfileCatalogBindingTest {
             setOf(
                 ExactOrigin.parse("https://cabildodelanzarote.sedelectronica.es"),
                 redirectOrigin,
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
             ),
             JuntaOriginPolicy.browserOrigins(profileId),
         )
@@ -123,6 +125,7 @@ class LanzaroteProfileCatalogBindingTest {
             setOf(
                 "cabildodelanzarote.sedelectronica.es",
                 "lanzaroteylagraciosa.sedelectronica.es",
+                "pasarela.clave.gob.es",
             ),
             JuntaOriginPolicy.browserAllowedHosts(profileId),
         )
@@ -158,7 +161,7 @@ class LanzaroteProfileCatalogBindingTest {
 
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(profileId, startUrl))

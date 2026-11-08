@@ -5,6 +5,7 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
@@ -33,10 +34,10 @@ class ZaragozaProfileCatalogBindingTest {
     private val startUrl = URI("https://dpz.sedelectronica.es/info.0")
 
     @Test
-    fun profileConfigPreservesExactFailClosedNavigationContract() {
+    fun profileConfigPreservesExactClaveLoginOnlyContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(
             "Sede electrónica pública de la Diputación Provincial de Zaragoza",
             profile.displayName,
@@ -48,17 +49,17 @@ class ZaragozaProfileCatalogBindingTest {
             setOf(ExactOrigin.parse("https://dpz.sedelectronica.es")),
             profile.initiatorOrigins,
         )
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertTrue(!profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertEquals(
             listOf(EvidenceReference(startUrl, LocalDate.parse("2026-08-25"))),
-            profile.evidence,
+            profile.evidence.filter { it.reviewedOn == LocalDate.parse("2026-08-25") },
         )
     }
 
@@ -72,11 +73,11 @@ class ZaragozaProfileCatalogBindingTest {
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode,
         )
         assertEquals(
-            TrustMode.TRUSTED_BROWSE,
+            TrustMode.TRUSTED_CLIENT_AUTH,
             BuiltInSiteProfiles.qaRegistry.resolve(
                 URI("https://dpz.sedelectronica.es/info"),
             )?.trustMode,
@@ -105,11 +106,14 @@ class ZaragozaProfileCatalogBindingTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(profileId).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse(startUrl.toString()), profileId))
         assertEquals(
-            setOf(ExactOrigin.parse("https://dpz.sedelectronica.es")),
+            setOf(
+                ExactOrigin.parse("https://dpz.sedelectronica.es"),
+                ExactOrigin.parse("https://pasarela.clave.gob.es"),
+            ),
             JuntaOriginPolicy.browserOrigins(profileId),
         )
         assertEquals(
-            setOf("dpz.sedelectronica.es"),
+            setOf("dpz.sedelectronica.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(profileId),
         )
     }
@@ -147,7 +151,7 @@ class ZaragozaProfileCatalogBindingTest {
 
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(profileId, startUrl))
