@@ -42,7 +42,7 @@ class MiniAppletPadesDocumentConsentTest {
             val variants = listOf(
                 request(fixture, protocolId = SigningProtocolId("not-the-adapter-v1")),
                 request(fixture, profileId = "not-the-profile"),
-                request(fixture, profileVersion = 2),
+                request(fixture, profileVersion = fixture.profileVersion + 1),
                 request(fixture, origin = TrustedOrigin("https", "other.invalid", 443)),
                 request(fixture, pageUrl = null),
                 request(fixture, description = "untrusted\u202Ename.pdf"),
@@ -126,7 +126,7 @@ class MiniAppletPadesDocumentConsentTest {
         payload: ByteArray = MiniAppletPayloadCodec.encode(PDF, fixture.properties),
         protocolId: SigningProtocolId = fixture.adapter.id,
         profileId: String = fixture.profileId,
-        profileVersion: Int = 1,
+        profileVersion: Int = fixture.profileVersion,
         origin: TrustedOrigin = TrustedOrigin("https", URI(fixture.origin).host, 443),
         pageUrl: String? = fixture.pageUrl,
         description: String = fixture.description,
@@ -146,25 +146,26 @@ class MiniAppletPadesDocumentConsentTest {
         Fixture(GranCanariaPadesAdapter(), GranCanariaPadesAdapter.PROFILE_ID,
             GranCanariaPadesAdapter.INITIATOR_ORIGIN, GranCanariaPadesAdapter.SIGNING_PAGE_URL,
             GranCanariaPadesAdapter.SAFE_DESCRIPTION, GranCanariaPadesAdapter.EXPECTED_EXTRA_PROPERTIES,
-            SigningAlgorithm.SHA512_WITH_RSA),
+            SigningAlgorithm.SHA512_WITH_RSA, GranCanariaPadesAdapter.PROFILE_VERSION),
         Fixture(FuerteventuraPadesAdapter(), FuerteventuraPadesAdapter.PROFILE_ID,
             FuerteventuraPadesAdapter.INITIATOR_ORIGIN, FuerteventuraPadesAdapter.SIGNING_PAGE_URL,
             FuerteventuraPadesAdapter.SAFE_DESCRIPTION, FuerteventuraPadesAdapter.EXPECTED_EXTRA_PROPERTIES,
-            SigningAlgorithm.SHA256_WITH_RSA),
+            SigningAlgorithm.SHA256_WITH_RSA, FuerteventuraPadesAdapter.PROFILE_VERSION),
         Fixture(TransparenciaPadesAdapter(), TransparenciaPadesAdapter.PROFILE_ID,
             TransparenciaPadesAdapter.INITIATOR_ORIGIN,
             TransparenciaPadesAdapter.SIGNING_PAGE_PREFIX + "idProc=133628&idBorr=1&idAmb=101524",
             TransparenciaPadesAdapter.SAFE_DESCRIPTION, TransparenciaPadesAdapter.EXPECTED_EXTRA_PROPERTIES,
-            SigningAlgorithm.SHA512_WITH_RSA),
+            SigningAlgorithm.SHA512_WITH_RSA, TransparenciaPadesAdapter.PROFILE_VERSION),
         Fixture(MinecoPadesAdapter(), MinecoPadesAdapter.PROFILE_ID,
             MinecoPadesAdapter.INITIATOR_ORIGIN, MinecoPadesAdapter.SIGNING_PAGE_URL,
             MinecoPadesAdapter.SAFE_DESCRIPTION, MinecoPadesAdapter.EXPECTED_EXTRA_PROPERTIES,
-            SigningAlgorithm.SHA512_WITH_RSA),
+            SigningAlgorithm.SHA512_WITH_RSA, MinecoPadesAdapter.PROFILE_VERSION),
     )
 
     private data class Fixture(
         val adapter: SigningProtocolAdapter, val profileId: String, val origin: String,
         val pageUrl: String, val description: String, val properties: String, val algorithm: SigningAlgorithm,
+        val profileVersion: Int,
     )
 
     private companion object {

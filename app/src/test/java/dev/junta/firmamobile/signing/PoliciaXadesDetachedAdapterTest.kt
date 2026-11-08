@@ -447,7 +447,7 @@ class PoliciaXadesDetachedAdapterTest {
             protocolId = PoliciaXadesDetachedAdapter.ID,
             context = SigningContext(
                 profileId = PoliciaXadesDetachedAdapter.PROFILE_ID,
-                profileVersion = 1,
+                profileVersion = 2,
                 origin = TrustedOrigin("https", "evil.example.es", 443),
                 navigationId = NavigationId("123e4567-e89b-42d3-a456-426614175001"),
                 navigationEpoch = 10,
@@ -478,7 +478,7 @@ class PoliciaXadesDetachedAdapterTest {
         protocolId = PoliciaXadesDetachedAdapter.ID,
         context = SigningContext(
             profileId = PoliciaXadesDetachedAdapter.PROFILE_ID,
-            profileVersion = 1,
+            profileVersion = 2,
             origin = TrustedOrigin("https", "sede.policia.gob.es", 443),
             navigationId = NavigationId("123e4567-e89b-42d3-a456-426614175001"),
             navigationEpoch = 10,

@@ -138,7 +138,7 @@ class PoliciaXadesDetachedAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("policia-xades-detached-v1")
         const val PROFILE_ID = "policia-solicitud-generica"
-        const val PROFILE_VERSION = 1
+        const val PROFILE_VERSION = 2
         const val ORIGIN = "https://sede.policia.gob.es"
         const val START_URL = "$ORIGIN/"
         const val PROCEDURE_PAGE = "$ORIGIN/portalCiudadano/_es/solicitudGenerica.xhtml"

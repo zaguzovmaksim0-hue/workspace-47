@@ -2631,7 +2631,7 @@ class PortalCatalogRepositoryTest {
         assertEquals(profileId, qaPortal.profileId)
         assertEquals(launch, qaPortal.entryUrl)
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, launch), qaRepository.resolveLaunch(qaPortal))

@@ -31,7 +31,7 @@ class DiputacionPalenciaSolicitudGeneralProfileCatalogBindingTest {
     )
 
     @Test
-    fun qaProfileIsLimitedToObservedPreauthNavigation() {
+    fun qaProfilePinsOnlyTheObservedClaveCertificateLogin() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -47,8 +47,9 @@ class DiputacionPalenciaSolicitudGeneralProfileCatalogBindingTest {
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, profile.clientAuthPolicy?.transitionMode)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
     }

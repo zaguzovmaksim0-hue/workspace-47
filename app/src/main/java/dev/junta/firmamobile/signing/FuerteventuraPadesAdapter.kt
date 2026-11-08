@@ -11,7 +11,7 @@ class FuerteventuraPadesAdapter(
     companion object {
         val ID = SigningProtocolId("fuerteventura-register-pades-v1")
         const val PROFILE_ID = "fuerteventura-sede-electronica"
-        const val PROFILE_VERSION = 1
+        const val PROFILE_VERSION = 2
         const val INITIATOR_ORIGIN = "https://sede.cabildofuer.es"
         const val PUBLIC_START_URL = "$INITIATOR_ORIGIN/eAdmin/Registrar.do?action=comenzar&tipoReg=1"
         const val SIGNING_PAGE_URL = "$INITIATOR_ORIGIN/eAdmin/Registrar.do?action=verYfirmar&modo=cert"

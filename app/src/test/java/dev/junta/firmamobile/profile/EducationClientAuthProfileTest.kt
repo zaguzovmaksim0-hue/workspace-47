@@ -35,7 +35,7 @@ class EducationClientAuthProfileTest {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)
 
-        assertEquals(2, profile.profileVersion)
+        assertEquals(3, profile.profileVersion)
         assertEquals("Ministerio de Educación — Convocatoria 46 — acceso con certificado", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -52,7 +52,7 @@ class EducationClientAuthProfileTest {
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
         assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
-        assertEquals(ClientAuthTransitionMode.DIRECT_FROM_SOURCE, policy.transitionMode)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
         assertEquals(
             setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
             policy.requestOrigins,
@@ -70,11 +70,15 @@ class EducationClientAuthProfileTest {
         assertTrue(policy.linkedEphemeralQueryParameterMappings.isEmpty())
         assertEquals(15, policy.grantTtlSeconds)
         assertEquals(443, policy.requestPort)
+        assertEquals(HttpMethod.POST, policy.requestMethod)
         assertTrue(policy.allowEmptyIssuerList)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(5, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-19" })
+        assertEquals(7, profile.evidence.size)
+        assertEquals(
+            setOf("2026-08-19", "2026-11-07"),
+            profile.evidence.map { it.reviewedOn.toString() }.toSet(),
+        )
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)

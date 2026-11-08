@@ -445,8 +445,14 @@ class ClientAuthNavigationAuthorizerTest {
     @Test
     fun exactEducationClaveTransitionAuthorizesOnlyTheObservedIdentifierCertificateRequest() {
         val education = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
-        val authorized = education.observeTopLevelNavigation(
-            EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, 78, true,
+        assertNull(education.observeTopLevelNavigation(
+            EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, 76, true,
+        ))
+        assertNull(education.observeTopLevelResourceRequest(
+            EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, "GET", 77, true,
+        ))
+        val authorized = education.observeTopLevelResourceRequest(
+            EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, "POST", 78, true,
         )
 
         assertEquals(EDUCATION_PROFILE, authorized?.profileId)
@@ -454,7 +460,9 @@ class ClientAuthNavigationAuthorizerTest {
         assertEquals("/IdP2/AuthenticateCitizen", authorized?.target?.rawPath)
         assertNull(authorized?.target?.rawQuery)
         assertNull(
-            education.observeTopLevelNavigation(EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, 78, true),
+            education.observeTopLevelResourceRequest(
+                EDUCATION_PROFILE, EDUCATION_SOURCE, EDUCATION_TARGET, "POST", 78, true,
+            ),
         )
 
         listOf(
@@ -466,8 +474,8 @@ class ClientAuthNavigationAuthorizerTest {
             val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
             assertNull(
                 invalidTarget,
-                fresh.observeTopLevelNavigation(
-                    EDUCATION_PROFILE, EDUCATION_SOURCE, invalidTarget, 180L + index, true,
+                fresh.observeTopLevelResourceRequest(
+                    EDUCATION_PROFILE, EDUCATION_SOURCE, invalidTarget, "POST", 180L + index, true,
                 ),
             )
         }
@@ -480,8 +488,8 @@ class ClientAuthNavigationAuthorizerTest {
             val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
             assertNull(
                 invalidSource,
-                fresh.observeTopLevelNavigation(
-                    EDUCATION_PROFILE, invalidSource, EDUCATION_TARGET, 190L + index, true,
+                fresh.observeTopLevelResourceRequest(
+                    EDUCATION_PROFILE, invalidSource, EDUCATION_TARGET, "POST", 190L + index, true,
                 ),
             )
         }
@@ -569,8 +577,13 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
-    fun claveDirectProfilesAuthorizeOnlyTheServiceRedirectPostToAuthenticateCitizen() {
+    fun claveProfilesAuthorizeOnlyTheReviewedPostToAuthenticateCitizen() {
         CLAVE_DIRECT_PROFILES.forEachIndexed { profileIndex, profile ->
+            val source = if (profile.value == "madrid-sede-tarjeta-azul") {
+                CLAVE_SERVICE_PROVIDER
+            } else {
+                CLAVE_SERVICE_REDIRECT
+            }
             val base = 100L * (profileIndex + 1)
             val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
             // The AFIRMA hop is a POST chain, so a plain navigation arms nothing.
@@ -585,7 +598,7 @@ class ClientAuthNavigationAuthorizerTest {
                 ),
             )
             val authorized = authorizer.observeTopLevelResourceRequest(
-                profile, CLAVE_SERVICE_REDIRECT, CLAVE_TARGET, "POST", base + 2, true,
+                profile, source, CLAVE_TARGET, "POST", base + 2, true,
             )
             assertEquals("$profile", profile, authorized?.profileId)
             assertEquals("pasarela-ident.clave.gob.es", authorized?.target?.host)
@@ -593,20 +606,25 @@ class ClientAuthNavigationAuthorizerTest {
             assertNull(authorized?.target?.rawQuery)
 
             listOf(
-                Triple(CLAVE_SERVICE_REDIRECT, CLAVE_TARGET, "GET"),
+                Triple(source, CLAVE_TARGET, "GET"),
                 Triple(
-                    CLAVE_SERVICE_REDIRECT,
+                    if (source == CLAVE_SERVICE_PROVIDER) CLAVE_SERVICE_REDIRECT else CLAVE_SERVICE_PROVIDER,
+                    CLAVE_TARGET,
+                    "POST",
+                ),
+                Triple(
+                    source,
                     CLAVE_TARGET.replace("/AuthenticateCitizen", "/AuthenticateCitizen/other"),
                     "POST",
                 ),
-                Triple(CLAVE_SERVICE_REDIRECT, "$CLAVE_TARGET?extra=1", "POST"),
+                Triple(source, "$CLAVE_TARGET?extra=1", "POST"),
                 Triple(
-                    CLAVE_SERVICE_REDIRECT,
+                    source,
                     CLAVE_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es.evil.example"),
                     "POST",
                 ),
                 Triple(
-                    CLAVE_SERVICE_REDIRECT,
+                    source,
                     CLAVE_TARGET.replace("pasarela-ident.clave.gob.es", "pasarela-ident.clave.gob.es:8443"),
                     "POST",
                 ),
@@ -1716,6 +1734,22 @@ class ClientAuthNavigationAuthorizerTest {
         const val AIREF_SOURCE = "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"
         const val AIREF_TARGET = "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen"
         val CLAVE_DIRECT_PROFILES = listOf(
+            ProfileId("madrid-sede-tarjeta-azul"),
+            ProfileId("cnmv-sede-public-home"),
+            ProfileId("csd-sede-public"),
+            ProfileId("policia-solicitud-generica"),
+            ProfileId("catastro-solicitudes-genericas"),
+            ProfileId("ministerio-economia-instancia-generica"),
+            ProfileId("age-portal-de-la-transparencia"),
+            ProfileId("red-es-sede-public-navigation"),
+            ProfileId("diputacion-almeria-solicitud-general"),
+            ProfileId("diputacion-cordoba-solicitud-generica"),
+            ProfileId("diputacion-palencia-solicitud-general"),
+            ProfileId("educacion-convocatoria"),
+            ProfileId("extremadura-tramites"),
+            ProfileId("fuerteventura-sede-electronica"),
+            ProfileId("justicia-sede-judicial-private-area"),
+            ProfileId("mjusticia-fundaciones-idp75"),
             ProfileId("asturias-miprincipado"),
             ProfileId("diputacion-ourense-sede"),
             ProfileId("diputacion-sevilla-sede"),

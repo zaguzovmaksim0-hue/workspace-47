@@ -22,16 +22,12 @@ class MinecoOriginSourceTest {
         assertEquals(START_URL, MinecoPadesAdapter.PUBLIC_START_URL)
         assertEquals(setOf(ExactOrigin.parse(ORIGIN)), profile.initiatorOrigins)
         assertEquals(START_URL, profile.startUrl.toASCIIString())
-        assertEquals("https://pasarela.clave.gob.es", MinecoPadesAdapter.CLAVE_BROWSE_ORIGIN)
-        assertEquals("https://pasarela-ident.clave.gob.es", MinecoPadesAdapter.CLAVE_IDENT_BROWSE_ORIGIN)
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
+        assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertEquals(
-            setOf(
-                ExactOrigin.parse("https://pasarela.clave.gob.es"),
-                ExactOrigin.parse("https://pasarela-ident.clave.gob.es"),
-            ),
-            profile.trustedBrowseOrigins,
+            setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+            profile.clientAuthPolicy?.requestOrigins,
         )
-        assertEquals(MinecoPadesAdapter.TRUSTED_BROWSE_ORIGINS, profile.trustedBrowseOrigins)
     }
 
     @Test
@@ -90,12 +86,13 @@ class MinecoOriginSourceTest {
 
     @Test
     fun parserRejectsTrustedBrowseOriginExtension() {
-        val browseArray =
-            "[\"https://pasarela.clave.gob.es\", \"https://pasarela-ident.clave.gob.es\"]"
-        val extended =
-            "[\"https://pasarela.clave.gob.es\", \"https://pasarela-ident.clave.gob.es\", " +
-                "\"https://evil.example\"]"
-        assertRejected(replaceUniqueInProfile(browseArray, extended), "browse origin extension")
+        assertRejected(
+            replaceUniqueInProfile(
+                "\"trustedBrowseOrigins\": []",
+                "\"trustedBrowseOrigins\": [\"https://evil.example\"]",
+            ),
+            "browse origin extension",
+        )
     }
 
     private fun mutateProfileBlock(transform: (String) -> String): String {

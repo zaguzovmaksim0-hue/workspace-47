@@ -50,15 +50,16 @@ class MadridPublicCatalogContractTest(unittest.TestCase):
         self.assertEqual(start, profile["startUrl"])
         self.assertEqual(["https://sede.madrid.es"], profile["initiatorOrigins"])
         self.assertEqual(
-            ["https://servcla.madrid.es", "https://cas.madrid.es"],
+            ["https://servcla.madrid.es", "https://cas.madrid.es", "https://pasarela.clave.gob.es"],
             profile["redirectOrigins"],
         )
         self.assertEqual([], profile["trustedBrowseOrigins"])
         self.assertEqual([], profile["endpoints"])
         self.assertEqual([], profile["operationPolicies"])
-        self.assertEqual([], profile["capabilities"])
-        self.assertIsNone(profile["clientAuthPolicy"])
-        self.assertNotIn("https://pasarela.clave.gob.es", profile["redirectOrigins"])
+        self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
+        self.assertEqual("POST", profile["clientAuthPolicy"]["requestMethod"])
+        self.assertEqual("IN_PLACE_FROM_SOURCE", profile["clientAuthPolicy"]["transitionMode"])
+        self.assertIn("https://pasarela.clave.gob.es", profile["redirectOrigins"])
 
 
 if __name__ == "__main__":

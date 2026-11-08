@@ -44,7 +44,7 @@ class ExtremaduraBatchSigningAdapterTest {
         )
         assertEquals(ExtremaduraBatchProtocolAdapter.ID, normalized.protocolId)
         assertEquals("extremadura-tramites", normalized.context.profileId)
-        assertEquals(1, normalized.context.profileVersion)
+        assertEquals(2, normalized.context.profileVersion)
         assertEquals("tramites.juntaex.es", normalized.context.origin.host)
         assertEquals(9L, normalized.context.navigationEpoch)
         assertEquals(observedAt, normalized.context.observedAt)

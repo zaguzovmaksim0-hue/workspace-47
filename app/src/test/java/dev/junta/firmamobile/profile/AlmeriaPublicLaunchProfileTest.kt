@@ -6,6 +6,7 @@ import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
 import dev.junta.firmamobile.catalog.PortalMechanism
 import dev.junta.firmamobile.catalog.PortalSupportStatus
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
 import java.net.URI
@@ -32,35 +33,42 @@ class AlmeriaPublicLaunchProfileTest {
     )
 
     @Test
-    fun qaProfilePinsOnlyTheExactSolicitudGeneralLaunchWithoutSensitiveCapabilities() {
+    fun qaProfilePinsTheReviewedSolicitudGeneralClaveLogin() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Diputación Provincial de Almería — Solicitud General", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse("https://ov.dipalme.org")), profile.initiatorOrigins)
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(
+            setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")),
+            profile.redirectOrigins,
+        )
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, profile.clientAuthPolicy?.transitionMode)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(3, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-21" })
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(7, profile.evidence.size)
+        assertEquals(
+            setOf("2026-08-21", "2026-11-07"),
+            profile.evidence.map { it.reviewedOn.toString() }.toSet(),
+        )
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://ov.dipalme.org.evil.example/")))
     }
 
     @Test
-    fun publicCatalogPromotesOnlyTheExactLaunchAndKeepsAuthAndSigningUnimplemented() {
+    fun publicCatalogBindsTheExactPendingClaveLoginWithoutSigning() {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0142" }
 
@@ -89,7 +97,7 @@ class AlmeriaPublicLaunchProfileTest {
         val qaPortal = qa.portals().single { it.portalId == portalId }
         val releasePortal = release.portals().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))

@@ -527,6 +527,127 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('claveOnClick = "waiting(); loginClave();"', source)
         self.assertIn('claveOnClick = "loginClave();"', source)
 
+    def test_wave_a_clave_recipes_stop_at_certificate_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        consequential = source.split('val CONSEQ_RECIPE_PROFILES = setOf(', 1)[1].split('\n        )', 1)[0]
+        profiles = {p["profileId"]: p for p in json.loads(
+            self.read(ROOT / "config/site_profiles_v1.json")
+        )["profiles"]}
+        contracts = {
+            "CNMV": "cnmv-sede-public-home",
+            "CSD": "csd-sede-public",
+            "POLICIA": "policia-solicitud-generica",
+            "CATASTRO": "catastro-solicitudes-genericas",
+            "MINECO": "ministerio-economia-instancia-generica",
+            "TRANSPARENCIA": "age-portal-de-la-transparencia",
+            "RED_ES": "red-es-sede-public-navigation",
+            "ALMERIA": "diputacion-almeria-solicitud-general",
+            "CORDOBA": "diputacion-cordoba-solicitud-generica",
+            "PALENCIA": "diputacion-palencia-solicitud-general",
+            "EDUCATION": "educacion-convocatoria",
+            "EXTREMADURA_ANTERIOR": "extremadura-tramites",
+            "FUERTEVENTURA": "fuerteventura-sede-electronica",
+            "JUSTICIA": "justicia-sede-judicial-private-area",
+            "MADRID_SEDE": "madrid-sede-tarjeta-azul",
+            "MJUSTICIA": "mjusticia-fundaciones-idp75",
+        }
+        for name, profile_id in contracts.items():
+            with self.subTest(profile=profile_id):
+                profile = profiles[profile_id]
+                self.assertEqual("QA_ONLY", profile["activation"])
+                self.assertIn("CLIENT_TLS_AUTH", profile["capabilities"])
+                if "SIGN" in profile["capabilities"]:
+                    self.assertIn(f'"{profile_id}"', consequential)
+                policy = profile["clientAuthPolicy"]
+                self.assertEqual("IN_PLACE_FROM_SOURCE", policy["transitionMode"])
+                self.assertEqual("POST", policy["requestMethod"])
+                self.assertEqual(["https://pasarela-ident.clave.gob.es"], policy["requestOrigins"])
+                self.assertEqual("/IdP2/AuthenticateCitizen", policy["requestPath"])
+                self.assertEqual(15, policy["grantTtlSeconds"])
+                self.assertEqual({}, policy["fixedQueryParameters"])
+                self.assertEqual([], policy["requiredEphemeralQueryParameters"])
+                terminal = "ServiceProvider" if name == "MADRID_SEDE" else "ServiceRedirect"
+                self.assertEqual([f"https://pasarela.clave.gob.es/Proxy2/{terminal}"], policy["sourceUrls"])
+                block = source.split(f"{name}_PORTAL_ID -> {{", 1)[1].split("\n            }\n", 1)[0]
+                if name != "MADRID_SEDE":
+                    self.assertTrue(block.rstrip().endswith("clickClaveAfirmaProvider(scenario)"))
+                for forbidden in ("loadUrl(", ".submit(", "evaluateJavascript(", "sign("):
+                    self.assertNotIn(forbidden, block)
+        self.assertIn('FUERTEVENTURA_INSTITUCIONAL_PORTAL_ID = "fuerteventura-portal-institucional"', source)
+        self.assertIn('expectedSrc = PALENCIA_CLAVE_IMAGE_SRC', source)
+        self.assertIn('expectedType = "image"', source)
+        self.assertIn('matchUrlWithoutQuery = true', source)
+
+    def test_exact_login_click_rejects_unreviewed_forms_and_stale_documents(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        values = {
+            "matchUrlWithoutQuery": False,
+            "quotedExpectedUrl": "https://login.example/login/",
+            "quotedExpectedElementId": "clave",
+            "quotedExpectedLabel": "",
+            "quotedExpectedAriaLabel": None,
+            "quotedExpectedOnClick": None,
+            "quotedWaitForBadajozSignHook": False,
+            "quotedExpectedTag": "input",
+            "quotedExpectedType": "image",
+            "quotedExpectedSrc": "clave.png",
+            "quotedFormName": "login",
+            "quotedFormAction": "https://login.example/login/",
+            "requireNoOnClick": True,
+            "quotedShadowHost": "",
+            "quotedExpectedHref": "#",
+        }
+        scripts = {}
+        for kind, name in (("button", "clickExactButton"), ("anchor", "clickExactLabeledAnchor")):
+            helper = source.split(f'private fun {name}(', 1)[1]
+            script = helper.split('webView.evaluateJavascript(', 1)[1].split('"""', 2)[1]
+            substitutions = dict(values, quotedExpectedOnClick="submit();" if kind == "anchor" else None)
+            scripts[kind] = re.sub(r'\$(\w+)', lambda match: json.dumps(substitutions[match[1]]), script)
+        harness = r"""
+            const assert = require('node:assert/strict');
+            for (const [kind, script] of Object.entries(SCRIPTS)) {
+            const run = (change = {}) => {
+              let clicks = 0;
+              const form = {
+                id: 'login', name: 'login', action: 'https://login.example/login/',
+                getAttribute: name => name === 'method' ? change.method || 'post' : change.target || null
+              };
+              if (change.action) form.action = change.action;
+              const element = {
+                id: 'clave', value: '', innerText: '', form: change.detached ? {} : form,
+                getAttribute: name => ({type: 'image', src: 'clave.png',
+                  href: '#', onclick: change.onclick || (kind === 'anchor' ? 'submit();' : null),
+                  formaction: change.formaction, formmethod: change.formmethod,
+                  formtarget: change.formtarget}[name] ?? null),
+                click: () => clicks++
+              };
+              const document = {
+                forms: change.missing ? [] : change.duplicate ? [form, form] : [form],
+                querySelectorAll: () => [element]
+              };
+              const location = {href: change.url || 'https://login.example/login'};
+              const window = {};
+              const code = eval(script);
+              return [code, clicks];
+            };
+            assert.deepEqual(run(), [1, 1]);
+            assert.deepEqual(run({url: 'https://login.example/login/'}), [1, 1]);
+            assert.deepEqual(run({target: '_parent'}), [1, 1]);
+            for (const change of [
+              {action: 'https://login.example/file'}, {action: 'https://foreign.example/login/'},
+              {method: 'get'}, {missing: true}, {duplicate: true}, {target: '_blank'}
+            ]) assert.deepEqual(run(change), [2, 0]);
+            if (kind === 'button') for (const change of [
+              {detached: true}, {formaction: '/file'}, {formmethod: 'get'}, {formtarget: '_blank'}
+            ]) assert.deepEqual(run(change), [2, 0]);
+            assert.deepEqual(run({onclick: 'file();'}), [0, 0]);
+            assert.deepEqual(run({url: 'https://login.example/stale'}), [0, 0]);
+            assert.deepEqual(run({url: 'https://login.example/login//'}), [0, 0]);
+            }
+        """.replace('SCRIPTS', json.dumps(scripts))
+        result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
+        self.assertEqual(0, result.returncode, result.stderr)
+
     def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
         source = self.read(INSTRUMENTATION)
         block = source.split('in GESTIONA_CLAVE_ORIGINS -> {', 1)[1].split('\n            }\n', 1)[0]
