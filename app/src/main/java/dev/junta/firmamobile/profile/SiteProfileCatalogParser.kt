@@ -1683,7 +1683,10 @@ object SiteProfileCatalogParser {
         require(profile.evidence.map { it.url }.toSet().size == profile.evidence.size)
         require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } ==
             CANARIAS_EVIDENCE_URLS.associateWith { "2026-08-17" } +
-            ("https://sede.gobiernodecanarias.org/sede/movil/identificacion" to "2026-11-08"))
+            mapOf(
+                "https://sede.gobiernodecanarias.org/sede/identificacion" to "2026-11-08",
+                "https://sede.gobiernodecanarias.org/sede/movil/identificacion" to "2026-11-08",
+            ))
     }
 
     // Cl@ve TLS and signing share the profile filter: v2 also requires digitalSignature for signing.
@@ -4342,7 +4345,7 @@ object SiteProfileCatalogParser {
     )
     private const val AEMET_PROFILE_ID = "aemet-public-solicitud-navigation"
     private const val CANARIAS_PROFILE_ID = "canarias-sede"
-    private const val CANARIAS_PROFILE_VERSION = 1
+    private const val CANARIAS_PROFILE_VERSION = 2
     private const val CANARIAS_DISPLAY_NAME = "Gobierno de Canarias — Sede electrónica"
     private const val CANARIAS_START_URL = "https://sede.gobiernodecanarias.org/sede/la_sede"
     private const val CANARIAS_ORIGIN = "https://sede.gobiernodecanarias.org"
@@ -4359,7 +4362,6 @@ object SiteProfileCatalogParser {
     private val CANARIAS_EVIDENCE_URLS = setOf(
         CANARIAS_START_URL,
         "https://sede.gobiernodecanarias.org/sede/tramites/6861",
-        "https://sede.gobiernodecanarias.org/sede/identificacion",
         "https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/miniapplet.js",
         "https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/sfest.base.js",
     )

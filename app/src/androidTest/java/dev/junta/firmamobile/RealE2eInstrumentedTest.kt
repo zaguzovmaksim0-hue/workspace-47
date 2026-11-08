@@ -852,6 +852,7 @@ class RealE2eInstrumentedTest {
                     expectedCurrentUrl = CANARIAS_LOGIN_MENU_URL,
                     expectedLabel = "Certificado Digital / DNI-E",
                     expectedHref = "identificacion",
+                    expectedTitle = "Certificado Digital / DNI-E",
                     waitForExpectedUrl = true,
                 )
                 clickExactButton(
@@ -1789,10 +1790,12 @@ class RealE2eInstrumentedTest {
         expectedCssClass: String? = null,
         expectedType: String? = null,
         expectedAriaLabel: String? = null,
+        expectedTitle: String? = null,
     ) {
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
         val quotedAnchorType = expectedType?.let { JSONObject.quote(it) } ?: "null"
         val quotedAnchorAriaLabel = expectedAriaLabel?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedTitle = expectedTitle?.let { JSONObject.quote(it) } ?: "null"
         val quotedShadowHost = JSONObject.quote(shadowHostTag.orEmpty())
         val quotedExpectedLabel = JSONObject.quote(expectedLabel)
         val quotedExpectedHref = JSONObject.quote(expectedHref)
@@ -1857,6 +1860,7 @@ class RealE2eInstrumentedTest {
                         // A first visit without cookies gets ;jsessionid=... rewritten into every href (CSN).
                         const href = (element.getAttribute('href') || '').replace(/;jsessionid=[^?#]*/i, '');
                         return label === $quotedExpectedLabel && href === $quotedExpectedHref &&
+                          ($quotedExpectedTitle === null || element.getAttribute('title') === $quotedExpectedTitle) &&
                           ($quotedAnchorType === null || element.getAttribute('type') === $quotedAnchorType) &&
                           ($quotedAnchorAriaLabel === null ||
                             element.getAttribute('aria-label') === $quotedAnchorAriaLabel) &&
@@ -2195,6 +2199,9 @@ class RealE2eInstrumentedTest {
                         if (forms.length !== 1) return 2;
                         let actionMatches = withoutSessionId(forms[0].action) === $quotedFormAction;
                         if ($matchCanariasLoginAction) {
+                          // sfest.base.js caches the library used by firmar -> getScript().sign in Script.
+                          const script = window.Script;
+                          if (typeof script?.sign !== 'function' || script.sign.__jfmSignHook !== true) return 0;
                           const action = new URL(forms[0].action);
                           const params = action.searchParams;
                           actionMatches = action.origin + action.pathname === $quotedFormAction &&

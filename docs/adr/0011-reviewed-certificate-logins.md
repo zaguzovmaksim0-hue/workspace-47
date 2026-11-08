@@ -25,8 +25,12 @@ Return the signature through the original in-memory callback. Add no HTTP endpoi
 or new network grants. AEMET native routing and signing preparation independently validate the contract and payload.
 Use ordinary exact DOM clicks after readiness checks. Leave Funciona navigation-only: its broker-origin source
 and multi-hop grant propagation require a separately reviewed authorization contract.
-For non-deep AEMET probes, abandon the pending native reply and immediately close the scenario: its error callback
-also submits the login form, so clicking Cancel would perform a live negative login request.
+When a non-deep AEMET probe reaches `AwaitingConfirmation`, abandon the pending native reply and immediately close
+the scenario: its error callback also submits the login form, so clicking Cancel would perform a negative login POST.
+This protects only that reached boundary. An earlier native failure (for example `CERTIFICATE_LOCKED` or
+`PROTOCOL_FAILED`) or a shim timeout still delivers the original error callback and can submit a negative login POST.
+Keep production error delivery unchanged without evidence of a product bug; non-deep probes do not guarantee zero
+login requests. This limitation does not authorize any administrative filing.
 
 ## Consequences
 
@@ -35,6 +39,8 @@ Parser pins, shim predicates, adapters and catalog metadata must agree; the smal
 exact set to represent Canarias desktop and mobile login. SHA1 is confined to the reviewed legacy login operations.
 Synthetic tests can prove filtering and detached signatures; server acceptance and Android lifecycle ordering remain
 unverified until authorized REAL E2E. This change does not promote compatibility status.
+Synthetic characterization of the actual shim and an in-memory login-form sink confirms one error callback/submit
+for native failures and request expiry, with no real network or credentials. It does not prove Android failure timing.
 The existing release build enables unverified profiles and selects the QA registry; QA_ONLY is metadata and does
 not hide these contracts from that runtime. The strict release registry remains available as a separate policy.
 
@@ -48,4 +54,6 @@ not hide these contracts from that runtime. The strict release registry remains 
 ## Payoff trigger
 
 Run operator-authorized Android REAL E2E on the integrated candidate to verify the five login boundaries and AEMET's
-local callback acceptance before promoting compatibility claims or changing the exact reviewed contracts.
+local callback acceptance before promoting compatibility claims or changing the exact reviewed contracts. Include
+pre-consent failures when selecting a reviewed non-deep probe strategy; the confirmation stop alone cannot prevent
+all negative login requests.

@@ -73,6 +73,8 @@ class CanariasCertificateLoginCadesAdapterTest {
 
     @Test
     fun rejectsEveryContractMismatchAndNonExactChallenge() = runTest {
+        assertFailure(request(profileVersion = 1), SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        assertFailure(request(profileVersion = 3), SigningErrorCode.UNSUPPORTED_PROTOCOL)
         assertFailure(request(profileId = "other-profile"), SigningErrorCode.UNSUPPORTED_PROTOCOL)
         assertFailure(request(origin = "https://sede.gobiernodecanarias.org.evil.example"), SigningErrorCode.UNSUPPORTED_PROTOCOL)
         assertFailure(request(pageUrl = "https://sede.gobiernodecanarias.org/sede/other"), SigningErrorCode.UNSUPPORTED_PROTOCOL)

@@ -683,6 +683,9 @@ class SiteProfileCatalogParserTest {
     @Test
     fun rejectsAnyExpansionOfTheCanariasCertificateLoginProfileContract() {
         val mutations = listOf(
+            "\"profileVersion\": 2" to "\"profileVersion\": 1",
+            "\"profileVersion\": 2" to "\"profileVersion\": 3",
+            "\"reviewedOn\":\"2026-11-08\"" to "\"reviewedOn\":\"2026-08-17\"",
             "\"SHA1_WITH_RSA\"" to "\"SHA256_WITH_RSA\"",
             "\"format\":\"CAdES Detached\"" to "\"format\":\"CAdES\"",
             "referencesDigestMethod\":\"http://www.w3.org/2001/04/xmlenc#sha512" to

@@ -774,6 +774,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             "matchCanariasLoginAction": False,
             "quotedAnchorType": None,
             "quotedAnchorAriaLabel": None,
+            "quotedExpectedTitle": None,
             "quotedExpectedType": "image",
             "quotedExpectedSrc": "clave.png",
             "quotedFormName": "login",

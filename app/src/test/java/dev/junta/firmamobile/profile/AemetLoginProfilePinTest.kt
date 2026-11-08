@@ -9,7 +9,7 @@ class AemetLoginProfilePinTest {
     fun aCorrectLastEntryCannotHideContradictoryEvidence() {
         val mutations = listOf(
             Triple("aemet-public-solicitud-navigation", "https://www.aemet.es/es/sede_electronica", "2026-08-23"),
-            Triple("canarias-sede", "https://sede.gobiernodecanarias.org/sede/identificacion", "2026-08-17"),
+            Triple("canarias-sede", "https://sede.gobiernodecanarias.org/sede/identificacion", "2026-11-08"),
         ).map { (id, url, date) ->
             TlsProfileMutation(
                 "$id contradictory evidence", id,

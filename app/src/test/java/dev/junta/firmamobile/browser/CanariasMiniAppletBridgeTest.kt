@@ -43,6 +43,7 @@ class CanariasMiniAppletBridgeTest {
             result.request.normalized.use { request ->
                 assertEquals(CanariasCertificateLoginCadesAdapter.ID, request.protocolId)
                 assertEquals(PROFILE_ID, request.context.profileId)
+                assertEquals(2, request.context.profileVersion)
                 assertEquals(page, request.context.pageUrl)
                 assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
                 assertEquals("CADES", request.format.name)

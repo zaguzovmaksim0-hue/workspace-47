@@ -71,6 +71,55 @@ class CertificateLoginWaveDTest(unittest.TestCase):
             }
         """.replace("PREDICATE", predicate).replace("PROPERTIES", json.dumps(properties)))
 
+    def test_canarias_certificate_link_requires_exact_title_label_and_href(self):
+        source = RECIPE.read_text().split("private fun clickExactLabeledAnchor(", 1)[1]
+        script = source.split("webView.evaluateJavascript(", 1)[1].split('"""', 2)[1]
+        page = "https://sede.gobiernodecanarias.org/sede/movil/identificacionmenu"
+        label = "Certificado Digital / DNI-E"
+        values = dict(matchUrlWithoutQuery=False, quotedExpectedUrl=page, quotedShadowHost="",
+                      quotedExpectedLabel=label, quotedExpectedHref="identificacion",
+                      quotedExpectedTitle=label, quotedAnchorType=None, quotedAnchorAriaLabel=None,
+                      quotedExpectedOnClick=None, quotedFormName=None, quotedFormAction=None)
+        rendered = re.sub(r"\$(\w+)", lambda m: json.dumps(values[m[1]]), script)
+        self.node(r"""
+            const assert = require('node:assert/strict');
+            const run = (change = {}) => {
+              let clicks = 0;
+              const location = {href: PAGE};
+              const link = {
+                innerText: change.label ?? LABEL,
+                getAttribute: name => ({href: change.href ?? 'identificacion',
+                  title: Object.hasOwn(change, 'title') ? change.title : LABEL}[name] ?? null),
+                click: () => clicks++
+              };
+              const document = {querySelectorAll: () => change.duplicate ? [link, link] : [link]};
+              return [eval(SCRIPT), clicks];
+            };
+            for (const change of [{title: null}, {title: 'Other'}, {title: LABEL + ' '},
+                {label: 'Other'}, {href: 'other'}]) assert.deepEqual(run(change), [0, 0]);
+            assert.deepEqual(run({duplicate: true}), [2, 0]);
+            assert.deepEqual(run(), [1, 1]);
+        """.replace("SCRIPT", json.dumps(rendered)).replace("PAGE", json.dumps(page))
+                  .replace("LABEL", json.dumps(label)))
+        recipe = RECIPE.read_text().split("CANARIAS_PORTAL_ID -> {", 1)[1].split("\n            }", 1)[0]
+        self.assertIn('expectedTitle = "Certificado Digital / DNI-E"', recipe)
+
+    def test_canarias_page_migration_pins_profile_version_two_and_reviewed_evidence(self):
+        profile = next(p for p in json.loads((ROOT / "config/site_profiles_v1.json").read_text())["profiles"]
+                       if p["profileId"] == "canarias-sede")
+        self.assertEqual(2, profile["profileVersion"])
+        adapter = (ROOT / "app/src/main/java/dev/junta/firmamobile/signing/"
+                   "CanariasCertificateLoginCadesAdapter.kt").read_text()
+        parser = (ROOT / "app/src/main/java/dev/junta/firmamobile/profile/"
+                  "SiteProfileCatalogParser.kt").read_text()
+        self.assertRegex(adapter, r"const val PROFILE_VERSION = 2\b")
+        self.assertRegex(parser, r"const val CANARIAS_PROFILE_VERSION = 2\b")
+        evidence = {item["url"]: item["reviewedOn"] for item in profile["evidence"]}
+        for path in ("/sede/identificacion", "/sede/movil/identificacion"):
+            url = "https://sede.gobiernodecanarias.org" + path
+            self.assertEqual("2026-11-08", evidence[url])
+            self.assertIn(f'"{url}" to "2026-11-08"', parser)
+
     def test_soria_waits_for_late_handler_and_dgsfp_requires_its_parent_anchor(self):
         source = RECIPE.read_text().split("internal fun clickExactButton(", 1)[1]
         script = source.split("webView.evaluateJavascript(", 1)[1].split('"""', 2)[1]
@@ -149,19 +198,44 @@ class CertificateLoginWaveDTest(unittest.TestCase):
               if (change.params) change.params(params);
               const form = {id: 'formData', name: 'formData', action: (change.action || ACTION) + '?' + params,
                 getAttribute: n => n === 'method' ? change.method || 'post' : change.target || null};
-              const window = {formData: change.global ? {} : form};
+              const hookedSign = ready => Object.assign(() => {}, {__jfmSignHook: ready});
+              const selected = change.selected || 'AutoScript';
+              const window = {formData: change.global ? {} : form,
+                AutoScript: {sign: hookedSign(selected !== 'AutoScript' || change.hook !== false)},
+                MiniApplet: {sign: hookedSign(selected !== 'MiniApplet' || change.hook !== false)}};
+              window.Script = change.noSelected ? null : window[selected];
+              if (change.noSign) delete window.Script.sign;
+              if (change.markerOnly) window.Script.sign = {__jfmSignHook: true};
+              if (change.replacedGlobal) window[selected] = {sign: hookedSign(true)};
+              if (change.noLibraries) window.Script = window.AutoScript = window.MiniApplet = undefined;
               if (!change.noHandler) window.firmar = () => {};
               const element = {innerText: change.accept ? 'Aceptar' : 'Validarme',
-                form: change.detached ? {} : form, disabled: false, getClientRects: () => [{}],
+                form: change.detached ? {} : form, disabled: !!change.disabled,
+                getClientRects: () => change.noRects ? [] : [{}],
                 getAttribute: n => ({type: change.accept ? 'submit' : 'button',
                   onclick: change.accept ? 'return firmar();' : 'firmar(formData);'}[n] ?? null),
                 click: () => clicks++};
               const getComputedStyle = () => ({visibility: change.hidden ? 'hidden' : 'visible'});
               const document = {readyState: 'complete', forms: change.duplicate ? [form, form] : [form],
                 querySelectorAll: () => [element]};
+              if (change.delayedHook) {
+                window.Script.sign = hookedSign(false);
+                for (let i = 0; i < 5; i++) assert.equal(eval(SCRIPT), 0);
+                assert.equal(clicks, 0);
+                window.Script.sign = hookedSign(true);
+              }
               return [eval(SCRIPT), clicks];
             };
             assert.deepEqual(run(), [1, 1]);
+            for (const selected of ['AutoScript', 'MiniApplet']) {
+              assert.deepEqual(run({selected, hook: false}), [0, 0]);
+              assert.deepEqual(run({selected, replacedGlobal: true}), [1, 1]);
+              assert.deepEqual(run({selected, hook: false, replacedGlobal: true}), [0, 0]);
+              assert.deepEqual(run({selected, delayedHook: true}), [1, 1]);
+              assert.deepEqual(run({selected}), [1, 1]);
+            }
+            for (const change of [{noSelected: true}, {noLibraries: true}, {noSign: true},
+                {markerOnly: true}]) assert.deepEqual(run(change), [0, 0]);
             for (const change of [{detached: true}, {global: true}, {method: 'get'}, {target: '_blank'},
                 {duplicate: true}, {action: 'https://foreign.example/accionProcesaFormularioLogin'},
                 {action: 'https://sede.gobiernodecanarias.org/file'},
@@ -171,7 +245,7 @@ class CertificateLoginWaveDTest(unittest.TestCase):
             }
             assert.deepEqual(run({noHandler: true}),
               [{readyState: 'complete', handlerReady: false, clicked: false}, 0]);
-            for (const change of [{accept: true}, {hidden: true}]) {
+            for (const change of [{accept: true}, {hidden: true}, {disabled: true}, {noRects: true}]) {
               assert.deepEqual(run(change), [0, 0]);
             }
         """.replace("SCRIPT", json.dumps(rendered)).replace("ACTION", json.dumps(action))

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "11125d82ea610e3dc2ae47f410d1ef607a71945d95a820a9b7c6dfdc00cd8525",
+  "sourceRevision": "04ecc50b04aeb4edeb2b6cd031ac7fe750fc941bc75d26aae257438b699a5e20",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -714,7 +714,7 @@
         "AEMET-SSO-2026-08-23"
       ],
       "reviewedOn": "2026-11-08",
-      "limitations": "Perfil QA_ONLY con SIGN y LEGACY_SHA1 únicamente para el nonce de login AEMET. El wire AUTO/null se normaliza localmente a CAdES detached solo en /AEMET/es/GestionPeticiones/sso; sin endpoints HTTP, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, documentos ni presentación. Falta E2E físico y aceptación del callback por el servidor."
+      "limitations": "Perfil QA_ONLY con SIGN y LEGACY_SHA1 únicamente para el nonce de login AEMET. El wire AUTO/null se normaliza localmente a CAdES detached solo en /AEMET/es/GestionPeticiones/sso; sin endpoints HTTP, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, documentos ni presentación. Un error anterior al consentimiento o un timeout puede activar el callback original y un POST negativo de login; detenerse en AwaitingConfirmation no garantiza cero peticiones. Falta E2E físico y aceptación del callback por el servidor."
     },
     {
       "portalId": "age-agencia-estatal-de-seguridad-aerea-aesa",

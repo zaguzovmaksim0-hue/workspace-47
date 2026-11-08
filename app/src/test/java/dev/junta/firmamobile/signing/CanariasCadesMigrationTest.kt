@@ -102,7 +102,7 @@ class CanariasCadesMigrationTest {
                     sign(prepared).use { local ->
                         val mutations = listOf(
                             request(protocol = SigningProtocolId("wrong")), request(profile = "wrong"),
-                            request(version = 2), request(description = "changed"),
+                            request(version = 1), request(version = 3), request(description = "changed"),
                             request(pageUrl = "https://sede.gobiernodecanarias.org/sede/other"),
                             request(pageUrl = null),
                             request(origin = TrustedOrigin("https", "sede.gobiernodecanarias.org.evil.example", 443)),
@@ -305,7 +305,7 @@ class CanariasCadesMigrationTest {
         extra: String = properties,
         protocol: SigningProtocolId = CanariasCertificateLoginCadesAdapter.ID,
         profile: String = CanariasCertificateLoginCadesAdapter.PROFILE_ID,
-        version: Int = 1,
+        version: Int = 2,
         description: String = CanariasCertificateLoginCadesAdapter.SAFE_DESCRIPTION,
         origin: TrustedOrigin = TrustedOrigin("https", "sede.gobiernodecanarias.org", 443),
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,

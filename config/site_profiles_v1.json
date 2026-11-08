@@ -858,7 +858,7 @@
     },
     {
       "profileId": "canarias-sede",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Gobierno de Canarias — Sede electrónica",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -874,7 +874,7 @@
       "evidence": [
         {"url":"https://sede.gobiernodecanarias.org/sede/la_sede","reviewedOn":"2026-08-17"},
         {"url":"https://sede.gobiernodecanarias.org/sede/tramites/6861","reviewedOn":"2026-08-17"},
-        {"url":"https://sede.gobiernodecanarias.org/sede/identificacion","reviewedOn":"2026-08-17"},
+        {"url":"https://sede.gobiernodecanarias.org/sede/identificacion","reviewedOn":"2026-11-08"},
         {"url":"https://sede.gobiernodecanarias.org/sede/movil/identificacion","reviewedOn":"2026-11-08"},
         {"url":"https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/miniapplet.js","reviewedOn":"2026-08-17"},
         {"url":"https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/sfest.base.js","reviewedOn":"2026-08-17"}
