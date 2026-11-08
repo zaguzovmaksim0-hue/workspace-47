@@ -34,6 +34,7 @@ import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.Capability
 import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningUiState
+import dev.junta.firmamobile.ui.CONSENT_ARM_DELAY_MS
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -2953,6 +2954,8 @@ class RealE2eInstrumentedTest {
             ownsRequest = { owner.isCurrent(profileId) },
             timeoutMillis = UI_TIMEOUT_MILLIS,
             advanceFrame = { rule.mainClock.advanceTimeByFrame() },
+            // Runs 42521821357: E0 with per-poll frames only; arm from the test thread once the native probe sees it.
+            armConsent = { rule.mainClock.advanceTimeBy(CONSENT_ARM_DELAY_MS) },
         )
     }
 
