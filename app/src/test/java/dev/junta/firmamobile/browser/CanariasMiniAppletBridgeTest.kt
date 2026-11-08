@@ -27,32 +27,34 @@ import org.robolectric.annotation.SQLiteMode
 class CanariasMiniAppletBridgeTest {
     @Test
     fun acceptsOnlyTheExactPublicCertificateLoginTuple() {
-        val challenge = CHALLENGE.encodeToByteArray()
-        val result = MiniAppletBridgeAdapter(
-            clock = Clock.fixed(Instant.parse("2026-08-17T21:55:05Z"), ZoneOffset.UTC),
-            activeProfileId = { ProfileId(PROFILE_ID) },
-        ).route(
-            rawMessage = message(challenge.copyOf()),
-            sourceOrigin = Uri.parse(ORIGIN),
-            isMainFrame = true,
-            navigationEpoch = 9,
-            currentPageUrl = SIGNING_PAGE_URL,
-        ) as MiniAppletBridgeRouteResult.Accepted
+        for (page in CanariasCertificateLoginCadesAdapter.SIGNING_PAGE_URLS) {
+            val challenge = CHALLENGE.encodeToByteArray()
+            val result = MiniAppletBridgeAdapter(
+                clock = Clock.fixed(Instant.parse("2026-08-17T21:55:05Z"), ZoneOffset.UTC),
+                activeProfileId = { ProfileId(PROFILE_ID) },
+            ).route(
+                rawMessage = message(challenge.copyOf()),
+                sourceOrigin = Uri.parse(ORIGIN),
+                isMainFrame = true,
+                navigationEpoch = 9,
+                currentPageUrl = page,
+            ) as MiniAppletBridgeRouteResult.Accepted
 
-        result.request.normalized.use { request ->
-            assertEquals(CanariasCertificateLoginCadesAdapter.ID, request.protocolId)
-            assertEquals(PROFILE_ID, request.context.profileId)
-            assertEquals(SIGNING_PAGE_URL, request.context.pageUrl)
-            assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
-            assertEquals("CADES", request.format.name)
-            request.withPayload { payload ->
-                MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
-                    assertArrayEquals(challenge, data)
-                    assertEquals(EXTRA_PROPERTIES, properties)
+            result.request.normalized.use { request ->
+                assertEquals(CanariasCertificateLoginCadesAdapter.ID, request.protocolId)
+                assertEquals(PROFILE_ID, request.context.profileId)
+                assertEquals(page, request.context.pageUrl)
+                assertEquals(SigningAlgorithm.SHA1_WITH_RSA, request.algorithm)
+                assertEquals("CADES", request.format.name)
+                request.withPayload { payload ->
+                    MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
+                        assertArrayEquals(challenge, data)
+                        assertEquals(EXTRA_PROPERTIES, properties)
+                    }
                 }
             }
+            challenge.fill(0)
         }
-        challenge.fill(0)
     }
 
     @Test
@@ -66,6 +68,11 @@ class CanariasMiniAppletBridgeTest {
             currentPageUrl = page,
         )
         val exact = message(CHALLENGE.encodeToByteArray())
+        for (page in CanariasCertificateLoginCadesAdapter.SIGNING_PAGE_URLS) {
+            for (suffix in listOf("/other", "?extra=1", "#fragment", "/")) {
+                assertTrue(route(exact, page + suffix) is MiniAppletBridgeRouteResult.Rejected)
+            }
+        }
         assertEquals(true, route(exact, "$ORIGIN/sede/other") is MiniAppletBridgeRouteResult.Rejected)
         assertEquals(true, route(exact.replace("SHA1withRSA", "SHA256withRSA")) is MiniAppletBridgeRouteResult.Rejected)
         assertEquals(true, route(exact.replace("CAdES", "XAdES")) is MiniAppletBridgeRouteResult.Rejected)

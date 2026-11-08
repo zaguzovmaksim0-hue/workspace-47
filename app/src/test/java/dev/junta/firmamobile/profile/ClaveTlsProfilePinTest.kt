@@ -7,6 +7,8 @@ import org.junit.Test
 class ClaveTlsProfilePinTest {
     private val ids = listOf(
         "asturias-miprincipado",
+        "aesa-solicitud-general-public",
+        "dgsfp-sede-public-home",
         "diputacion-ourense-sede",
         "diputacion-sevilla-sede",
         "diputacion-a-coruna-solicitud-general",

@@ -45,7 +45,7 @@ class CanariasProfileCatalogBindingTest {
         assertNull(profile.clientAuthPolicy)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-17" })
+        assertEquals(setOf("2026-08-17", "2026-11-08"), profile.evidence.map { it.reviewedOn.toString() }.toSet())
 
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         assertEquals(CanariasCertificateLoginCadesAdapter.SAFE_DESCRIPTION, operation.safeDescription)

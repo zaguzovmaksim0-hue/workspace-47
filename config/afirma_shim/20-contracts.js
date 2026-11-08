@@ -22,6 +22,7 @@
   let matchesGranCanariaSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesCanariasSign = () => null;
+  let matchesAemetSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.
   let matchesFuerteventuraSign = () => null;
   // null: not applicable; false: reject; true: exact tuple.

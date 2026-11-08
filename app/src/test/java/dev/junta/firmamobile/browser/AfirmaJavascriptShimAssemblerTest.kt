@@ -32,8 +32,7 @@ class AfirmaJavascriptShimAssemblerTest {
         "https://sede.example.test",
     )
     private val legacyTemplate: String
-        get() = checkNotNull(javaClass.getResourceAsStream("AfirmaJavascriptShimLegacy.js"))
-            .bufferedReader(Charsets.UTF_8).use { it.readText() }
+        get() = AfirmaJavascriptShimLegacy.template()
 
     @Test
     fun facadeAndReaderMatchLegacyBytesForEveryPackagedProfileFlagCombination() {
@@ -110,8 +109,8 @@ class AfirmaJavascriptShimAssemblerTest {
     fun everyMissingOrDuplicatedPlaceholderFailsClosed() {
         val template = legacyTemplate
         val tokens = Regex("__JFM_[A-Z_]+__").findAll(template).map { it.value }.toList()
-        assertEquals(24, tokens.size)
-        assertEquals(24, tokens.toSet().size)
+        assertEquals(25, tokens.size)
+        assertEquals(25, tokens.toSet().size)
         for (token in tokens) {
             for (invalid in listOf(template.replace(token, ""), template + token)) {
                 assertThrows("Invalid token: $token", IllegalStateException::class.java) {
@@ -221,6 +220,7 @@ class AfirmaJavascriptShimAssemblerTest {
         AfirmaShimCompatibilityFlags(granCanaria = true),
         AfirmaShimCompatibilityFlags(fuerteventura = true),
         AfirmaShimCompatibilityFlags(canarias = true),
+        AfirmaShimCompatibilityFlags(aemet = true),
         AfirmaShimCompatibilityFlags(mineco = true),
         AfirmaShimCompatibilityFlags(melillaBatch = true),
         AfirmaShimCompatibilityFlags(lugoBatch = true),
@@ -245,6 +245,7 @@ class AfirmaJavascriptShimAssemblerTest {
         granCanaria = true,
         fuerteventura = true,
         canarias = true,
+        aemet = true,
         mineco = true,
         melillaBatch = true,
         lugoBatch = true,

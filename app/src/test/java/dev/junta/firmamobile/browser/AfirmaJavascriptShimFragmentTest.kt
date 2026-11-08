@@ -24,7 +24,30 @@ import org.robolectric.annotation.SQLiteMode
 class AfirmaJavascriptShimFragmentTest {
     private val configuration = AfirmaJavascriptShimConfiguration(
         MiniAppletBridgeMode.FUNCTIONAL, false,
-        AfirmaShimCompatibilityFlags(cantabria = true, jccm = true, jccmRegistro = true, airef = true, cdti = true, policia = true, granCanaria = true, fuerteventura = true, mineco = true, canarias = true, xuntaGalicia = true, acceda = true, sevillaAtse = true, ugr = true, badajoz = true, melillaBatch = true, lugoBatch = true, caibBatch = true, euskadiClientAuthPost = true, isciiiCertificateSelection = true, valenciaCertificateSelection = true),
+        AfirmaShimCompatibilityFlags(
+            cantabria = true,
+            jccm = true,
+            jccmRegistro = true,
+            airef = true,
+            cdti = true,
+            policia = true,
+            granCanaria = true,
+            fuerteventura = true,
+            mineco = true,
+            canarias = true,
+            aemet = true,
+            xuntaGalicia = true,
+            acceda = true,
+            sevillaAtse = true,
+            ugr = true,
+            badajoz = true,
+            melillaBatch = true,
+            lugoBatch = true,
+            caibBatch = true,
+            euskadiClientAuthPost = true,
+            isciiiCertificateSelection = true,
+            valenciaCertificateSelection = true,
+        ),
         "https://sede.example.test",
     )
     private val raw = listOf(File("src/main/res/raw"), File("app/src/main/res/raw"))
@@ -365,8 +388,7 @@ class AfirmaJavascriptShimFragmentTest {
     @Test
     fun realFragmentsPreserveLegacyCoreAndTupleInOrderAndAreReadOnce() {
         val read = mutableListOf<AfirmaJavascriptShimFragment>()
-        val template = checkNotNull(javaClass.getResourceAsStream("AfirmaJavascriptShimLegacy.js"))
-            .bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val template = AfirmaJavascriptShimLegacy.template()
         val actual = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) { fragment ->
             read += fragment
             File(raw, "afirma_shim_${fragment.name.lowercase()}.js").reader(Charsets.UTF_8)
@@ -634,6 +656,29 @@ class AfirmaJavascriptShimFragmentTest {
     }
 
     @Test
+    fun disabledAemetOmitsOnlyItsBodyAndDoesNotReadItsResource() {
+        val reads = mutableListOf<AfirmaJavascriptShimFragment>()
+        val disabled = configuration.copy(flags = configuration.flags.copy(aemet = false))
+        val output = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(disabled) {
+            reads += it
+            check(it != AfirmaJavascriptShimFragment.AEMET)
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        assertEquals(AfirmaJavascriptShimFragment.entries - AfirmaJavascriptShimFragment.AEMET, reads)
+        assertFalse(output.contains("https://sede.aemet.gob.es"))
+        assertFalse(output.contains("matchesAemetSign = (args, successCallback, errorCallback)"))
+        assertFalse(output.contains("__JFM_"))
+        assertTrue(output.contains("const aemetCompatibilityEnabled = false;"))
+        val enabled = AfirmaJavascriptShimAssembler.readFragmentsAndAssemble(configuration) {
+            File(raw, "afirma_shim_${it.name.lowercase()}.js").reader(Charsets.UTF_8)
+        }
+        val body = File(raw, "afirma_shim_aemet.js").readText(Charsets.UTF_8)
+        assertEquals(enabled.replace(body, "").replace(
+            "const aemetCompatibilityEnabled = true;", "const aemetCompatibilityEnabled = false;",
+        ), output)
+    }
+
+    @Test
     fun disabledMinecoOmitsOnlyItsBodyAndDoesNotReadItsResource() {
         val reads = mutableListOf<AfirmaJavascriptShimFragment>()
         val disabled = configuration.copy(flags = configuration.flags.copy(mineco = false))
@@ -756,8 +801,38 @@ class AfirmaJavascriptShimFragmentTest {
 }
 
 // Compare every unchanged byte with the frozen fixture after undoing only the portal extractions.
+// Reverse only reviewed Wave D deltas before comparing the unchanged pre-extraction reference.
+private fun restoreReviewedLoginChanges(actual: String, aemetEnabled: Boolean): String {
+    val module = checkNotNull(AfirmaJavascriptShimLegacy.javaClass.getResourceAsStream("AemetLoginShimReference.js"))
+        .bufferedReader(Charsets.UTF_8).use { it.readText() }
+    assertEquals(aemetEnabled, actual.contains(module))
+    assertEquals(actual.indexOf(module), actual.lastIndexOf(module))
+    return actual.replace(module, "")
+        .replace("  let matchesAemetSign = () => null;\n", "")
+        .replace(
+            "    const isExactAemetCall = matchesAemetSign(args, successCallback, errorCallback);\n" +
+                "    if (isExactAemetCall === false) {\n" +
+                "      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n",
+            "",
+        )
+        .replace(" && !aemetCompatibilityEnabled", "")
+        .replace(" && !isExactAemetCall", "")
+        .replace(
+            "    Object.defineProperty(wrappedMiniAppletMethod, \"__jfmSignHook\", {value: call === \"SIGN\"});\n",
+            "",
+        )
+        .replace(
+            "    const canariasPages = [\n" +
+                "      \"https://sede.gobiernodecanarias.org/sede/identificacion\",\n" +
+                "      \"https://sede.gobiernodecanarias.org/sede/movil/identificacion\"\n    ];",
+            "    const canariasPage = \"https://sede.gobiernodecanarias.org/sede/identificacion\";",
+        )
+        .replace("canariasPages.includes(window.location.href)", "window.location.href === canariasPage")
+}
+
 internal fun assertPortalExtractions(legacy: String, assembled: String, flags: AfirmaShimCompatibilityFlags) {
-    val valenciaRestored = restoreValenciaSelectionExtraction(assembled, flags.valenciaCertificateSelection)
+    val reviewed = restoreReviewedLoginChanges(assembled, flags.aemet)
+    val valenciaRestored = restoreValenciaSelectionExtraction(reviewed, flags.valenciaCertificateSelection)
     val isciiiRestored = restoreIsciiiSelectionExtraction(valenciaRestored, flags.isciiiCertificateSelection)
     val euskadiRestored = restoreEuskadiPostExtraction(isciiiRestored, flags.euskadiClientAuthPost)
     val caibRestored = restoreCaibBatchExtraction(euskadiRestored, flags.caibBatch)
