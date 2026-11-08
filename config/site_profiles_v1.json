@@ -994,18 +994,40 @@
       "displayName": "TEA — Alegaciones con certificado",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
-      "startUrl": "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
+      "startUrl": "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE",
       "initiatorOrigins": ["https://sede.tea.hacienda.gob.es"],
       "redirectOrigins": [],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
       "capabilities": ["CLIENT_TLS_AUTH"],
-      "clientAuthPolicy": {"transitionMode":"DIRECT_FROM_SOURCE","requestOrigins":["https://www1.tea.hacienda.gob.es"],"sourceUrls":["https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"],"requestPath":"/wlpl/TEAC-TRAM/SedeTRAM","fixedQueryParameters":{"tram":"0"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
+      "clientAuthPolicy": {
+        "transitionMode": "DIRECT_FROM_SOURCE",
+        "requestOrigins": ["https://www1.tea.hacienda.gob.es"],
+        "sourceUrls": ["https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"],
+        "requestPath": "/wlpl/OVCT-CXEW/DialogoRepresentacion",
+        "fixedQueryParameters": {"ref": "/wlpl/TEAC-TRAM/SedeTRAM?tram=0"},
+        "requiredEphemeralQueryParameters": [],
+        "allowEmptyIssuerList": false,
+        "grantTtlSeconds": 15,
+        "requireOfferedKeyTypeMatch": true,
+        "requireTlsClientAuthExtendedKeyUsage": true,
+        "requestPort": 443,
+        "requestMethod": "GET",
+        "sourceFixedQueryParameters": {},
+        "sourceRequiredEphemeralQueryParameters": [],
+        "linkedEphemeralQueryParameters": [],
+        "linkedEphemeralQueryParameterMappings": {},
+        "sourceBase64UrlConstraints": {},
+        "requestContinuationUrlConstraints": [],
+        "returnUrlConstraints": []
+      },
       "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":true},
       "evidence": [
         {"url":"https://sede.tea.hacienda.gob.es/TEA/alegaciones.html","reviewedOn":"2026-08-14"},
-        {"url":"https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0","reviewedOn":"2026-08-14"}
+        {"url":"https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0","reviewedOn":"2026-08-14"},
+        {"url":"https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE","reviewedOn":"2026-11-08"},
+        {"url":"https://www1.tea.hacienda.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion?ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0","reviewedOn":"2026-11-08"}
       ]
     },
     {

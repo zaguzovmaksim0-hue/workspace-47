@@ -32,6 +32,29 @@ class PublicPortalCatalogParserTest {
     }
 
     @Test
+    fun `TEA retains Alegaciones metadata and binds only the exact QA selector launch`() {
+        val catalog = PublicPortalCatalogParser.parse(json)
+        val entry = catalog.entries.single { it.inventoryId == "ES-PUB-0090" }
+        val selector = URI(
+            "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE",
+        )
+        val profiles = BuiltInSiteProfiles.catalog
+        val repository = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, profiles, catalog)
+        assertEquals(URI("https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"), entry.entryUrl)
+        assertEquals(ProfileId("tea-alegaciones-certificado"), entry.profileId)
+        assertEquals(selector, entry.launchUrl)
+        assertEquals(
+            PortalLaunchTarget(entry.profileId!!, selector), repository.resolveLaunch(entry.portalId, entry.entryUrl),
+        )
+        assertEquals(PublicCatalogStatus.E2E_PENDING, entry.catalogStatus)
+
+        val changed = PublicPortalCatalogParser.parse(json.replace(selector.toASCIIString(), "$selector&extra=1"))
+        val mismatched = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, profiles, changed)
+        assertNull(mismatched.resolveLaunch(entry.portalId, entry.entryUrl))
+    }
+
+    @Test
     fun `bundled catalog contains the complete inventory with only exact profile bindings`() {
         val catalog = PublicPortalCatalogParser.parse(json)
 

@@ -23,6 +23,53 @@ import org.robolectric.annotation.SQLiteMode
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class SiteProfileCatalogParserTest {
 
+    @Test
+    fun teaSelectorPinRejectsUnreviewedRoutesEvidenceAndWeakenedCertificateRules() {
+        val mutations = listOf<(JSONObject) -> Unit>(
+            { it.put("profileVersion", 2) },
+            { it.put("activation", "ENABLED") },
+            { it.put("startUrl", "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html") },
+            { it.put("capabilities", org.json.JSONArray().put("CLIENT_TLS_AUTH").put("SIGN")) },
+            { it.getJSONObject("certificateRules").put("requireDigitalSignatureKeyUsage", false) },
+            { it.getJSONObject("certificateRules").put("allowedKeyAlgorithms", org.json.JSONArray().put("RSA")) },
+            { it.getJSONObject("clientAuthPolicy").put("requestPath", "/wlpl/TEAC-TRAM/SedeTRAM") },
+            { it.getJSONObject("clientAuthPolicy").put("requestMethod", "POST") },
+            { it.getJSONObject("clientAuthPolicy").put("requestPort", 8443) },
+            { it.getJSONObject("clientAuthPolicy").put("grantTtlSeconds", 30) },
+            { it.getJSONObject("clientAuthPolicy").put("allowEmptyIssuerList", true) },
+            { it.getJSONObject("clientAuthPolicy").put("requireOfferedKeyTypeMatch", false) },
+            { it.getJSONObject("clientAuthPolicy").put("requireTlsClientAuthExtendedKeyUsage", false) },
+            { it.getJSONObject("clientAuthPolicy").put("requestOrigins",
+                org.json.JSONArray().put("https://www6.tea.hacienda.gob.es")) },
+            { it.getJSONObject("clientAuthPolicy").put("requestOrigins",
+                org.json.JSONArray().put("https://www11.tea.hacienda.gob.es")) },
+            { it.getJSONObject("clientAuthPolicy").getJSONObject("fixedQueryParameters")
+                .put("ref", "/wlpl/TEAC-TRAM/SedeTRAM?tram=2") },
+            { it.getJSONObject("clientAuthPolicy").getJSONObject("sourceFixedQueryParameters").put("rep", "S") },
+            { it.getJSONArray("evidence").getJSONObject(0).put("reviewedOn", "2026-11-08") },
+            { it.getJSONArray("evidence").getJSONObject(2).put("reviewedOn", "2026-08-14") },
+            { it.getJSONArray("evidence").put(it.getJSONArray("evidence").getJSONObject(0)) },
+        )
+        val sourceMutations = listOf(
+            "rep=S" to "rep=N", "aut=CPE" to "aut=PE", "tram%3D0" to "tram%3D2",
+            "sede.tea.hacienda.gob.es" to "foreign.example",
+        ).map { (before, after) ->
+            { profile: JSONObject ->
+                val policy = profile.getJSONObject("clientAuthPolicy")
+                policy.put("sourceUrls", org.json.JSONArray().put(
+                    policy.getJSONArray("sourceUrls").getString(0).replace(before, after),
+                ))
+            }
+        }
+        (mutations + sourceMutations).forEachIndexed { index, mutate ->
+            val root = JSONObject(BuiltInSiteProfiles.JSON)
+            mutate(schemaV2Profile(root, "tea-alegaciones-certificado"))
+            assertThrows("mutation $index", IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(root.toString())
+            }
+        }
+    }
+
     private val waveAProfiles = listOf(
         "cnmv-sede-public-home", "csd-sede-public", "policia-solicitud-generica",
         "catastro-solicitudes-genericas", "ministerio-economia-instancia-generica",

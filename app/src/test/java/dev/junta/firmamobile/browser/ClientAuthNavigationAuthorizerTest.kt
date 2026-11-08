@@ -511,23 +511,35 @@ class ClientAuthNavigationAuthorizerTest {
 
         assertEquals(TEA_PROFILE, result?.profileId)
         assertEquals("www1.tea.hacienda.gob.es", result?.target?.host)
-        assertEquals("/wlpl/TEAC-TRAM/SedeTRAM", result?.target?.rawPath)
-        assertEquals("tram=0", result?.target?.rawQuery)
+        assertEquals("/wlpl/OVCT-CXEW/DialogoRepresentacion", result?.target?.rawPath)
+        assertEquals("ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0", result?.target?.rawQuery)
+        assertEquals(URI(TEA_SOURCE), result?.source)
         assertNull(
             authorizer.observeTopLevelNavigation(
                 TEA_PROFILE, TEA_SOURCE, TEA_TARGET, 42, true,
             ),
         )
+        assertFalse(result!!.isExpiredOrInvalid(monotonic.nowNanos()))
+        monotonic.advance(Duration.ofSeconds(16))
+        assertTrue(result.isExpiredOrInvalid(monotonic.nowNanos()))
     }
 
     @Test
     fun teaAlegacionesDirectTransitionRejectsEverySourceAndTargetExpansion() {
         val invalidCalls = listOf<Pair<String, String>>(
-            TEA_SOURCE.replace("alegaciones.html", "solicitudes.html") to TEA_TARGET,
-            TEA_SOURCE to TEA_TARGET.replace("tram=0", "tram=2"),
+            "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html" to TEA_TARGET,
+            TEA_SOURCE.replace("rep=S", "rep=N") to TEA_TARGET,
+            TEA_SOURCE.replace("aut=CPE", "aut=PE") to TEA_TARGET,
+            TEA_SOURCE.replace("tram%3D0", "tram%3D2") to TEA_TARGET,
+            "$TEA_SOURCE&rep=S" to TEA_TARGET,
+            TEA_SOURCE.replace("sede.tea.hacienda.gob.es", "foreign.example") to TEA_TARGET,
+            TEA_SOURCE to TEA_TARGET.replace("tram%3D0", "tram%3D2"),
             TEA_SOURCE to "$TEA_TARGET&extra=1",
-            TEA_SOURCE to "$TEA_TARGET&tram=0",
-            TEA_SOURCE to TEA_TARGET.replace("/SedeTRAM", "/SedeTRAM/other"),
+            TEA_SOURCE to "$TEA_TARGET&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0",
+            TEA_SOURCE to "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
+            TEA_SOURCE to TEA_TARGET.replace("/DialogoRepresentacion", "/DialogoRepresentacion/other"),
+            TEA_SOURCE to TEA_TARGET.replace("www1.", "www6."),
+            TEA_SOURCE to TEA_TARGET.replace("www1.", "www11."),
             TEA_SOURCE to TEA_TARGET.replace("www1.tea.hacienda.gob.es", "www1.tea.hacienda.gob.es.evil.example"),
             TEA_SOURCE to TEA_TARGET.replace("www1.tea.hacienda.gob.es", "www1.tea.hacienda.gob.es:8443"),
         )
@@ -541,6 +553,18 @@ class ClientAuthNavigationAuthorizerTest {
                 ),
             )
         }
+    }
+
+    @Test
+    fun teaSelectorRequiresProfiledTopLevelNavigationAndRejectsResourceArming() {
+        assertNull(authorizer.observeTopLevelNavigation(null, TEA_SOURCE, TEA_TARGET, 42, true))
+        assertNull(authorizer.observeTopLevelNavigation(TEA_PROFILE, TEA_SOURCE, TEA_TARGET, 42, false))
+        assertNull(authorizer.observeTopLevelNavigation(TEA_PROFILE, null, TEA_TARGET, 42, true))
+        assertNull(authorizer.observeTopLevelNavigation(TEA_PROFILE, TEA_TARGET, TEA_TARGET, 42, true))
+        assertNull(authorizer.observeTopLevelNavigation(TEA_PROFILE, TEA_SOURCE, TEA_TARGET, Long.MAX_VALUE, true))
+        assertNull(authorizer.observeTopLevelResourceRequest(TEA_PROFILE, TEA_SOURCE, TEA_TARGET, "POST", 42, true))
+        assertNull(authorizer.observeTopLevelResourceRequest(TEA_PROFILE, TEA_SOURCE, TEA_TARGET, "GET", 42, false))
+        assertNull(authorizer.observeTopLevelNavigation(AEAT_PROFILE, TEA_SOURCE, TEA_TARGET, 42, true))
     }
 
     @Test
@@ -1983,9 +2007,11 @@ class ClientAuthNavigationAuthorizerTest {
         const val TOLEDO_TARGET =
             "https://diputacion.toledo.gob.es:843/SIGEM_AutenticacionWeb/validacionCertificado.do"
         const val TEA_SOURCE =
-            "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+            "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"
         const val TEA_TARGET =
-            "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0"
+            "https://www1.tea.hacienda.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+                "?ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0"
         const val SANIDAD_SOURCE =
             "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
         const val SANIDAD_TARGET =

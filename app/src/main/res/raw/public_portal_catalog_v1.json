@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "e16d9299dc33fc1652ec8135addfd72f43b448c511c9c3cdc1101cd40a691ec1",
+  "sourceRevision": "46fc309ebeb21c74007dc2963852ac238593ad2bb6608c032046b0534ec341b9",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2532,8 +2532,9 @@
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Acceso con certificado TLS cliente a la entrada pública de Alegaciones TEA; no incluye firma documental ni presentación administrativa.",
+      "purpose": "Identificación con certificado TLS cliente desde el selector publicado para Alegaciones TEA; no incluye firma documental ni presentación administrativa.",
       "entryUrl": "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
+      "launchUrl": "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
         "CLIENT_TLS_AUTH"
@@ -2546,10 +2547,11 @@
       "evidenceIds": [
         "D11",
         "P24",
-        "P25"
+        "P25",
+        "TEA-SELECTOR-PROBE-42465852282"
       ],
-      "reviewedOn": "2026-08-14",
-      "limitations": "CLIENT_TLS_AUTH TLS 1.2 implementado solo en QA para la fuente, host, ruta y query tram=0 exactos. E2E físico pendiente; no se afirma firma electrónica, envío de alegaciones ni aceptación administrativa."
+      "reviewedOn": "2026-11-08",
+      "limitations": "CLIENT_TLS_AUTH TLS 1.2 implementado solo en QA desde el selector principal exacto, con rep=S/aut=CPE y ref=/wlpl/TEAC-TRAM/SedeTRAM?tram=0 fijo en DialogoRepresentacion. E2E físico pendiente; no se afirma firma electrónica, envío de alegaciones ni aceptación administrativa."
     },
     {
       "portalId": "age-tesoro-publico",

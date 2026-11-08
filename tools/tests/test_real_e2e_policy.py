@@ -32,12 +32,12 @@ class RealE2ePolicyTest(unittest.TestCase):
             capture_output=True,
         )
 
-    def test_wave_f_login_recipes_keep_the_reviewed_controls_and_six_portal_boundary(self) -> None:
+    def test_wave_f_login_recipes_keep_the_reviewed_controls_and_seven_portal_boundary(self) -> None:
         source = self.read(INSTRUMENTATION)
         wave = source.split("BOE_PORTAL_ID ->", 1)[1].split("CSN_PORTAL_ID ->", 1)[0]
-        for portal in ("CMT", "FONDOS", "IMSERSO", "INE", "SEPES"):
+        for portal in ("CMT", "FONDOS", "IMSERSO", "INE", "SEPES", "TEA"):
             self.assertIn(f"{portal}_PORTAL_ID ->", wave)
-        for excluded in ("DGOJ", "TEA", "ITJ", "OEPM", "CYL", "FORMENTERA", "CNMC"):
+        for excluded in ("DGOJ", "ITJ", "OEPM", "CYL", "FORMENTERA", "CNMC"):
             self.assertNotIn(f"{excluded}_PORTAL_ID ->", wave)
         self.assertEqual(4, wave.count("clickClaveAfirmaProvider(scenario)"))
         for pin in ("Consulta de sus trámites", "Acceso con Cl@ve", "VerCargando();",
@@ -67,6 +67,77 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn("boeCertificateAnchorRequiresUniquePinnedImage", fixture)
         self.assertIn("cmtOptionRequiresSameOriginFrame", fixture)
         self.assertIn("shouldInterceptRequest", fixture)
+
+    def test_tea_recipe_clicks_only_the_observed_top_level_certificate_button(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        recipe = source.split("TEA_PORTAL_ID ->", 1)[1].split("CSN_PORTAL_ID ->", 1)[0]
+        self.assertEqual(1, recipe.count("clickExactButton("))
+        for pin in ('expectedCurrentUrl = TEA_SELECTOR_URL', 'expectedElementId = null',
+                    'expectedLabel = "Certificado o DNI electrónico"', 'expectedAriaLabel = null',
+                    'expectedOnClick = null', 'waitForExpectedUrl = true', 'expectedType = "button"',
+                    'expectedTag = "button"', 'requireNoOnClick = true'):
+            self.assertIn(pin, recipe)
+        for forbidden in ('loadUrl(', '.submit(', 'window.open', 'data-link', ':has-text',
+                          'autoriza-', 'clickClaveAfirmaProvider'):
+            self.assertNotIn(forbidden, recipe)
+        self.assertIn('const val TEA_SELECTOR_URL =', source)
+        self.assertIn('SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE', source)
+        self.assertNotIn('DGOJ_PORTAL_ID ->', source)
+        fixture = self.read(INSTRUMENTATION.with_name("RealE2eWaveFRecipeInstrumentedTest.kt"))
+        self.assertIn('teaCertificateButtonUsesTheExistingExactHelper', fixture)
+        self.assertIn('autoriza-C', fixture)
+        self.assertIn('data-link=', fixture)
+        self.assertIn("addEventListener('click'", fixture)
+
+    def test_tea_exact_button_script_rejects_changed_controls_without_a_network_request(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source.split('private fun clickExactButton(', 1)[1]
+        script = textwrap.dedent(helper.split('webView.evaluateJavascript(', 1)[1].split('"""', 2)[1])
+        selector = (
+            'https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/'
+            'SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE'
+        )
+        values = {
+            'matchUrlWithoutQuery': False, 'quotedExpectedUrl': selector,
+            'quotedExpectedElementId': None, 'quotedExpectedLabel': 'Certificado o DNI electrónico',
+            'quotedExpectedAriaLabel': None, 'quotedExpectedOnClick': None,
+            'quotedWaitForBadajozSignHook': False, 'quotedExpectedTag': 'button',
+            'quotedExpectedType': 'button', 'quotedExpectedSrc': None, 'requireNoOnClick': True,
+            'quotedFormName': None, 'quotedFormAction': None,
+        }
+        script = re.sub(r'\$(\w+)', lambda match: json.dumps(values[match[1]]), script)
+        harness = r'''
+            const assert = require('node:assert/strict');
+            const vm = require('node:vm');
+            function run(options = {}) {
+              let clicks = 0;
+              const element = {
+                innerText: options.label ?? 'Certificado o DNI electrónico',
+                getAttribute: name => ({type: 'button', ...options.attrs}[name] ?? null),
+                click() { clicks++; }
+              };
+              const document = {querySelectorAll(tag) {
+                assert.equal(tag, 'button');
+                return Array.from({length: options.count ?? 1}, () => element);
+              }};
+              return [vm.runInNewContext(SCRIPT, {
+                document, location: {href: options.url || SOURCE}, window: {}
+              }), clicks];
+            }
+            assert.deepEqual(run(), [1, 1]);
+            assert.deepEqual(run({label: '  Certificado\n o DNI\t electrónico  '}), [1, 1]);
+            assert.deepEqual(run({count: 2}), [2, 0]);
+            for (const options of [{count: 0}, {attrs: {type: 'submit'}}, {attrs: {type: null}},
+                {label: 'Cl@ve'}, {attrs: {onclick: ''}}, {attrs: {onclick: 'login();'}},
+                {url: SOURCE.replace('rep=S', 'rep=N')}, {url: SOURCE.replace('aut=CPE', 'aut=PE')},
+                {url: SOURCE.replace('tram%3D0', 'tram%3D2')}, {url: SOURCE + '&extra=1'}])
+              assert.deepEqual(run(options), [0, 0]);
+        '''
+        result = subprocess.run(
+            ['node', '-e', f'const SCRIPT={json.dumps(script)}, SOURCE={json.dumps(selector)};\n' + harness],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
 
     def test_wave_f_dom_scripts_reject_ambiguity_and_wait_for_the_reviewed_frame(self) -> None:
         source = self.read(INSTRUMENTATION)

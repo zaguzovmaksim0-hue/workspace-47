@@ -57,6 +57,9 @@ class PortalCatalogRepositoryTest {
                 "https://sede.transportes.gob.es/grupo-transportes/" +
                     "entidad-publica-empresarial-suelo-sepes/quejas-reclamaciones",
                 "https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx"),
+            Triple("tea-alegaciones-certificado", "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
+                "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+                    "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"),
         )
         routes.forEach { (id, entry, launch) ->
             val profileId = ProfileId(id)
@@ -79,6 +82,9 @@ class PortalCatalogRepositoryTest {
                 launch + "&extra=1", launch.replace("code=SIRIOWS", "code=OTHER").takeIf { it != launch },
                 launch.replace("ta=ANO", "ta=OTHER").takeIf { it != launch },
                 launch.replace("action=consulta", "action=solicitud").takeIf { it != launch },
+                launch.replace("rep=S", "rep=N").takeIf { it != launch },
+                launch.replace("aut=CPE", "aut=PE").takeIf { it != launch },
+                launch.replace("tram%3D0", "tram%3D2").takeIf { it != launch },
                 "https://unreviewed.example/login",
             )
             attacks.forEach { attack ->

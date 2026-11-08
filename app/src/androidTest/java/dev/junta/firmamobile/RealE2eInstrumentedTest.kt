@@ -778,6 +778,18 @@ class RealE2eInstrumentedTest {
                 )
                 clickClaveAfirmaProvider(scenario)
             }
+            TEA_PORTAL_ID -> clickExactButton(
+                scenario = scenario,
+                expectedCurrentUrl = TEA_SELECTOR_URL,
+                expectedElementId = null,
+                expectedLabel = "Certificado o DNI electrónico",
+                expectedAriaLabel = null,
+                expectedOnClick = null,
+                waitForExpectedUrl = true,
+                expectedType = "button",
+                expectedTag = "button",
+                requireNoOnClick = true,
+            )
             CSN_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = CSN_HOME_URL,
@@ -3165,6 +3177,10 @@ class RealE2eInstrumentedTest {
         const val INE_ENTRY_URL = "https://sede.ine.gob.es/es/index.htm"
         const val SEPES_PORTAL_ID = "age-entidad-publica-empresarial-de-suelo-sepes"
         const val SEPES_LOGIN_URL = "https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx"
+        const val TEA_PORTAL_ID = "age-sede-electronica-de-los-tribunales-economico-administrativos-tea"
+        const val TEA_SELECTOR_URL =
+            "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"
         const val REAL_E2E_ARGUMENT = "realE2e"
         const val DEEP_ARGUMENT = "realE2eDeep"
         const val PORTAL_ID_ARGUMENT = "portalId"

@@ -9,6 +9,39 @@ import org.junit.Test
 
 class SiteProfileRegistryTest {
     @Test
+    fun `TEA resolves only its selected exact certificate target and retains profile-free popup isolation`() {
+        val tea = ProfileId("tea-alegaciones-certificado")
+        val selector = URI(
+            "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+                "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE",
+        )
+        val target = "https://www1.tea.hacienda.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+            "?ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0"
+        assertEquals(TrustMode.TRUSTED_BROWSE,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(tea, selector)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH,
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(tea, URI(target))?.trustMode)
+        val unreviewed = listOf(
+            target.replace("tram%3D0", "tram%3D2"), "$target&ref=other", "$target&extra=1",
+            "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
+        )
+        unreviewed.forEach {
+            assertEquals(TrustMode.BROWSE_ONLY,
+                BuiltInSiteProfiles.qaRegistry.resolveForProfile(tea, URI(it))?.trustMode)
+        }
+        listOf("www6", "www11").forEach { host ->
+            assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(tea, URI(target.replace("www1", host))))
+        }
+        assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(URI(target))?.trustMode)
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveRedirect(tea, URI(target)))
+        assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+            ProfileId("aeat-mis-datos-censales"), URI(target),
+        ))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolveForProfile(tea, selector))
+        assertNull(BuiltInSiteProfiles.releaseRegistry.resolveForProfile(tea, URI(target)))
+    }
+
+    @Test
     fun `shared Clave origins stay globally ambiguous and resolve only inside the selected profile`() {
         val clave = URI("https://pasarela.clave.gob.es/Proxy2/ServiceProvider")
         val claveIdent = URI("https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen")

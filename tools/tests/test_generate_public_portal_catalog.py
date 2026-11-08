@@ -1166,16 +1166,23 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("tea-alegaciones-certificado", tea["profileId"])
         self.assertEqual("ES-PUB-0090", tea["inventoryId"])
         self.assertEqual("https://sede.tea.hacienda.gob.es/TEA/alegaciones.html", tea["entryUrl"])
-        self.assertNotIn("launchUrl", tea)
+        selector = (
+            "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/"
+            "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"
+        )
+        self.assertEqual(selector, tea["launchUrl"])
+        self.assertEqual([tea], [entry for entry in catalog["entries"] if entry.get("launchUrl") == selector])
         self.assertEqual("E2E_PENDING", tea["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", tea["inventoryStatus"])
-        self.assertEqual("2026-08-14", tea["reviewedOn"])
+        self.assertEqual("2026-11-08", tea["reviewedOn"])
         self.assertIn("CLIENT_TLS_AUTH", tea["observedMechanisms"])
         self.assertIn("CERTIFICATE_ACCESS", tea["observedMechanisms"])
         self.assertNotIn("ELECTRONIC_SIGNATURE", tea["observedMechanisms"])
         self.assertEqual([], tea["observedSignatureFormats"])
         self.assertIn("tls 1.2", tea["limitations"].lower())
         self.assertIn("e2e", tea["limitations"].lower())
+        self.assertIn("ref=/wlpl/TEAC-TRAM/SedeTRAM?tram=0", tea["limitations"])
+        self.assertIn("selector", tea["limitations"].lower())
 
     def test_menorca_client_tls_profile_binds_exact_qa_pending_contract(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)

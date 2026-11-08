@@ -1638,15 +1638,17 @@ object SiteProfileCatalogParser {
                 requestOrigins = setOf(ExactOrigin.parse(TEA_REQUEST_ORIGIN)),
                 sourceUrls = setOf(URI(TEA_SOURCE_URL)),
                 requestPath = TEA_REQUEST_PATH,
-                fixedQueryParameters = linkedMapOf("tram" to "0"),
+                fixedQueryParameters = linkedMapOf("ref" to "/wlpl/TEAC-TRAM/SedeTRAM?tram=0"),
                 requiredEphemeralQueryParameters = emptySet(),
                 allowEmptyIssuerList = false,
                 grantTtlSeconds = REVIEWED_CLIENT_AUTH_GRANT_TTL_SECONDS,
                 requestPort = HTTPS_PORT,
             ),
         )
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == TEA_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-14") })
+        require(profile.evidence.size == TEA_EVIDENCE_REVIEWS.size)
+        require(
+            profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == TEA_EVIDENCE_REVIEWS,
+        )
     }
 
     private fun validateCanariasProfile(profile: SiteProfile) {
@@ -4353,13 +4355,18 @@ object SiteProfileCatalogParser {
     private const val TEA_PROFILE_ID = "tea-alegaciones-certificado"
     private const val TEA_PROFILE_VERSION = 1
     private const val TEA_DISPLAY_NAME = "TEA — Alegaciones con certificado"
-    private const val TEA_SOURCE_URL = "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html"
+    private const val TEA_SOURCE_URL =
+        "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+            "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"
     private const val TEA_SOURCE_ORIGIN = "https://sede.tea.hacienda.gob.es"
     private const val TEA_REQUEST_ORIGIN = "https://www1.tea.hacienda.gob.es"
-    private const val TEA_REQUEST_PATH = "/wlpl/TEAC-TRAM/SedeTRAM"
-    private val TEA_EVIDENCE_URLS = setOf(
-        TEA_SOURCE_URL,
-        "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0",
+    private const val TEA_REQUEST_PATH = "/wlpl/OVCT-CXEW/DialogoRepresentacion"
+    private val TEA_EVIDENCE_REVIEWS = mapOf(
+        "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html" to "2026-08-14",
+        "https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0" to "2026-08-14",
+        TEA_SOURCE_URL to "2026-11-08",
+        "https://www1.tea.hacienda.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+            "?ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0" to "2026-11-08",
     )
     private const val LLEIDA_PROFILE_ID = "diputacion-lleida-sede"
     private const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"

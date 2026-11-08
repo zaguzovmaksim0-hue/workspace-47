@@ -5,12 +5,15 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.ByteArrayInputStream
+import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,6 +21,67 @@ import org.junit.runner.RunWith
 /** Local documents only: every resource is intercepted and no certificate or network is used. */
 @RunWith(AndroidJUnit4::class)
 class RealE2eWaveFRecipeInstrumentedTest {
+    @Test
+    fun teaCertificateButtonUsesTheExistingExactHelper() {
+        val source = "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
+            "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"
+        val target = "https://www1.tea.hacienda.gob.es/wlpl/OVCT-CXEW/DialogoRepresentacion" +
+            "?ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0"
+        val button = """
+            <button name="autoriza-C" type="button" data-link="$target">Certificado o DNI electrónico</button>
+        """.trimIndent()
+        val cases = listOf(
+            button, button.replace("type=\"button\"", "type=\"submit\""),
+            button.replace("Certificado o DNI electrónico", "Cl@ve"),
+            button.replace("<button ", "<button onclick='' "), button + button,
+        )
+        val recipe = RealE2eInstrumentedTest::class.java.getDeclaredMethod(
+            "applyPortalRecipe", ActivityScenario::class.java, String::class.java, String::class.java,
+        ).apply { isAccessible = true }
+        val currentWebView = MainActivity::class.java.getDeclaredField("currentWebView")
+            .apply { isAccessible = true }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            cases.forEachIndexed { index, content ->
+                val html = """
+                    <html><body>$content<script>
+                    window.fixtureClicks = 0;
+                    document.querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
+                      window.fixtureClicks++; window.fixtureTarget = button.getAttribute('data-link');
+                    }));
+                    </script></body></html>
+                """.trimIndent()
+                checkFixture(source, html, "", "window.fixtureClicks === 1 ? 1 : 0", index == 0) { view ->
+                    var original: WebView? = null
+                    scenario.onActivity { activity ->
+                        original = currentWebView.get(activity) as? WebView
+                        currentWebView.set(activity, view)
+                        (activity.application as JuntaFirmaApplication).sanitizedLogger.clear()
+                    }
+                    try {
+                        val probe = RealE2eInstrumentedTest()
+                        if (index == 0) {
+                            recipe.invoke(probe, scenario,
+                                "age-sede-electronica-de-los-tribunales-economico-administrativos-tea",
+                                "tea-alegaciones-certificado")
+                        } else {
+                            val failure = assertThrows(InvocationTargetException::class.java) {
+                                recipe.invoke(probe, scenario,
+                                    "age-sede-electronica-de-los-tribunales-economico-administrativos-tea",
+                                    "tea-alegaciones-certificado")
+                            }
+                            assertTrue(failure.cause is IllegalStateException)
+                            assertTrue(failure.cause?.message in setOf(
+                                "REAL_E2E_RECIPE_TARGET_TIMEOUT", "REAL_E2E_RECIPE_TARGET_MISMATCH",
+                            ))
+                        }
+                    } finally {
+                        scenario.onActivity { currentWebView.set(it, original) }
+                    }
+                }
+            }
+        }
+    }
+
     @Test
     fun boeCertificateAnchorRequiresUniquePinnedImage() {
         val anchor = """
@@ -79,7 +143,10 @@ class RealE2eWaveFRecipeInstrumentedTest {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun checkFixture(base: String, html: String, frameHtml: String, script: String, accepted: Boolean) {
+    private fun checkFixture(
+        base: String, html: String, frameHtml: String, script: String, accepted: Boolean,
+        beforeInspect: (WebView) -> Unit = {},
+    ) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val loaded = CountDownLatch(1)
         lateinit var webView: WebView
@@ -100,6 +167,7 @@ class RealE2eWaveFRecipeInstrumentedTest {
         }
         try {
             assertTrue(loaded.await(10, TimeUnit.SECONDS))
+            beforeInspect(webView)
             val inspected = CountDownLatch(1)
             var code: String? = null
             var clicks: String? = null
