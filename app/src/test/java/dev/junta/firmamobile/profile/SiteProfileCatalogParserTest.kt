@@ -26,6 +26,52 @@ import org.robolectric.annotation.SQLiteMode
 class SiteProfileCatalogParserTest {
 
     @Test
+    fun dgojClavePinRejectsUnreviewedRoutesEvidenceAndWeakenedRules() {
+        val mutations = listOf<(JSONObject) -> Unit>(
+            { it.put("profileVersion", 1) },
+            { it.put("activation", "ENABLED") },
+            { it.put("startUrl", it.getString("startUrl").replace("iA=no", "iA=si")) },
+            { it.put("startUrl", it.getString("startUrl").replace("limpiarBusqueda=S", "limpiarBusqueda=N")) },
+            { it.getJSONArray("initiatorOrigins").put(0, "https://foreign.example") },
+            { it.getJSONArray("redirectOrigins").put("https://pasarela-ident.clave.gob.es") },
+            { it.getJSONArray("trustedBrowseOrigins").put("https://foreign.example") },
+            { it.getJSONArray("capabilities").put("SIGN") },
+            { it.getJSONArray("capabilities").put("AFIRMA_URI") },
+            { it.getJSONArray("capabilities").put("SELECT_CERTIFICATE") },
+            { it.put("shimFeatures", org.json.JSONArray().put("universal-afirma")) },
+            { it.getJSONObject("certificateRules").put("requireDigitalSignatureKeyUsage", false) },
+            { it.getJSONObject("certificateRules").put("allowedKeyAlgorithms", org.json.JSONArray().put("RSA")) },
+            { it.getJSONObject("clientAuthPolicy").put("transitionMode", "DIRECT_FROM_SOURCE") },
+            { it.getJSONObject("clientAuthPolicy").getJSONArray("sourceUrls").put(0,
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider") },
+            { it.getJSONObject("clientAuthPolicy").getJSONArray("requestOrigins").put(0,
+                "https://foreign.example") },
+            { it.getJSONObject("clientAuthPolicy").put("requestPath", "/IdP2/other") },
+            { it.getJSONObject("clientAuthPolicy").put("requestMethod", "GET") },
+            { it.getJSONObject("clientAuthPolicy").put("requestPort", 444) },
+            { it.getJSONObject("clientAuthPolicy").put("grantTtlSeconds", 30) },
+            { it.getJSONObject("clientAuthPolicy").put("allowEmptyIssuerList", false) },
+            { it.getJSONObject("clientAuthPolicy").put("requireOfferedKeyTypeMatch", false) },
+            { it.getJSONObject("clientAuthPolicy").put("requireTlsClientAuthExtendedKeyUsage", false) },
+            { it.getJSONObject("clientAuthPolicy").getJSONObject("fixedQueryParameters").put("extra", "1") },
+            { it.getJSONObject("clientAuthPolicy").getJSONObject("sourceFixedQueryParameters").put("extra", "1") },
+            { it.getJSONObject("clientAuthPolicy").getJSONArray("sourceRequiredEphemeralQueryParameters").put("s") },
+            { it.getJSONObject("clientAuthPolicy").getJSONArray("requiredEphemeralQueryParameters").put("s") },
+            { it.getJSONArray("evidence").getJSONObject(0).put("reviewedOn", "2026-11-08") },
+            { it.getJSONArray("evidence").getJSONObject(6).put("reviewedOn", "2026-11-07") },
+            { it.getJSONArray("evidence").getJSONObject(7).put("reviewedOn", "2026-11-07") },
+            { it.getJSONArray("evidence").put(it.getJSONArray("evidence").getJSONObject(0)) },
+        )
+        mutations.forEachIndexed { index, mutate ->
+            val root = JSONObject(BuiltInSiteProfiles.JSON)
+            mutate(schemaV2Profile(root, "dgoj-public-navigation"))
+            assertThrows("DGOJ mutation $index", IllegalArgumentException::class.java) {
+                SiteProfileCatalogParser.parse(root.toString())
+            }
+        }
+    }
+
+    @Test
     fun teaSelectorPinRejectsUnreviewedRoutesEvidenceAndWeakenedCertificateRules() {
         val mutations = listOf<(JSONObject) -> Unit>(
             { it.put("profileVersion", 2) },
@@ -1748,30 +1794,54 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `DGOJ public navigation profile is QA only and exposes no sensitive capability`() {
+    fun `DGOJ login profile is QA only and pins the exact Clave v2 certificate route`() {
         val profileId = ProfileId("dgoj-public-navigation")
-        val start = URI("https://sede.ordenacionjuego.gob.es/")
+        val start = URI("https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(start, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse("https://sede.ordenacionjuego.gob.es")), profile.initiatorOrigins)
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(
+            ClientAuthPolicy(
+                transitionMode = ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE,
+                requestOrigins = setOf(ExactOrigin.parse("https://pasarela-ident.clave.gob.es")),
+                sourceUrls = setOf(URI("https://pasarela.clave.gob.es/Proxy2/ServiceRedirect")),
+                requestPath = "/IdP2/AuthenticateCitizen",
+                fixedQueryParameters = emptyMap(), requiredEphemeralQueryParameters = emptySet(),
+                allowEmptyIssuerList = true, grantTtlSeconds = 15, requestMethod = HttpMethod.POST,
+                requestPort = 443, requireOfferedKeyTypeMatch = true, requireTlsClientAuthExtendedKeyUsage = true,
+            ),
+            profile.clientAuthPolicy,
+        )
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(4, profile.evidence.size)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(8, profile.evidence.size)
+        assertEquals(
+            mapOf(
+                "https://sede.ordenacionjuego.gob.es/" to "2026-08-24",
+                "https://sede.ordenacionjuego.gob.es/es/firma" to "2026-08-24",
+                "https://sede.ordenacionjuego.gob.es/aviso-navegador-chrome" to "2026-08-24",
+                start.toASCIIString() to "2026-11-08",
+                "https://sede.ordenacionjuego.gob.es/tramite/clave/lanzarPeticionClave.jjsp" to "2026-11-08",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider" to "2026-11-08",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect" to "2026-11-08",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen" to "2026-11-08",
+            ),
+            profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() },
+        )
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ordenacionjuego.gob.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.ordenacionjuego.gob.es:444/")))
     }

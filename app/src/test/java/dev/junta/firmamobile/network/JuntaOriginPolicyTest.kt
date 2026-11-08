@@ -479,10 +479,14 @@ class JuntaOriginPolicyTest {
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sedefondoscomunitarios.gob.es/"), fondosEuropeos))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://tramitesfondoseuropeos.hacienda.gob.es/dossier"), fondosEuropeos))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://reg.redsara.es/es/"), fondosEuropeos))
-        assertEquals(setOf("sede.ordenacionjuego.gob.es"), JuntaOriginPolicy.browserAllowedHosts(dgoj))
+        assertEquals(setOf("sede.ordenacionjuego.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(dgoj))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(dgoj).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.ordenacionjuego.gob.es/"), dgoj))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://clave.gob.es/"), dgoj))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela-ident.clave.gob.es/"), dgoj))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://sede.ordenacionjuego.gob.es.evil.example/"), dgoj))
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://pasarela.clave.gob.es.evil.example/"), dgoj))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
         assertEquals(
             setOf("www.sededgsfp.gob.es", "pasarela.clave.gob.es"),

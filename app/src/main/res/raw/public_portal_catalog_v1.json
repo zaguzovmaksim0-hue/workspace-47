@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "82ad36243211315dbf10019f70623f7f67176d61af3818db66835ebf544e5f2a",
+  "sourceRevision": "cc85ff8658c4535feb5957f8a6218d68dd7de9113ce13276f0c5aa1ca65caf3b",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -1190,25 +1190,30 @@
       "portalId": "age-direccion-general-de-ordenacion-del-juego",
       "inventoryId": "ES-PUB-0041",
       "profileId": "dgoj-public-navigation",
-      "displayName": "Sede electrónica / navegación pública de procedimientos",
+      "displayName": "Sede electrónica / acceso con Cl@ve",
       "organization": "Dirección General de Ordenación del Juego",
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Navegación QA-only por la Sede pública de la DGOJ y su índice público de procedimientos y servicios.",
+      "purpose": "Login QA-only con Cl@ve en la Sede DGOJ, previo a cualquier trámite.",
       "entryUrl": "https://sede.ordenacionjuego.gob.es/",
-      "observedMechanisms": [],
+      "launchUrl": "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S",
+      "observedMechanisms": [
+        "CERTIFICATE_ACCESS",
+        "CLIENT_TLS_AUTH"
+      ],
       "observedSignatureFormats": [],
-      "protocolFamily": "DGOJ_PUBLIC_NAVIGATION_BOUNDARY",
+      "protocolFamily": "CLIENT_TLS_AUTH",
       "catalogStatus": "E2E_PENDING",
       "inventoryStatus": "IMPLEMENTED_NOT_E2E",
       "discoveryState": "REVIEWED",
       "evidenceIds": [
         "D11",
-        "DGOJ-PUBLIC-2026-08-24"
+        "DGOJ-PUBLIC-2026-08-24",
+        "DGOJ-LOGIN-PROBE-42471980144"
       ],
-      "reviewedOn": "2026-08-24",
-      "limitations": "Perfil QA-only de navegación pública limitado al origin exacto sede.ordenacionjuego.gob.es; no se infiere SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni contrato criptográfico a partir de documentación descriptiva."
+      "reviewedOn": "2026-11-08",
+      "limitations": "LOGIN ONLY, QA_ONLY y E2E_PENDING: contrato Cl@ve v2 exacto, sin firma ni presentación. DGOJ_ID sólo se compara localmente en el helper; no amplía TLS ni la confianza de ventanas emergentes."
     },
     {
       "portalId": "age-direccion-general-de-seguros-y-fondos-de-pensiones",

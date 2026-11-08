@@ -60,6 +60,8 @@ class PortalCatalogRepositoryTest {
             Triple("tea-alegaciones-certificado", "https://sede.tea.hacienda.gob.es/TEA/alegaciones.html",
                 "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
                     "SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE"),
+            Triple("dgoj-public-navigation", "https://sede.ordenacionjuego.gob.es/",
+                "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S"),
         )
         routes.forEach { (id, entry, launch) ->
             val profileId = ProfileId(id)
@@ -85,6 +87,8 @@ class PortalCatalogRepositoryTest {
                 launch.replace("rep=S", "rep=N").takeIf { it != launch },
                 launch.replace("aut=CPE", "aut=PE").takeIf { it != launch },
                 launch.replace("tram%3D0", "tram%3D2").takeIf { it != launch },
+                launch.replace("iA=no", "iA=si").takeIf { it != launch },
+                launch.replace("limpiarBusqueda=S", "limpiarBusqueda=N").takeIf { it != launch },
                 "https://unreviewed.example/login",
             )
             attacks.forEach { attack ->

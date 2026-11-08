@@ -65,6 +65,7 @@ class SharedOriginCharacterizationTest {
                 "sepes-transportes-public-complaints",
                 "diputacion-pontevedra-instancia-xenerica",
                 "aesa-solicitud-general-public", "dgsfp-sede-public-home",
+                "dgoj-public-navigation",
             ),
         ),
         Family(
@@ -112,6 +113,7 @@ class SharedOriginCharacterizationTest {
                 "sepes-transportes-public-complaints",
                 "diputacion-pontevedra-instancia-xenerica",
                 "aesa-solicitud-general-public", "dgsfp-sede-public-home",
+                "dgoj-public-navigation",
             ),
         ),
         Family(
