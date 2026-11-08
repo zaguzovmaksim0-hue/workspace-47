@@ -1,23 +1,11 @@
 [
   {
-    "name": "mites-net",
-    "url": "https://sede.mites.gob.es/",
-    "wait": 25000,
-    "cap": 170000,
-    "net": true,
-    "clicks": [
-      "dnt-header-item[routerlink=\"/auth\"] dnt-link a"
-    ]
-  },
-  {
-    "name": "adif-acceder",
+    "name": "adif-js",
     "url": "https://sede.adif.gob.es/",
     "wait": 10000,
     "cap": 170000,
     "net": true,
-    "html": [
-      "button"
-    ],
+    "save": "^https://sede\\.adif\\.gob\\.es/.*\\.js(\\?|$)",
     "clicks": [
       "button:has-text(\"Identificarse\")",
       "button:has-text(\"Acceder\")"

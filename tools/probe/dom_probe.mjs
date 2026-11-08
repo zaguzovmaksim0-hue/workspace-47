@@ -42,6 +42,19 @@ const runOne = async (probe) => {
   const entry = { name: probe.name, steps: [] };
   // Optional network/console trail: shows blocked chunks, failed redirects and afirma:// launches.
   const net = [];
+  // Optional: keep bodies of matching first-party scripts (to read what a login button really calls).
+  if (probe.save) {
+    const re = new RegExp(probe.save);
+    page.on('response', async r => {
+      try {
+        if (!re.test(r.url())) return;
+        const body = await r.text();
+        const safe = probe.name + '__' + r.url().replace(/^https?:\/\//, '').replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 150);
+        fs.mkdirSync('probe-out/saved', { recursive: true });
+        fs.writeFileSync('probe-out/saved/' + safe, body);
+      } catch (_) {}
+    });
+  }
   if (probe.net) {
     page.on('requestfailed', r => net.push(['failed', r.resourceType(), r.url().slice(0, 300), (r.failure() || {}).errorText]));
     page.on('response', r => { if (r.status() >= 300) net.push([r.status(), r.request().resourceType(), r.url().slice(0, 300)]); });
