@@ -348,6 +348,7 @@ class SigningAdapterGoldenCharacterizationTest(private val case: AdapterGoldenCa
 
     // Login page and Cl@ve migrations retain their reviewed profile versions.
     private val caseVersion get() = when (case.profile) {
+        LocalCadesDetachedAdapter.PROFILE_ID -> LocalCadesDetachedAdapter.PROFILE_VERSION
         TenerifeCadesDetachedAdapter.PROFILE_ID -> TenerifeCadesDetachedAdapter.PROFILE_VERSION
         "airef-instancia-general" -> AirefXadesEnvelopingAdapter.PROFILE_VERSION
         CanariasCertificateLoginCadesAdapter.PROFILE_ID -> CanariasCertificateLoginCadesAdapter.PROFILE_VERSION

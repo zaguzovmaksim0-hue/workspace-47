@@ -534,6 +534,8 @@ class RealE2eInstrumentedTest {
                     expectedLabel = "Ir al trámite con Cl@ve",
                     expectedHref = CORDOBA_CLAVE_HREF,
                     waitForExpectedUrl = true,
+                    expectedFormName = "formClave",
+                    expectedFormAction = "https://apis.dipucordoba.es/apiclave/api/sessions",
                 )
                 clickClaveAfirmaProvider(scenario)
             }
@@ -3528,7 +3530,7 @@ class RealE2eInstrumentedTest {
         const val CORDOBA_CLAVE_URL =
             "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/" +
                 "solicitud-generica"
-        const val CORDOBA_CLAVE_HREF = "www.dipucordoba.es"
+        const val CORDOBA_CLAVE_HREF = ""
         const val PALENCIA_PORTAL_ID = "diputacion-palencia-sede"
         const val PALENCIA_CLAVE_FORM_ACTION =
             "https://sede.diputaciondepalencia.es/SPProxy2/IndexPage"
