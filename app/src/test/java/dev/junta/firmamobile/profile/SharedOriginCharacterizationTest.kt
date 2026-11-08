@@ -60,6 +60,7 @@ class SharedOriginCharacterizationTest {
                 "lanzarote-sede-public-navigation",
                 "isfas-sede-public-navigation",
                 "diputacion-pontevedra-instancia-xenerica",
+                "aesa-solicitud-general-public", "dgsfp-sede-public-home",
             ),
         ),
         Family(
@@ -102,6 +103,7 @@ class SharedOriginCharacterizationTest {
                 "lanzarote-sede-public-navigation",
                 "isfas-sede-public-navigation",
                 "diputacion-pontevedra-instancia-xenerica",
+                "aesa-solicitud-general-public", "dgsfp-sede-public-home",
             ),
         ),
         Family(

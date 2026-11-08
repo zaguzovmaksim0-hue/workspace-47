@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "600b075528213a3018b2924a063d493316f5914fb1cd4029dae89db61407f121",
+  "sourceRevision": "28b4b44037f5ebec22505725d5a3e5cde5785155adf13f5d0bf4b0a5844938ab",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -692,7 +692,7 @@
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Navegación QA integrada desde la entrada oficial estable de la Sede AEMET hacia el flujo público 'Solicitud certificados y datos'; el login por certificado/AutoFirma se registra como frontera observada, no como capacidad criptográfica implementada.",
+      "purpose": "Entrada QA por certificado a AEMET: firma local de un número decimal de login, sin solicitud ni presentación administrativa.",
       "entryUrl": "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home",
       "observedMechanisms": [
         "AUTOFIRMA",
@@ -713,8 +713,8 @@
         "AEMET-L1-2026-08-23",
         "AEMET-SSO-2026-08-23"
       ],
-      "reviewedOn": "2026-08-23",
-      "limitations": "Perfil nuevo QA_ONLY limitado a navegación same-origin desde la entrada oficial estable. Los mecanismos CERTIFICATE_ACCESS/ELECTRONIC_SIGNATURE/AUTOFIRMA/MINIAPPLET reflejan únicamente la frontera pública observada; el perfil mantiene capabilities vacío y no implementa SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, carga documental ni presentación final. Falta E2E físico."
+      "reviewedOn": "2026-11-08",
+      "limitations": "Perfil QA_ONLY con SIGN y LEGACY_SHA1 únicamente para el nonce de login AEMET. El wire AUTO/null se normaliza localmente a CAdES detached solo en /AEMET/es/GestionPeticiones/sso; sin endpoints HTTP, SELECT_CERTIFICATE, CLIENT_TLS_AUTH, documentos ni presentación. Un error anterior al consentimiento o un timeout puede activar el callback original y un POST negativo de login; detenerse en AwaitingConfirmation no garantiza cero peticiones. Falta E2E físico y aceptación del callback por el servidor."
     },
     {
       "portalId": "age-agencia-estatal-de-seguridad-aerea-aesa",
@@ -725,7 +725,7 @@
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Lanzamiento público QA de la Solicitud general de AESA (SIA 203553); la Sede documenta acceso autenticado y firma electrónica, pero la implementación no ejecuta autenticación ni firma.",
+      "purpose": "Entrada QA de AESA a Cl@ve y selección de certificado para identificación, sin firma ni presentación de Solicitud general.",
       "entryUrl": "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general",
       "observedMechanisms": [
         "AUTOFIRMA",
@@ -743,8 +743,8 @@
         "AESA-SOLGEN-2026-08-23",
         "AESA-ID-FIRMA-2026-08-23"
       ],
-      "reviewedOn": "2026-08-23",
-      "limitations": "Perfil QA_ONLY limitado al lanzamiento público exacto de Solicitud general, sin capabilities sensibles. `CERTIFICATE_ACCESS`, `ELECTRONIC_SIGNATURE` y `AUTOFIRMA` son mecanismos documentados por AESA; no se infieren CLIENT_TLS_AUTH, formato, algoritmo, endpoint, callback ni presentación final."
+      "reviewedOn": "2026-11-08",
+      "limitations": "Perfil QA_ONLY con CLIENT_TLS_AUTH solo para el POST Cl@ve AuthenticateCitizen desde ServiceRedirect. AUTOFIRMA y ELECTRONIC_SIGNATURE siguen siendo mecanismos documentados, sin contrato de firma de solicitudes, formato ni presentación final. Falta E2E Android autenticado."
     },
     {
       "portalId": "age-agencia-estatal-del-boletin-oficial-del-estado-boe",
@@ -1202,7 +1202,7 @@
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Navegación QA delimitada al inicio público first-party de la Sede DGSFP; autenticación, certificado, Cl@ve, AutoFirma y tramitación permanecen fuera del contrato implementado.",
+      "purpose": "Entrada QA por certificado de DGSFP a través de Cl@ve, sin firma ni presentación administrativa.",
       "entryUrl": "https://www.sededgsfp.gob.es/",
       "observedMechanisms": [],
       "observedSignatureFormats": [],
@@ -1214,8 +1214,8 @@
         "D11",
         "DGSFP-SEDE-2026-08-24"
       ],
-      "reviewedOn": "2026-08-24",
-      "limitations": "La entrada pública first-party y su origin están revalidados y permiten solo un contrato QA-only de navegación. Las referencias de certificado/Cl@ve/AutoFirma en bundles no se promocionan a SIGN, SELECT_CERTIFICATE, CLIENT_TLS_AUTH ni AFIRMA_URI sin contrato técnico exacto y E2E físico."
+      "reviewedOn": "2026-11-08",
+      "limitations": "Perfil QA-only con CLIENT_TLS_AUTH limitado al POST Cl@ve AuthenticateCitizen desde ServiceRedirect; sin SIGN, SELECT_CERTIFICATE, AutoFirma documental ni presentación final. Falta E2E Android autenticado."
     },
     {
       "portalId": "age-direccion-general-del-catastro",

@@ -5,6 +5,7 @@ import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -383,8 +384,8 @@ class JuntaOriginPolicyTest {
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(aragonTramites).isEmpty())
         assertEquals(setOf("sede.agenciatributaria.gob.es"), JuntaOriginPolicy.browserAllowedHosts(aeat))
         assertEquals(setOf("sede.aemet.gob.es"), JuntaOriginPolicy.browserAllowedHosts(aemet))
-        assertTrue(JuntaOriginPolicy.webMessageOriginRules(aemet).isEmpty())
-        assertNull(
+        assertEquals(setOf("https://sede.aemet.gob.es"), JuntaOriginPolicy.webMessageOriginRules(aemet))
+        assertNotNull(
             JuntaOriginPolicy.signingOriginFor(
                 Uri.parse("https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso"),
                 aemet,
@@ -478,7 +479,10 @@ class JuntaOriginPolicyTest {
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://sede.ordenacionjuego.gob.es/"), dgoj))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://clave.gob.es/"), dgoj))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(funciona).isEmpty())
-        assertEquals(setOf("www.sededgsfp.gob.es"), JuntaOriginPolicy.browserAllowedHosts(dgsfp))
+        assertEquals(
+            setOf("www.sededgsfp.gob.es", "pasarela.clave.gob.es"),
+            JuntaOriginPolicy.browserAllowedHosts(dgsfp),
+        )
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(dgsfp).isEmpty())
         assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("https://www.sededgsfp.gob.es/"), dgsfp))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://www.sededgsfp.gob.es.evil.example/"), dgsfp))

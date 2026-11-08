@@ -13,7 +13,7 @@ class RuntimeSigningAdaptersTest {
     fun ordinaryIndexResolvesAllBuiltInAdapters() {
         val adapters = ordinaryAdapters()
 
-        assertEquals(26, adapters.all.size)
+        assertEquals(27, adapters.all.size)
         assertTrue(adapters.resolve(JuntaTriPhaseAdapter.ID) is JuntaTriPhaseAdapter)
         assertTrue(adapters.resolve(JuntaOfvirtualTriPhaseAdapter.ID) is JuntaOfvirtualTriPhaseAdapter)
         assertTrue(adapters.resolve(LocalXadesDetachedAdapter.ID) is LocalXadesDetachedAdapter)
@@ -22,6 +22,7 @@ class RuntimeSigningAdaptersTest {
         assertTrue(adapters.resolve(DiputacionLleidaCadesAdapter.ID) is DiputacionLleidaCadesAdapter)
         assertTrue(adapters.resolve(DiputacionBadajozCadesAdapter.ID) is DiputacionBadajozCadesAdapter)
         assertTrue(adapters.resolve(CanariasCertificateLoginCadesAdapter.ID) is CanariasCertificateLoginCadesAdapter)
+        assertTrue(adapters.resolve(AemetCertificateLoginCadesAdapter.ID) is AemetCertificateLoginCadesAdapter)
         assertTrue(adapters.resolve(UgrCadesDetachedAdapter.ID) is UgrCadesDetachedAdapter)
         assertTrue(adapters.resolve(JccmCertificateLoginProbeCadesAdapter.ID) is JccmCertificateLoginProbeCadesAdapter)
         assertTrue(adapters.resolve(MitesCertificateLoginCadesAdapter.ID) is MitesCertificateLoginCadesAdapter)

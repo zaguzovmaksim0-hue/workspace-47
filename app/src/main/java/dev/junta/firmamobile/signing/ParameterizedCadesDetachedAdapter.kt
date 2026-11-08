@@ -15,7 +15,7 @@ internal data class CadesDetachedContract(
     val extraProperties: String,
     val contentLiteral: String? = null,
     val safeDescription: String? = null,
-    val pageUrl: String? = null,
+    val pageUrls: Set<String> = emptySet(),
     val revalidatePayloadOnComplete: Boolean = false,
     // Exact size by default; portal validators may accept shorter bounded challenges.
     val contentValidator: (ByteArray) -> Boolean = { it.size == contentBytes },
@@ -117,7 +117,7 @@ internal class ParameterizedCadesDetachedAdapter(
             context.profileVersion == contract.profileVersion &&
             context.origin.serialized == contract.initiatorOrigin &&
             (contract.safeDescription == null || safeDescription == contract.safeDescription) &&
-            (contract.pageUrl == null || context.pageUrl == contract.pageUrl) &&
+            (contract.pageUrls.isEmpty() || context.pageUrl in contract.pageUrls) &&
             format == SigningFormat.CADES &&
             algorithm == contract.algorithm
 

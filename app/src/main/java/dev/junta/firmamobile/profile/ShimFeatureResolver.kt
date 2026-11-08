@@ -169,6 +169,14 @@ internal class ShimFeatureResolver(catalog: SiteProfileCatalog) {
                     ),
                 ),
             ),
+            "aemet-public-solicitud-navigation" to ReviewedShimContract(
+                feature = ShimFeature.AEMET_LOGIN,
+                operations = mapOf(
+                    ProtocolOperation.SIGN to (
+                        "miniapplet-autoscript-v1" to "miniapplet-sign-callback-v1"
+                    ),
+                ),
+            ),
             "ministerio-economia-instancia-generica" to ReviewedShimContract(
                 feature = ShimFeature.MINECO_SIGN,
                 operations = mapOf(

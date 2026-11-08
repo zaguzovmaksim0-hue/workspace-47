@@ -21,6 +21,7 @@ class AfirmaShimCompatibilityFlagsMapperTest {
         assertFalse(flags.granCanaria)
         assertFalse(flags.fuerteventura)
         assertFalse(flags.canarias)
+        assertFalse(flags.aemet)
         assertFalse(flags.mineco)
         assertFalse(flags.melillaBatch)
         assertFalse(flags.lugoBatch)
@@ -47,6 +48,7 @@ class AfirmaShimCompatibilityFlagsMapperTest {
             ShimFeature.GRAN_CANARIA_SIGN to AfirmaShimCompatibilityFlags(granCanaria = true),
             ShimFeature.FUERTEVENTURA_SIGN to AfirmaShimCompatibilityFlags(fuerteventura = true),
             ShimFeature.CANARIAS_LOGIN to AfirmaShimCompatibilityFlags(canarias = true),
+            ShimFeature.AEMET_LOGIN to AfirmaShimCompatibilityFlags(aemet = true),
             ShimFeature.MINECO_SIGN to AfirmaShimCompatibilityFlags(mineco = true),
             ShimFeature.ACCEDA_SIGN to AfirmaShimCompatibilityFlags(acceda = true),
             ShimFeature.BADAJOZ_SIGN to AfirmaShimCompatibilityFlags(badajoz = true),
@@ -62,7 +64,7 @@ class AfirmaShimCompatibilityFlagsMapperTest {
             ShimFeature.CAIB_PORTAFIB_BATCH to AfirmaShimCompatibilityFlags(caibBatch = true),
         )
 
-        assertEquals(21, expected.size)
+        assertEquals(22, expected.size)
         assertEquals(ShimFeature.entries.toSet(), expected.keys)
         expected.forEach { (feature, expectedFlags) ->
             assertEquals(feature.name, expectedFlags, AfirmaShimCompatibilityFlags.fromFeatures(setOf(feature)))

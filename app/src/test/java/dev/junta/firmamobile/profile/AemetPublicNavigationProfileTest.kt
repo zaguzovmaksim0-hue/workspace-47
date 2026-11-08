@@ -5,6 +5,7 @@ import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
 import dev.junta.firmamobile.catalog.PortalMechanism
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
 import dev.junta.firmamobile.catalog.loadBundledPublicPortalCatalog
@@ -30,9 +31,9 @@ class AemetPublicNavigationProfileTest {
     private val startUrl = URI("https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/home")
 
     @Test
-    fun qaProfilePinsStableAemetSedeEntryWithoutCryptographicCapabilities() {
+    fun qaProfilePinsTheExactLocalAemetCertificateLogin() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("AEMET — Solicitud certificados y datos", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -41,22 +42,22 @@ class AemetPublicNavigationProfileTest {
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
-        assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
+        assertEquals(setOf(ProtocolOperation.SIGN), profile.operationPolicies.keys)
+        assertEquals(setOf(Capability.SIGN, Capability.LEGACY_SHA1), profile.capabilities)
         assertNull(profile.clientAuthPolicy)
-        assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(6, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-23" })
+        assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(9, profile.evidence.size)
+        assertEquals(setOf("2026-08-23", "2026-11-08"), profile.evidence.map { it.reviewedOn.toString() }.toSet())
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_SIGNING, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.aemet.gob.es.evil.example/")))
     }
 
     @Test
-    fun publicCatalogRecordsObservedCertificateAutofirmaBoundaryWithoutEnablingSigning() {
+    fun publicCatalogBindsThePendingLoginWithoutClaimingAcceptedSigning() {
         val publicCatalog = loadBundledPublicPortalCatalog()
         val entry = publicCatalog.entries.single { it.inventoryId == "ES-PUB-0024" }
         assertEquals(portalId, entry.portalId)
@@ -75,16 +76,16 @@ class AemetPublicNavigationProfileTest {
             entry.observedMechanisms,
         )
         assertTrue(entry.observedSignatureFormats.isEmpty())
-        assertEquals("2026-08-23", entry.reviewedOn.toString())
-        assertTrue(entry.limitations.contains("capabilities vacío", ignoreCase = true))
+        assertEquals("2026-11-08", entry.reviewedOn.toString())
+        assertTrue(entry.limitations.contains("nonce", ignoreCase = true))
 
         val qa = PortalCatalogRepository(BuiltInSiteProfiles.qaRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
         val release = PortalCatalogRepository(BuiltInSiteProfiles.releaseRegistry, BuiltInSiteProfiles.catalog, publicCatalog)
         val qaPortal = qa.portals().single { it.portalId == portalId }
         val releasePortal = release.portals().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
-        assertTrue(qaPortal.signatureFormats.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.ELECTRONIC_SIGNATURE), qaPortal.capabilities)
+        assertEquals(setOf(SignatureFormat.CADES), qaPortal.signatureFormats)
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))
         assertEquals(PortalSupportStatus.VERIFIED_CONTRACT, releasePortal.supportStatus)

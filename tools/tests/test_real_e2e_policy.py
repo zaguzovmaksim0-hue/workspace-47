@@ -318,7 +318,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             'LLEIDA_PORTAL_ID -> {',
             'waitForExpectedUrl = true',
             'LLEIDA_LOGIN_LINK_HREF',
-            'private fun clickExactButton(',
+            'internal fun clickExactButton(',
             'recipeUrlMatches(',
             "element.getAttribute('aria-label') !== expectedAriaLabel",
         ):
@@ -722,6 +722,9 @@ class RealE2ePolicyTest(unittest.TestCase):
             "quotedExpectedElementId": None,
             "requireVisible": False,
             "requireFormContainment": False,
+            "quotedAnchorType": None,
+            "quotedAnchorAriaLabel": None,
+            "quotedExpectedTitle": None,
         }
         scripts = {}
         for name, href in (("old", "www.dipucordoba.es"), ("reviewed", "")):
@@ -793,6 +796,64 @@ class RealE2ePolicyTest(unittest.TestCase):
         result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
         self.assertEqual(0, result.returncode, result.stderr)
 
+    def test_wave_d_clave_recipes_allow_only_reviewed_certificate_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        profiles = {p["profileId"]: p for p in json.loads(
+            self.read(ROOT / "config/site_profiles_v1.json")
+        )["profiles"]}
+        for name, profile_id in (
+            ("AESA", "aesa-solicitud-general-public"),
+            ("DGSFP", "dgsfp-sede-public-home"),
+        ):
+            with self.subTest(profile=profile_id):
+                profile = profiles[profile_id]
+                self.assertEqual(2, profile["profileVersion"])
+                self.assertEqual("QA_ONLY", profile["activation"])
+                self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
+                self.assertEqual([], profile["operationPolicies"])
+                policy = profile["clientAuthPolicy"]
+                self.assertEqual("IN_PLACE_FROM_SOURCE", policy["transitionMode"])
+                self.assertEqual("POST", policy["requestMethod"])
+                self.assertEqual(["https://pasarela-ident.clave.gob.es"], policy["requestOrigins"])
+                self.assertEqual(["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"], policy["sourceUrls"])
+                self.assertEqual("/IdP2/AuthenticateCitizen", policy["requestPath"])
+                self.assertEqual({}, policy["fixedQueryParameters"])
+                self.assertEqual([], policy["requiredEphemeralQueryParameters"])
+                self.assertEqual(15, policy["grantTtlSeconds"])
+                block = source.split(f"{name}_PORTAL_ID -> {{", 1)[1].split("\n            }\n", 1)[0]
+                self.assertTrue(block.rstrip().endswith("clickClaveAfirmaProvider(scenario)"))
+                for forbidden in ("loadUrl(", ".submit(", "evaluateJavascript(", "sign("):
+                    self.assertNotIn(forbidden, block)
+
+    def test_wave_d_autofirma_recipes_sign_only_login_challenges(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        safe = source.split('val SAFE_AUTH_SIGN_PROFILES = setOf(', 1)[1].split(')', 1)[0]
+        for name, profile in (("CANARIAS", "canarias-sede"), ("AEMET", "aemet-public-solicitud-navigation")):
+            self.assertIn(f'"{profile}"', safe)
+            block = source.split(f"{name}_PORTAL_ID -> {{", 1)[1].split("\n            }\n", 1)[0]
+            self.assertEqual(2, block.count("clickExactLabeledAnchor("))
+            self.assertEqual(1, block.count("clickExactButton("))
+            self.assertIn("requireVisible = true", block)
+            for forbidden in ("loadUrl(", ".submit(", "evaluateJavascript(", "sign(", '"Aceptar"'):
+                self.assertNotIn(forbidden, block)
+        self.assertIn('expectedOnClick = "firmar(formData);"', source)
+        self.assertIn('expectedLabel = "Validarme"', source)
+        self.assertIn('expectedHandlerName = "envia"', source)
+        self.assertIn('waitForAemetSignHook = true', source)
+        self.assertIn('expectedFormAction = AEMET_LOGIN_ACTION_URL', source)
+        self.assertIn('matchCanariasLoginAction = true', source)
+        self.assertIn('expectedName = "autenticarComprobacion"', source)
+        stop = source.split('if (!deepEnabled && profileId == AEMET_PROFILE_ID) {', 1)[1].split('\n                }', 1)[0]
+        self.assertIn('abandonAemetLoginAtBoundary(scenario)', stop)
+        self.assertIn('classify(profileCapabilities, result)', stop)
+        self.assertIn('return', stop)
+        self.assertNotIn('performClick', stop)
+        abandon = source.split('private fun abandonAemetLoginAtBoundary(', 1)[1].split('private fun ', 1)[0]
+        self.assertIn('coordinator.cancel(SigningCancelReason.BACKGROUND, pending.requestId)', abandon)
+        self.assertIn('check(abandoned)', abandon)
+        soria = source.split('SORIA_PORTAL_ID -> clickExactButton(', 1)[1].split('\n            )\n', 1)[0]
+        self.assertIn('expectedHandlerName = "pulsarCertificado"', soria)
+
     def test_exact_login_click_rejects_unreviewed_forms_and_stale_documents(self) -> None:
         source = self.read(INSTRUMENTATION)
         values = {
@@ -804,6 +865,15 @@ class RealE2ePolicyTest(unittest.TestCase):
             "quotedExpectedOnClick": None,
             "quotedWaitForBadajozSignHook": False,
             "quotedExpectedTag": "input",
+            "quotedParentAnchorClass": None,
+            "quotedHandlerName": None,
+            "requireVisible": False,
+            "waitForAemetSignHook": False,
+            "quotedExpectedName": None,
+            "matchCanariasLoginAction": False,
+            "quotedAnchorType": None,
+            "quotedAnchorAriaLabel": None,
+            "quotedExpectedTitle": None,
             "quotedExpectedType": "image",
             "quotedExpectedSrc": "clave.png",
             "quotedFormName": "login",
@@ -817,7 +887,8 @@ class RealE2ePolicyTest(unittest.TestCase):
         }
         scripts = {}
         for kind, name in (("button", "clickExactButton"), ("anchor", "clickExactLabeledAnchor")):
-            helper = source.split(f'private fun {name}(', 1)[1]
+            visibility = 'internal' if name == 'clickExactButton' else 'private'
+            helper = source.split(f'{visibility} fun {name}(', 1)[1]
             script = helper.split('webView.evaluateJavascript(', 1)[1].split('"""', 2)[1]
             substitutions = dict(values, quotedExpectedOnClick="submit();" if kind == "anchor" else None)
             scripts[kind] = re.sub(r'\$(\w+)', lambda match: json.dumps(substitutions[match[1]]), script)
@@ -899,6 +970,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             "quotedFormName": None, "quotedFormAction": None, "requireVisible": True,
             "quotedExpectedElementId": None,
             "requireFormContainment": False,
+            "quotedAnchorType": None, "quotedAnchorAriaLabel": None, "quotedExpectedTitle": None,
         }
         script = re.sub(r'\$(\w+)', lambda match: json.dumps(values[match[1]]), script)
         harness = r"""
@@ -1352,7 +1424,7 @@ class RealE2ePolicyTest(unittest.TestCase):
     def test_unizar_recipe_waits_for_the_script_bound_certificate_handler(self) -> None:
         source = self.read(INSTRUMENTATION)
         helper = source[source.index("private fun clickExactContainedButton("):]
-        helper = helper[:helper.index("private fun clickExactButton(")]
+        helper = helper[:helper.index("internal fun clickExactButton(")]
         self.assertIn("require(JS_IDENTIFIER.matches(expectedHandlerName))", helper)
         self.assertIn("(inlineOnClick !== null && inlineOnClick !== $quotedExpectedOnClick)", helper)
         self.assertIn("typeof $expectedHandlerName === 'function'", helper)

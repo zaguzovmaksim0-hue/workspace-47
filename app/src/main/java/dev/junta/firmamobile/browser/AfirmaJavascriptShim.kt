@@ -17,6 +17,7 @@ internal data class AfirmaShimCompatibilityFlags(
     val granCanaria: Boolean = false,
     val fuerteventura: Boolean = false,
     val canarias: Boolean = false,
+    val aemet: Boolean = false,
     val mineco: Boolean = false,
     val melillaBatch: Boolean = false,
     val lugoBatch: Boolean = false,
@@ -44,6 +45,7 @@ internal data class AfirmaShimCompatibilityFlags(
             ShimFeature.GRAN_CANARIA_SIGN to { copy(granCanaria = true) },
             ShimFeature.FUERTEVENTURA_SIGN to { copy(fuerteventura = true) },
             ShimFeature.CANARIAS_LOGIN to { copy(canarias = true) },
+            ShimFeature.AEMET_LOGIN to { copy(aemet = true) },
             ShimFeature.MINECO_SIGN to { copy(mineco = true) },
             ShimFeature.ACCEDA_SIGN to { copy(acceda = true) },
             ShimFeature.BADAJOZ_SIGN to { copy(badajoz = true) },
@@ -93,6 +95,7 @@ object AfirmaJavascriptShim {
             AfirmaJavascriptShimFragment.FUERTEVENTURA -> R.raw.afirma_shim_fuerteventura
             AfirmaJavascriptShimFragment.MINECO -> R.raw.afirma_shim_mineco
             AfirmaJavascriptShimFragment.CANARIAS -> R.raw.afirma_shim_canarias
+            AfirmaJavascriptShimFragment.AEMET -> R.raw.afirma_shim_aemet
             AfirmaJavascriptShimFragment.XUNTA -> R.raw.afirma_shim_xunta
             AfirmaJavascriptShimFragment.ACCEDA -> R.raw.afirma_shim_acceda
             AfirmaJavascriptShimFragment.SEVILLA_ATSE -> R.raw.afirma_shim_sevilla_atse

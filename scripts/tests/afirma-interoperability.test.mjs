@@ -65,6 +65,89 @@ test('ordinary AutoScript assignment is intercepted once', () => {
  const f=fixture(); f.loaded(); f.window.AutoScript={sign:f.original}; f.sign();
  assert.equal(f.nativeCount(),1); assert.equal(f.fallbackCount(),0);
 });
+
+const aemet = {
+  url: 'https://sede.aemet.gob.es/AEMET/es/GestionPeticiones/sso',
+  flags: { __JFM_AEMET_COMPATIBILITY_ENABLED__: true }
+};
+for (const nonce of ['0', '10000']) test('AEMET returns the local signature only to its login callback: '+nonce, () => {
+  const f = fixture(aemet);
+  let submits = 0, network = 0;
+  const form = { signature: '', submit() { submits++; } };
+  f.window.fetch = () => { network++; throw new Error('unexpected network'); };
+  f.window.XMLHttpRequest = function () { network++; throw new Error('unexpected HTTP broker'); };
+  f.window.MiniApplet = { sign: f.original };
+  f.loaded();
+  assert.equal(f.window.MiniApplet.sign.__jfmSignHook, true);
+  f.window.MiniApplet.sign(Buffer.from(nonce).toString('base64'), 'SHA1withRSA', 'AUTO', null,
+    signature => { form.signature = signature; form.submit(); },
+    code => f.errors.push(code));
+  assert.equal(f.nativeCount(), 1);
+  assert.equal(submits, 0);
+  const request = f.messages.find(m => m.type === 'MINIAPPLET_SIGN');
+  assert.equal(request.format, 'AUTO');
+  assert.equal(request.extraProperties, null);
+  const result = { data: JSON.stringify({type: 'MINIAPPLET_RESULT', requestId: request.requestId,
+    status: 'success', signature: 'AQ==', certificate: 'Ag=='}) };
+  f.window.JuntaFirmaMobile.onmessage(result);
+  f.window.JuntaFirmaMobile.onmessage(result);
+  assert.equal(form.signature, 'AQ==');
+  assert.equal(submits, 1);
+  assert.equal(network, 0);
+  assert.equal(f.fallbackCount(), 0);
+  assert.deepEqual(f.errors, []);
+});
+for (const failure of ['CERTIFICATE_LOCKED', 'PROTOCOL_FAILED', 'REQUEST_EXPIRED']) {
+  test('AEMET early error can submit a negative login through its original callback: ' + failure, () => {
+    const f = fixture(aemet);
+    let submits = 0, network = 0;
+    const form = { errorMessage: '', submit() { submits++; } };
+    f.window.fetch = () => { network++; throw new Error('unexpected network'); };
+    f.window.XMLHttpRequest = function () { network++; throw new Error('unexpected HTTP broker'); };
+    f.window.MiniApplet = { sign: f.original };
+    f.loaded();
+    const beforeTimers = new Set(f.timers.keys());
+    f.window.MiniApplet.sign('MQ==', 'SHA1withRSA', 'AUTO', null,
+      () => assert.fail('unexpected signature'),
+      (code, message) => {
+        // Models firma.js koCallback's login submit; the sink never performs a request.
+        form.errorMessage = message;
+        f.errors.push(code);
+        form.submit();
+      });
+    assert.equal(f.nativeCount(), 1);
+    assert.equal(submits, 0);
+    const request = f.messages.find(m => m.type === 'MINIAPPLET_SIGN');
+    if (failure === 'REQUEST_EXPIRED') {
+      const pendingTimers = [...f.timers].filter(([id]) => !beforeTimers.has(id));
+      assert.equal(pendingTimers.length, 1);
+      pendingTimers[0][1].fn();
+      pendingTimers[0][1].fn();
+    } else {
+      const result = { data: JSON.stringify({type: 'MINIAPPLET_RESULT', requestId: request.requestId,
+        status: 'error', errorCode: failure}) };
+      f.window.JuntaFirmaMobile.onmessage(result);
+      f.window.JuntaFirmaMobile.onmessage(result);
+    }
+    assert.deepEqual(f.errors, [failure]);
+    assert.ok(form.errorMessage.length > 0);
+    assert.equal(submits, 1);
+    assert.equal(network, 0);
+    assert.equal(f.fallbackCount(), 0);
+  });
+}
+for (const [label, data, format, extra] of [
+  ['out of range', '10001', 'AUTO', null], ['leading zero', '00', 'AUTO', null],
+  ['document', '%PDF-1.7', 'AUTO', null], ['other format', '1', 'CAdES', null],
+  ['string properties', '1', 'AUTO', 'null'], ['empty properties', '1', 'AUTO', '']
+]) test('AEMET rejects an unreviewed tuple without invoking the original transport: '+label, () => {
+  const f = fixture(aemet); f.window.MiniApplet = { sign: f.original }; f.loaded();
+  f.window.MiniApplet.sign(Buffer.from(data).toString('base64'), 'SHA1withRSA', format, extra,
+    () => assert.fail('unexpected signature'), code => f.errors.push(code));
+  assert.equal(f.nativeCount(), 0);
+  assert.equal(f.fallbackCount(), 0);
+  assert.deepEqual(f.errors, ['INVALID_REQUEST']);
+});
 test('late global defineProperty is repaired after page load', () => {
  const f=fixture(); f.loaded();
  Object.defineProperty(f.window,'AutoScript',{configurable:true,writable:true,value:{sign:f.original}});

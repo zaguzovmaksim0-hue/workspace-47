@@ -178,6 +178,7 @@
         completeMiniAppletCall(observedRequestId);
       }
     }
+    Object.defineProperty(wrappedMiniAppletMethod, "__jfmSignHook", {value: call === "SIGN"});
     wrappedMethods.add(wrappedMiniAppletMethod);
     return wrappedMiniAppletMethod;
   }

@@ -345,7 +345,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.manifest = self.parts / "manifest.json"
         self.output = self.root / "app/src/main/res/raw/afirma_shim_bootstrap.js"
         self.output.parent.mkdir(parents=True)
-        self.names = [f"{i:02d}-section.js" for i in range(31)]
+        self.names = [f"{i:02d}-section.js" for i in range(32)]
         self.write_manifest()
         for name in self.names:
             (self.parts / name).write_bytes((name + "\n").encode())
@@ -475,6 +475,30 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertEqual(1, expected_core.count(constants))
         self.assertEqual(1, expected_core.count(expression))
         expected_core = expected_core.replace(constants, stub, 1).replace(expression, matcher + "(a)", 1)
+        expected_core = expected_core.replace(
+            "  const canariasCompatibilityEnabled =",
+            "  const aemetCompatibilityEnabled = __JFM_AEMET_COMPATIBILITY_ENABLED__;\n"
+            "  const canariasCompatibilityEnabled =",
+        ).replace(
+            "  let matchesCanariasSign = () => null;",
+            "  let matchesCanariasSign = () => null;\n  let matchesAemetSign = () => null;",
+        ).replace(
+            "    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);",
+            "    const isExactAemetCall = matchesAemetSign(args, successCallback, errorCallback);\n"
+            "    if (isExactAemetCall === false) {\n"
+            "      rejectDirectCall(errorCallback, \"INVALID_REQUEST\");\n      return true;\n    }\n"
+            "    const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);",
+        ).replace(
+            "!jccmCompatibilityEnabled && !canariasCompatibilityEnabled &&",
+            "!jccmCompatibilityEnabled && !canariasCompatibilityEnabled && !aemetCompatibilityEnabled &&",
+        ).replace(
+            "!isExactAccedaCall && !isExactBadajozCall",
+            "!isExactAccedaCall && !isExactBadajozCall && !isExactAemetCall",
+        ).replace(
+            "    wrappedMethods.add(wrappedMiniAppletMethod);",
+            '    Object.defineProperty(wrappedMiniAppletMethod, "__jfmSignHook", {value: call === "SIGN"});\n'
+            "    wrappedMethods.add(wrappedMiniAppletMethod);",
+        )
         self.assertEqual(expected_core, core)
 
     def test_jccm_is_packaged_separately_with_unchanged_exact_tuple(self):
@@ -623,6 +647,12 @@ class AfirmaShimGenerationTest(unittest.TestCase):
         self.assertTrue(module.is_file(), "Canarias needs an optional packaged body")
         legacy = (ROOT / "app/src/test/resources/dev/junta/firmamobile/browser/AfirmaJavascriptShimLegacy.js").read_text()
         _, _, _, expected = canarias_extraction(legacy)
+        expected = expected.replace(
+            '    const canariasPage = "https://sede.gobiernodecanarias.org/sede/identificacion";',
+            '    const canariasPages = [\n'
+            '      "https://sede.gobiernodecanarias.org/sede/identificacion",\n'
+            '      "https://sede.gobiernodecanarias.org/sede/movil/identificacion"\n    ];',
+        ).replace("window.location.href === canariasPage", "canariasPages.includes(window.location.href)")
         self.assertEqual(expected, module.read_text())
         core = "".join((raw / name).read_text() for name in (
             "afirma_shim_bootstrap.js", "afirma_shim_request_ids.js", "afirma_shim_handlers.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"))
@@ -854,7 +884,7 @@ class AfirmaShimGenerationTest(unittest.TestCase):
     def test_packaged_fragments_reconstruct_source_bytes(self):
         raw = ROOT / "app/src/main/res/raw"
         names = ["afirma_shim_bootstrap.js", "afirma_shim_cantabria.js", "afirma_shim_jccm.js",
-                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_isciii_selection.js", "afirma_shim_valencia_selection.js", "afirma_shim_request_ids.js", "afirma_shim_euskadi_post.js", "afirma_shim_handlers.js", "afirma_shim_melilla_batch.js", "afirma_shim_lugo_batch.js", "afirma_shim_caib_batch.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"]
+                 "afirma_shim_jccm_registro.js", "afirma_shim_airef.js", "afirma_shim_cdti.js", "afirma_shim_policia.js", "afirma_shim_gran_canaria.js", "afirma_shim_fuerteventura.js", "afirma_shim_mineco.js", "afirma_shim_canarias.js", "afirma_shim_aemet.js", "afirma_shim_xunta.js", "afirma_shim_acceda.js", "afirma_shim_sevilla_atse.js", "afirma_shim_ugr.js", "afirma_shim_badajoz.js", "afirma_shim_isciii_selection.js", "afirma_shim_valencia_selection.js", "afirma_shim_request_ids.js", "afirma_shim_euskadi_post.js", "afirma_shim_handlers.js", "afirma_shim_melilla_batch.js", "afirma_shim_lugo_batch.js", "afirma_shim_caib_batch.js", "afirma_shim_batch_results.js", "afirma_shim_installation.js"]
         self.assertEqual(compose(ROOT), b"".join((raw / name).read_bytes() for name in names))
         self.assertEqual(set(names), {p.name for p in raw.glob("afirma_shim*.js")})
 

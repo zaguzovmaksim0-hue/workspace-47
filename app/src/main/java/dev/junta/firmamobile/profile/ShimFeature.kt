@@ -13,6 +13,7 @@ enum class ShimFeature(val moduleId: String) {
     GRAN_CANARIA_SIGN("gran-canaria-sign"),
     FUERTEVENTURA_SIGN("fuerteventura-sign"),
     CANARIAS_LOGIN("canarias-login"),
+    AEMET_LOGIN("aemet-login"),
     MINECO_SIGN("mineco-sign"),
     ACCEDA_SIGN("acceda-sign"),
     BADAJOZ_SIGN("badajoz-sign"),

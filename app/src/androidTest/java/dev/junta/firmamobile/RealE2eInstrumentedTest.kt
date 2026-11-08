@@ -36,6 +36,7 @@ import dev.junta.firmamobile.certificate.StoredCertificateReference
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.Capability
 import dev.junta.firmamobile.signing.SigningCoordinator
+import dev.junta.firmamobile.signing.SigningCancelReason
 import dev.junta.firmamobile.signing.SigningUiState
 import java.io.File
 import java.io.FileInputStream
@@ -746,6 +747,51 @@ class RealE2eInstrumentedTest {
                 )
                 clickClaveAfirmaProvider(scenario)
             }
+            AESA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = AESA_HOME_URL,
+                    expectedLabel = "Trámite online",
+                    expectedHref = "/oficina/tramites/altaSolicitud.do?id=4&codArea=SOLGEN",
+                    expectedType = "button",
+                    expectedAriaLabel = "Iniciar el trámite electrónico",
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = AESA_LOGIN_URL,
+                    expectedElementId = "botonAccederClave",
+                    expectedName = "autenticarComprobacion",
+                    expectedLabel = "Acceder",
+                    expectedAriaLabel = null,
+                    expectedOnClick = "galleta(); muestraCargando(); accesoClave();",
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
+            DGSFP_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = DGSFP_HOME_URL,
+                    expectedLabel = "",
+                    expectedHref = DGSFP_LOGIN_URL,
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = DGSFP_LOGIN_URL,
+                    expectedElementId = "imgClave",
+                    expectedLabel = "",
+                    expectedAriaLabel = null,
+                    expectedOnClick = null,
+                    expectedType = null,
+                    expectedTag = "img",
+                    expectedSrc = "/Style Library/DGSFP.SedeElectronica/Imagenes/clave.png",
+                    expectedParentAnchorClass = "text-center",
+                    waitForExpectedUrl = true,
+                )
+                clickClaveAfirmaProvider(scenario)
+            }
             // CSN: the hidden login-menu link starts Cl@ve with AFIRMA preselected; no provider choice follows.
             CSN_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
@@ -805,7 +851,69 @@ class RealE2eInstrumentedTest {
                 expectedAriaLabel = null,
                 expectedOnClick = LUGO_CERT_BUTTON_ONCLICK,
             )
-            // Soria: the source page's certificate "ACCEDER" button opens the reviewed client-TLS target.
+            AEMET_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = AEMET_HOME_URL,
+                    expectedLabel = "Identificarse",
+                    expectedHref = "selectLogin",
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = AEMET_LOGIN_MENU_URL,
+                    expectedLabel = "Acceder por dni-e o certificado digital",
+                    expectedHref = "./sso",
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = AEMET_LOGIN_URL,
+                    expectedElementId = "buttonSign",
+                    expectedLabel = "Entrar",
+                    expectedAriaLabel = null,
+                    expectedOnClick = "envia();",
+                    expectedTag = "input",
+                    expectedFormName = "signBean",
+                    expectedFormAction = AEMET_LOGIN_ACTION_URL,
+                    expectedHandlerName = "envia",
+                    waitForAemetSignHook = true,
+                    requireVisible = true,
+                    waitForExpectedUrl = true,
+                )
+            }
+            CANARIAS_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CANARIAS_HOME_URL,
+                    expectedLabel = "Gestión datos personales",
+                    expectedHref = CANARIAS_PERSONAL_DATA_URL,
+                    waitForExpectedUrl = true,
+                )
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = CANARIAS_LOGIN_MENU_URL,
+                    expectedLabel = "Certificado Digital / DNI-E",
+                    expectedHref = "identificacion",
+                    expectedTitle = "Certificado Digital / DNI-E",
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = CANARIAS_LOGIN_URL,
+                    expectedElementId = null,
+                    expectedLabel = "Validarme",
+                    expectedAriaLabel = null,
+                    expectedOnClick = "firmar(formData);",
+                    expectedFormName = "formData",
+                    expectedFormAction = CANARIAS_LOGIN_ACTION_URL,
+                    matchCanariasLoginAction = true,
+                    expectedHandlerName = "firmar",
+                    requireVisible = true,
+                    waitForExpectedUrl = true,
+                )
+            }
+            // Soria: wait for the late script before clicking the certificate control.
             SORIA_PORTAL_ID -> clickExactButton(
                 scenario = scenario,
                 expectedCurrentUrl = SORIA_SOURCE_URL,
@@ -813,6 +921,7 @@ class RealE2eInstrumentedTest {
                 expectedLabel = SORIA_CERT_BUTTON_LABEL,
                 expectedAriaLabel = null,
                 expectedOnClick = SORIA_CERT_BUTTON_ONCLICK,
+                expectedHandlerName = "pulsarCertificado",
             )
             // La Rioja: the trámite redirects to CAS with per-session param/TARGET; its certificate "Conectar".
             LA_RIOJA_PORTAL_ID -> clickExactButton(
@@ -1725,8 +1834,14 @@ class RealE2eInstrumentedTest {
         expectedElementId: String? = null,
         requireVisible: Boolean = false,
         requireFormContainment: Boolean = false,
+        expectedType: String? = null,
+        expectedAriaLabel: String? = null,
+        expectedTitle: String? = null,
     ) {
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedAnchorType = expectedType?.let { JSONObject.quote(it) } ?: "null"
+        val quotedAnchorAriaLabel = expectedAriaLabel?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedTitle = expectedTitle?.let { JSONObject.quote(it) } ?: "null"
         val quotedShadowHost = JSONObject.quote(shadowHostTag.orEmpty())
         val quotedExpectedLabel = JSONObject.quote(expectedLabel)
         val quotedExpectedHref = JSONObject.quote(expectedHref)
@@ -1795,6 +1910,10 @@ class RealE2eInstrumentedTest {
                         // A first visit without cookies gets ;jsessionid=... rewritten into every href (CSN).
                         const href = (element.getAttribute('href') || '').replace(/;jsessionid=[^?#]*/i, '');
                         return label === $quotedExpectedLabel && href === $quotedExpectedHref &&
+                          ($quotedExpectedTitle === null || element.getAttribute('title') === $quotedExpectedTitle) &&
+                          ($quotedAnchorType === null || element.getAttribute('type') === $quotedAnchorType) &&
+                          ($quotedAnchorAriaLabel === null ||
+                            element.getAttribute('aria-label') === $quotedAnchorAriaLabel) &&
                           ($quotedExpectedOnClick === null ||
                             element.getAttribute('onclick') === $quotedExpectedOnClick);
                       });
@@ -1995,7 +2114,7 @@ class RealE2eInstrumentedTest {
         )
     }
 
-    private fun clickExactButton(
+    internal fun clickExactButton(
         scenario: ActivityScenario<MainActivity>,
         expectedCurrentUrl: String,
         expectedElementId: String?,
@@ -2014,9 +2133,22 @@ class RealE2eInstrumentedTest {
         expectedFormName: String? = null,
         expectedFormAction: String? = null,
         requireNoOnClick: Boolean = false,
+        expectedParentAnchorClass: String? = null,
+        expectedHandlerName: String? = null,
+        requireVisible: Boolean = false,
+        waitForAemetSignHook: Boolean = false,
+        expectedName: String? = null,
+        matchCanariasLoginAction: Boolean = false,
     ) {
         require(expectedLabel != null || expectedAriaLabel != null)
         require(expectedTag in setOf("button", "input", "img"))
+        require(expectedHandlerName == null || JS_IDENTIFIER.matches(expectedHandlerName))
+        require(expectedParentAnchorClass == null || expectedTag == "img")
+        val quotedHandlerName = expectedHandlerName?.let { JSONObject.quote(it) } ?: "null"
+        val quotedParentAnchorClass = expectedParentAnchorClass?.let { JSONObject.quote(it) } ?: "null"
+        val quotedExpectedName = expectedName?.let { JSONObject.quote(it) } ?: "null"
+        require(!matchCanariasLoginAction || expectedCurrentUrl == CANARIAS_LOGIN_URL &&
+            expectedFormName == "formData" && expectedFormAction == CANARIAS_LOGIN_ACTION_URL)
         val quotedExpectedTag = JSONObject.quote(expectedTag)
         val quotedExpectedType = expectedType?.let { JSONObject.quote(it) } ?: "null"
         val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
@@ -2030,6 +2162,8 @@ class RealE2eInstrumentedTest {
         val quotedFormName = expectedFormName?.let { JSONObject.quote(it) } ?: "null"
         val quotedFormAction = expectedFormAction?.let { JSONObject.quote(it) } ?: "null"
         val quotedWaitForBadajozSignHook = waitForBadajozSignHook.toString()
+        var lastReadyState = "unobserved"
+        var handlerReady = false
         while (SystemClock.elapsedRealtime() < deadline) {
             if (hasObservedTerminalNavigationFailure()) return
             val inspected = CountDownLatch(1)
@@ -2081,6 +2215,8 @@ class RealE2eInstrumentedTest {
                       const elements = Array.from(document.querySelectorAll(expectedTag)).filter(element => {
                         if (element.getAttribute('type') !== $quotedExpectedType) return false;
                         if (expectedId !== null && element.id !== expectedId) return false;
+                        if ($quotedExpectedName !== null &&
+                            element.getAttribute('name') !== $quotedExpectedName) return false;
                         if ($quotedExpectedSrc !== null &&
                             element.getAttribute('src') !== $quotedExpectedSrc) return false;
                         if ($requireNoOnClick && element.getAttribute('onclick') !== null) return false;
@@ -2094,11 +2230,40 @@ class RealE2eInstrumentedTest {
                       });
                       if (elements.length === 0) return 0;
                       if (elements.length !== 1) return 2;
+                      if ($quotedParentAnchorClass !== null) {
+                        const anchor = elements[0].parentElement;
+                        if (anchor?.tagName !== 'A' || anchor.className !== $quotedParentAnchorClass ||
+                            anchor.getAttribute('target') !== '_self') return 2;
+                      }
+                      if ($quotedHandlerName !== null) {
+                        const handlerReady = typeof window[$quotedHandlerName] === 'function';
+                        if (document.readyState !== 'complete' || !handlerReady) {
+                          return {readyState: document.readyState, handlerReady, clicked: false};
+                        }
+                      }
+                      if ($requireVisible && (elements[0].disabled || elements[0].getClientRects().length === 0 ||
+                          getComputedStyle(elements[0]).visibility !== 'visible')) return 0;
+                      if ($waitForAemetSignHook && window.MiniApplet?.sign?.__jfmSignHook !== true) return 0;
                       if ($quotedFormName !== null) {
                         const forms = Array.from(document.forms).filter(form =>
                           form.name === $quotedFormName || form.id === $quotedFormName);
-                        if (forms.length !== 1 ||
-                            withoutSessionId(forms[0].action) !== $quotedFormAction ||
+                        if (forms.length !== 1) return 2;
+                        let actionMatches = withoutSessionId(forms[0].action) === $quotedFormAction;
+                        if ($matchCanariasLoginAction) {
+                          // sfest.base.js caches the library used by firmar -> getScript().sign in Script.
+                          const script = window.Script;
+                          if (typeof script?.sign !== 'function' || script.sign.__jfmSignHook !== true) return 0;
+                          const action = new URL(forms[0].action);
+                          const params = action.searchParams;
+                          actionMatches = action.origin + action.pathname === $quotedFormAction &&
+                            action.hash === '' && action.username === '' && action.password === '' &&
+                            Array.from(params.keys()).length === 6 &&
+                            params.get('i3l') === 'es_ES' && params.get('i3pn') === 'identificacion' &&
+                            params.get('i3sc') === '' && params.get('i3pt') === 'S' &&
+                            params.get('i3d') === 'e8e67340-afe4-11e6-9a06-1eb47e039c2b' &&
+                            Boolean(params.get('i3csrf')) && window.formData === forms[0];
+                        }
+                        if (!actionMatches ||
                             (forms[0].getAttribute('method') || '').toLowerCase() !== 'post' ||
                             (expectedTag !== 'img' && elements[0].form !== forms[0])) return 2;
                         if (!['', '_self', '_parent'].includes(
@@ -2119,6 +2284,13 @@ class RealE2eInstrumentedTest {
                         "1" -> clicked = true
                         "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
                         "3" -> waitingForBadajozSignHook = true
+                        else -> if (expectedHandlerName != null && recipeCode.startsWith("{")) {
+                            val state = JSONObject(recipeCode)
+                            lastReadyState = state.optString("readyState").takeIf {
+                                it in setOf("loading", "interactive", "complete")
+                            } ?: "unknown"
+                            handlerReady = state.optBoolean("handlerReady")
+                        }
                     }
                     inspected.countDown()
                 }
@@ -2133,7 +2305,12 @@ class RealE2eInstrumentedTest {
                 SystemClock.sleep(RECIPE_POLL_MILLIS)
                 continue
             }
-            if (clicked) return
+            if (clicked) {
+                if (expectedHandlerName != null) {
+                    println("REAL_E2E_RECIPE_READINESS readyState=complete handlerReady=true clicked=true")
+                }
+                return
+            }
             SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
         val terminalFailureDeadline =
@@ -2143,6 +2320,9 @@ class RealE2eInstrumentedTest {
             SystemClock.sleep(RECIPE_POLL_MILLIS)
         }
         if (hasObservedTerminalNavigationFailure()) return
+        if (expectedHandlerName != null) {
+            println("REAL_E2E_RECIPE_READINESS readyState=$lastReadyState handlerReady=$handlerReady clicked=false")
+        }
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
@@ -2406,6 +2586,13 @@ class RealE2eInstrumentedTest {
             ) {
                 result.signingConfirmationObserved = true
                 result.level = maxOf(result.level, 3)
+                if (!deepEnabled && profileId == AEMET_PROFILE_ID) {
+                    // AEMET's error callback submits its login form, so stop without delivering a callback.
+                    abandonAemetLoginAtBoundary(scenario)
+                    result.signingCancelledAtBoundary = true
+                    classify(profileCapabilities, result)
+                    return
+                }
                 if (deepEnabled && profileId in SAFE_AUTH_SIGN_PROFILES) {
                     val preSignRecords = diagnosticRecords()
                     val signingEvidenceTracker = SigningEvidenceTracker(preSignRecords)
@@ -2458,6 +2645,17 @@ class RealE2eInstrumentedTest {
         }
 
         classify(profileCapabilities, result)
+    }
+
+    private fun abandonAemetLoginAtBoundary(scenario: ActivityScenario<MainActivity>) {
+        val coordinator = signingCoordinatorForScenario(scenario)
+        var abandoned = false
+        scenario.onActivity {
+            val pending = coordinator.state.value as? SigningUiState.AwaitingConfirmation
+                ?: error("REAL_E2E_SIGNING_REQUEST_MISSING")
+            abandoned = coordinator.cancel(SigningCancelReason.BACKGROUND, pending.requestId)
+        }
+        check(abandoned) { "REAL_E2E_SIGNING_ABANDON_FAILED" }
     }
 
     private fun waitForSigningTerminalState(
@@ -3525,6 +3723,30 @@ class RealE2eInstrumentedTest {
         const val SORIA_CERT_BUTTON_ID = "b_certificado"
         const val SORIA_CERT_BUTTON_LABEL = "ACCEDER"
         const val SORIA_CERT_BUTTON_ONCLICK = "pulsarCertificado();"
+        const val AEMET_PORTAL_ID = "age-agencia-estatal-de-meteorologia-aemet"
+        const val AEMET_PROFILE_ID = "aemet-public-solicitud-navigation"
+        const val AEMET_BASE_URL = "https://sede.aemet.gob.es/AEMET/es/GestionPeticiones"
+        const val AEMET_HOME_URL = "$AEMET_BASE_URL/home"
+        const val AEMET_LOGIN_MENU_URL = "$AEMET_BASE_URL/selectLogin"
+        const val AEMET_LOGIN_URL = "$AEMET_BASE_URL/sso"
+        const val AEMET_LOGIN_ACTION_URL = "$AEMET_BASE_URL/ssoLogin"
+        const val CANARIAS_PORTAL_ID = "canarias-sede"
+        const val CANARIAS_MOBILE_BASE = "https://sede.gobiernodecanarias.org/sede/movil"
+        const val CANARIAS_HOME_URL = "$CANARIAS_MOBILE_BASE/la_sede"
+        const val CANARIAS_PERSONAL_DATA_URL = "$CANARIAS_MOBILE_BASE/menu_portada_movil/area_personal/datos_personales"
+        const val CANARIAS_LOGIN_MENU_URL = "$CANARIAS_MOBILE_BASE/identificacionmenu"
+        const val CANARIAS_LOGIN_URL = "$CANARIAS_MOBILE_BASE/identificacion"
+        const val CANARIAS_LOGIN_ACTION_URL = "https://sede.gobiernodecanarias.org/-/action/" +
+            "c002ea10-8036-11df-9987-52c39c0cc1c2/e8e67340-afe4-11e6-9a06-1eb47e039c2b/es_ES/" +
+            "a15be610-b249-11e6-9a06-11991fa5bb48/accionProcesaFormularioLogin"
+        const val AESA_PORTAL_ID = "age-agencia-estatal-de-seguridad-aerea-aesa"
+        const val AESA_HOME_URL = "https://sede.seguridadaerea.gob.es/sede-aesa/" +
+            "catalogo-de-procedimientos/solicitud-general"
+        const val AESA_LOGIN_URL =
+            "https://sede.seguridadaerea.gob.es/oficina/tramites/altaSolicitud.do?id=4&codArea=SOLGEN"
+        const val DGSFP_PORTAL_ID = "age-direccion-general-de-seguros-y-fondos-de-pensiones"
+        const val DGSFP_HOME_URL = "https://www.sededgsfp.gob.es/es/Paginas/inicio.aspx"
+        const val DGSFP_LOGIN_URL = "https://www.sededgsfp.gob.es/es/paginas/login.aspx"
         const val LA_RIOJA_PORTAL_ID = "la-rioja-oficina-electronica"
         const val LA_RIOJA_CAS_LOGIN_URL = "https://ias1.larioja.org/casLR/login"
         const val LA_RIOJA_CERT_BUTTON_ID = "boton_certificado"
@@ -3640,6 +3862,7 @@ class RealE2eInstrumentedTest {
             "cdti-certificate-validation",
             "diputacion-lugo-sede",
             "canarias-sede",
+            "aemet-public-solicitud-navigation",
             "transportes-qys-cert-login",
             "mites-certificate-login",
             "diputacion-lleida-sede",

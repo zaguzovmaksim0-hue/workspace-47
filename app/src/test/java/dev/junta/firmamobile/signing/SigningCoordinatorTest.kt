@@ -332,6 +332,19 @@ class SigningCoordinatorTest {
     }
 
     @Test
+    fun abandoningTheExactPendingRequestNeverInvokesItsErrorCallback() {
+        val reply = RecordingReply(REQUEST_ID)
+        assertEquals(SigningPreparationResult.Ready(REQUEST_ID), coordinator.prepare(request(), reply))
+        assertFalse(coordinator.cancel(SigningCancelReason.BACKGROUND, UUID.randomUUID()))
+        assertTrue(coordinator.state.value is SigningUiState.AwaitingConfirmation)
+        assertTrue(coordinator.cancel(SigningCancelReason.BACKGROUND, REQUEST_ID))
+        assertEquals(SigningUiState.Idle, coordinator.state.value)
+        assertTrue(reply.events.isEmpty())
+        assertFalse(reply.failure(SigningErrorCode.USER_CANCELLED))
+        assertTrue(reply.events.isEmpty())
+    }
+
+    @Test
     fun cancelledActiveRequestRejectsLateTunnelProgressOwnership() {
         val blockingAdapter = BlockingPrepareAdapter()
         val localCoordinator = SigningCoordinator(
