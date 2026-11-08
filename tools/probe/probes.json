@@ -1,33 +1,22 @@
 [
  {
-  "name": "mites-home",
-  "url": "https://sede.mites.gob.es/",
-  "wait": 12000,
-  "clicks": []
- },
- {
-  "name": "mites-auth",
-  "url": "https://sede.mites.gob.es/auth",
-  "wait": 12000,
-  "clicks": []
- },
- {
-  "name": "ciudad-real-4443",
-  "url": "https://se1.dipucr.es:4443/SIGEM_AutenticacionWeb/seleccionEntidad.do?REDIRECCION=RegistroTelematico&tramiteId=DPCR_SRS&SESION_ID=&ENTIDAD_ID=005",
-  "wait": 6000,
-  "clicks": []
- },
- {
-  "name": "girona-valid-30s",
-  "url": "https://seu-e.cat/tramits/8001760009/instancia-generica",
-  "wait": 30000,
+  "name": "mites-inicio-25s",
+  "url": "https://sede.mites.gob.es/inicio",
+  "wait": 25000,
   "cap": 100000,
   "clicks": []
  },
  {
-  "name": "tarragona-valid-30s",
-  "url": "https://seuelectronica.dipta.cat/tramits-online/fr/administracions/8004330008/procediments/DIP80_EGIST_00001/crearInstancia",
-  "wait": 30000,
+  "name": "mites-auth-25s",
+  "url": "https://sede.mites.gob.es/auth",
+  "wait": 25000,
+  "cap": 100000,
+  "clicks": []
+ },
+ {
+  "name": "mites-root-25s",
+  "url": "https://sede.mites.gob.es/",
+  "wait": 25000,
   "cap": 100000,
   "clicks": []
  }
