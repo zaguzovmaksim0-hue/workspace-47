@@ -1661,15 +1661,21 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual("2026-08-20", target["reviewedOn"])
+        self.assertEqual("2026-11-08", target["reviewedOn"])
         self.assertEqual(["CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertEqual("NO_VERIFICADO", target["protocolFamily"])
         self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
         self.assertEqual("QA_ONLY", profile["activation"])
         self.assertEqual([], profile["operationPolicies"])
-        self.assertEqual([], profile["capabilities"])
-        self.assertIsNone(profile["clientAuthPolicy"])
+        self.assertEqual(2, profile["profileVersion"])
+        self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
+        policy = profile["clientAuthPolicy"]
+        self.assertEqual("IN_PLACE_FROM_SOURCE", policy["transitionMode"])
+        self.assertEqual("POST", policy["requestMethod"])
+        self.assertEqual(["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"], policy["sourceUrls"])
+        self.assertEqual(["https://pasarela-ident.clave.gob.es"], policy["requestOrigins"])
+        self.assertEqual("/IdP2/AuthenticateCitizen", policy["requestPath"])
         self.assertIn("clienteFirma".lower(), target["limitations"].lower())
         self.assertIn("e2e", target["limitations"].lower())
 
@@ -2822,7 +2828,7 @@ records:
         self.assertIn("client_tls_auth", target["limitations"].lower())
 
 
-    def test_aemet_profile_binds_stable_public_home_and_keeps_sensitive_runtime_capabilities_unimplemented(self) -> None:
+    def test_aemet_profile_binds_only_the_local_certificate_login(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
         target = next(entry for entry in catalog["entries"] if entry["inventoryId"] == "ES-PUB-0024")
         self.assertEqual("age-agencia-estatal-de-meteorologia-aemet", target["portalId"])
@@ -2833,14 +2839,14 @@ records:
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual("2026-08-23", target["reviewedOn"])
+        self.assertEqual("2026-11-08", target["reviewedOn"])
         self.assertEqual(
             ["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE", "MINIAPPLET"],
             target["observedMechanisms"],
         )
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa_only", target["limitations"].lower())
-        self.assertIn("capabilities vacío", target["limitations"].lower())
+        self.assertIn("nonce", target["limitations"].lower())
         self.assertIn("client_tls_auth", target["limitations"].lower())
 
     def test_oepm_protegeo_profile_binds_exact_public_launch_without_sensitive_mechanisms(self) -> None:
@@ -2953,7 +2959,7 @@ records:
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual("2026-08-24", target["reviewedOn"])
+        self.assertEqual("2026-11-08", target["reviewedOn"])
         self.assertEqual([], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
         self.assertIn("qa-only", target["limitations"].lower())
@@ -2972,7 +2978,7 @@ records:
         self.assertEqual("E2E_PENDING", aesa["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", aesa["inventoryStatus"])
         self.assertEqual("REVIEWED", aesa["discoveryState"])
-        self.assertEqual("2026-08-23", aesa["reviewedOn"])
+        self.assertEqual("2026-11-08", aesa["reviewedOn"])
         self.assertEqual(
             ["AUTOFIRMA", "CERTIFICATE_ACCESS", "ELECTRONIC_SIGNATURE"],
             aesa["observedMechanisms"],

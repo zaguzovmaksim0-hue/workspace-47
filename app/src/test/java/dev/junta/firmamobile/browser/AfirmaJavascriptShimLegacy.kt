@@ -8,6 +8,15 @@ import org.json.JSONObject
 internal object AfirmaJavascriptShimLegacy {
     const val MAX_SCRIPT_CHARS = 96 * 1024
 
+    // The pre-extraction snapshot stays frozen; the reviewed new flag gets its own assembly slot.
+    fun template(): String = checkNotNull(javaClass.getResourceAsStream("AfirmaJavascriptShimLegacy.js"))
+        .bufferedReader(Charsets.UTF_8).use { it.readText() }
+        .replace(
+            "  const canariasCompatibilityEnabled =",
+            "  const aemetCompatibilityEnabled = __JFM_AEMET_COMPATIBILITY_ENABLED__;\n" +
+                "  const canariasCompatibilityEnabled =",
+        )
+
     fun assemble(
         script: String,
         mode: MiniAppletBridgeMode,
@@ -111,6 +120,7 @@ internal object AfirmaJavascriptShimLegacy {
             GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER to { it.granCanaria },
             FUERTEVENTURA_COMPATIBILITY_PLACEHOLDER to { it.fuerteventura },
             CANARIAS_COMPATIBILITY_PLACEHOLDER to { it.canarias },
+            "__JFM_AEMET_COMPATIBILITY_ENABLED__" to { it.aemet },
             MINECO_COMPATIBILITY_PLACEHOLDER to { it.mineco },
             MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER to { it.melillaBatch },
             LUGO_BATCH_COMPATIBILITY_PLACEHOLDER to { it.lugoBatch },

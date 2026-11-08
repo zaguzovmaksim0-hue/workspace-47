@@ -1,7 +1,10 @@
 
   matchesCanariasSign = (args, successCallback, errorCallback) => {
     const canariasOrigin = "https://sede.gobiernodecanarias.org";
-    const canariasPage = "https://sede.gobiernodecanarias.org/sede/identificacion";
+    const canariasPages = [
+      "https://sede.gobiernodecanarias.org/sede/identificacion",
+      "https://sede.gobiernodecanarias.org/sede/movil/identificacion"
+    ];
     const canariasChallengePattern =
     /^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), [0-9]{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} GMT$/;
     const canariasExtraProperties =
@@ -25,7 +28,7 @@
     const isCanariasOrigin =
       canariasCompatibilityEnabled && window.location.origin === canariasOrigin;
     const isCanariasPage =
-      isCanariasOrigin && window.location.href === canariasPage &&
+      isCanariasOrigin && canariasPages.includes(window.location.href) &&
       window.location.search === "" && window.location.hash === "";
     const isExactCanariasCall =
       isCanariasPage && args.length === 6 && isExactCanariasChallenge(args[0]) &&

@@ -270,6 +270,13 @@ object BuiltInProtocolAdapterRegistry {
                 signingProtocolId = CanariasCertificateLoginCadesAdapter.ID,
             ),
             ProtocolAdapterBinding(
+                profileId = ProfileId(AemetCertificateLoginCadesAdapter.PROFILE_ID),
+                operation = ProtocolOperation.SIGN,
+                inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),
+                callbackContractId = CallbackContractId("miniapplet-sign-callback-v1"),
+                signingProtocolId = AemetCertificateLoginCadesAdapter.ID,
+            ),
+            ProtocolAdapterBinding(
                 profileId = ProfileId(XuntaPadesTriPhaseAdapter.PROFILE_ID),
                 operation = ProtocolOperation.SIGN,
                 inputAdapterId = ProtocolInputAdapterId("miniapplet-autoscript-v1"),

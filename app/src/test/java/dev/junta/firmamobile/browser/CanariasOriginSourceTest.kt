@@ -21,6 +21,10 @@ class CanariasOriginSourceTest {
         assertEquals("https://sede.gobiernodecanarias.org", ORIGIN)
         assertEquals("https://sede.gobiernodecanarias.org/sede/la_sede", START_URL)
         assertEquals("https://sede.gobiernodecanarias.org/sede/identificacion", SIGNING_PAGE_URL)
+        assertEquals(setOf(
+            "https://sede.gobiernodecanarias.org/sede/identificacion",
+            "https://sede.gobiernodecanarias.org/sede/movil/identificacion",
+        ), CanariasCertificateLoginCadesAdapter.SIGNING_PAGE_URLS)
         assertEquals("https://sede.gobiernodecanarias.org/platino/servlet_afirma/SignatureService", SERVER_URL)
         assertEquals(setOf(ExactOrigin.parse(ORIGIN)), profile.initiatorOrigins)
         assertEquals(START_URL, profile.startUrl.toASCIIString())

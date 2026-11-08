@@ -2,8 +2,11 @@ package dev.junta.firmamobile.browser
 
 import android.net.Uri
 import dev.junta.firmamobile.signing.AccedaPadesAdapter
+import dev.junta.firmamobile.signing.CadesDetachedCodec
 import dev.junta.firmamobile.signing.EivissaCadesDetachedAdapter
+import dev.junta.firmamobile.signing.JcaLocalSignatureEngine
 import dev.junta.firmamobile.signing.LocalSignature
+import dev.junta.firmamobile.signing.LocalSignatureResult
 import dev.junta.firmamobile.signing.MiniAppletPayloadCodec
 import dev.junta.firmamobile.signing.SensitiveSignatureCopyObserver
 import dev.junta.firmamobile.signing.SigningAlgorithm
@@ -14,7 +17,10 @@ import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import dev.junta.firmamobile.signing.LocalXadesDetachedAdapter
 import dev.junta.firmamobile.signing.ProtocolAdapterBinding
 import dev.junta.firmamobile.signing.ProtocolAdapterRegistry
+import dev.junta.firmamobile.signing.ProtocolCompletionResult
+import dev.junta.firmamobile.signing.ProtocolPrepareResult
 import dev.junta.firmamobile.signing.SigningProtocolId
+import dev.junta.firmamobile.signing.syntheticIdentity
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuildTrustPolicy
 import dev.junta.firmamobile.profile.CallbackContractId
@@ -37,10 +43,12 @@ import dev.junta.firmamobile.profile.SiteProfile
 import dev.junta.firmamobile.profile.SiteProfileCatalog
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import java.net.URI
+import java.security.MessageDigest
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.Base64
+import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -257,7 +265,7 @@ class MiniAppletBridgeAdapterTest {
     }
 
     @Test
-    fun exactAragonSirawLoginRoutesToLocalDetachedCadesOnlyForSelectedProfile() {
+    fun exactAragonSirawLoginRoutesToLocalDetachedCadesOnlyForSelectedProfile() = runTest {
         val challenge = ByteArray(LocalCadesDetachedAdapter.CHALLENGE_BYTES) { index ->
             (index + 1).toByte()
         }
@@ -280,6 +288,7 @@ class MiniAppletBridgeAdapterTest {
 
         accepted.request.normalized.use { request ->
             assertEquals("aragon-siraw", request.context.profileId)
+            assertEquals(2, request.context.profileVersion)
             assertEquals("aplicaciones.aragon.es", request.context.origin.host)
             assertEquals(31, request.context.navigationEpoch)
             assertEquals(LocalCadesDetachedAdapter.ID, request.protocolId)
@@ -289,6 +298,33 @@ class MiniAppletBridgeAdapterTest {
                 MiniAppletPayloadCodec.withDecoded(payload) { data, properties ->
                     assertArrayEquals(challenge, data)
                     assertEquals(ARAGON_PROPERTIES, properties)
+                }
+            }
+            val identity = syntheticIdentity()
+            val signingAdapter = LocalCadesDetachedAdapter(
+                Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC),
+            )
+            val prepared = signingAdapter.prepare(request, identity.chain) as ProtocolPrepareResult.Success
+            prepared.preSign.use { preSign ->
+                val signed = preSign.withBytesToSign {
+                    JcaLocalSignatureEngine().sign(it, identity, SigningAlgorithm.SHA1_WITH_RSA)
+                } as LocalSignatureResult.Success
+                signed.signature.use { localSignature ->
+                    val completed = signingAdapter.complete(request, preSign, localSignature)
+                        as ProtocolCompletionResult.Success
+                    completed.signature.use { signature ->
+                        signature.withBytes { cms ->
+                            assertTrue(
+                                CadesDetachedCodec.validate(
+                                    signatureDocument = cms,
+                                    detachedContent = challenge,
+                                    expectedContentBytes = LocalCadesDetachedAdapter.CHALLENGE_BYTES,
+                                    expectedCertificateFingerprint = MessageDigest.getInstance("SHA-256")
+                                        .digest(identity.certificate.encoded),
+                                ),
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -309,13 +345,27 @@ class MiniAppletBridgeAdapterTest {
         ) as MiniAppletBridgeRouteResult.Rejected
         assertEquals(SigningErrorCode.ORIGIN_NOT_ALLOWED, sameOriginClientAuthProfile.code)
 
-        val wrongProperties = adapterFor("aragon-siraw").route(
-            rawMessage = rawMessage.replace("filter=nonexpired", "filter=qualified:123"),
+        val subframe = adapterFor("aragon-siraw").route(
+            rawMessage = rawMessage,
             sourceOrigin = ARAGON_ORIGIN,
-            isMainFrame = true,
+            isMainFrame = false,
             navigationEpoch = 31,
         ) as MiniAppletBridgeRouteResult.Rejected
-        assertEquals(SigningErrorCode.INVALID_REQUEST, wrongProperties.code)
+        assertEquals(SigningErrorCode.NAVIGATION_CHANGED, subframe.code)
+
+        for (properties in listOf(
+            "$ARAGON_PROPERTIES\nprecalculatedHashAlgorithm=SHA1",
+            "$ARAGON_PROPERTIES\nheadless=true",
+            ARAGON_PROPERTIES.replace("filter=nonexpired", "filter=qualified:123"),
+        )) {
+            val wrongProperties = adapterFor("aragon-siraw").route(
+                rawMessage = JSONObject(rawMessage).put("extraProperties", properties).toString(),
+                sourceOrigin = ARAGON_ORIGIN,
+                isMainFrame = true,
+                navigationEpoch = 31,
+            ) as MiniAppletBridgeRouteResult.Rejected
+            assertEquals(SigningErrorCode.INVALID_REQUEST, wrongProperties.code)
+        }
         challenge.fill(0)
     }
 

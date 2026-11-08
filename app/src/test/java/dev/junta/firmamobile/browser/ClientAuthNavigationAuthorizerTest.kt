@@ -108,6 +108,23 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun initialEntryCannotGrantClientTlsBeforeAnObservedSource() {
+        BuiltInSiteProfiles.catalog.profiles.forEach { profile ->
+            val initial = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            val entry = profile.startUrl.toASCIIString()
+            assertNull(
+                profile.profileId.value,
+                initial.observeTopLevelNavigation(profile.profileId, null, entry, 0, true),
+            )
+            initial.onTopLevelPageStarted(entry, 1)
+            assertNull(
+                profile.profileId.value,
+                initial.observeTopLevelResourceRequest(profile.profileId, null, entry, "GET", 1, true),
+            )
+        }
+    }
+
+    @Test
     fun ownTlsPostLoginsKeepTheSelectedSourceMethodEpochAndSingleUseBoundary() {
         val flows = listOf(
             Triple(
@@ -1916,6 +1933,7 @@ class ClientAuthNavigationAuthorizerTest {
             ProfileId("diputacion-almeria-solicitud-general"),
             ProfileId("diputacion-cordoba-solicitud-generica"),
             ProfileId("diputacion-palencia-solicitud-general"),
+            ProfileId("diputacion-pontevedra-instancia-xenerica"),
             ProfileId("educacion-convocatoria"),
             ProfileId("extremadura-tramites"),
             ProfileId("fuerteventura-sede-electronica"),

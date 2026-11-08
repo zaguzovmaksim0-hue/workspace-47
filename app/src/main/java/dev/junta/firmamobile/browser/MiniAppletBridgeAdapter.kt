@@ -19,6 +19,7 @@ import dev.junta.firmamobile.signing.SevillaAtseXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.AirefXadesEnvelopingAdapter
 import dev.junta.firmamobile.signing.BuiltInProtocolAdapterRegistry
 import dev.junta.firmamobile.signing.CdtiXadesEnvelopingAdapter
+import dev.junta.firmamobile.signing.AemetCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.CanariasCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.CantabriaRecCertificateLoginCadesAdapter
 import dev.junta.firmamobile.signing.TransportesXadesEnvelopedAdapter
@@ -368,6 +369,18 @@ internal class ProfileMiniAppletBridgeAdapter(
         ) {
             return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
         }
+        val isAemetContract = isExactAemetContract(
+            profile = profile,
+            origin = resolved.origin,
+            operation = operation,
+            signingProtocolId = binding.signingProtocolId.value,
+            currentPageUrl = currentPageUrl,
+        )
+        if (profile.profileId.value == AemetCertificateLoginCadesAdapter.PROFILE_ID &&
+            !isAemetContract
+        ) {
+            return MiniAppletBridgeRouteResult.Rejected(requestId, SigningErrorCode.UNSUPPORTED_PROTOCOL)
+        }
         val isDiputacionBadajozContract = isExactDiputacionBadajozContract(
             profile = profile,
             origin = resolved.origin,
@@ -411,7 +424,12 @@ internal class ProfileMiniAppletBridgeAdapter(
             )
         }
         val suppliedFormat = json.strictString(FORMAT_FIELD)
-        val normalizedFormat = if (
+        if (isAemetContract && suppliedFormat != "AUTO") {
+            return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
+        }
+        val normalizedFormat = if (isAemetContract) {
+            FORMAT_CADES
+        } else if (
             isDiputacionBadajozContract && suppliedFormat.equals(FORMAT_CADES, ignoreCase = true)
         ) {
             FORMAT_CADES
@@ -476,7 +494,9 @@ internal class ProfileMiniAppletBridgeAdapter(
                 canonicalRequestId,
                 SigningErrorCode.REQUEST_TOO_LARGE,
             )
-        if (!BASE64_PATTERN.matches(dataBase64)) {
+        if (!BASE64_PATTERN.matches(dataBase64) ||
+            isAemetContract && dataBase64.length > AemetCertificateLoginCadesAdapter.MAX_CHALLENGE_BASE64_CHARS
+        ) {
             return MiniAppletBridgeRouteResult.Rejected(
                 canonicalRequestId,
                 SigningErrorCode.INVALID_REQUEST,
@@ -551,6 +571,11 @@ internal class ProfileMiniAppletBridgeAdapter(
                     canonicalRequestId,
                     SigningErrorCode.INVALID_REQUEST,
                 )
+        } else if (isAemetContract) {
+            if (!json.has(EXTRA_PROPERTIES_FIELD) || json.opt(EXTRA_PROPERTIES_FIELD) !== JSONObject.NULL) {
+                return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
+            }
+            ""
         } else if (isCanariasContract) {
             json.strictString(EXTRA_PROPERTIES_FIELD)
                 ?.takeIf { it == CanariasCertificateLoginCadesAdapter.EXPECTED_EXTRA_PROPERTIES }
@@ -730,6 +755,12 @@ internal class ProfileMiniAppletBridgeAdapter(
                 canonicalRequestId,
                 SigningErrorCode.INVALID_REQUEST,
             )
+        }
+        if (isAemetContract && (!AemetCertificateLoginCadesAdapter.isExactChallenge(decodedData) ||
+                Base64.getEncoder().encodeToString(decodedData) != dataBase64)
+        ) {
+            decodedData.fill(0)
+            return MiniAppletBridgeRouteResult.Rejected(canonicalRequestId, SigningErrorCode.INVALID_REQUEST)
         }
         if (isCanariasContract && !CanariasCertificateLoginCadesAdapter.isExactChallenge(decodedData)) {
             decodedData.fill(0)
@@ -1624,7 +1655,7 @@ internal class ProfileMiniAppletBridgeAdapter(
         signingProtocolId: String,
         currentPageUrl: String?,
     ): Boolean =
-        currentPageUrl == CanariasCertificateLoginCadesAdapter.SIGNING_PAGE_URL &&
+        currentPageUrl in CanariasCertificateLoginCadesAdapter.SIGNING_PAGE_URLS &&
             profile.profileId.value == CanariasCertificateLoginCadesAdapter.PROFILE_ID &&
             profile.profileVersion == CanariasCertificateLoginCadesAdapter.PROFILE_VERSION &&
             profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
@@ -1655,6 +1686,55 @@ internal class ProfileMiniAppletBridgeAdapter(
             operation.fixedExtraProperties == CanariasCertificateLoginCadesAdapter.EXPECTED_FIXED_EXTRA_PROPERTIES &&
             operation.allowedExtraProperties.isEmpty() &&
             signingProtocolId == CanariasCertificateLoginCadesAdapter.ID.value
+
+    // Split into page, profile and operation checks only to stay under detekt's complexity limit.
+    private fun isExactAemetContract(
+        profile: SiteProfile,
+        origin: ExactOrigin,
+        operation: OperationPolicy,
+        signingProtocolId: String,
+        currentPageUrl: String?,
+    ): Boolean =
+        isExactAemetPage(profile, origin, currentPageUrl) &&
+            isExactAemetProfile(profile) &&
+            isExactAemetOperation(operation, signingProtocolId)
+
+    private fun isExactAemetPage(profile: SiteProfile, origin: ExactOrigin, currentPageUrl: String?): Boolean =
+        currentPageUrl == AemetCertificateLoginCadesAdapter.SIGNING_PAGE_URL &&
+            profile.profileId.value == AemetCertificateLoginCadesAdapter.PROFILE_ID &&
+            profile.profileVersion == AemetCertificateLoginCadesAdapter.PROFILE_VERSION &&
+            profile.compatibilityStatus == CompatibilityStatus.VERIFIED_CONTRACT &&
+            profile.activation == ProfileActivation.QA_ONLY &&
+            profile.startUrl.toASCIIString() == AemetCertificateLoginCadesAdapter.PUBLIC_START_URL &&
+            origin.serialized == AemetCertificateLoginCadesAdapter.INITIATOR_ORIGIN &&
+            profile.initiatorOrigins == setOf(
+                ExactOrigin.parse(AemetCertificateLoginCadesAdapter.INITIATOR_ORIGIN),
+            )
+
+    private fun isExactAemetProfile(profile: SiteProfile): Boolean =
+        profile.redirectOrigins.isEmpty() &&
+            profile.trustedBrowseOrigins.isEmpty() &&
+            profile.endpoints.isEmpty() &&
+            profile.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            profile.clientAuthPolicy == null &&
+            profile.certificateRules.allowedKeyAlgorithms == setOf("RSA") &&
+            profile.certificateRules.requireDigitalSignatureKeyUsage &&
+            profile.operationPolicies.size == 1
+
+    private fun isExactAemetOperation(operation: OperationPolicy, signingProtocolId: String): Boolean =
+        operation.operation == ProtocolOperation.SIGN &&
+            operation.safeDescription == AemetCertificateLoginCadesAdapter.SAFE_DESCRIPTION &&
+            operation.inputAdapterId.value == "miniapplet-autoscript-v1" &&
+            operation.callbackContractId.value == "miniapplet-sign-callback-v1" &&
+            operation.capabilities == setOf(Capability.SIGN, Capability.LEGACY_SHA1) &&
+            operation.endpointId == null &&
+            operation.algorithms == setOf(SignatureAlgorithm.SHA1_WITH_RSA) &&
+            operation.format == SignatureFormat.CADES &&
+            operation.packaging == dev.junta.firmamobile.profile.SignaturePackaging.DETACHED &&
+            operation.mode == dev.junta.firmamobile.profile.SignatureMode.EXPLICIT &&
+            operation.fixedExtraProperties.isEmpty() &&
+            operation.allowedExtraProperties.isEmpty() &&
+            signingProtocolId == AemetCertificateLoginCadesAdapter.ID.value
 
     private fun isExactDiputacionLleidaContract(
         profile: SiteProfile,

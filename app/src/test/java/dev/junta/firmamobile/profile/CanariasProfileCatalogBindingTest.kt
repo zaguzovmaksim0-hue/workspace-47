@@ -33,7 +33,7 @@ class CanariasProfileCatalogBindingTest {
     @Test
     fun qaProfilePinsOnlyTheObservedCertificateLoginContract() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(startUrl, profile.startUrl)
@@ -45,7 +45,10 @@ class CanariasProfileCatalogBindingTest {
         assertNull(profile.clientAuthPolicy)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-17" })
+        assertEquals(setOf("2026-08-17", "2026-11-08"), profile.evidence.map { it.reviewedOn.toString() }.toSet())
+        for (page in CanariasCertificateLoginCadesAdapter.SIGNING_PAGE_URLS) {
+            assertEquals("2026-11-08", profile.evidence.single { it.url.toASCIIString() == page }.reviewedOn.toString())
+        }
 
         val operation = profile.operationPolicies.getValue(ProtocolOperation.SIGN)
         assertEquals(CanariasCertificateLoginCadesAdapter.SAFE_DESCRIPTION, operation.safeDescription)

@@ -427,7 +427,7 @@ class SiteProfileRegistryTest {
     }
 
     @Test
-    fun `DGSFP public Sede is browse-only trust in QA and sensitive routes remain profile-scoped closed`() {
+    fun `DGSFP public Sede has profile-scoped QA certificate trust`() {
         val profileId = ProfileId("dgsfp-sede-public-home")
         val start = URI("https://www.sededgsfp.gob.es/")
 
@@ -437,8 +437,8 @@ class SiteProfileRegistryTest {
         assertNotNull(profile)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
-        assertEquals(emptySet<Capability>(), profile?.capabilities)
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es:444/")))
     }

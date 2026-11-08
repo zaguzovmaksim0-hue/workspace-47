@@ -477,6 +477,7 @@ object SiteProfileCatalogParser {
         val endpointOwners = mutableMapOf<EndpointId, ProfileId>()
         catalog.profiles.forEach { p ->
             validateOwnTlsLoginProfile(p)
+            validateAemetLoginProfile(p)
             if (p.profileId.value == UGR_PROFILE_ID) {
                 validateUgrProfile(p)
             }
@@ -885,6 +886,7 @@ object SiteProfileCatalogParser {
                                         )
                                         UGR_PROFILE_ID -> emptyMap()
                                         JCCM_PROFILE_ID -> emptyMap()
+                                        AEMET_PROFILE_ID -> emptyMap()
                                         CANARIAS_PROFILE_ID -> CANARIAS_EXTRA_PROPERTIES
                                         else -> null
                                     }
@@ -1681,8 +1683,13 @@ object SiteProfileCatalogParser {
                 allowedExtraProperties = emptySet(),
             ),
         )
-        require(profile.evidence.map { it.url.toASCIIString() }.toSet() == CANARIAS_EVIDENCE_URLS)
-        require(profile.evidence.all { it.reviewedOn == LocalDate.parse("2026-08-17") })
+        require(profile.evidence.map { it.url }.toSet().size == profile.evidence.size)
+        require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } ==
+            CANARIAS_EVIDENCE_URLS.associateWith { "2026-08-17" } +
+            mapOf(
+                "https://sede.gobiernodecanarias.org/sede/identificacion" to "2026-11-08",
+                "https://sede.gobiernodecanarias.org/sede/movil/identificacion" to "2026-11-08",
+            ))
     }
 
     // Cl@ve TLS and signing share the profile filter: v2 also requires digitalSignature for signing.
@@ -3133,7 +3140,10 @@ object SiteProfileCatalogParser {
                             ICAC_PROFILE_ID,
                             GRANADA_PROFILE_ID,
                             ICO_PROFILE_ID,
+                            AESA_PROFILE_ID,
+                            DGSFP_PROFILE_ID,
                             CSN_PROFILE_ID,
+                            PONTEVEDRA_PROFILE_ID,
                             CNMV_PROFILE_ID,
                             CSD_PROFILE_ID,
                             POLICIA_PROFILE_ID,
@@ -3187,6 +3197,8 @@ object SiteProfileCatalogParser {
                             LANZAROTE_PROFILE_ID,
                             TERUEL_PROFILE_ID,
                             GUADALAJARA_PROFILE_ID,
+                            AESA_PROFILE_ID,
+                            DGSFP_PROFILE_ID,
                             CSN_PROFILE_ID,
                             ENAIRE_PROFILE_ID,
                             IAC_PROFILE_ID,
@@ -3194,6 +3206,7 @@ object SiteProfileCatalogParser {
                             GRANADA_PROFILE_ID,
                             ICO_PROFILE_ID,
                             CADIZ_PROFILE_ID,
+                            PONTEVEDRA_PROFILE_ID,
                             CNMV_PROFILE_ID,
                             CSD_PROFILE_ID,
                             POLICIA_PROFILE_ID,
@@ -4066,6 +4079,56 @@ object SiteProfileCatalogParser {
                 "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
             ),
         ),
+        AESA_PROFILE_ID to ClaveDirectPin(
+            displayName = "AESA — Solicitud general",
+            startUrl = "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general",
+            origins = ClaveOriginPins(
+                initiator = "https://sede.seguridadaerea.gob.es",
+                redirect = setOf(CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-23",
+                "https://sede.seguridadaerea.gob.es/sede-aesa/",
+                "https://sede.seguridadaerea.gob.es/sede-aesa/catalogo-de-procedimientos/solicitud-general",
+                "https://sede.seguridadaerea.gob.es/sede-aesa/informacion-general/identificacion-y-firma",
+                "https://sede.seguridadaerea.gob.es/oficina/tramites/altaSolicitud.do?codArea=SOLGEN&id=4",
+            ) + claveEvidence(
+                "2026-11-08",
+                "https://sede.seguridadaerea.gob.es/oficina/tramites/altaSolicitud.do?id=4&codArea=SOLGEN",
+                "https://sede.seguridadaerea.gob.es/oficina/autenticacion/autenticacion.do",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
+        DGSFP_PROFILE_ID to ClaveDirectPin(
+            displayName = "Dirección General de Seguros y Fondos de Pensiones — Sede pública",
+            startUrl = "https://www.sededgsfp.gob.es/",
+            origins = ClaveOriginPins(
+                initiator = "https://www.sededgsfp.gob.es",
+                redirect = setOf(CLAVE_PASARELA_ORIGIN),
+                trustedBrowse = emptySet(),
+            ),
+            sourceUrl = CLAVE_REDIRECT_URL,
+            keyAlgorithms = setOf("RSA", "EC"),
+            evidence = claveEvidence(
+                "2026-08-24",
+                "https://www.sededgsfp.gob.es/",
+                "https://www.sededgsfp.gob.es/Style%20Library/DGSFP.SedeElectronica/Scripts/cabecera-bundle.js",
+                "https://www.sededgsfp.gob.es/Style%20Library/DGSFP.SedeElectronica/Scripts/home-bundle.js",
+            ) + claveEvidence(
+                "2026-11-08",
+                "https://www.sededgsfp.gob.es/es/Paginas/inicio.aspx",
+                "https://www.sededgsfp.gob.es/es/paginas/login.aspx",
+                "https://www.sededgsfp.gob.es/Style%20Library/DGSFP.SedeElectronica/Scripts/login-bundle.js",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceProvider",
+                "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect",
+                "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen",
+            ),
+        ),
         SEGOVIA_PROFILE_ID to gestionaClavePin(
             displayName = "Diputación de Segovia — Registro electrónico",
             startUrl = "https://sede.dipsegovia.es/registro",
@@ -4179,6 +4242,22 @@ object SiteProfileCatalogParser {
                 "2026-11-07",
                 "https://sede.isfas.gob.es/sede-web/",
                 "https://sede.isfas.gob.es/sede-web/pages/autenticacion/identificarse.xhtml",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
+        PONTEVEDRA_PROFILE_ID to gestionaClavePin(
+            displayName = "Deputación de Pontevedra — Instancia xenérica",
+            startUrl = "https://sede.depo.gal/web/public/catalog-detail/50709505",
+            evidence = claveEvidence(
+                "2026-08-20",
+                "https://sede.depo.gal/web/public/catalog-detail/50709505",
+                "https://sede.depo.gal/web/private/registry/external-registryinput-new.xhtml" +
+                    "?idbduacproceduretype=50709505&ispresential=0",
+                "https://sede.depo.gal/web/javax.faces.resource/afirma/common-js/firma.js",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede.depo.gal/web/public/login/login.xhtml",
+                "https://sede.depo.gal/web/public/login/redirect-clave.xhtml",
                 CLAVE_PROVIDER_URL,
             ),
         ),
@@ -4379,8 +4458,9 @@ object SiteProfileCatalogParser {
         "headless" to "true",
         "filters" to "nonexpired:true;authCert:true",
     )
+    private const val AEMET_PROFILE_ID = "aemet-public-solicitud-navigation"
     private const val CANARIAS_PROFILE_ID = "canarias-sede"
-    private const val CANARIAS_PROFILE_VERSION = 1
+    private const val CANARIAS_PROFILE_VERSION = 2
     private const val CANARIAS_DISPLAY_NAME = "Gobierno de Canarias — Sede electrónica"
     private const val CANARIAS_START_URL = "https://sede.gobiernodecanarias.org/sede/la_sede"
     private const val CANARIAS_ORIGIN = "https://sede.gobiernodecanarias.org"
@@ -4397,7 +4477,6 @@ object SiteProfileCatalogParser {
     private val CANARIAS_EVIDENCE_URLS = setOf(
         CANARIAS_START_URL,
         "https://sede.gobiernodecanarias.org/sede/tramites/6861",
-        "https://sede.gobiernodecanarias.org/sede/identificacion",
         "https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/miniapplet.js",
         "https://sede.gobiernodecanarias.org/platino/cliente_afirma/mini/js/sfest.base.js",
     )
@@ -4671,6 +4750,8 @@ object SiteProfileCatalogParser {
         "https://tramites.juntaex.es/",
         "https://tramites.juntaex.es/sta/",
         "https://tramites.juntaex.es/sta/CarpetaPublic/?APP_CODE=STA&PAGE_CODE=PTS2_HOME",
+        "https://tramites.juntaex.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME",
+        "https://tramites.juntaex.es/sta/CarpetaPrivate/Clave2Request?APP_CODE=STA&PAGE_CODE=HOME",
     )
     private val FUERTEVENTURA_CLAVE_EVIDENCE = claveEvidence(
         "2026-08-18",
@@ -4691,7 +4772,10 @@ object SiteProfileCatalogParser {
     private const val ZAMORA_PROFILE_ID = "zamora-sede-public-navigation"
     private const val ZARAGOZA_PROFILE_ID = "zaragoza-sede-public-navigation"
     private const val ISFAS_PROFILE_ID = "isfas-sede-public-navigation"
+    private const val AESA_PROFILE_ID = "aesa-solicitud-general-public"
+    private const val DGSFP_PROFILE_ID = "dgsfp-sede-public-home"
     private const val CSN_PROFILE_ID = "csn-sede-public"
+    private const val PONTEVEDRA_PROFILE_ID = "diputacion-pontevedra-instancia-xenerica"
     private const val CNMV_PROFILE_ID = "cnmv-sede-public-home"
     private const val CSD_PROFILE_ID = "csd-sede-public"
     private const val RED_ES_PROFILE_ID = "red-es-sede-public-navigation"

@@ -117,6 +117,7 @@ class SigningModuleRegistryRegressionTest {
                 DiputacionLleidaCadesAdapter::class.java,
                 DiputacionBadajozCadesAdapter::class.java,
                 CanariasCertificateLoginCadesAdapter::class.java,
+                AemetCertificateLoginCadesAdapter::class.java,
                 UgrCadesDetachedAdapter::class.java,
                 JccmCertificateLoginProbeCadesAdapter::class.java,
                 MitesCertificateLoginCadesAdapter::class.java,

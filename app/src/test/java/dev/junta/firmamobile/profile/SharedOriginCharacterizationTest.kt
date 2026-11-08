@@ -63,6 +63,8 @@ class SharedOriginCharacterizationTest {
                 "imserso-sede-public-navigation",
                 "ine-sede-public-navigation",
                 "sepes-transportes-public-complaints",
+                "diputacion-pontevedra-instancia-xenerica",
+                "aesa-solicitud-general-public", "dgsfp-sede-public-home",
             ),
         ),
         Family(
@@ -108,6 +110,8 @@ class SharedOriginCharacterizationTest {
                 "imserso-sede-public-navigation",
                 "ine-sede-public-navigation",
                 "sepes-transportes-public-complaints",
+                "diputacion-pontevedra-instancia-xenerica",
+                "aesa-solicitud-general-public", "dgsfp-sede-public-home",
             ),
         ),
         Family(
@@ -371,6 +375,7 @@ class SharedOriginCharacterizationTest {
             "lanzarote-sede-public-navigation",
             "isfas-sede-public-navigation",
             "diputacion-palencia-solicitud-general",
+            "diputacion-pontevedra-instancia-xenerica",
             "ctbg-solicitud-informacion", "catastro-solicitudes-genericas",
             "fega-solicitud-general-ofvsg02", "diputacion-caceres-instancia-general",
             "diputacion-guadalajara-instancia-general", "diputacion-cadiz-solicitud-generica",

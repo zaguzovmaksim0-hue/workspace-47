@@ -94,8 +94,12 @@ class LocalCadesDetachedAdapterTest {
         val wrongFormat = request(format = SigningFormat.XADES)
         assertFailure(wrongFormat, SigningErrorCode.UNSUPPORTED_PROTOCOL)
 
-        val wrongSize = request(ByteArray(LocalCadesDetachedAdapter.CHALLENGE_BYTES - 1))
-        assertFailure(wrongSize, SigningErrorCode.PROTOCOL_FAILED)
+        for (size in listOf(
+            LocalCadesDetachedAdapter.CHALLENGE_BYTES - 1,
+            LocalCadesDetachedAdapter.CHALLENGE_BYTES + 1,
+        )) {
+            assertFailure(request(ByteArray(size)), SigningErrorCode.PROTOCOL_FAILED)
+        }
 
         val wrongProperties = request(extraProperties = "mode=explicit")
         assertFailure(wrongProperties, SigningErrorCode.PROTOCOL_FAILED)
@@ -104,6 +108,38 @@ class LocalCadesDetachedAdapterTest {
         val failure = adapter.prepare(missingCertificate, emptyList()) as ProtocolPrepareResult.Failure
         assertTrue(failure.code == SigningErrorCode.UNSUPPORTED_PROTOCOL)
         missingCertificate.close()
+    }
+
+    @Test
+    fun rejectsOtherProfileVersionsWithoutConsumingValidState() = runTest {
+        request().use { owner ->
+            val prepared = adapter.prepare(owner, identity.chain) as ProtocolPrepareResult.Success
+            prepared.preSign.use { preSign ->
+                val original = preSign.withBytesToSign { it.copyOf() }
+                try {
+                    val signed = preSign.withBytesToSign {
+                        JcaLocalSignatureEngine().sign(it, identity, SigningAlgorithm.SHA1_WITH_RSA)
+                    } as LocalSignatureResult.Success
+                    signed.signature.use { local ->
+                        for (version in listOf(1, 3)) {
+                            request(profileVersion = version).use { wrongVersion ->
+                                val prepareFailure = adapter.prepare(wrongVersion, identity.chain)
+                                    as ProtocolPrepareResult.Failure
+                                val completionFailure = adapter.complete(wrongVersion, preSign, local)
+                                    as ProtocolCompletionResult.Failure
+                                assertEquals(SigningErrorCode.UNSUPPORTED_PROTOCOL, prepareFailure.code)
+                                assertEquals(SigningErrorCode.UNSUPPORTED_PROTOCOL, completionFailure.code)
+                                preSign.withBytesToSign { assertArrayEquals(original, it) }
+                            }
+                        }
+                        val completed = adapter.complete(owner, preSign, local) as ProtocolCompletionResult.Success
+                        completed.signature.close()
+                    }
+                } finally {
+                    original.fill(0)
+                }
+            }
+        }
     }
 
     @Test
@@ -183,7 +219,7 @@ class LocalCadesDetachedAdapterTest {
     fun aragonMigrationMatchesLegacySignedBytesAndCompleteCms() = runTest {
         val legacy = LegacyAragonCadesDetachedAdapter(clock)
         val golden = adapterGoldenCases().first { it.name == "Aragon" }
-        request().use { oldOwner ->
+        request(profileVersion = LegacyAragonCadesDetachedAdapter.PROFILE_VERSION).use { oldOwner ->
             request().use { newOwner ->
                 val oldPreSign = (legacy.prepare(oldOwner, identity.chain) as ProtocolPrepareResult.Success).preSign
                 val newPreSign = (adapter.prepare(newOwner, identity.chain) as ProtocolPrepareResult.Success).preSign
@@ -216,9 +252,12 @@ class LocalCadesDetachedAdapterTest {
 
     @Test
     fun aragonMigrationRetainsLegacyOwnerAndConsumptionOrder() = runTest {
-        for (candidate in listOf(LegacyAragonCadesDetachedAdapter(clock), adapter)) {
-            request().use { owner ->
-                request().use { impostor ->
+        for ((candidate, version) in listOf(
+            LegacyAragonCadesDetachedAdapter(clock) to LegacyAragonCadesDetachedAdapter.PROFILE_VERSION,
+            adapter to LocalCadesDetachedAdapter.PROFILE_VERSION,
+        )) {
+            request(profileVersion = version).use { owner ->
+                request(profileVersion = version).use { impostor ->
                     val preSign = (candidate.prepare(owner, identity.chain) as ProtocolPrepareResult.Success).preSign
                     preSign.use { prepared ->
                         val borrowed = prepared.withBytesToSign { it }
@@ -267,6 +306,7 @@ class LocalCadesDetachedAdapterTest {
         extraProperties: String = LocalCadesDetachedAdapter.EXPECTED_EXTRA_PROPERTIES,
         requestId: UUID = UUID.fromString("123e4567-e89b-42d3-a456-426614174000"),
         profileId: String = LocalCadesDetachedAdapter.PROFILE_ID,
+        profileVersion: Int = LocalCadesDetachedAdapter.PROFILE_VERSION,
         origin: String = LocalCadesDetachedAdapter.INITIATOR_ORIGIN,
         algorithm: SigningAlgorithm = SigningAlgorithm.SHA1_WITH_RSA,
         format: SigningFormat = SigningFormat.CADES,
@@ -275,7 +315,7 @@ class LocalCadesDetachedAdapterTest {
         protocolId = LocalCadesDetachedAdapter.ID,
         context = SigningContext(
             profileId = profileId,
-            profileVersion = LocalCadesDetachedAdapter.PROFILE_VERSION,
+            profileVersion = profileVersion,
             origin = URI(origin).let { TrustedOrigin(it.scheme, it.host, 443) },
             navigationId = NavigationId("123e4567-e89b-42d3-a456-426614174001"),
             navigationEpoch = 7,

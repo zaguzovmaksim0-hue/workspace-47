@@ -755,6 +755,7 @@ class WebMessageBridge internal constructor(
         private const val FUERTEVENTURA_PROFILE_ID = "fuerteventura-sede-electronica"
         private const val XUNTA_PROFILE_ID = "xunta-galicia-solicitude-xenerica"
         private const val ACCEDA_PROFILE_ID = "age-acceda"
+        private const val AEMET_PROFILE_ID = "aemet-public-solicitud-navigation"
         private const val CANARIAS_PROFILE_ID = "canarias-sede"
         private const val MINECO_PROFILE_ID = "ministerio-economia-instancia-generica"
         private const val BADAJOZ_PROFILE_ID = "diputacion-badajoz-portal"
@@ -776,6 +777,7 @@ class WebMessageBridge internal constructor(
             granCanaria = profileActive && profileId.value == GRAN_CANARIA_PROFILE_ID,
             fuerteventura = profileActive && profileId.value == FUERTEVENTURA_PROFILE_ID,
             canarias = profileActive && profileId.value == CANARIAS_PROFILE_ID,
+            aemet = profileActive && profileId.value == AEMET_PROFILE_ID,
             mineco = profileActive && profileId.value == MINECO_PROFILE_ID,
             melillaBatch = melillaBatchEnabled && profileId.value != LugoBatchBridgeAdapter.PROFILE_ID && profileId.value != CaibBatchBridgeAdapter.PROFILE_ID,
             lugoBatch = melillaBatchEnabled && profileId.value == LugoBatchBridgeAdapter.PROFILE_ID,

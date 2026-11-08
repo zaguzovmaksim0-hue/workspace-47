@@ -1493,7 +1493,7 @@ class PublicPortalCatalogParserTest {
         assertTrue(metadata.observedMechanisms.isEmpty())
         assertTrue(metadata.observedSignatureFormats.isEmpty())
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
-        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), portal.capabilities)
         assertTrue(portal.signatureFormats.isEmpty())
         assertTrue(portal.isEnabled)
         assertEquals(PortalLaunchTarget(ProfileId("dgsfp-sede-public-home"), URI("https://www.sededgsfp.gob.es/")), repository.resolveLaunch(portal))

@@ -2332,7 +2332,7 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `DGSFP opens only exact public Sede in QA while sensitive capabilities remain fail closed`() {
+    fun `DGSFP opens only exact public Sede in QA with scoped certificate login`() {
         val portalId = PortalId("age-direccion-general-de-seguros-y-fondos-de-pensiones")
         val profileId = ProfileId("dgsfp-sede-public-home")
         val publicHome = java.net.URI("https://www.sededgsfp.gob.es/")
@@ -2341,7 +2341,7 @@ class PortalCatalogRepositoryTest {
         assertEquals(profileId, qaPortal.profileId)
         assertEquals(publicHome, qaPortal.entryUrl)
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(qaPortal))

@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.profile
 
+import dev.junta.firmamobile.signing.LocalCadesDetachedAdapter
 import org.json.JSONObject
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -84,6 +85,7 @@ class SiteProfileCatalogParserTest {
         "diputacion-segovia-registro", "el-hierro-solicitud-general", "la-gomera-instancia-general",
         "zamora-sede-public-navigation", "zaragoza-sede-public-navigation", "el-hierro-sede-public-navigation",
         "la-gomera-sede-public-navigation", "lanzarote-sede-public-navigation", "isfas-sede-public-navigation",
+        "diputacion-pontevedra-instancia-xenerica",
     )
 
     @Test
@@ -731,6 +733,9 @@ class SiteProfileCatalogParserTest {
     @Test
     fun rejectsAnyExpansionOfTheCanariasCertificateLoginProfileContract() {
         val mutations = listOf(
+            "\"profileVersion\": 2" to "\"profileVersion\": 1",
+            "\"profileVersion\": 2" to "\"profileVersion\": 3",
+            "\"reviewedOn\":\"2026-11-08\"" to "\"reviewedOn\":\"2026-08-17\"",
             "\"SHA1_WITH_RSA\"" to "\"SHA256_WITH_RSA\"",
             "\"format\":\"CAdES Detached\"" to "\"format\":\"CAdES\"",
             "referencesDigestMethod\":\"http://www.w3.org/2001/04/xmlenc#sha512" to
@@ -845,6 +850,8 @@ class SiteProfileCatalogParserTest {
             it.profileId == ProfileId("aragon-siraw")
         }
         assertEquals(ProfileId("aragon-siraw"), profile.profileId)
+        assertEquals(2, profile.profileVersion)
+        assertEquals(LocalCadesDetachedAdapter.PROFILE_VERSION, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_E2E, profile.compatibilityStatus)
         assertEquals(ProfileActivation.ENABLED, profile.activation)
         assertEquals(
@@ -1712,30 +1719,30 @@ class SiteProfileCatalogParserTest {
     }
 
     @Test
-    fun `DGSFP public Sede profile is QA only and exposes no sensitive capability`() {
+    fun `DGSFP public Sede profile pins the QA only Clave certificate login`() {
         val profileId = ProfileId("dgsfp-sede-public-home")
         val start = URI("https://www.sededgsfp.gob.es/")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(start, profile.startUrl)
         assertEquals(setOf(ExactOrigin.parse("https://www.sededgsfp.gob.es")), profile.initiatorOrigins)
-        assertTrue(profile.redirectOrigins.isEmpty())
+        assertEquals(setOf(ExactOrigin.parse("https://pasarela.clave.gob.es")), profile.redirectOrigins)
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        assertEquals(HttpMethod.POST, profile.clientAuthPolicy?.requestMethod)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(3, profile.evidence.size)
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(9, profile.evidence.size)
 
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(start))
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
         assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es.evil.example/")))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolveForProfile(profileId, URI("https://www.sededgsfp.gob.es:444/")))
     }
