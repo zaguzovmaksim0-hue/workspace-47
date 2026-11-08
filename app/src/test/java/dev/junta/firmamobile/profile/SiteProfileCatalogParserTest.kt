@@ -36,6 +36,7 @@ class SiteProfileCatalogParserTest {
         "diputacion-segovia-registro", "el-hierro-solicitud-general", "la-gomera-instancia-general",
         "zamora-sede-public-navigation", "zaragoza-sede-public-navigation", "el-hierro-sede-public-navigation",
         "la-gomera-sede-public-navigation", "lanzarote-sede-public-navigation", "isfas-sede-public-navigation",
+        "diputacion-pontevedra-instancia-xenerica",
     )
 
     @Test

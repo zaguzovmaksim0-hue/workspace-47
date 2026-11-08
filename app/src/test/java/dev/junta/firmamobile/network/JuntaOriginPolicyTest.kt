@@ -1052,6 +1052,7 @@ class JuntaOriginPolicyTest {
             ico to "sedeico.gob.es",
             ProfileId("enaire-sede-public") to "enaire.sede.gob.es",
             ProfileId("diputacion-granada-sede-public") to "sede.dipgra.es",
+            ProfileId("diputacion-pontevedra-instancia-xenerica") to "sede.depo.gal",
         ).forEach { (profileId, host) ->
             assertEquals(setOf(host, "pasarela.clave.gob.es"), JuntaOriginPolicy.browserAllowedHosts(profileId))
             assertEquals(

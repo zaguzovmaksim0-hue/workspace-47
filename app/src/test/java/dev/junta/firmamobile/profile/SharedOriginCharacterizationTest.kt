@@ -59,6 +59,7 @@ class SharedOriginCharacterizationTest {
                 "la-gomera-sede-public-navigation",
                 "lanzarote-sede-public-navigation",
                 "isfas-sede-public-navigation",
+                "diputacion-pontevedra-instancia-xenerica",
             ),
         ),
         Family(
@@ -100,6 +101,7 @@ class SharedOriginCharacterizationTest {
                 "la-gomera-sede-public-navigation",
                 "lanzarote-sede-public-navigation",
                 "isfas-sede-public-navigation",
+                "diputacion-pontevedra-instancia-xenerica",
             ),
         ),
         Family(
@@ -363,6 +365,7 @@ class SharedOriginCharacterizationTest {
             "lanzarote-sede-public-navigation",
             "isfas-sede-public-navigation",
             "diputacion-palencia-solicitud-general",
+            "diputacion-pontevedra-instancia-xenerica",
             "ctbg-solicitud-informacion", "catastro-solicitudes-genericas",
             "fega-solicitud-general-ofvsg02", "diputacion-caceres-instancia-general",
             "diputacion-guadalajara-instancia-general", "diputacion-cadiz-solicitud-generica",

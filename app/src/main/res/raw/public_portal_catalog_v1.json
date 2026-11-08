@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "b6875cf013575ac64529a7da2adc96a1c985e72f5472ae88bda4942842e71153",
+  "sourceRevision": "600b075528213a3018b2924a063d493316f5914fb1cd4029dae89db61407f121",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -4817,7 +4817,7 @@
       "governmentLevel": "LOCAL_ADMINISTRATION",
       "regionCode": "ES-GA",
       "territory": "Galicia",
-      "purpose": "Entrada QA-only a la Instancia xenérica 50709505 y navegación same-origin hasta el límite de identificación de la Sede.",
+      "purpose": "Entrada QA-only a la Instancia xenérica 50709505 y acceso de certificado vía Cl@ve, sin firma documental ni registro.",
       "entryUrl": "https://sede.depo.gal/web/public/catalog-detail/50709505",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
@@ -4834,10 +4834,12 @@
         "DP29B",
         "PONTEVEDRA-INSTANCIA-2026-08-20",
         "PONTEVEDRA-LOGIN-2026-08-20",
-        "PONTEVEDRA-FIRMAJS-2026-08-20"
+        "PONTEVEDRA-FIRMAJS-2026-08-20",
+        "PONTEVEDRA-CLAVE-2026-11-08",
+        "PONTEVEDRA-CLAVE-PROVIDER-2026-11-08"
       ],
-      "reviewedOn": "2026-08-20",
-      "limitations": "Perfil QA-only limitado a la ficha pública exacta y navegación same-origin hasta el login. No expone bridge ClienteFirma, no afirma autenticación completada, ABI de firma documental, formato/algoritmo de la presentación, aceptación E2E ni registro final."
+      "reviewedOn": "2026-11-08",
+      "limitations": "Perfil QA-only con ficha pública exacta, login y CLIENT_TLS_AUTH de Cl@ve. No expone bridge ClienteFirma; faltan E2E Android y autenticación completada. No habilita firma documental, presentación ni registro final."
     },
     {
       "portalId": "diputacion-salamanca-sede",

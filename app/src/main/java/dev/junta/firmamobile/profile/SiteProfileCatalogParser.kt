@@ -3125,6 +3125,7 @@ object SiteProfileCatalogParser {
                             GRANADA_PROFILE_ID,
                             ICO_PROFILE_ID,
                             CSN_PROFILE_ID,
+                            PONTEVEDRA_PROFILE_ID,
                             CNMV_PROFILE_ID,
                             CSD_PROFILE_ID,
                             POLICIA_PROFILE_ID,
@@ -3181,6 +3182,7 @@ object SiteProfileCatalogParser {
                             GRANADA_PROFILE_ID,
                             ICO_PROFILE_ID,
                             CADIZ_PROFILE_ID,
+                            PONTEVEDRA_PROFILE_ID,
                             CNMV_PROFILE_ID,
                             CSD_PROFILE_ID,
                             POLICIA_PROFILE_ID,
@@ -4090,6 +4092,22 @@ object SiteProfileCatalogParser {
                 CLAVE_PROVIDER_URL,
             ),
         ),
+        PONTEVEDRA_PROFILE_ID to gestionaClavePin(
+            displayName = "Deputación de Pontevedra — Instancia xenérica",
+            startUrl = "https://sede.depo.gal/web/public/catalog-detail/50709505",
+            evidence = claveEvidence(
+                "2026-08-20",
+                "https://sede.depo.gal/web/public/catalog-detail/50709505",
+                "https://sede.depo.gal/web/private/registry/external-registryinput-new.xhtml" +
+                    "?idbduacproceduretype=50709505&ispresential=0",
+                "https://sede.depo.gal/web/javax.faces.resource/afirma/common-js/firma.js",
+            ) + claveEvidence(
+                "2026-11-07",
+                "https://sede.depo.gal/web/public/login/login.xhtml",
+                "https://sede.depo.gal/web/public/login/redirect-clave.xhtml",
+                CLAVE_PROVIDER_URL,
+            ),
+        ),
         CSN_PROFILE_ID to ClaveDirectPin(
             displayName = "Consejo de Seguridad Nuclear — sede pública",
             startUrl = "https://sede.csn.gob.es/",
@@ -4573,6 +4591,8 @@ object SiteProfileCatalogParser {
         "https://tramites.juntaex.es/",
         "https://tramites.juntaex.es/sta/",
         "https://tramites.juntaex.es/sta/CarpetaPublic/?APP_CODE=STA&PAGE_CODE=PTS2_HOME",
+        "https://tramites.juntaex.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME",
+        "https://tramites.juntaex.es/sta/CarpetaPrivate/Clave2Request?APP_CODE=STA&PAGE_CODE=HOME",
     )
     private val FUERTEVENTURA_CLAVE_EVIDENCE = claveEvidence(
         "2026-08-18",
@@ -4594,6 +4614,7 @@ object SiteProfileCatalogParser {
     private const val ZARAGOZA_PROFILE_ID = "zaragoza-sede-public-navigation"
     private const val ISFAS_PROFILE_ID = "isfas-sede-public-navigation"
     private const val CSN_PROFILE_ID = "csn-sede-public"
+    private const val PONTEVEDRA_PROFILE_ID = "diputacion-pontevedra-instancia-xenerica"
     private const val CNMV_PROFILE_ID = "cnmv-sede-public-home"
     private const val CSD_PROFILE_ID = "csd-sede-public"
     private const val RED_ES_PROFILE_ID = "red-es-sede-public-navigation"
