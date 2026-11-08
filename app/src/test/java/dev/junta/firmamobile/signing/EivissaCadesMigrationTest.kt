@@ -149,6 +149,7 @@ class EivissaCadesMigrationTest {
                             request(
                                 data = ByteArray(20), extra = "mode=explicit\nfilter=nonexpired",
                                 protocol = LocalCadesDetachedAdapter.ID, profile = "aragon-siraw",
+                                version = LocalCadesDetachedAdapter.PROFILE_VERSION,
                                 origin = TrustedOrigin("https", "aplicaciones.aragon.es", 443),
                                 algorithm = SigningAlgorithm.SHA1_WITH_RSA,
                             ).use { foreign ->
