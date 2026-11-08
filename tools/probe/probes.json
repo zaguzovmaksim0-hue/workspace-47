@@ -1,23 +1,46 @@
 [
- {
-  "name": "mites-inicio-25s",
-  "url": "https://sede.mites.gob.es/inicio",
-  "wait": 25000,
-  "cap": 100000,
-  "clicks": []
- },
- {
-  "name": "mites-auth-25s",
-  "url": "https://sede.mites.gob.es/auth",
-  "wait": 25000,
-  "cap": 100000,
-  "clicks": []
- },
- {
-  "name": "mites-root-25s",
-  "url": "https://sede.mites.gob.es/",
-  "wait": 25000,
-  "cap": 100000,
-  "clicks": []
- }
+  {
+    "name": "age-administrador-de-infraestructuras-ferroviarias-adif",
+    "url": "https://sede.adif.gob.es/",
+    "wait": 8000,
+    "clicks": []
+  },
+  {
+    "name": "age-agencia-estatal-de-seguridad-aerea-aesa",
+    "url": "https://sede.seguridadaerea.gob.es/oficina/tramites/altaSolicitud.do?id=4&codArea=SOLGEN",
+    "wait": 8000,
+    "clicks": [
+      "button#botonAccederClave[type=\"button\"]"
+    ]
+  },
+  {
+    "name": "age-direccion-general-de-la-guardia-civil",
+    "url": "https://sede.guardiacivil.gob.es/",
+    "wait": 8000,
+    "clicks": []
+  },
+  {
+    "name": "comunidad-madrid-sede",
+    "url": "https://gestiona.comunidad.madrid/ereg_virtual_presenta/run/j/InicioDistribuidor.icm",
+    "wait": 6000,
+    "clicks": []
+  },
+  {
+    "name": "age-portal-funciona",
+    "url": "https://sede.funciona.gob.es/es/home",
+    "wait": 10000,
+    "clicks": [
+      "dnt-button[title-text=\"Acceder con Autentica\"]"
+    ]
+  },
+  {
+    "name": "age-ministerio-de-trabajo-mites-auth",
+    "url": "https://sede.mites.gob.es/",
+    "wait": 25000,
+    "cap": 150000,
+    "clicks": [
+      "dnt-header-item[routerlink=\"/auth\"]",
+      "[title-text*=\"Cl@ve\"]"
+    ]
+  }
 ]
