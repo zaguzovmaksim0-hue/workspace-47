@@ -54,7 +54,7 @@ class SanidadClientAuthProfileTest {
         assertEquals(
             linkedMapOf(
                 "REDIRECCION" to "RegistroTelematico",
-                "tramiteId" to "TRAM_TARDESCONPLAN",
+                "tramiteId" to "TRAM_TEMPRANAATENCION",
                 "ENTIDAD_ID" to "000",
                 "LANG" to "es",
                 "COUNTRY" to "ES",
@@ -67,7 +67,7 @@ class SanidadClientAuthProfileTest {
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertEquals(4, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-14" })
+        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-11-07" })
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
         assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)

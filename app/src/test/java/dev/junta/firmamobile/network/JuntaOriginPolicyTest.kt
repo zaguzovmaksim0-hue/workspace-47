@@ -124,6 +124,25 @@ class JuntaOriginPolicyTest {
     private val euskadi = ProfileId("euskadi-sede-electronica")
 
     @Test
+    fun ownTlsLoginTargetsRemainOutsideBrowseAndNativeMessageTrust() {
+        val targets = mapOf(
+            "diputacion-huelva-sede-public" to "https://authserver.diphuelva.es",
+            "comunidad-madrid-cuenta-digital-53f1" to "https://gestiona2.comunidad.madrid",
+            "seguridad-social-sede-autofirma" to "https://ipce.seg-social.es",
+        )
+        targets.forEach { (id, target) ->
+            val profileId = ProfileId(id)
+            assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("$target/"), profileId))
+            assertTrue(JuntaOriginPolicy.webMessageOriginRules(profileId).isEmpty())
+            assertNull(JuntaOriginPolicy.signingOriginFor(Uri.parse("$target/"), profileId))
+        }
+        assertEquals(
+            setOf("sede.seg-social.gob.es", "idp.seg-social.es"),
+            JuntaOriginPolicy.browserAllowedHosts(ProfileId("seguridad-social-sede-autofirma")),
+        )
+    }
+
+    @Test
     fun keepsTheCatalogUnionOnlyForGenericNonBrowserResolution() {
         val expectedHosts = setOf(
             "www.juntadeandalucia.es",
@@ -275,6 +294,7 @@ class JuntaOriginPolicyTest {
             "www.sedecatastro.gob.es",
             "www3.sede.fega.gob.es",
             "sede.diphuelva.es",
+            "authserver.diphuelva.es",
             "ov.dipalme.org",
             "sede.dipucr.es",
             "sede.dipucordoba.es",

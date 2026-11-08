@@ -845,14 +845,201 @@ class RealE2eInstrumentedTest {
                 loginLabel = SEDIPUALBA_LOGIN_LABEL_ES,
                 optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_ES,
             )
-            SEDIPUALBA_MALLORCA_PORTAL_ID -> clickSedipualbaServerCertificateOption(
+            SEDIPUALBA_MALLORCA_PORTAL_ID, MALLORCA_INSTITUCIONAL_PORTAL_ID -> clickSedipualbaServerCertificateOption(
                 scenario = scenario,
                 expectedEntryUrl = SEDIPUALBA_MALLORCA_ENTRY_URL,
                 expectedLoginUrl = SEDIPUALBA_MALLORCA_LOGIN_URL,
                 loginLabel = SEDIPUALBA_LOGIN_LABEL_CA,
                 optionLabel = SEDIPUALBA_SSL_OPTION_LABEL_CA,
             )
+            SANIDAD_PORTAL_ID, JAEN_PORTAL_ID -> {
+                val hops = if (portalId == SANIDAD_PORTAL_ID) SANIDAD_LINK_HOPS else JAEN_LINK_HOPS
+                hops.forEach { hop ->
+                    clickExactLabeledAnchor(
+                        scenario = scenario,
+                        expectedCurrentUrl = hop.pageUrl,
+                        expectedLabel = hop.label,
+                        expectedHref = hop.href,
+                        waitForExpectedUrl = true,
+                    )
+                }
+            }
+            ARAGON_TRAMITES_PORTAL_ID -> clickAragonIframeCertificateLogin(scenario)
+            MADRID_CUENTA_DIGITAL_PORTAL_ID -> clickMadridCuentaDigitalCertificateLogin(scenario)
+            HUELVA_PORTAL_ID -> {
+                clickExactLabeledAnchor(
+                    scenario = scenario,
+                    expectedCurrentUrl = HUELVA_INDEX_URL,
+                    expectedLabel = "Identificarse",
+                    expectedHref = GSEDE_AUTHENTICATION_PATH,
+                    waitForExpectedUrl = true,
+                )
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = HUELVA_AUTH_URL,
+                    expectedElementId = null,
+                    expectedLabel = "Acceder",
+                    expectedAriaLabel = null,
+                    expectedOnClick = "login();",
+                    waitForExpectedUrl = true,
+                )
+            }
+            VALLADOLID_PORTAL_ID -> clickExactLabeledAnchor(
+                scenario = scenario,
+                expectedCurrentUrl = VALLADOLID_LOGIN_URL,
+                expectedLabel = "ACCESO CON CERTIFICADO DIGITAL",
+                expectedHref = "/c/portal/cert-login",
+                waitForExpectedUrl = true,
+            )
+            GVA_PORTAL_ID -> clickExactLabeledAnchor(
+                scenario = scenario,
+                expectedCurrentUrl = GVA_LOGIN_URL,
+                expectedLabel = "Acceder con certificado",
+                expectedHref = "javascript:;",
+                waitForExpectedUrl = true,
+            )
+            SEGURIDAD_SOCIAL_PORTAL_ID, IMPORTASS_PORTAL_ID -> {
+                if (portalId == SEGURIDAD_SOCIAL_PORTAL_ID) {
+                    clickExactButton(
+                        scenario = scenario,
+                        expectedCurrentUrl = SEGURIDAD_SOCIAL_ENTRY_URL,
+                        expectedElementId = null,
+                        expectedLabel = "Acceder",
+                        expectedAriaLabel = null,
+                        expectedOnClick = "doLogin();",
+                        expectedType = null,
+                        waitForExpectedUrl = true,
+                    )
+                }
+                // The portal performs its own SAML auto-posts; only the exact IdP choice is clicked.
+                clickExactButton(
+                    scenario = scenario,
+                    expectedCurrentUrl = SEGURIDAD_SOCIAL_IDP_URL,
+                    expectedElementId = "IPCEIdP",
+                    expectedLabel = "DNIe o certificado",
+                    expectedAriaLabel = "Acceder a DNIe o certificado",
+                    expectedOnClick = null,
+                    expectedType = "submit",
+                    waitForExpectedUrl = true,
+                )
+            }
             else -> Unit
+        }
+    }
+
+    private fun clickAragonIframeCertificateLogin(scenario: ActivityScenario<MainActivity>) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        val quotedEntry = JSONObject.quote(ARAGON_TRAMITES_ENTRY_URL)
+        val quotedFrameUrl = JSONObject.quote(ARAGON_IDENTIFICATION_FRAME_URL)
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView").apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      if (location.href !== $quotedEntry) return 0;
+                      const frames = document.querySelectorAll('iframe#mfe_iframe');
+                      if (frames.length === 0) return 0;
+                      if (frames.length !== 1) return 2;
+                      let doc;
+                      try { doc = frames[0].contentDocument; } catch (e) { return 2; }
+                      if (!doc || doc.location.href === 'about:blank') return 0;
+                      if (doc.location.href !== $quotedFrameUrl || doc.location.origin !== location.origin) return 2;
+                      const radios = doc.querySelectorAll('input#identificacion-2[name="identificacion"]' +
+                        '[type="radio"][value="certificado"]');
+                      const labels = doc.querySelectorAll('label[for="identificacion-2"]');
+                      const buttons = Array.from(doc.querySelectorAll('button')).filter(button =>
+                        (button.innerText || '').trim().replace(/\s+/g, ' ') === 'Acceder' &&
+                        button.getAttribute('onclick') === 'identifyByMethod(applicationId, urlRedirect)');
+                      if (radios.length === 0 || labels.length === 0 || buttons.length === 0) return 0;
+                      if (radios.length !== 1 || labels.length !== 1 || buttons.length !== 1) return 2;
+                      if ((labels[0].textContent || '').trim() !== 'Con certificado electrónico') return 2;
+                      if (radios[0].disabled || buttons[0].disabled) return 0;
+                      radios[0].click();
+                      if (!radios[0].checked) return 2;
+                      buttons[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { code ->
+                    clicked = code == "1"
+                    if (code == "2") failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
+    private fun clickMadridCuentaDigitalCertificateLogin(scenario: ActivityScenario<MainActivity>) {
+        val quotedSource = JSONObject.quote(MADRID_CUENTA_DIGITAL_LOGIN_URL)
+        val controls = listOf(
+            "ui-button" to "Acceder a Cuenta Digital",
+            "a.idps__list--link[role=\"link\"][tabindex=\"0\"]" to "Certificado Digital",
+        )
+        for ((selector, label) in controls) {
+            val quotedSelector = JSONObject.quote(selector)
+            val quotedLabel = JSONObject.quote(label)
+            val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+            var clicked = false
+            while (!clicked && SystemClock.elapsedRealtime() < deadline) {
+                if (hasObservedTerminalNavigationFailure()) return
+                val inspected = CountDownLatch(1)
+                var failure: String? = null
+                scenario.onActivity { activity ->
+                    val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                        .apply { isAccessible = true }
+                    val webView = field.get(activity) as? WebView
+                    if (webView == null) {
+                        failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                        inspected.countDown()
+                        return@onActivity
+                    }
+                    webView.evaluateJavascript(
+                        """
+                        (() => {
+                          if (location.href !== $quotedSource && location.href + '/' !== $quotedSource) return 0;
+                          const elements = Array.from(document.querySelectorAll($quotedSelector)).filter(element => {
+                            if (element.localName === 'ui-button') {
+                              return element.xRole === 'link' && element.type === 'link' &&
+                                element.text === $quotedLabel;
+                            }
+                            const texts = element.querySelectorAll('ui-text');
+                            return texts.length === 1 && texts[0].text === $quotedLabel;
+                          });
+                          if (elements.length === 0) return 0;
+                          if (elements.length !== 1) return 2;
+                          elements[0].click();
+                          return 1;
+                        })()
+                        """.trimIndent(),
+                    ) { code ->
+                        clicked = code == "1"
+                        if (code == "2") failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                        inspected.countDown()
+                    }
+                }
+                check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+                check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+                if (!clicked) SystemClock.sleep(RECIPE_POLL_MILLIS)
+            }
+            if (hasObservedTerminalNavigationFailure()) return
+            check(clicked) { "REAL_E2E_RECIPE_TARGET_TIMEOUT" }
         }
     }
 
@@ -1410,7 +1597,9 @@ class RealE2eInstrumentedTest {
                     return@onActivity
                 }
                 val currentUrl = webView.url
-                val comparedUrl = if (matchUrlWithoutQuery) currentUrl?.substringBefore('?') else currentUrl
+                // Tomcat rewrites this login URL on the first visit before the session cookie exists.
+                val withoutSession = currentUrl?.replace(Regex(";jsessionid=[^/?#;]+", RegexOption.IGNORE_CASE), "")
+                val comparedUrl = if (matchUrlWithoutQuery) withoutSession?.substringBefore('?') else withoutSession
                 if (comparedUrl != null && !recipeUrlMatches(comparedUrl, expectedCurrentUrl)) {
                     if (waitForExpectedUrl) {
                         waitingForExpectedUrl = true
@@ -1423,7 +1612,8 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
-                      const documentUrl = $matchUrlWithoutQuery ? location.href.split('?')[0] : location.href;
+                      let documentUrl = location.href.replace(/;jsessionid=[^/?#;]+/i, '');
+                      if ($matchUrlWithoutQuery) documentUrl = documentUrl.split('?')[0];
                       if (documentUrl !== $quotedExpectedUrl &&
                           !(!$quotedExpectedUrl.endsWith('/') && documentUrl === $quotedExpectedUrl + '/') &&
                           !($quotedExpectedUrl.endsWith('/') &&
@@ -2812,6 +3002,68 @@ class RealE2eInstrumentedTest {
         const val SEDIPUALBA_LEON_LOGIN_URL =
             "https://sede.dipuleon.es/carpetaciudadana/login.aspx?returnUrl=" +
                 "https%3a%2f%2fsede.dipuleon.es%2fcarpetaciudadana%2ftramite.aspx%3fidtramite%3d20270"
+        const val SANIDAD_PORTAL_ID = "age-ministerio-de-sanidad"
+        const val ARAGON_TRAMITES_PORTAL_ID = "aragon-tramites-sede"
+        const val MADRID_CUENTA_DIGITAL_PORTAL_ID = "comunidad-madrid-cuenta-digital-carne-joven"
+        const val HUELVA_PORTAL_ID = "diputacion-huelva-portal"
+        const val JAEN_PORTAL_ID = "diputacion-jaen-sede"
+        const val VALLADOLID_PORTAL_ID = "diputacion-valladolid-sede"
+        const val GVA_PORTAL_ID = "gva-sede"
+        const val MALLORCA_INSTITUCIONAL_PORTAL_ID = "mallorca-portal-institucional"
+        const val SEGURIDAD_SOCIAL_PORTAL_ID = "seguridad-social-sede"
+        const val IMPORTASS_PORTAL_ID = "tgss-importass"
+        const val HUELVA_INDEX_URL = "https://sede.diphuelva.es/opencms/sede/elements/secciones/index"
+        const val HUELVA_AUTH_URL =
+            "https://sede.diphuelva.es/opencms/system/modules/gsede/elements/secciones/autenticacion/" +
+            "autenticacion.jsp"
+        const val VALLADOLID_LOGIN_URL = "https://www.sede.diputaciondevalladolid.es/tgauth/login"
+        const val GVA_LOGIN_URL = "https://www.tramita.gva.es/ctt-att-atr/login.html"
+        const val SEGURIDAD_SOCIAL_ENTRY_URL =
+            "https://sede.seg-social.gob.es/wps/portal/sede/sede/Inicio/RegistroElectronicoApod/NREASS_3?" +
+            "changeLanguage=es"
+        const val SEGURIDAD_SOCIAL_IDP_URL = "https://idp.seg-social.es/PGIS/Login"
+        const val ARAGON_TRAMITES_ENTRY_URL = "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion"
+        const val ARAGON_IDENTIFICATION_FRAME_URL =
+            "https://aplicaciones.aragon.es/mfe_core/rest/identification/TTO/" +
+            "aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFsL2lkZW50aWZpY2FjaW9uL2lk" +
+            "ZW50aWZpY2Fkbw=="
+        const val MADRID_CUENTA_DIGITAL_LOGIN_URL = "https://digital.comunidad.madrid/login/"
+        val SANIDAD_LINK_HOPS = listOf(
+            RecipeLinkHop(
+                "https://sede.mscbs.gob.es/",
+                "Registro electrónico",
+                "/registroElectronico/home.htm",
+            ),
+            RecipeLinkHop(
+                "https://sede.mscbs.gob.es/registroElectronico/home.htm",
+                "índice de formularios",
+                "https://sede.mscbs.gob.es/registroElectronico/formularios.htm",
+            ),
+            RecipeLinkHop(
+                "https://sede.mscbs.gob.es/registroElectronico/formularios.htm",
+                "Mejora de la Atencion Temprana",
+                "#TRAM_TEMPRANAATENCION",
+            ),
+            RecipeLinkHop(
+                "https://sede.mscbs.gob.es/registroElectronico/formularios.htm",
+                "Certificado digital",
+                "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
+                "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TEMPRANAATENCION&ENTIDAD_ID=000&LANG=es&COUNTRY=ES",
+            ),
+        )
+        val JAEN_LINK_HOPS = listOf(
+            RecipeLinkHop(
+                "https://sede.dipujaen.es/SolicitudGenerica",
+                "Acceder",
+                "/IniciarSesion",
+            ),
+            RecipeLinkHop(
+                "https://sede.dipujaen.es/IniciarSesion",
+                "Acceder con certificado digital",
+                "/IniciarSesion/Certificado",
+            ),
+        )
+
         const val SEDIPUALBA_MALLORCA_PORTAL_ID = "mallorca-sede-electronica"
         const val SEDIPUALBA_MALLORCA_ENTRY_URL =
             "https://cim.secimallorca.net/segex/tramite.aspx?idtramite=12082"

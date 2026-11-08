@@ -2730,7 +2730,7 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `Madrid Cuenta Digital 53F1 opens exact QA entry while auth and signing stay fail closed`() {
+    fun `Madrid Cuenta Digital 53F1 opens exact QA entry with certificate login and no signing`() {
         val portalId = PortalId("comunidad-madrid-cuenta-digital-carne-joven")
         val profileId = ProfileId("comunidad-madrid-cuenta-digital-53f1")
         val start = java.net.URI("https://digital.comunidad.madrid/ext/53F1")
@@ -2740,7 +2740,7 @@ class PortalCatalogRepositoryTest {
         assertEquals(start, qaPortal.entryUrl)
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
         assertTrue(qaPortal.isEnabled)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(profileId, start), qaRepository.resolveLaunch(qaPortal))
         assertEquals(PortalLaunchTarget(profileId, start), qaRepository.resolveLaunch(profileId, start))

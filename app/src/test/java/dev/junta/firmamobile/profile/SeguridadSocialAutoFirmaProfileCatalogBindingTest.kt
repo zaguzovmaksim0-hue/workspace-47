@@ -9,19 +9,27 @@ import org.junit.Test
 
 class SeguridadSocialAutoFirmaProfileCatalogBindingTest {
     @Test
-    fun qaProfileBindsOnlyPublicEntryAndOwnsNoLocalSigningCapability() {
+    fun qaProfileBindsOnlyCertificateLoginAndOwnsNoLocalSigningCapability() {
         val profile = BuiltInSiteProfiles.qaRegistry.profile(ProfileId(PROFILE_ID))!!
 
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
         assertEquals(URI(START_URL), profile.startUrl)
-        assertEquals(setOf(ExactOrigin.parse(ORIGIN)), profile.initiatorOrigins)
+        assertEquals(
+            setOf(ExactOrigin.parse(ORIGIN), ExactOrigin.parse("https://idp.seg-social.es")), profile.initiatorOrigins,
+        )
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.IN_PLACE_FROM_SOURCE, policy.transitionMode)
+        assertEquals(HttpMethod.POST, policy.requestMethod)
+        assertEquals(setOf(URI("https://idp.seg-social.es/PGIS/Login")), policy.sourceUrls)
+        assertEquals(mapOf("seleccion" to "IPCE"), policy.sourceFixedQueryParameters)
+        assertEquals(setOf(ExactOrigin.parse("https://ipce.seg-social.es")), policy.requestOrigins)
+        assertEquals("/IPCE/Login", policy.requestPath)
         assertFalse(Capability.SIGN in profile.capabilities)
         assertFalse(Capability.AFIRMA_URI in profile.capabilities)
     }

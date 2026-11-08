@@ -126,6 +126,19 @@ class SharedOriginCharacterizationTest {
             redirects = listOf("comunidad-madrid-cuenta-digital-53f1"),
         ),
         Family(
+            "https://gestiona2.comunidad.madrid",
+            initiators = listOf("comunidad-madrid-gestiona2-public-navigation"),
+            requests = listOf("comunidad-madrid-cuenta-digital-53f1"),
+        ),
+        Family(
+            "https://idp.seg-social.es",
+            initiators = listOf("tgss-importass-client-auth", "seguridad-social-sede-autofirma"),
+        ),
+        Family(
+            "https://ipce.seg-social.es",
+            requests = listOf("tgss-importass-client-auth", "seguridad-social-sede-autofirma"),
+        ),
+        Family(
             "https://sede.transportes.gob.es",
             initiators = listOf("transportes-qys-cert-login", "sepes-transportes-public-complaints"),
         ),
@@ -184,7 +197,11 @@ class SharedOriginCharacterizationTest {
             family.owners.forEach { owner ->
                 val id = ProfileId(owner)
                 val profile = BuiltInSiteProfiles.qaRegistry.profile(id)!!
-                val url = if (owner in family.initiators) profile.startUrl else URI("${family.origin}/")
+                val url = if (owner in family.initiators && profile.startUrl.host == origin.host) {
+                    profile.startUrl
+                } else {
+                    URI("${family.origin}/")
+                }
                 val resolved = BuiltInSiteProfiles.qaRegistry.resolveForProfile(id, url)
                 assertNotNull("${family.origin}: $owner", resolved)
                 assertEquals(id, resolved?.profile?.profileId)
@@ -440,7 +457,7 @@ class SharedOriginCharacterizationTest {
     @Test
     fun tlsQueryAndPortMutationsAreRejectedForEverySameOriginProfile() {
         val cases = listOf(
-            Triple("ministerio-sanidad-certificado", "TRAM_TARDESCONPLAN", "TRAM_OTHER"),
+            Triple("ministerio-sanidad-certificado", "TRAM_TEMPRANAATENCION", "TRAM_OTHER"),
             Triple("navarra-sede-registro-general", "\"returnUrl\"", "\"otherUrl\""),
             Triple("menorca-carpeta-ciutadana", "\"URL\"", "\"OTHER\""),
             Triple("la-rioja-oficina-electronica", "\"OFIVIR\"", "\"OTHER\""),
@@ -569,6 +586,7 @@ class SharedOriginCharacterizationTest {
             "https://ovt.gencat.cat" -> "\"BOTH\""
             "https://identificacionssl.sedipualba.es" ->
                 if ("diputacion-leon-sede" in listOf(first, later)) ALL_ROLES else ""
+            "https://gestiona2.comunidad.madrid", "https://idp.seg-social.es", "https://ipce.seg-social.es",
             "https://sede.transportes.gob.es", "https://ws235.juntadeandalucia.es",
             "https://elhierro.sedelectronica.es", "https://lagomera.sedelectronica.es" -> "\"NEITHER\""
             else -> ALL_ROLES

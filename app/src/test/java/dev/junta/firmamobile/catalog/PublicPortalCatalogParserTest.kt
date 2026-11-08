@@ -1768,7 +1768,7 @@ class PublicPortalCatalogParserTest {
         assertTrue(metadata.observedSignatureFormats.isEmpty())
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, portal.supportStatus)
         assertTrue(portal.isEnabled)
-        assertTrue(portal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), portal.capabilities)
         assertTrue(portal.signatureFormats.isEmpty())
         assertEquals(PortalLaunchTarget(ProfileId("comunidad-madrid-cuenta-digital-53f1"), start), repository.resolveLaunch(portal))
     }

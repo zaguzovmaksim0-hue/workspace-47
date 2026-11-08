@@ -4,6 +4,7 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
 import dev.junta.firmamobile.catalog.PortalLaunchTarget
+import dev.junta.firmamobile.catalog.PortalServiceCapability
 import dev.junta.firmamobile.catalog.PortalMechanism
 import dev.junta.firmamobile.catalog.PortalSupportStatus
 import dev.junta.firmamobile.catalog.PublicCatalogStatus
@@ -30,7 +31,7 @@ class HuelvaPublicSedeProfileTest {
     private val startUrl = URI("https://sede.diphuelva.es/")
 
     @Test
-    fun qaProfilePinsOnlyThePublicSedeOriginWithoutSensitiveCapabilities() {
+    fun qaProfilePinsTheLoginTicketWithoutSigningCapabilities() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
         assertEquals(1, profile.profileVersion)
@@ -43,15 +44,18 @@ class HuelvaPublicSedeProfileTest {
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertTrue(profile.operationPolicies.isEmpty())
-        assertTrue(profile.capabilities.isEmpty())
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val policy = checkNotNull(profile.clientAuthPolicy)
+        assertEquals(ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE, policy.transitionMode)
+        assertEquals(setOf(ExactOrigin.parse("https://authserver.diphuelva.es")), policy.requestOrigins)
+        assertEquals(setOf("ticket"), policy.requiredEphemeralQueryParameters)
         assertEquals(setOf("RSA", "EC"), profile.certificateRules.allowedKeyAlgorithms)
-        assertFalse(profile.certificateRules.requireDigitalSignatureKeyUsage)
-        assertEquals(2, profile.evidence.size)
-        assertTrue(profile.evidence.all { it.reviewedOn.toString() == "2026-08-21" })
+        assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
+        assertEquals(4, profile.evidence.size)
+        assertEquals(2, profile.evidence.count { it.reviewedOn.toString() == "2026-11-07" })
 
         assertEquals(profile, BuiltInSiteProfiles.qaRegistry.profile(profileId))
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(startUrl)?.trustMode)
         assertNull(BuiltInSiteProfiles.releaseRegistry.profile(profileId))
         assertNull(BuiltInSiteProfiles.releaseRegistry.resolve(startUrl))
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://www.diphuelva.es/")))
@@ -80,7 +84,7 @@ class HuelvaPublicSedeProfileTest {
         val qaPortal = qa.portals().single { it.portalId == portalId }
         val releasePortal = release.portals().single { it.portalId == portalId }
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, startUrl), qa.resolveLaunch(qaPortal))

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "catalogVersion": 2,
-  "sourceRevision": "3a12741babe512802843ab61a184ed96ed3226e3c10c83512cbf51dd1a7dc805",
+  "sourceRevision": "b6875cf013575ac64529a7da2adc96a1c985e72f5472ae88bda4942842e71153",
   "entries": [
     {
       "portalId": "age-pag-reg",
@@ -2029,7 +2029,7 @@
       "governmentLevel": "STATE",
       "regionCode": "ES",
       "territory": "España",
-      "purpose": "Acceso con certificado mediante TLS cliente al trámite público TRAM_TARDESCONPLAN; no incluye firma documental ni presentación administrativa.",
+      "purpose": "Acceso con certificado mediante TLS cliente al trámite público TRAM_TEMPRANAATENCION; no incluye firma documental ni presentación administrativa.",
       "entryUrl": "https://sede.mscbs.gob.es/",
       "observedMechanisms": [
         "CERTIFICATE_ACCESS",
@@ -4539,7 +4539,7 @@
         "HUELVA-SEDE-2026-08-21"
       ],
       "reviewedOn": "2026-08-21",
-      "limitations": "Implementación QA_ONLY de navegación exacta a la Sede pública. El acceso por certificado es una opción observada, no se modela CLIENT_TLS_AUTH; firma documental, formato, algoritmo, callback y presentación final permanecen NO_VERIFICADO. E2E físico pendiente."
+      "limitations": "Implementación QA_ONLY de navegación exacta a la Sede pública. CLIENT_TLS_AUTH QA_ONLY limita el acceso al salto autenticacion.jsp -> authserver.diphuelva.es con ticket efímero y TTL de 15 segundos. No habilita firma documental ni presentación; E2E Android pendiente."
     },
     {
       "portalId": "diputacion-huesca-portal",
@@ -5210,7 +5210,7 @@
         "LIVE-CUENTA-DIGITAL-53F1-2026-08-19"
       ],
       "reviewedOn": "2026-08-19",
-      "limitations": "Perfil nuevo QA_ONLY limitado a la entrada exacta 53F1 y navegación first-party digital.comunidad.madrid -> gestiona.comunidad.madrid, sin SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH. El certificado vigente usa un salto POST a gestiona2; el helper CLIENT_TLS_AUTH actual reabre targets como GET y por tanto no puede representarlo fielmente. Firma, payload, callback, formato, algoritmo, presentación y aceptación administrativa siguen NO_VERIFICADO."
+      "limitations": "Perfil QA_ONLY limitado a la entrada exacta 53F1 y al contrato CLIENT_TLS_AUTH IN_PLACE_FROM_SOURCE/POST hacia gestiona2, sin SIGN ni SELECT_CERTIFICATE. La fuente seleccion-idp.jsf exige un id efímero de la sesión actual. Firma, payload, callback, formato, algoritmo, presentación y aceptación administrativa siguen NO_VERIFICADO."
     },
     {
       "portalId": "junta-andalucia-carne-joven",

@@ -29,6 +29,74 @@ class ClientAuthNavigationAuthorizerTest {
     )
 
     @Test
+    fun ownTlsPostLoginsKeepTheSelectedSourceMethodEpochAndSingleUseBoundary() {
+        val flows = listOf(
+            Triple(
+                "comunidad-madrid-cuenta-digital-53f1",
+                "https://gestiona.comunidad.madrid/auto_login/seleccion-idp.jsf?id=synthetic-session",
+                "https://gestiona2.comunidad.madrid/auto_certificado/SelCertificado",
+            ),
+            Triple(
+                "seguridad-social-sede-autofirma", "https://idp.seg-social.es/PGIS/Login?seleccion=IPCE",
+                "https://ipce.seg-social.es/IPCE/Login",
+            ),
+            Triple(
+                "tgss-importass-client-auth", "https://idp.seg-social.es/PGIS/Login?seleccion=IPCE",
+                "https://ipce.seg-social.es/IPCE/Login",
+            ),
+        )
+        for ((id, source, target) in flows) {
+            val profile = ProfileId(id)
+            val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            assertNull(fresh.observeTopLevelNavigation(profile, source, target, 20, true))
+            assertNull(fresh.observeTopLevelResourceRequest(profile, source, target, "GET", 20, true))
+            assertNull(fresh.observeTopLevelResourceRequest(profile, source, target, "POST", 20, false))
+            assertNull(fresh.observeTopLevelResourceRequest(profile, "$source&extra=1", target, "POST", 20, true))
+            // The source POST may be observed before its HTML becomes the committed current URL.
+            assertNull(
+                fresh.observeTopLevelResourceRequest(profile, source.substringBefore('?'), source, "POST", 20, true),
+            )
+            fresh.onTopLevelPageStarted(source, 21)
+            val result = fresh.observeTopLevelResourceRequest(
+                profile, source.substringBefore('?'), target, "POST", 21, true,
+            )
+            assertEquals(id, result?.profileId?.value)
+            assertEquals(URI(source), result?.source)
+            assertEquals(URI(target), result?.target)
+            assertNull(fresh.observeTopLevelResourceRequest(profile, source, target, "POST", 21, true))
+
+            val wrongEpoch = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+            wrongEpoch.observeTopLevelResourceRequest(profile, source.substringBefore('?'), source, "POST", 20, true)
+            assertNull(
+                wrongEpoch.observeTopLevelResourceRequest(
+                    profile, source.substringBefore('?'), target, "POST", 22, true,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun huelvaRedirectGrantRequiresTheFreshSourceAndRejectsASecondPageStart() {
+        val profile = ProfileId("diputacion-huelva-sede-public")
+        val home = "https://sede.diphuelva.es/opencms/sede/elements/secciones/index"
+        val source = "https://sede.diphuelva.es/opencms/system/modules/gsede/" +
+            "elements/secciones/autenticacion/autenticacion.jsp"
+        val target = "https://authserver.diphuelva.es/?ticket=synthetic-session"
+        assertNull(authorizer.observeTopLevelNavigation(profile, home, source, 10, true))
+        authorizer.onTopLevelPageStarted(source, 11)
+        assertNull(authorizer.observeTopLevelResourceRequest(profile, source, source, "POST", 11, true))
+        assertEquals(
+            profile,
+            authorizer.observeTopLevelNavigation(profile, source, target, 11, true)?.profileId,
+        )
+        val secondStart = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        secondStart.observeTopLevelNavigation(profile, home, source, 10, true)
+        secondStart.onTopLevelPageStarted(source, 11)
+        secondStart.onTopLevelPageStarted(source, 12)
+        assertNull(secondStart.observeTopLevelNavigation(profile, source, target, 12, true))
+    }
+
+    @Test
     fun exactDirectSourceTransitionProducesOneBoundedAeatTarget() {
         val direct = aeatAuthorizer()
 
@@ -420,7 +488,7 @@ class ClientAuthNavigationAuthorizerTest {
     fun sanidadDirectTransitionRejectsEverySourcePathAndQueryExpansion() {
         val invalidCalls = listOf<Pair<String, String>>(
             SANIDAD_SOURCE.replace("formularios.htm", "home.htm") to SANIDAD_TARGET,
-            SANIDAD_SOURCE to SANIDAD_TARGET.replace("TRAM_TARDESCONPLAN", "TRAM_OTHER"),
+            SANIDAD_SOURCE to SANIDAD_TARGET.replace("TRAM_TEMPRANAATENCION", "TRAM_OTHER"),
             SANIDAD_SOURCE to SANIDAD_TARGET.replace("COUNTRY=ES", "COUNTRY=FR"),
             SANIDAD_SOURCE to SANIDAD_TARGET.replace("LANG=es", "LANG=en"),
             SANIDAD_SOURCE to SANIDAD_TARGET.replace("ENTIDAD_ID=000", "ENTIDAD_ID=001"),
@@ -1843,7 +1911,7 @@ class ClientAuthNavigationAuthorizerTest {
             "https://sede.mscbs.gob.es/registroElectronico/formularios.htm"
         const val SANIDAD_TARGET =
             "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?" +
-                "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&" +
+                "REDIRECCION=RegistroTelematico&tramiteId=TRAM_TEMPRANAATENCION&" +
                 "ENTIDAD_ID=000&LANG=es&COUNTRY=ES"
         const val VALLADOLID_INDEX =
             "https://www.sede.diputaciondevalladolid.es/tgauth/login"

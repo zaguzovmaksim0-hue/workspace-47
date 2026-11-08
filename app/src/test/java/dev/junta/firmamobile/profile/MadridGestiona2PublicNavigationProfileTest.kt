@@ -86,11 +86,17 @@ class MadridGestiona2PublicNavigationProfileTest {
         )
         assertEquals(
             TrustMode.TRUSTED_BROWSE,
-            BuiltInSiteProfiles.qaRegistry.resolve(
+            BuiltInSiteProfiles.qaRegistry.resolveForProfile(
+                ProfileId("comunidad-madrid-gestiona2-public-navigation"),
                 URI("https://gestiona2.comunidad.madrid/gpse_solicitud/index_seleccion.jsf"),
             )?.trustMode,
         )
 
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(
+                URI("https://gestiona2.comunidad.madrid/gpse_solicitud/index_seleccion.jsf"),
+            ),
+        )
         listOf(
             "http://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094",
             "https://gestiona2.comunidad.madrid:8443/gpse_solicitud/accesos.jsf?numref=2094",
@@ -171,6 +177,11 @@ class MadridGestiona2PublicNavigationProfileTest {
         assertNull(release.resolveLaunch(releasePortal))
         assertNull(release.resolveLaunch(profileId, startUrl))
 
+        assertNull(
+            BuiltInSiteProfiles.qaRegistry.resolve(
+                URI("https://gestiona2.comunidad.madrid/gpse_solicitud/index_seleccion.jsf"),
+            ),
+        )
         listOf(
             "http://gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094",
             "https://user@gestiona2.comunidad.madrid/gpse_solicitud/accesos.jsf?numref=2094",

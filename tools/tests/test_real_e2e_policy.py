@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -387,6 +388,124 @@ class RealE2ePolicyTest(unittest.TestCase):
             'clickClaveAfirmaProvider(scenario)',
         ):
             self.assertIn(expected, source)
+
+    def test_own_tls_recipes_only_click_reviewed_login_controls(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        recipe = source.split('private fun applyPortalRecipe(', 1)[1].split(
+            'private fun clickAragonIframeCertificateLogin(', 1
+        )[0]
+        for constant, portal in (
+            ('SANIDAD', 'age-ministerio-de-sanidad'),
+            ('ARAGON_TRAMITES', 'aragon-tramites-sede'),
+            ('MADRID_CUENTA_DIGITAL', 'comunidad-madrid-cuenta-digital-carne-joven'),
+            ('HUELVA', 'diputacion-huelva-portal'),
+            ('JAEN', 'diputacion-jaen-sede'),
+            ('VALLADOLID', 'diputacion-valladolid-sede'),
+            ('GVA', 'gva-sede'),
+            ('MALLORCA_INSTITUCIONAL', 'mallorca-portal-institucional'),
+            ('SEGURIDAD_SOCIAL', 'seguridad-social-sede'),
+            ('IMPORTASS', 'tgss-importass'),
+        ):
+            with self.subTest(portal=portal):
+                self.assertTrue(f'{constant}_PORTAL_ID = "{portal}"' in source, portal)
+                self.assertTrue(f'{constant}_PORTAL_ID' in recipe, portal)
+        for forbidden in ('loadUrl(', '.submit(', 'evaluateJavascript('):
+            self.assertTrue(forbidden not in recipe, forbidden)
+        self.assertIn('expectedOnClick = "login();"', recipe)
+        self.assertIn('expectedElementId = "IPCEIdP"', recipe)
+        self.assertIn('expectedAriaLabel = "Acceder a DNIe o certificado"', recipe)
+        self.assertIn('expectedHref = "javascript:;"', recipe)
+
+    def test_aragon_iframe_login_rejects_ambiguous_or_foreign_controls(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source.split('private fun clickAragonIframeCertificateLogin(', 1)[1].split(
+            'private fun clickMadridCuentaDigitalCertificateLogin(', 1
+        )[0]
+        script = textwrap.dedent(helper.split('"""', 2)[1]).strip()
+        entry = 'https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion'
+        frame = (
+            'https://aplicaciones.aragon.es/mfe_core/rest/identification/TTO/'
+            'aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFs'
+            'L2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw=='
+        )
+        script = script.replace('$quotedEntry', json.dumps(entry)).replace('$quotedFrameUrl', json.dumps(frame))
+        harness = r'''
+            const assert = require('node:assert/strict');
+            const vm = require('node:vm');
+            function run(options = {}) {
+              const clicks = [];
+              const radio = {checked: false, disabled: false, click() {this.checked = true; clicks.push('radio');}};
+              const button = {innerText: 'Acceder', disabled: false,
+                getAttribute: name => name === 'onclick' ? 'identifyByMethod(applicationId, urlRedirect)' : null,
+                click() {clicks.push('login');}};
+              const origin = 'https://aplicaciones.aragon.es';
+              const doc = {location: {href: options.frame || FRAME, origin},
+                querySelectorAll(selector) {
+                  if (selector === 'input#identificacion-2[name="identificacion"][type="radio"][value="certificado"]')
+                    return [radio];
+                  if (selector === 'label[for="identificacion-2"]')
+                    return [{textContent: options.label || 'Con certificado electrónico'}];
+                  if (selector === 'button') return options.duplicate ? [button, button] : [button];
+                  throw Error('Unexpected selector');
+                }};
+              const document = {querySelectorAll(selector) {
+                assert.equal(selector, 'iframe#mfe_iframe');
+                return [{contentDocument: doc}];
+              }};
+              const result = vm.runInNewContext(SCRIPT, {document, location: {href: options.entry || ENTRY, origin}});
+              return {result, clicks};
+            }
+            assert.deepEqual(run(), {result: 1, clicks: ['radio', 'login']});
+            assert.deepEqual(run({duplicate: true}), {result: 2, clicks: []});
+            assert.deepEqual(run({label: 'Enviar solicitud'}), {result: 2, clicks: []});
+            assert.deepEqual(run({frame: 'https://foreign.example/'}), {result: 2, clicks: []});
+            assert.deepEqual(run({entry: 'https://foreign.example/'}), {result: 0, clicks: []});
+        '''
+        harness = f'const SCRIPT = {json.dumps(script)}, ENTRY = {json.dumps(entry)}, FRAME = {json.dumps(frame)};\n' + harness
+        result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_madrid_first_access_matches_stencil_properties_and_rejects_other_cards(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source.split('private fun clickMadridCuentaDigitalCertificateLogin(', 1)[1].split(
+            'private fun waitForBadajozEntryPageReady(', 1
+        )[0]
+        self.assertIn('"ui-button" to "Acceder a Cuenta Digital"', helper)
+        self.assertIn('"a.idps__list--link[role=\\"link\\"][tabindex=\\"0\\"]"', helper)
+        script = textwrap.dedent(helper.split('"""', 2)[1]).strip()
+        source_url = 'https://digital.comunidad.madrid/login/'
+        for selector, label, kind in (
+            ('ui-button', 'Acceder a Cuenta Digital', 'ui-button'),
+            ('a.idps__list--link[role="link"][tabindex="0"]', 'Certificado Digital', 'a'),
+        ):
+            with self.subTest(control=kind):
+                evaluated = script.replace('$quotedSource', json.dumps(source_url)).replace(
+                    '$quotedSelector', json.dumps(selector)
+                ).replace('$quotedLabel', json.dumps(label))
+                harness = r'''
+                    const assert = require('node:assert/strict');
+                    const vm = require('node:vm');
+                    function run({duplicate = false, text = LABEL, role = 'link', href = SOURCE} = {}) {
+                      let clicks = 0;
+                      const element = {localName: KIND, innerText: '', xRole: role, type: 'link', text,
+                        querySelectorAll(selector) {assert.equal(selector, 'ui-text'); return [{text}];},
+                        click() {clicks++;}};
+                      const document = {querySelectorAll(selector) {
+                        assert.equal(selector, SELECTOR);
+                        return duplicate ? [element, element] : [element];
+                      }};
+                      return {result: vm.runInNewContext(SCRIPT, {document, location: {href}}), clicks};
+                    }
+                    assert.deepEqual(run(), {result: 1, clicks: 1});
+                    assert.deepEqual(run({duplicate: true}), {result: 2, clicks: 0});
+                    assert.deepEqual(run({text: 'Cl@ve Permanente'}), {result: 0, clicks: 0});
+                    assert.deepEqual(run({href: 'https://foreign.example/'}), {result: 0, clicks: 0});
+                    if (KIND === 'ui-button') assert.deepEqual(run({role: 'button'}), {result: 0, clicks: 0});
+                '''
+                constants = dict(SCRIPT=evaluated, SELECTOR=selector, LABEL=label, KIND=kind, SOURCE=source_url)
+                program = '\n'.join(f'const {name} = {json.dumps(value)};' for name, value in constants.items())
+                result = subprocess.run(['node', '-e', program + harness], capture_output=True, text=True, check=False)
+                self.assertEqual(0, result.returncode, result.stderr)
 
     def test_malaga_recipe_uses_only_the_reviewed_clave_afirma_client_auth_path(self) -> None:
         source = self.read(INSTRUMENTATION)

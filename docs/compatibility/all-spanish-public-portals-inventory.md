@@ -2754,11 +2754,11 @@ records:
     protocol_family: "CLIENT_TLS_AUTH"
     signature_format: "NO_VERIFICADO"
     signature_algorithm: "NO_VERIFICADO"
-    endpoint: "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES"
+    endpoint: "https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TEMPRANAATENCION&ENTIDAD_ID=000&LANG=es&COUNTRY=ES"
     discovery_state: "REVIEWED"
     inventory_status: "IMPLEMENTED_NOT_E2E"
-    operation_summary: "Acceso con certificado mediante TLS cliente al trámite público TRAM_TARDESCONPLAN; no incluye firma documental ni presentación administrativa."
-    protocol_evidence: "El índice SIGEM público marca TRAM_TARDESCONPLAN activo; form_gen.js construye el endpoint exacto de certificado. Una petición GET sin certificado provoca HelloRequest y CertificateRequest por renegociación TLS 1.2 con lista de emisores no vacía, y termina en HTTP 403."
+    operation_summary: "Acceso con certificado mediante TLS cliente al trámite público TRAM_TEMPRANAATENCION; no incluye firma documental ni presentación administrativa."
+    protocol_evidence: "La revisión pública del 2026-11-07 confirma TRAM_TEMPRANAATENCION activo; form_gen.js construye el endpoint exacto de certificado. Una petición GET sin certificado provoca HelloRequest y CertificateRequest por renegociación TLS 1.2 con lista de emisores no vacía, y termina en HTTP 403."
     client_tls_auth: "SI"
     evidence_ids: ["D11", "P20", "P21", "P22", "P23"]
     reason: "CLIENT_TLS_AUTH implementado solo en QA para source, host, ruta y query exactos. El flujo depende de renegociación TLS 1.2 y queda E2E pendiente; no se afirma firma, envío ni aceptación administrativa."
@@ -5415,7 +5415,7 @@ records:
     protocol_evidence: "El portal oficial https://www.diphuelva.es/ enlaza actualmente de forma directa https://sede.diphuelva.es/. La portada de la Sede publica REG. ELECTRÓNICO / INSTANCIA GENÉRICA (IGE_03); su transición pública ticketizada muestra la ficha actual y declara que la presentación electrónica admite certificado digital, DNI electrónico o usuario y clave de la Sede. El deep-link altaSolicitud es dependiente del ticket/sesión y fuera de ese contexto devuelve error, por lo que no se fija como startUrl ni se infiere firma, AutoFirma, callback o presentación final."
     client_tls_auth: "NO_VERIFICADO"
     evidence_ids: ["D06", "DP20A", "HUELVA-SEDE-2026-08-21"]
-    reason: "Implementación QA_ONLY de navegación exacta a la Sede pública. El acceso por certificado es una opción observada, no se modela CLIENT_TLS_AUTH; firma documental, formato, algoritmo, callback y presentación final permanecen NO_VERIFICADO. E2E físico pendiente."
+    reason: "Implementación QA_ONLY de navegación exacta a la Sede pública. CLIENT_TLS_AUTH QA_ONLY limita el acceso al salto autenticacion.jsp -> authserver.diphuelva.es con ticket efímero y TTL de 15 segundos. No habilita firma documental ni presentación; E2E Android pendiente."
     reviewed_at: "2026-08-21"
     next_gate: "Si se amplía el contrato, continuar autenticado solo hasta el primer estado pre-firma observable y detenerse antes de firma criptográfica o presentación final."
 
@@ -6056,12 +6056,12 @@ records:
     discovery_state: "REVIEWED"
     inventory_status: "IMPLEMENTED_NOT_E2E"
     operation_summary: "Solicitud electrónica y obtención de la versión digital del Carné Joven de la Comunidad de Madrid mediante Cuenta Digital."
-    protocol_evidence: "El 2026-08-19 la entrada /ext/53F1 redirigió a /login; el selector vigente ofreció IDentifica, Cl@ve Móvil, Cl@ve Permanente, Certificado Digital y DNIe. La opción de certificado siguió auto_login/seleccion-idp.jsf -> POST gestiona2/auto_certificado/SelCertificado. Sin certificado terminó en respuestaError; con PKCS#12 autorizado y presentado transitoriamente por TLS avanzó a reqAuto.jsf -> RespuestaCertificado.jsf y volvió a Cuenta Digital. El POST mTLS no se modela porque el runtime Android actual solo puede reabrir un target TLS por URL/GET."
+    protocol_evidence: "El 2026-08-19 la entrada /ext/53F1 redirigió a /login; el selector vigente ofreció IDentifica, Cl@ve Móvil, Cl@ve Permanente, Certificado Digital y DNIe. La opción de certificado siguió auto_login/seleccion-idp.jsf -> POST gestiona2/auto_certificado/SelCertificado. Sin certificado terminó en respuestaError; con PKCS#12 autorizado y presentado transitoriamente por TLS avanzó a reqAuto.jsf -> RespuestaCertificado.jsf y volvió a Cuenta Digital. El contrato QA_ONLY revisado el 2026-11-07 conserva el POST a SelCertificado desde seleccion-idp.jsf con id efímero; no acredita E2E Android ni presentación."
     client_tls_auth: "SI"
     evidence_ids: ["P18", "P18A", "P18B", "P18C", "P18D", "P18E", "P18F", "LIVE-CUENTA-DIGITAL-53F1-2026-08-19"]
-    reason: "Perfil nuevo QA_ONLY limitado a la entrada exacta 53F1 y navegación first-party digital.comunidad.madrid -> gestiona.comunidad.madrid, sin SIGN, SELECT_CERTIFICATE ni CLIENT_TLS_AUTH. El certificado vigente usa un salto POST a gestiona2; el helper CLIENT_TLS_AUTH actual reabre targets como GET y por tanto no puede representarlo fielmente. Firma, payload, callback, formato, algoritmo, presentación y aceptación administrativa siguen NO_VERIFICADO."
+    reason: "Perfil QA_ONLY limitado a la entrada exacta 53F1 y al contrato CLIENT_TLS_AUTH IN_PLACE_FROM_SOURCE/POST hacia gestiona2, sin SIGN ni SELECT_CERTIFICATE. La fuente seleccion-idp.jsf exige un id efímero de la sesión actual. Firma, payload, callback, formato, algoritmo, presentación y aceptación administrativa siguen NO_VERIFICADO."
     reviewed_at: "2026-08-19"
-    next_gate: "E2E QA del launch/navegación exactos y, por separado, soporte method-preserving para el POST mTLS o autenticación controlada por otro método antes de investigar el flujo 53F1 posterior al login."
+    next_gate: "E2E Android del acceso con certificado preservando POST y la sesión actual; detenerse antes de firma documental o presentación."
 ```
 
 ### 7.7. Carné Joven Europeo de Andalucía — autenticación TLS
@@ -6424,7 +6424,7 @@ Orden de expansión recomendado:
 [P20]: https://sede.mscbs.gob.es/registroElectronico/formularios.htm
 [P21]: https://sede.mscbs.gob.es/SIGEM_RegistroTelematicoWeb/indiceForm
 [P22]: https://sede.mscbs.gob.es/diseno/js/form_gen.js
-[P23]: https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TARDESCONPLAN&ENTIDAD_ID=000&LANG=es&COUNTRY=ES
+[P23]: https://sede.mscbs.gob.es/SIGEM_AutenticacionWeb/validacionCertificado.do?REDIRECCION=RegistroTelematico&tramiteId=TRAM_TEMPRANAATENCION&ENTIDAD_ID=000&LANG=es&COUNTRY=ES
 [P24]: https://sede.tea.hacienda.gob.es/TEA/alegaciones.html
 [P25]: https://www1.tea.hacienda.gob.es/wlpl/TEAC-TRAM/SedeTRAM?tram=0
 [P19A]: https://ws101.juntadeandalucia.es/portalcj/
