@@ -864,6 +864,11 @@ class RealE2eInstrumentedTest {
                 )
                 clickClaveAfirmaProvider(scenario)
             }
+            DGOJ_PORTAL_ID -> {
+                clickDgojLoginSubmit(scenario, secondStep = false)
+                clickDgojLoginSubmit(scenario, secondStep = true)
+                clickClaveAfirmaProvider(scenario)
+            }
             TEA_PORTAL_ID -> clickExactButton(
                 scenario = scenario,
                 expectedCurrentUrl = TEA_SELECTOR_URL,
@@ -1553,6 +1558,43 @@ class RealE2eInstrumentedTest {
             expectedHref = STA_CERTIFICATE_LINK_HREF,
             waitForExpectedUrl = true,
         )
+    }
+
+    private fun clickDgojLoginSubmit(scenario: ActivityScenario<MainActivity>, secondStep: Boolean) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val field = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }
+                val webView = field.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                if (!dgojLoginSourceMatches(webView.url, secondStep)) {
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(dgojLoginSubmitScript(secondStep)) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
     private fun clickBoeCertificateAnchor(scenario: ActivityScenario<MainActivity>) {
@@ -3424,6 +3466,7 @@ class RealE2eInstrumentedTest {
         const val INE_ENTRY_URL = "https://sede.ine.gob.es/es/index.htm"
         const val SEPES_PORTAL_ID = "age-entidad-publica-empresarial-de-suelo-sepes"
         const val SEPES_LOGIN_URL = "https://sede.transportes.gob.es/MFOM.Sisgest/autenticacion.aspx"
+        const val DGOJ_PORTAL_ID = "age-direccion-general-de-ordenacion-del-juego"
         const val TEA_PORTAL_ID = "age-sede-electronica-de-los-tribunales-economico-administrativos-tea"
         const val TEA_SELECTOR_URL =
             "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/" +
@@ -3996,6 +4039,72 @@ class RealE2eInstrumentedTest {
         )
     }
 }
+
+private const val DGOJ_START_URL =
+    "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S"
+private const val DGOJ_PLOGIN_URL = "https://sede.ordenacionjuego.gob.es/tramite/login/plogin.jjsp"
+private const val DGOJ_CLAVE_ACTION = "https://sede.ordenacionjuego.gob.es/tramite/clave/lanzarPeticionClave.jjsp"
+// Defensive helper bound, not a measured server session grammar; see ADR 0012.
+private val DGOJ_PLOGIN_SESSION = Regex(Regex.escape(DGOJ_PLOGIN_URL) + ";DGOJ_ID=[A-Za-z0-9._~-]{1,256}")
+
+internal fun dgojLoginSourceMatches(actualUrl: String?, secondStep: Boolean): Boolean =
+    if (secondStep) actualUrl != null && DGOJ_PLOGIN_SESSION.matches(actualUrl) else actualUrl == DGOJ_START_URL
+
+internal fun dgojLoginSubmitScript(secondStep: Boolean): String = """
+    (() => {
+      if (window.top !== window.self) return 2;
+      if (document.readyState !== 'complete') return 0;
+      const secondStep = $secondStep;
+      const plogin = ${JSONObject.quote(DGOJ_PLOGIN_URL)};
+      const isPlogin = raw => {
+        const prefix = plogin + ';DGOJ_ID=';
+        if (!raw.startsWith(prefix)) return false;
+        const suffix = raw.slice(prefix.length);
+        return suffix.length >= 1 && suffix.length <= 256 && !/[^A-Za-z0-9._~-]/.test(suffix);
+      };
+      if (!(secondStep ? isPlogin(document.location.href) :
+          document.location.href === ${JSONObject.quote(DGOJ_START_URL)})) return 0;
+      const name = secondStep ? 'lanzarPeticionClave' : 'plogin';
+      const forms = Array.from(document.querySelectorAll('form')).filter(
+        form => form.getAttribute('id') === name || form.getAttribute('name') === name
+      );
+      if (forms.length === 0) return 0;
+      if (forms.length !== 1) return 2;
+      const form = forms[0];
+      if (form.getAttribute('id') !== name || form.getAttribute('name') !== name) return 2;
+      const inputId = secondStep ? 'lanzarPeticionClave__' : 'plogin_login_texto_iniciar_sesion';
+      const controls = Array.from(document.querySelectorAll('[id]')).filter(input => input.id === inputId);
+      if (controls.length === 0) return 0;
+      if (controls.length !== 1) return 2;
+      const input = controls[0];
+      if (input.tagName !== 'INPUT' || (input.getAttribute('type') || '').toLowerCase() !== 'submit' ||
+          input.getAttribute('name') !== (secondStep ? ' ' : 'login.texto.iniciar.sesion') ||
+          (input.value || '').trim().replace(/\s+/g, ' ') !== (secondStep ? '' : 'Iniciar sesión') ||
+          input.getAttribute('onclick') !== null || input.disabled || input.matches(':disabled') ||
+          input.form !== form || !form.contains(input) || input.getClientRects().length === 0) return 2;
+      const style = getComputedStyle(input);
+      if (style.display === 'none' || style.visibility !== 'visible') return 2;
+      if ((form.getAttribute('method') || '').toLowerCase() !== 'post' ||
+          (form.getAttribute('target') || '') !== '' ||
+          ['formaction', 'formmethod', 'formtarget'].some(attr => input.hasAttribute(attr)) ||
+          Array.from(document.querySelectorAll('base[target]')).some(
+            base => (base.getAttribute('target') || '') !== ''
+          )) return 2;
+      // DOM action canonicalizes ports and dot segments; compare its raw spelling too.
+      const rawAction = form.getAttribute('action') || '';
+      const action = rawAction.startsWith('/') ? 'https://sede.ordenacionjuego.gob.es' + rawAction : rawAction;
+      if (action !== form.action || !(secondStep ? action === ${JSONObject.quote(DGOJ_CLAVE_ACTION)} :
+          isPlogin(action))) return 2;
+      const csrf = Array.from(form.elements).filter(control => control.getAttribute('name') === 'sedeCsrf');
+      if (csrf.length === 0) return 0;
+      if (csrf.length !== 1 || csrf[0].tagName !== 'INPUT' ||
+          (csrf[0].getAttribute('type') || '').toLowerCase() !== 'hidden' || csrf[0].form !== form ||
+          csrf[0].disabled || csrf[0].matches(':disabled')) return 2;
+      if (csrf[0].value.length === 0) return 0;
+      input.click();
+      return 1;
+    })()
+""".trimIndent()
 
 internal fun boeCertificateAnchorScript(): String = """
     (() => {

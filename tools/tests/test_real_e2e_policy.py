@@ -236,14 +236,14 @@ class RealE2ePolicyTest(unittest.TestCase):
         for private_value in ('rawMessage', 'batchXml', 'requestId', 'documentId', 'extraProperties'):
             self.assertNotIn(private_value, log)
 
-    def test_wave_f_login_recipes_keep_the_reviewed_controls_and_seven_portal_boundary(self) -> None:
+    def test_wave_f_login_recipes_keep_the_reviewed_controls_and_eight_portal_boundary(self) -> None:
         source = self.read(INSTRUMENTATION)
         wave = source.split("BOE_PORTAL_ID ->", 1)[1].split("CSN_PORTAL_ID ->", 1)[0]
-        for portal in ("CMT", "FONDOS", "IMSERSO", "INE", "SEPES", "TEA"):
+        for portal in ("CMT", "FONDOS", "IMSERSO", "INE", "SEPES", "DGOJ", "TEA"):
             self.assertIn(f"{portal}_PORTAL_ID ->", wave)
-        for excluded in ("DGOJ", "ITJ", "OEPM", "CYL", "FORMENTERA", "CNMC"):
+        for excluded in ("ITJ", "OEPM", "CYL", "FORMENTERA", "CNMC"):
             self.assertNotIn(f"{excluded}_PORTAL_ID ->", wave)
-        self.assertEqual(4, wave.count("clickClaveAfirmaProvider(scenario)"))
+        self.assertEqual(5, wave.count("clickClaveAfirmaProvider(scenario)"))
         for pin in ("Consulta de sus trámites", "Acceso con Cl@ve", "VerCargando();",
                     "javascript:__doPostBack('ImageButtonClave2','')", 'expectedFormName = "servForm"',
                     'expectedFormAction = FONDOS_LOGIN_URL', 'INE_ENTRY_URL + "#accFig1254735165102"',
@@ -286,12 +286,160 @@ class RealE2ePolicyTest(unittest.TestCase):
             self.assertNotIn(forbidden, recipe)
         self.assertIn('const val TEA_SELECTOR_URL =', source)
         self.assertIn('SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE', source)
-        self.assertNotIn('DGOJ_PORTAL_ID ->', source)
         fixture = self.read(INSTRUMENTATION.with_name("RealE2eWaveFRecipeInstrumentedTest.kt"))
         self.assertIn('teaCertificateButtonUsesTheExistingExactHelper', fixture)
         self.assertIn('autoriza-C', fixture)
         self.assertIn('data-link=', fixture)
         self.assertIn("addEventListener('click'", fixture)
+
+    def test_dgoj_recipe_uses_two_pinned_login_submits_then_the_existing_afirma_helper(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        recipe = source.split('DGOJ_PORTAL_ID ->', 1)[1].split('TEA_PORTAL_ID ->', 1)[0]
+        self.assertEqual([
+            'clickDgojLoginSubmit(scenario, secondStep = false)',
+            'clickDgojLoginSubmit(scenario, secondStep = true)',
+            'clickClaveAfirmaProvider(scenario)',
+        ], [line.strip() for line in recipe.splitlines() if 'click' in line])
+        helper = source.split('private fun clickDgojLoginSubmit(', 1)[1].split('private fun ', 1)[0]
+        for pin in ('webView.url', 'dgojLoginSourceMatches', 'dgojLoginSubmitScript(secondStep)',
+                    'if (clicked) return', 'UI_TIMEOUT_MILLIS', 'REAL_E2E_RECIPE_TARGET_MISMATCH'):
+            self.assertIn(pin, helper)
+        script = source.split('internal fun dgojLoginSubmitScript(', 1)[1].split('"""', 2)[1]
+        for pin in ('window.top !== window.self', 'document.readyState', 'document.location.href',
+                    'forms.length !== 1', 'controls.length !== 1', "input.form !== form",
+                    '!form.contains(input)', 'getClientRects()', 'sedeCsrf', 'csrf.length !== 1',
+                    "getAttribute('target')", 'base[target]', 'formaction', 'formmethod', 'formtarget',
+                    "getAttribute('onclick') !== null", 'input.click()', 'form.action'):
+            self.assertIn(pin, script)
+        self.assertNotRegex(script, r'location\.href\s*=(?!=)')
+        for forbidden in ('loadUrl(', '.submit(', 'window.open',
+                          'setAttribute(', 'reload(', 'decodeURI', 'new URL(', 'console.', 'JSON.stringify'):
+            self.assertNotIn(forbidden, helper + script)
+        fixture = self.read(INSTRUMENTATION.with_name('RealE2eWaveFRecipeInstrumentedTest.kt'))
+        self.assertIn('dgojLoginSubmitsRequireExactFormsAndReadyCsrf', fixture)
+        self.assertIn('dgojPloginSessionComparisonIsBounded', fixture)
+
+    def test_dgoj_login_scripts_fail_closed_and_wait_for_csrf_without_rewriting_the_document(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        script = textwrap.dedent(source.split('internal fun dgojLoginSubmitScript(', 1)[1].split('"""', 2)[1])
+        start = 'https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S'
+        plogin = 'https://sede.ordenacionjuego.gob.es/tramite/login/plogin.jjsp'
+        action = 'https://sede.ordenacionjuego.gob.es/tramite/clave/lanzarPeticionClave.jjsp'
+        for name, value in (('DGOJ_START_URL', start), ('DGOJ_PLOGIN_URL', plogin), ('DGOJ_CLAVE_ACTION', action)):
+            script = script.replace('${JSONObject.quote(' + name + ')}', json.dumps(value))
+        scripts = [script.replace('$secondStep', value) for value in ('false', 'true')]
+        harness = r'''
+            const assert = require('node:assert/strict');
+            const vm = require('node:vm');
+            function fixture(o = {}) {
+              let clicks = 0, neighborClicks = 0;
+              const second = o.second ?? false;
+              const formName = second ? 'lanzarPeticionClave' : 'plogin';
+              const inputId = second ? 'lanzarPeticionClave__' : 'plogin_login_texto_iniciar_sesion';
+              const element = (tagName, attrs, value = '') => ({tagName, attrs, value,
+                get id() { return attrs.id; }, get disabled() { return !!attrs.disabled; },
+                getAttribute: name => attrs[name] ?? null,
+                hasAttribute: name => Object.hasOwn(attrs, name),
+                matches: selector => {assert.equal(selector, ':disabled'); return !!attrs.disabled;},
+                getClientRects: () => o.hidden ? [] : [{}]});
+              const form = element('FORM', {id: formName, name: formName, method: 'post', ...o.form});
+              const rawAction = o.action ?? (second ? ACTION : PLOGIN + ';DGOJ_ID=synthetic-1');
+              form.attrs.action = rawAction;
+              form.action = o.resolvedAction ?? (rawAction.startsWith('/') ? ORIGIN + rawAction : rawAction);
+              const input = element(o.tag ?? 'INPUT', {id: inputId, type: 'submit',
+                name: second ? ' ' : 'login.texto.iniciar.sesion', ...o.input},
+                o.label ?? (second ? '' : 'Iniciar sesión'));
+              input.form = o.wrongOwner ? {} : form;
+              input.click = () => clicks++;
+              const csrf = element(o.csrfTag ?? 'INPUT', {type: 'hidden', name: 'sedeCsrf', ...o.csrf},
+                o.csrfValue ?? 'synthetic-csrf');
+              csrf.form = o.csrfOwner ? {} : form;
+              form.elements = Array.from({length: o.csrfCount ?? 1}, () => csrf);
+              form.contains = child => child === input && !o.outside;
+              const neighbor = element('FORM', {id: 'iniciar_sesion_form', name: 'iniciar_sesion_form'});
+              const neighborInput = element('INPUT', {id: 'other-login', type: 'submit'}, 'Iniciar sesión');
+              neighborInput.click = () => neighborClicks++;
+              const bases = o.base === undefined ? [] : [element('BASE', {target: o.base})];
+              const document = {readyState: o.ready ?? 'complete',
+                location: {href: o.url ?? (second ? PLOGIN + ';DGOJ_ID=synthetic-1' : START)},
+                querySelectorAll(selector) {
+                  if (selector === 'form') return [...Array.from({length: o.forms ?? 1}, () => form), neighbor];
+                  if (selector === '[id]') return [...Array.from({length: o.controls ?? 1}, () => input), neighborInput];
+                  if (selector === 'base[target]') return bases;
+                  throw new Error('Unexpected selector: ' + selector);
+                }};
+              const window = {}; window.self = window; window.top = o.subframe ? {} : window;
+              const context = vm.createContext({document, window,
+                getComputedStyle: () => ({display: 'inline-block', visibility: 'visible', ...o.style})});
+              const snapshot = () => JSON.stringify([form.attrs, form.action, input.attrs, csrf.attrs,
+                csrf.value, document.location.href]);
+              return {input, csrf, form, document, run() {
+                const before = snapshot();
+                const result = vm.runInContext(SCRIPTS[Number(second)], context);
+                assert.equal(snapshot(), before);
+                assert.equal(neighborClicks, 0);
+                return [result, clicks];
+              }};
+            }
+            const run = o => fixture(o).run();
+            const rejected = o => {const [code, clicks] = run(o); assert.notEqual(code, 1); assert.equal(clicks, 0);};
+            for (const second of [false, true]) {
+              assert.deepEqual(run({second}), [1, 1]);
+              assert.deepEqual(run({second, form: {target: ''}, base: ''}), [1, 1]);
+              assert.deepEqual(run({second, label: second ? ' \t ' : '  Iniciar\n sesión  '}), [1, 1]);
+              assert.deepEqual(run({second, action: second ? ACTION.slice(ORIGIN.length) :
+                PLOGIN.slice(ORIGIN.length) + ';DGOJ_ID=a'}), [1, 1]);
+              for (const options of [{forms: 0}, {forms: 2}, {form: {id: 'wrong'}}, {form: {name: 'wrong'}},
+                {controls: 0}, {controls: 2}, {input: {id: 'wrong'}}, {wrongOwner: true}, {outside: true},
+                {tag: 'BUTTON'}, {input: {type: 'button'}}, {input: {name: 'wrong'}}, {label: 'Cl@ve'},
+                {hidden: true}, {style: {visibility: 'hidden'}}, {style: {display: 'none'}},
+                {input: {disabled: true}}, {input: {onclick: ''}}, {input: {onclick: 'login();'}},
+                {form: {method: 'get'}}, {action: 'https://foreign.example/login'}, {base: '_blank'},
+                ...['_self', '_top', '_parent', '_blank', ' '].map(target => ({form: {target}})),
+                ...['formaction', 'formmethod', 'formtarget'].map(attr => ({input: {[attr]: ''}})),
+                {csrfCount: 0}, {csrfValue: ''}, {csrf: {disabled: true}}, {csrf: {type: 'text'}},
+                {csrfTag: 'SELECT'}, {csrfCount: 2}, {csrfOwner: true}, {subframe: true}, {ready: 'loading'}])
+                rejected({second, ...options});
+              const f = fixture({second, csrfCount: 0});
+              assert.deepEqual(f.run(), [0, 0]);
+              f.form.elements.push(f.csrf); f.csrf.value = '';
+              assert.deepEqual(f.run(), [0, 0]);
+              f.csrf.value = 'synthetic-ready';
+              assert.deepEqual(f.run(), [1, 1]);
+            }
+            for (const url of [START.replace('iA=no', 'iA=si'), START.replace('limpiarBusqueda=S', 'limpiarBusqueda=N'),
+              START.replace('iA=no&', ''), START.replace('&limpiarBusqueda=S', ''),
+              START + '&iA=no', START + '&limpiarBusqueda=S', START + '&extra=1', START + '#x',
+              START + ';DGOJ_ID=a', START.replace('iA=no&limpiarBusqueda=S', 'limpiarBusqueda=S&iA=no')])
+              rejected({url});
+            const invalid = [PLOGIN, PLOGIN + ';DGOJ_ID=', PLOGIN + ';DGOJ_ID=' + 'a'.repeat(257),
+              ...['http://', 'https://user@'].map(s => s + PLOGIN.slice('https://'.length)),
+              ...[':443', ':444', '.evil.example', '.'].map(s => PLOGIN.replace(ORIGIN, ORIGIN + s)),
+              PLOGIN.replace('plogin.jjsp', 'other.jjsp'), PLOGIN.replace('/login/', '/login/../login/'),
+              PLOGIN + '/', PLOGIN + '/other', PLOGIN.replace('/login/', '//login/'),
+              ...['a;DGOJ_ID=b', 'a;x=y', 'a?x=1', 'a#x', 'a/b', 'a\\b', 'a b', 'a\n', 'a\r',
+                'a\t', 'a\u0000', 'é', '%41', 'a%2Fb', 'a%3Bb'].map(s => PLOGIN + ';DGOJ_ID=' + s),
+              PLOGIN + ';jsessionid=a', PLOGIN + ';dgoj_id=a'];
+            for (const url of invalid) {
+              rejected({second: true, url}); rejected({action: url});
+            }
+            for (const value of ['a', 'a'.repeat(256), 'AZaz09._~-']) {
+              assert.deepEqual(run({second: true, url: PLOGIN + ';DGOJ_ID=' + value}), [1, 1]);
+              assert.deepEqual(run({action: PLOGIN + ';DGOJ_ID=' + value}), [1, 1]);
+            }
+            rejected({action: PLOGIN.replace(ORIGIN, ORIGIN + ':443') + ';DGOJ_ID=a',
+              resolvedAction: PLOGIN + ';DGOJ_ID=a'});
+            rejected({second: true, action: ACTION + ';DGOJ_ID=a'});
+            rejected({second: true, url: ACTION + ';DGOJ_ID=a'});
+            rejected({second: true, url: 'https://pasarela.clave.gob.es/Proxy2/ServiceRedirect;DGOJ_ID=a'});
+        '''
+        result = subprocess.run(
+            ['node', '-e', f'const SCRIPTS={json.dumps(scripts)}, START={json.dumps(start)}, '
+             f'PLOGIN={json.dumps(plogin)}, ACTION={json.dumps(action)}, '
+             'ORIGIN="https://sede.ordenacionjuego.gob.es";\n' + harness],
+            capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
 
     def test_tea_exact_button_script_rejects_changed_controls_without_a_network_request(self) -> None:
         source = self.read(INSTRUMENTATION)

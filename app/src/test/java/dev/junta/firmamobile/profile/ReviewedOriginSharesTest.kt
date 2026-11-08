@@ -15,11 +15,31 @@ class ReviewedOriginSharesTest {
     @Test
     fun canonicalCatalogPublishesTypedDirectionalDeclarations() {
         val catalog = SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON)
-        assertEquals(166, catalog.reviewedOriginShares.size)
-        assertEquals(7020, catalog.reviewedOriginShares.sumOf { it.laterOwners.size })
+        assertEquals(168, catalog.reviewedOriginShares.size)
+        assertEquals(7258, catalog.reviewedOriginShares.sumOf { it.laterOwners.size })
         assertTrue(catalog.reviewedOriginShares.all { share ->
             share.firstOwner !in share.laterOwners && share.redirectRoles.isNotEmpty()
         })
+    }
+
+    @Test
+    fun dgojSharesBothClaveOriginsInBothDirectionsWithoutAdmittingAnUnreviewedOwner() {
+        val catalog = SiteProfileCatalogParser.parse(BuiltInSiteProfiles.JSON)
+        val dgoj = ProfileId("dgoj-public-navigation")
+        mapOf("https://pasarela.clave.gob.es" to 60, "https://pasarela-ident.clave.gob.es" to 59)
+            .forEach { (origin, peers) ->
+                val shares = catalog.reviewedOriginShares.filter { it.origin.serialized == origin }
+                val own = shares.single { it.firstOwner == dgoj }
+                assertEquals(peers, own.laterOwners.size)
+                assertEquals(shares.filter { it.firstOwner != dgoj }.map { it.firstOwner }.toSet(), own.laterOwners)
+                assertTrue(shares.filter { it.firstOwner != dgoj }.all { dgoj in it.laterOwners })
+                val declaration = declarations.lines().first {
+                    it.contains("\"origin\":\"$origin\"") && it.contains("\"firstOwner\":\"${dgoj.value}\"")
+                }.trim().removeSuffix(",")
+                val removed = declarations.replaceFirst(declaration, "").replace(Regex(",\\s*]$"), "]")
+                rejects(removed)
+                rejects(declarations.replaceFirst(declaration, declaration.replace(dgoj.value, "boe-sede-public-home")))
+            }
     }
 
     @Test

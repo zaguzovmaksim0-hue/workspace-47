@@ -1234,6 +1234,7 @@ object SiteProfileCatalogParser {
                 returnUrlConstraints = emptySet(),
             ),
         )
+        require(profile.evidence.size == pin.evidence.size)
         require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == pin.evidence)
     }
 
@@ -3160,6 +3161,7 @@ object SiteProfileCatalogParser {
                             IMSERSO_PROFILE_ID,
                             INE_PROFILE_ID,
                             SEPES_TRANSPORTES_PROFILE_ID,
+                            DGOJ_PROFILE_ID,
                         )
                     }
                     AIREF_CLIENT_AUTH_ORIGIN -> owners.all {
@@ -3224,6 +3226,7 @@ object SiteProfileCatalogParser {
                             IMSERSO_PROFILE_ID,
                             INE_PROFILE_ID,
                             SEPES_TRANSPORTES_PROFILE_ID,
+                            DGOJ_PROFILE_ID,
                         )
                     }
                     else -> false
@@ -3517,6 +3520,7 @@ object SiteProfileCatalogParser {
         "https://ws235-3.juntadeandalucia.es/authenticationFacade/4",
         "https://ws235-4.juntadeandalucia.es/authenticationFacade/5",
     ).associateWith { "2026-08-28" }
+    private const val DGOJ_PROFILE_ID = "dgoj-public-navigation"
     private const val FONDOS_PROFILE_ID = "fondos-europeos-sede-public-home"
     private const val IMSERSO_PROFILE_ID = "imserso-sede-public-navigation"
     private const val INE_PROFILE_ID = "ine-sede-public-navigation"
@@ -3537,6 +3541,23 @@ object SiteProfileCatalogParser {
     private const val CLAVE_DIRECT_PROFILE_VERSION = 2
 
     private val CLAVE_DIRECT_PINS = mapOf(
+        DGOJ_PROFILE_ID to gestionaClavePin(
+            displayName = "DGOJ — acceso con Cl@ve",
+            startUrl = "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S",
+            evidence = claveEvidence(
+                "2026-08-24",
+                "https://sede.ordenacionjuego.gob.es/",
+                "https://sede.ordenacionjuego.gob.es/es/firma",
+                "https://sede.ordenacionjuego.gob.es/aviso-navegador-chrome",
+            ) + claveEvidence(
+                "2026-11-08",
+                "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S",
+                "https://sede.ordenacionjuego.gob.es/tramite/clave/lanzarPeticionClave.jjsp",
+                CLAVE_PROVIDER_URL,
+                CLAVE_REDIRECT_URL,
+                CLAVE_IDENT_EVIDENCE_URL,
+            ),
+        ),
         FONDOS_PROFILE_ID to gestionaClavePin(
             displayName = "Fondos Europeos — acceso SIRIOWS (Incentivos Regionales)",
             startUrl = "https://webpub2.igae.hacienda.gob.es/accesoremoto/frmExecAPP.aspx?code=SIRIOWS&ta=ANO",

@@ -1903,28 +1903,57 @@ class PublicPortalCatalogGeneratorTest(unittest.TestCase):
         self.assertEqual("age-direccion-general-de-ordenacion-del-juego", target["portalId"])
         self.assertEqual("dgoj-public-navigation", target["profileId"])
         self.assertEqual("https://sede.ordenacionjuego.gob.es/", target["entryUrl"])
-        self.assertNotIn("launchUrl", target)
-        self.assertEqual("DGOJ_PUBLIC_NAVIGATION_BOUNDARY", target["protocolFamily"])
+        start = "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S"
+        self.assertEqual(start, target["launchUrl"])
+        self.assertEqual("CLIENT_TLS_AUTH", target["protocolFamily"])
         self.assertEqual("E2E_PENDING", target["catalogStatus"])
         self.assertEqual("IMPLEMENTED_NOT_E2E", target["inventoryStatus"])
         self.assertEqual("REVIEWED", target["discoveryState"])
-        self.assertEqual("2026-08-24", target["reviewedOn"])
-        self.assertEqual([], target["observedMechanisms"])
+        self.assertEqual("2026-11-08", target["reviewedOn"])
+        self.assertEqual(["CERTIFICATE_ACCESS", "CLIENT_TLS_AUTH"], target["observedMechanisms"])
         self.assertEqual([], target["observedSignatureFormats"])
+        self.assertIn("DGOJ-LOGIN-PROBE-42471980144", target["evidenceIds"])
+        self.assertIn("login", target["limitations"].lower())
+        self.assertIn("e2e", target["limitations"].lower())
 
         profiles = json.loads(SITE_PROFILES.read_text())["profiles"]
         profile = next(item for item in profiles if item["profileId"] == "dgoj-public-navigation")
         self.assertEqual("VERIFIED_CONTRACT", profile["compatibilityStatus"])
         self.assertEqual("QA_ONLY", profile["activation"])
-        self.assertEqual("https://sede.ordenacionjuego.gob.es/", profile["startUrl"])
+        self.assertEqual(2, profile["profileVersion"])
+        self.assertEqual("DGOJ — acceso con Cl@ve", profile["displayName"])
+        self.assertEqual(start, profile["startUrl"])
         self.assertEqual(["https://sede.ordenacionjuego.gob.es"], profile["initiatorOrigins"])
-        self.assertEqual([], profile["redirectOrigins"])
+        self.assertEqual(["https://pasarela.clave.gob.es"], profile["redirectOrigins"])
         self.assertEqual([], profile["trustedBrowseOrigins"])
         self.assertEqual([], profile["endpoints"])
         self.assertEqual([], profile["operationPolicies"])
-        self.assertEqual([], profile["capabilities"])
-        self.assertIsNone(profile["clientAuthPolicy"])
-        self.assertEqual({"allowedKeyAlgorithms": ["RSA", "EC"], "requireDigitalSignatureKeyUsage": False}, profile["certificateRules"])
+        self.assertEqual(["CLIENT_TLS_AUTH"], profile["capabilities"])
+        self.assertEqual({
+            "transitionMode": "IN_PLACE_FROM_SOURCE", "requestMethod": "POST", "requestPort": 443,
+            "requestOrigins": ["https://pasarela-ident.clave.gob.es"],
+            "requestPath": "/IdP2/AuthenticateCitizen",
+            "sourceUrls": ["https://pasarela.clave.gob.es/Proxy2/ServiceRedirect"],
+            "fixedQueryParameters": {}, "requiredEphemeralQueryParameters": [],
+            "sourceFixedQueryParameters": {}, "sourceRequiredEphemeralQueryParameters": [],
+            "linkedEphemeralQueryParameters": [], "linkedEphemeralQueryParameterMappings": {},
+            "sourceBase64UrlConstraints": {}, "requestContinuationUrlConstraints": [], "returnUrlConstraints": [],
+            "allowEmptyIssuerList": True, "grantTtlSeconds": 15,
+            "requireOfferedKeyTypeMatch": True, "requireTlsClientAuthExtendedKeyUsage": True,
+        }, profile["clientAuthPolicy"])
+        self.assertEqual({"allowedKeyAlgorithms": ["RSA", "EC"], "requireDigitalSignatureKeyUsage": True},
+                         profile["certificateRules"])
+        self.assertEqual({
+            "https://sede.ordenacionjuego.gob.es/": "2026-08-24",
+            "https://sede.ordenacionjuego.gob.es/es/firma": "2026-08-24",
+            "https://sede.ordenacionjuego.gob.es/aviso-navegador-chrome": "2026-08-24",
+            start: "2026-11-08",
+            "https://sede.ordenacionjuego.gob.es/tramite/clave/lanzarPeticionClave.jjsp": "2026-11-08",
+            "https://pasarela.clave.gob.es/Proxy2/ServiceProvider": "2026-11-08",
+            "https://pasarela.clave.gob.es/Proxy2/ServiceRedirect": "2026-11-08",
+            "https://pasarela-ident.clave.gob.es/IdP2/AuthenticateCitizen": "2026-11-08",
+        }, {entry["url"]: entry["reviewedOn"] for entry in profile["evidence"]})
+        self.assertEqual(8, len(profile["evidence"]))
 
     def test_fogasa_reg_age_alias_binds_exact_qa_launch(self) -> None:
         catalog = GENERATOR.generate(SOURCE, SITE_PROFILES)
