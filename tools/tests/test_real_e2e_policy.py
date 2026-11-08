@@ -696,6 +696,98 @@ class RealE2ePolicyTest(unittest.TestCase):
         self.assertIn('expectedSrc = PALENCIA_CLAVE_IMAGE_SRC', source)
         self.assertIn('expectedType = "image"', source)
         self.assertIn('matchUrlWithoutQuery = true', source)
+        self.assertIn('CORDOBA_CLAVE_HREF = ""', source)
+        cordoba = source.split('CORDOBA_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        self.assertIn('expectedHref = CORDOBA_CLAVE_HREF', cordoba)
+        self.assertIn('expectedFormName = "formClave"', cordoba)
+        self.assertIn(
+            'expectedFormAction = "https://apis.dipucordoba.es/apiclave/api/sessions"', cordoba,
+        )
+
+    def test_cordoba_login_click_matches_only_the_observed_anchor_and_form(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source.split('private fun clickExactLabeledAnchor(', 1)[1]
+        script = helper.split('webView.evaluateJavascript(', 1)[1].split('"""', 2)[1]
+        values = {
+            "matchUrlWithoutQuery": False,
+            "quotedExpectedUrl": (
+                "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica"
+            ),
+            "quotedExpectedLabel": "Ir al trámite con Cl@ve",
+            "quotedExpectedOnClick": None,
+            "quotedShadowHost": "",
+            "quotedFormName": "formClave",
+            "quotedFormAction": "https://apis.dipucordoba.es/apiclave/api/sessions",
+        }
+        scripts = {}
+        for name, href in (("old", "www.dipucordoba.es"), ("reviewed", "")):
+            substitutions = dict(values, quotedExpectedHref=href)
+            scripts[name] = re.sub(r'\$(\w+)', lambda match: json.dumps(substitutions[match[1]]), script)
+        harness = r"""
+            const assert = require('node:assert/strict');
+            const scripts = SCRIPTS;
+            // Public attributes shared by probe 42466003392 snapshots 0 and 1.
+            const snapshots = [0, 1].map(step => ({
+              step,
+              url: 'https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica',
+              controls: [
+                {tag: 'a', innerText: 'Ir al trámite con Cl@ve', href: null},
+                {tag: 'a', innerText: 'Ir al trámite Sin identificación', href: null}
+              ],
+              form: {
+                id: 'formClave', name: '', method: 'post', target: null,
+                action: 'https://apis.dipucordoba.es/apiclave/api/sessions'
+              }
+            }));
+            const run = (snapshot, change = {}, script = scripts.reviewed) => {
+              let clicks = 0;
+              const controls = snapshot.controls.map(control => ({...control}));
+              if (change.publicOnly) controls.shift();
+              else Object.assign(controls[0], change.anchor);
+              if (change.duplicateAnchor) controls.push({...controls[0]});
+              const elements = controls.map(control => ({
+                ...control,
+                getAttribute: name => control[name] ?? null,
+                click: () => {
+                  assert.equal(control.innerText, 'Ir al trámite con Cl@ve');
+                  clicks++;
+                }
+              }));
+              const form = {...snapshot.form, ...change.form};
+              form.getAttribute = name => form[name] ?? null;
+              const document = {
+                readyState: 'complete',
+                forms: change.missingForm ? [] : change.duplicateForm ? [form, form] : [form],
+                querySelectorAll: tag => elements.filter(element => element.tag === tag)
+              };
+              const location = {href: change.url || snapshot.url};
+              const code = eval(script);
+              return [code, clicks];
+            };
+            for (const snapshot of snapshots) {
+              assert.deepEqual(run(snapshot, {}, scripts.old), [0, 0]);
+              assert.deepEqual(run(snapshot), [1, 1]);
+              assert.deepEqual(run(snapshot, {anchor: {href: ''}}), [1, 1]);
+              for (const change of [
+                {publicOnly: true}, {anchor: {tag: 'div'}}, {anchor: {innerText: 'Acceso Cl@ve'}},
+                ...['www.dipucordoba.es', '#', 'javascript:void(0)', 'https://foreign.example/login']
+                  .map(href => ({anchor: {href}}))
+              ]) assert.deepEqual(run(snapshot, change), [0, 0]);
+              assert.deepEqual(run(snapshot, {duplicateAnchor: true}), [2, 0]);
+              for (const url of [
+                snapshot.url.replace('sede.dipucordoba.es', 'foreign.example'),
+                snapshot.url + '/unreviewed', snapshot.url + '?unreviewed=1', snapshot.url + '#unreviewed'
+              ]) assert.deepEqual(run(snapshot, {url}), [0, 0]);
+              for (const change of [
+                {missingForm: true}, {duplicateForm: true}, {form: {id: 'unreviewed'}},
+                {form: {action: 'https://foreign.example/apiclave/api/sessions'}},
+                {form: {action: 'https://apis.dipucordoba.es/apiclave/api/applications'}},
+                {form: {method: 'get'}}, {form: {target: '_blank'}}
+              ]) assert.deepEqual(run(snapshot, change), [2, 0]);
+            }
+        """.replace('SCRIPTS', json.dumps(scripts))
+        result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
+        self.assertEqual(0, result.returncode, result.stderr)
 
     def test_exact_login_click_rejects_unreviewed_forms_and_stale_documents(self) -> None:
         source = self.read(INSTRUMENTATION)
