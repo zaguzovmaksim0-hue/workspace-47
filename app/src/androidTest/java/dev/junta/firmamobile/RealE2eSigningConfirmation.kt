@@ -120,7 +120,8 @@ internal object RealE2eSigningConfirmation {
             return finish(if (current is SigningUiState.Idle) SignConfirmationOutcome.IDLE
                 else SignConfirmationOutcome.REQUEST_CHANGED)
         }
-        if (current is SigningUiState.Failed) {
+        // A failure after accepted consent belongs to the terminal-state observer, not to the confirmation probe.
+        if (current is SigningUiState.Failed && !previous.callbackAccepted) {
             return finish(
                 if (current.code == SigningErrorCode.REQUEST_EXPIRED) SignConfirmationOutcome.REQUEST_EXPIRED
                 else SignConfirmationOutcome.FAILED,
