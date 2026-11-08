@@ -719,6 +719,9 @@ class RealE2ePolicyTest(unittest.TestCase):
             "quotedFormName": "formClave",
             "quotedFormAction": "https://apis.dipucordoba.es/apiclave/api/sessions",
             "quotedCssClass": None,
+            "quotedExpectedElementId": None,
+            "requireVisible": False,
+            "requireFormContainment": False,
             "quotedAnchorType": None,
             "quotedAnchorAriaLabel": None,
             "quotedExpectedTitle": None,
@@ -879,6 +882,8 @@ class RealE2ePolicyTest(unittest.TestCase):
             "quotedShadowHost": "",
             "quotedExpectedHref": "#",
             "quotedCssClass": "imagenIdentificarse",
+            "requireVisible": False,
+            "requireFormContainment": True,
         }
         scripts = {}
         for kind, name in (("button", "clickExactButton"), ("anchor", "clickExactLabeledAnchor")):
@@ -887,18 +892,25 @@ class RealE2ePolicyTest(unittest.TestCase):
             script = helper.split('webView.evaluateJavascript(', 1)[1].split('"""', 2)[1]
             substitutions = dict(values, quotedExpectedOnClick="submit();" if kind == "anchor" else None)
             scripts[kind] = re.sub(r'\$(\w+)', lambda match: json.dumps(substitutions[match[1]]), script)
+            if kind == "anchor":
+                substitutions["requireFormContainment"] = False
+                scripts["anchor_legacy"] = re.sub(
+                    r'\$(\w+)', lambda match: json.dumps(substitutions[match[1]]), script,
+                )
         harness = r"""
             const assert = require('node:assert/strict');
-            for (const [kind, script] of Object.entries(SCRIPTS)) {
+            for (const [variant, script] of Object.entries(SCRIPTS)) {
+            const kind = variant.split('_')[0];
             const run = (change = {}) => {
               let clicks = 0;
               const form = {
                 id: 'login', name: 'login', action: 'https://login.example/login/',
+                contains: element => element.form === form,
                 getAttribute: name => name === 'method' ? change.method || 'post' : change.target || null
               };
               if (change.action) form.action = change.action;
               const element = {
-                id: 'clave', value: '', innerText: '', form: change.detached ? {} : form,
+                id: change.id || 'clave', value: '', innerText: '', form: change.detached ? {} : form,
                 classList: {contains: name => name === 'imagenIdentificarse' && !change.wrongClass},
                 getAttribute: name => ({type: 'image', src: 'clave.png',
                   href: '#', onclick: change.onclick || (kind === 'anchor' ? 'submit();' : null),
@@ -928,8 +940,10 @@ class RealE2ePolicyTest(unittest.TestCase):
               {action: 'https://login.example/login/#;jsessionid=SYNTHETIC'},
               {method: 'get'}, {missing: true}, {duplicate: true}, {target: '_blank'}
             ]) assert.deepEqual(run(change), [2, 0]);
+            assert.deepEqual(run({detached: true}), variant === 'anchor_legacy' ? [1, 1] : [2, 0]);
+            assert.deepEqual(run({id: 'other-login'}), [0, 0]);
             if (kind === 'button') for (const change of [
-              {detached: true}, {formaction: '/file'}, {formmethod: 'get'}, {formtarget: '_blank'}
+              {formaction: '/file'}, {formmethod: 'get'}, {formtarget: '_blank'}
             ]) assert.deepEqual(run(change), [2, 0]);
             if (kind === 'anchor') assert.deepEqual(run({wrongClass: true}), [0, 0]);
             assert.deepEqual(run({onclick: 'file();'}), [0, 0]);
@@ -942,6 +956,48 @@ class RealE2ePolicyTest(unittest.TestCase):
             }
             }
         """.replace('SCRIPTS', json.dumps(scripts))
+        result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_exact_anchor_can_require_one_visible_match_in_responsive_layout(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        helper = source.split('private fun clickExactLabeledAnchor(', 1)[1]
+        script = helper.split('webView.evaluateJavascript(', 1)[1].split('"""', 2)[1]
+        values = {
+            "matchUrlWithoutQuery": False, "quotedExpectedUrl": "https://sede.depo.gal/start",
+            "quotedShadowHost": "", "quotedExpectedLabel": "En liña", "quotedExpectedHref": "/login",
+            "quotedExpectedOnClick": None, "quotedCssClass": "rightformbutton",
+            "quotedFormName": None, "quotedFormAction": None, "requireVisible": True,
+            "quotedExpectedElementId": None,
+            "requireFormContainment": False,
+            "quotedAnchorType": None, "quotedAnchorAriaLabel": None, "quotedExpectedTitle": None,
+        }
+        script = re.sub(r'\$(\w+)', lambda match: json.dumps(values[match[1]]), script)
+        harness = r"""
+            const assert = require('node:assert/strict');
+            const run = (copies, change = {}) => {
+              let clicks = 0;
+              const anchors = copies.map(visible => ({
+                innerText: change.label || '  En liña\n ',
+                classList: {contains: name => name === 'rightformbutton' && !change.wrongClass},
+                getAttribute: name => ({href: change.href || '/login', onclick: null}[name] ?? null),
+                getClientRects: () => visible ? [{}] : [],
+                click: () => clicks++
+              }));
+              const document = {querySelectorAll: () => anchors};
+              const location = {href: change.url || 'https://sede.depo.gal/start'};
+              return [eval(SCRIPT), clicks];
+            };
+            assert.deepEqual(run([false, true]), [1, 1]);
+            assert.deepEqual(run([true, false]), [1, 1]);
+            assert.deepEqual(run([true]), [1, 1]);
+            assert.deepEqual(run([true, true]), [2, 0]);
+            assert.deepEqual(run([false, false]), [0, 0]);
+            assert.deepEqual(run([false]), [0, 0]);
+            assert.deepEqual(run([]), [0, 0]);
+            for (const change of [{label: 'Presencial'}, {href: '/file'}, {wrongClass: true},
+              {url: 'https://foreign.example/start'}]) assert.deepEqual(run([false, true], change), [0, 0]);
+        """.replace('SCRIPT', json.dumps(script))
         result = subprocess.run(['node', '-e', harness], capture_output=True, text=True, check=False)
         self.assertEqual(0, result.returncode, result.stderr)
 
@@ -1053,6 +1109,50 @@ class RealE2ePolicyTest(unittest.TestCase):
                 self.assertEqual(15, policy['grantTtlSeconds'])
                 self.assertEqual({}, policy['fixedQueryParameters'])
                 self.assertEqual([], policy['requiredEphemeralQueryParameters'])
+
+    def test_wave_c2_recipes_stop_at_the_reviewed_certificate_login(self) -> None:
+        source = self.read(INSTRUMENTATION)
+        pontevedra = source.split('PONTEVEDRA_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        extremadura = source.split('EXTREMADURA_PORTAL_ID -> {', 1)[1].split('\n            }\n', 1)[0]
+        for expected in ('expectedCurrentUrl = PONTEVEDRA_ENTRY_URL', 'expectedLabel = "En liña"',
+                         'expectedHref = PONTEVEDRA_LOGIN_HREF', 'expectedCssClass = "rightformbutton"',
+                         'requireVisible = true', 'expectedCurrentUrl = PONTEVEDRA_LOGIN_URL',
+                         'expectedLabel = "Certificado dixital ou DNI electrónico"', 'expectedHref = "#"',
+                         'expectedOnClick = PONTEVEDRA_CLAVE_ONCLICK', 'expectedFormName = "formclave"',
+                         'requireFormContainment = true',
+                         'expectedFormAction = PONTEVEDRA_FORM_ACTION'):
+            self.assertIn(expected, pontevedra)
+        for expected in ('expectedCurrentUrl = EXTREMADURA_ANTERIOR_CLAVE_0_URL', 'expectedLabel = "Miespacio"',
+                         'expectedHref = EXTREMADURA_LOGIN_URL', 'expectedCurrentUrl = EXTREMADURA_LOGIN_URL',
+                         'expectedElementId = "link-clave"',
+                         'expectedLabel = "Acceso mediante el sistema CLAVE"', 'expectedHref = EXTREMADURA_CLAVE_HREF'):
+            self.assertIn(expected, extremadura)
+        self.assertNotIn('requireVisible = true', extremadura)
+        for block in (pontevedra, extremadura):
+            self.assertEqual(2, block.count('clickExactLabeledAnchor('))
+            self.assertTrue(block.rstrip().endswith('clickClaveAfirmaProvider(scenario)'))
+            for forbidden in ('loadUrl(', '.submit(', 'evaluateJavascript(', 'sign(', 'Clave PIN', 'Presencial'):
+                self.assertNotIn(forbidden, block)
+        self.assertIn('PONTEVEDRA_PORTAL_ID = "diputacion-pontevedra-sede"', source)
+        self.assertIn("{'formclave:j_idt231':'formclave:j_idt231'},'');return false", source)
+        self.assertIn('EXTREMADURA_PORTAL_ID = "extremadura-tramites"', source)
+        profiles = {p['profileId']: p for p in json.loads(self.read(ROOT / 'config/site_profiles_v1.json'))['profiles']}
+        for profile_id in ('diputacion-pontevedra-instancia-xenerica', 'extremadura-tramites'):
+            profile = profiles[profile_id]
+            self.assertEqual(2, profile['profileVersion'])
+            self.assertEqual('QA_ONLY', profile['activation'])
+            policy = profile['clientAuthPolicy']
+            self.assertEqual('IN_PLACE_FROM_SOURCE', policy['transitionMode'])
+            self.assertEqual('POST', policy['requestMethod'])
+            self.assertEqual(['https://pasarela.clave.gob.es/Proxy2/ServiceRedirect'], policy['sourceUrls'])
+            self.assertEqual(['https://pasarela-ident.clave.gob.es'], policy['requestOrigins'])
+            self.assertEqual('/IdP2/AuthenticateCitizen', policy['requestPath'])
+            self.assertEqual(443, policy['requestPort'])
+            self.assertEqual(15, policy['grantTtlSeconds'])
+        self.assertEqual(['CLIENT_TLS_AUTH'], profiles['diputacion-pontevedra-instancia-xenerica']['capabilities'])
+        self.assertEqual([], profiles['diputacion-pontevedra-instancia-xenerica']['operationPolicies'])
+        entries = {e['portalId']: e for e in json.loads(self.read(CATALOG))['entries']}
+        self.assertEqual(entries['extremadura-sede-anterior']['profileId'], entries['extremadura-tramites']['profileId'])
 
     def test_gestiona_recipe_submits_only_the_reviewed_clave_form(self) -> None:
         source = self.read(INSTRUMENTATION)
