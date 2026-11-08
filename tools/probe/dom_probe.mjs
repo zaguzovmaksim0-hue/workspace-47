@@ -13,7 +13,7 @@ const context = await browser.newContext({
   userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
 });
 // Never reach the certificate step itself: abort every request to the Cl@ve identity endpoint.
-await context.route(/pasarela-ident\.clave\.gob\.es/, route => route.abort());
+await context.route(/pasarela-ident\.clave\.gob\.es|cert\.valid\.aoc\.cat/, route => route.abort());
 const dump = () => {
   const vis = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
   const text = (el) => (el.innerText || el.value || el.getAttribute('aria-label') || el.title || '').trim().replace(/\s+/g, ' ').slice(0, 90);
@@ -63,7 +63,7 @@ await Promise.all(Array.from({ length: 6 }, async () => {
     // A hung page must not cost the whole dump: cap each probe and flush results after every one.
     results[index] = await Promise.race([
       runOne(probe),
-      new Promise(resolve => setTimeout(() => resolve({ name: probe.name, error: 'probe-timeout' }), 90000)),
+      new Promise(resolve => setTimeout(() => resolve({ name: probe.name, error: 'probe-timeout' }), probe.cap ?? 90000)),
     ]);
     fs.writeFileSync('probe-out/dom.json', JSON.stringify(results, null, 1));
     console.log(index, probe.name, results[index].error || 'ok');
