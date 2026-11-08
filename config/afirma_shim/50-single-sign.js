@@ -74,6 +74,11 @@
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }
+    const isExactAemetCall = matchesAemetSign(args, successCallback, errorCallback);
+    if (isExactAemetCall === false) {
+      rejectDirectCall(errorCallback, "INVALID_REQUEST");
+      return true;
+    }
     const isExactCanariasCall = matchesCanariasSign(args, successCallback, errorCallback);
     if (isExactCanariasCall === false) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
@@ -133,7 +138,7 @@
       typeof globalThis.btoa === "function" &&
       base64Pattern.test(dataB64);
     const isJuntaCades =
-      !jccmCompatibilityEnabled && !canariasCompatibilityEnabled &&
+      !jccmCompatibilityEnabled && !canariasCompatibilityEnabled && !aemetCompatibilityEnabled &&
       (args[1] === "SHA1withRSA" || args[1] === "SHA256withRSA") &&
       args[2] === "CAdES" && typeof args[3] === "string" &&
       args[3].length <= maxExtraPropertiesChars;
@@ -147,7 +152,7 @@
           !isExactJccmRegistroCall && !isExactSevillaAtseCall && !isExactAirefCall &&
           !isExactGranCanariaCall && !isExactFuerteventuraCall && !isExactCanariasCall &&
           !isExactMinecoCall && !isExactCdtiCall && !isExactXuntaCall &&
-          !isExactAccedaCall && !isExactBadajozCall &&
+          !isExactAccedaCall && !isExactBadajozCall && !isExactAemetCall &&
           !base64Pattern.test(args[0])) ||
           (isExactUgrLiteralCall && !hasValidUgrDataEncoding) ||
           (isExactCantabriaCall && !hasValidCantabriaDataEncoding) ||
@@ -157,7 +162,7 @@
           !isExactSevillaAtseCall &&
           !isExactAirefCall && !isExactCdtiCall && !isExactPoliciaCall &&
           !isExactGranCanariaCall && !isExactFuerteventuraCall && !isExactCanariasCall && !isExactMinecoCall &&
-          !isExactXuntaCall && !isExactAccedaCall && !isExactBadajozCall)) {
+          !isExactXuntaCall && !isExactAccedaCall && !isExactBadajozCall && !isExactAemetCall)) {
       rejectDirectCall(errorCallback, "INVALID_REQUEST");
       return true;
     }

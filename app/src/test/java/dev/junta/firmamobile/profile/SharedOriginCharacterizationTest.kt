@@ -59,6 +59,7 @@ class SharedOriginCharacterizationTest {
                 "la-gomera-sede-public-navigation",
                 "lanzarote-sede-public-navigation",
                 "isfas-sede-public-navigation",
+                "aesa-solicitud-general-public", "dgsfp-sede-public-home",
             ),
         ),
         Family(
@@ -100,6 +101,7 @@ class SharedOriginCharacterizationTest {
                 "la-gomera-sede-public-navigation",
                 "lanzarote-sede-public-navigation",
                 "isfas-sede-public-navigation",
+                "aesa-solicitud-general-public", "dgsfp-sede-public-home",
             ),
         ),
         Family(

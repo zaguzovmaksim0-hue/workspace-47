@@ -17,7 +17,7 @@ class CanariasCertificateLoginCadesAdapter internal constructor(
         contentBytes = CHALLENGE_BYTES,
         extraProperties = EXPECTED_EXTRA_PROPERTIES,
         safeDescription = SAFE_DESCRIPTION,
-        pageUrl = SIGNING_PAGE_URL,
+        pageUrls = SIGNING_PAGE_URLS,
         revalidatePayloadOnComplete = true,
         contentValidator = ::isExactChallenge,
     ),
@@ -27,10 +27,12 @@ class CanariasCertificateLoginCadesAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("canarias-certificate-login-cades-v1")
         const val PROFILE_ID = "canarias-sede"
-        const val PROFILE_VERSION = 1
+        const val PROFILE_VERSION = 2
         const val INITIATOR_ORIGIN = "https://sede.gobiernodecanarias.org"
         const val PUBLIC_START_URL = "$INITIATOR_ORIGIN/sede/la_sede"
         const val SIGNING_PAGE_URL = "$INITIATOR_ORIGIN/sede/identificacion"
+        const val MOBILE_SIGNING_PAGE_URL = "$INITIATOR_ORIGIN/sede/movil/identificacion"
+        val SIGNING_PAGE_URLS = setOf(SIGNING_PAGE_URL, MOBILE_SIGNING_PAGE_URL)
         const val SERVER_URL = "$INITIATOR_ORIGIN/platino/servlet_afirma/SignatureService"
         const val SAFE_DESCRIPTION =
             "Acceso con certificado a la Sede electrónica del Gobierno de Canarias"

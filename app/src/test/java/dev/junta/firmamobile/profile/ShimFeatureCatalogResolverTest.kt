@@ -29,6 +29,7 @@ class ShimFeatureCatalogResolverTest {
         "gran-canaria-sede-electronica" to ShimFeature.GRAN_CANARIA_SIGN,
         "fuerteventura-sede-electronica" to ShimFeature.FUERTEVENTURA_SIGN,
         "canarias-sede" to ShimFeature.CANARIAS_LOGIN,
+        "aemet-public-solicitud-navigation" to ShimFeature.AEMET_LOGIN,
         "ministerio-economia-instancia-generica" to ShimFeature.MINECO_SIGN,
         "age-acceda" to ShimFeature.ACCEDA_SIGN,
         "diputacion-badajoz-portal" to ShimFeature.BADAJOZ_SIGN,
@@ -55,9 +56,9 @@ class ShimFeatureCatalogResolverTest {
     )
 
     @Test
-    fun closedInventoryMatchesAllTwentyOneLegacyFlags() {
-        assertEquals(21, ShimFeature.entries.size)
-        assertEquals(21, ShimFeature.entries.map { it.moduleId }.toSet().size)
+    fun closedInventoryMatchesAllReviewedFlags() {
+        assertEquals(22, ShimFeature.entries.size)
+        assertEquals(22, ShimFeature.entries.map { it.moduleId }.toSet().size)
         assertEquals(ShimFeature.entries.toSet(), expected.values.toSet())
         ShimFeature.entries.forEach { assertEquals(it, ShimFeature.fromModuleId(it.moduleId)) }
         assertThrows(IllegalArgumentException::class.java) { ShimFeature.fromModuleId("UGR_LOGIN") }
@@ -317,6 +318,7 @@ class ShimFeatureCatalogResolverTest {
         assertEquals(expected.granCanaria, actual.granCanaria)
         assertEquals(expected.fuerteventura, actual.fuerteventura)
         assertEquals(expected.canarias, actual.canarias)
+        assertEquals(expected.aemet, actual.aemet)
         assertEquals(expected.mineco, actual.mineco)
         assertEquals(expected.melillaBatch, actual.melillaBatch)
         assertEquals(expected.lugoBatch, actual.lugoBatch)
@@ -341,6 +343,7 @@ class ShimFeatureCatalogResolverTest {
             ShimFeature.GRAN_CANARIA_SIGN to flags.granCanaria,
             ShimFeature.FUERTEVENTURA_SIGN to flags.fuerteventura,
             ShimFeature.CANARIAS_LOGIN to flags.canarias,
+            ShimFeature.AEMET_LOGIN to flags.aemet,
             ShimFeature.MINECO_SIGN to flags.mineco,
             ShimFeature.ACCEDA_SIGN to flags.acceda,
             ShimFeature.BADAJOZ_SIGN to flags.badajoz,

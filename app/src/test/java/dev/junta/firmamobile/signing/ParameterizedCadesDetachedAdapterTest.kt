@@ -26,7 +26,7 @@ class ParameterizedCadesDetachedAdapterTest {
     )
 
     @Test
-    fun nullPageContractAcceptsAnyPageInPrepareAndComplete() = runBlocking {
+    fun emptyPageSetAcceptsAnyPageInPrepareAndComplete() = runBlocking {
         val adapter = ParameterizedCadesDetachedAdapter(contract, clock, BundledBouncyCastle.provider)
         for (pageUrl in listOf(null, page, "https://example.test/other")) {
             request(pageUrl).use { owner ->
@@ -43,7 +43,7 @@ class ParameterizedCadesDetachedAdapterTest {
     @Test
     fun pinnedPageRejectsMismatchBeforePayloadOrStateConsumption() = runBlocking {
         val adapter = ParameterizedCadesDetachedAdapter(
-            contract.copy(pageUrl = page), clock, BundledBouncyCastle.provider,
+            contract.copy(pageUrls = setOf(page)), clock, BundledBouncyCastle.provider,
         )
         request(page).use { owner ->
             val prepared = (adapter.prepare(owner, identity.chain) as ProtocolPrepareResult.Success).preSign
@@ -215,7 +215,9 @@ class ParameterizedCadesDetachedAdapterTest {
     }
 
     private suspend fun assertRevalidationPolicy(policy: CadesDetachedContract, expected: SigningErrorCode) {
-        val adapter = ParameterizedCadesDetachedAdapter(policy.copy(pageUrl = page), clock, BundledBouncyCastle.provider)
+        val adapter = ParameterizedCadesDetachedAdapter(
+            policy.copy(pageUrls = setOf(page)), clock, BundledBouncyCastle.provider,
+        )
         request(page).use { owner ->
             (adapter.prepare(owner, identity.chain) as ProtocolPrepareResult.Success).preSign.use { prepared ->
                 val borrowed = prepared.withBytesToSign { it }

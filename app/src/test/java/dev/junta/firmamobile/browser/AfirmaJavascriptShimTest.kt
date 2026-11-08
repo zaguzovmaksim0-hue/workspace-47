@@ -53,6 +53,7 @@ class AfirmaJavascriptShimTest {
                 granCanaria = true,
                 fuerteventura = true,
                 canarias = true,
+                aemet = true,
                 mineco = true,
                 melillaBatch = true,
                 lugoBatch = true,

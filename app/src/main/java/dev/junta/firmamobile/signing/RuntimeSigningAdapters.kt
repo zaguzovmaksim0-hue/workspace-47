@@ -31,6 +31,7 @@ internal object RuntimeSigningAdapters {
             DiputacionLleidaCadesAdapter(),
             DiputacionBadajozCadesAdapter(),
             CanariasCertificateLoginCadesAdapter(),
+            AemetCertificateLoginCadesAdapter(),
             UgrCadesDetachedAdapter(),
             JccmCertificateLoginProbeCadesAdapter(),
             MitesCertificateLoginCadesAdapter(),

@@ -105,7 +105,8 @@ internal class LegacyCanariasCertificateLoginCadesAdapter(
     companion object {
         val ID = SigningProtocolId("canarias-certificate-login-cades-v1")
         const val PROFILE_ID = "canarias-sede"
-        const val PROFILE_VERSION = 1
+        // Compare the legacy engine with the migrated profile's current version pin.
+        const val PROFILE_VERSION = 2
         const val INITIATOR_ORIGIN = "https://sede.gobiernodecanarias.org"
         const val PUBLIC_START_URL = "https://sede.gobiernodecanarias.org/sede/la_sede"
         const val SIGNING_PAGE_URL = "https://sede.gobiernodecanarias.org/sede/identificacion"

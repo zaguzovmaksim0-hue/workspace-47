@@ -23,6 +23,7 @@ internal enum class AfirmaJavascriptShimFragment {
     FUERTEVENTURA,
     MINECO,
     CANARIAS,
+    AEMET,
     XUNTA,
     ACCEDA,
     SEVILLA_ATSE,
@@ -141,6 +142,7 @@ internal object AfirmaJavascriptShimAssembler {
             AfirmaJavascriptShimFragment.FUERTEVENTURA to { it.fuerteventura },
             AfirmaJavascriptShimFragment.MINECO to { it.mineco },
             AfirmaJavascriptShimFragment.CANARIAS to { it.canarias },
+            AfirmaJavascriptShimFragment.AEMET to { it.aemet },
             AfirmaJavascriptShimFragment.XUNTA to { it.xuntaGalicia },
             AfirmaJavascriptShimFragment.ACCEDA to { it.acceda },
             AfirmaJavascriptShimFragment.SEVILLA_ATSE to { it.sevillaAtse },
@@ -176,6 +178,7 @@ internal object AfirmaJavascriptShimAssembler {
         "__JFM_GRAN_CANARIA_COMPATIBILITY_ENABLED__"
     private const val FUERTEVENTURA_COMPATIBILITY_PLACEHOLDER =
         "__JFM_FUERTEVENTURA_COMPATIBILITY_ENABLED__"
+    private const val AEMET_COMPATIBILITY_PLACEHOLDER = "__JFM_AEMET_COMPATIBILITY_ENABLED__"
     private const val CANARIAS_COMPATIBILITY_PLACEHOLDER =
         "__JFM_CANARIAS_COMPATIBILITY_ENABLED__"
     private const val MINECO_COMPATIBILITY_PLACEHOLDER =
@@ -213,6 +216,7 @@ internal object AfirmaJavascriptShimAssembler {
             GRAN_CANARIA_COMPATIBILITY_PLACEHOLDER to { it.granCanaria },
             FUERTEVENTURA_COMPATIBILITY_PLACEHOLDER to { it.fuerteventura },
             CANARIAS_COMPATIBILITY_PLACEHOLDER to { it.canarias },
+            AEMET_COMPATIBILITY_PLACEHOLDER to { it.aemet },
             MINECO_COMPATIBILITY_PLACEHOLDER to { it.mineco },
             MELILLA_BATCH_COMPATIBILITY_PLACEHOLDER to { it.melillaBatch },
             LUGO_BATCH_COMPATIBILITY_PLACEHOLDER to { it.lugoBatch },
