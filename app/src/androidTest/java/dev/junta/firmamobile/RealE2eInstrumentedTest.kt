@@ -1612,7 +1612,8 @@ class RealE2eInstrumentedTest {
                 webView.evaluateJavascript(
                     """
                     (() => {
-                      const documentUrl = $matchUrlWithoutQuery ? location.href.split('?')[0] : location.href;
+                      let documentUrl = location.href.replace(/;jsessionid=[^/?#;]+/i, '');
+                      if ($matchUrlWithoutQuery) documentUrl = documentUrl.split('?')[0];
                       if (documentUrl !== $quotedExpectedUrl &&
                           !(!$quotedExpectedUrl.endsWith('/') && documentUrl === $quotedExpectedUrl + '/') &&
                           !($quotedExpectedUrl.endsWith('/') &&
