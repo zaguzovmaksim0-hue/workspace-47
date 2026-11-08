@@ -4092,9 +4092,22 @@ internal fun dgojLoginSubmitScript(secondStep: Boolean): String = """
           Array.from(document.querySelectorAll('base[target]')).some(
             base => (base.getAttribute('target') || '') !== ''
           )) return 2;
-      // DOM action canonicalizes ports and dot segments; compare its raw spelling too.
+      // DOM action canonicalizes ports and dot segments; resolve the raw spelling by hand and require both to agree.
+      // The sede writes page-relative actions (plogin.jjsp;DGOJ_ID=…, ../clave/…).
       const rawAction = form.getAttribute('action') || '';
-      const action = rawAction.startsWith('/') ? 'https://sede.ordenacionjuego.gob.es' + rawAction : rawAction;
+      let action = rawAction;
+      if (rawAction.startsWith('/')) {
+        action = 'https://sede.ordenacionjuego.gob.es' + rawAction;
+      } else if (!/^[a-z][a-z0-9+.-]*:/i.test(rawAction)) {
+        let dir = document.location.href.split(/[?#]/)[0];
+        dir = dir.slice(0, dir.lastIndexOf('/') + 1);
+        action = rawAction;
+        while (action.startsWith('../')) {
+          dir = dir.slice(0, dir.slice(0, -1).lastIndexOf('/') + 1);
+          action = action.slice(3);
+        }
+        action = dir + action;
+      }
       if (action !== form.action || !(secondStep ? action === ${JSONObject.quote(DGOJ_CLAVE_ACTION)} :
           isPlogin(action))) return 2;
       const csrf = Array.from(form.elements).filter(control => control.getAttribute('name') === 'sedeCsrf');
