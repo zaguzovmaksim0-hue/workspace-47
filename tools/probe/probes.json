@@ -1,63 +1,37 @@
 [
   {
-    "name": "mites-area-privada",
+    "name": "mites-dnt-link",
     "url": "https://sede.mites.gob.es/",
     "wait": 25000,
     "cap": 170000,
     "html": [
-      "dnt-header-item[routerlink=\"/auth\"]",
-      "dnt-horizontal-menu-item"
+      "dnt-link[to=\"/auth\"]"
     ],
     "clicks": [
-      "a:text-is(\"Área Privada\")",
+      "dnt-header-item[routerlink=\"/auth\"] dnt-link a",
       "app-login-clave dnt-button[type=\"primary-light\"]"
     ]
   },
   {
-    "name": "mites-header-item",
+    "name": "mites-dnt-link-host",
     "url": "https://sede.mites.gob.es/",
     "wait": 25000,
     "cap": 170000,
     "clicks": [
-      "dnt-header-item[routerlink=\"/auth\"] >> nth=0",
+      "dnt-link[to=\"/auth\"]",
       "app-login-clave dnt-button[type=\"primary-light\"]"
     ]
   },
   {
-    "name": "age-administrador-de-infraestructuras-ferroviarias-adif",
+    "name": "adif-identificarse",
     "url": "https://sede.adif.gob.es/",
     "wait": 10000,
-    "cap": 120000,
+    "cap": 150000,
+    "html": [
+      "button"
+    ],
     "clicks": [
-      "button:text-is(\"Identificarse\")"
+      "button:has-text(\"Identificarse\")"
     ]
-  },
-  {
-    "name": "age-direccion-general-de-seguros-y-fondos-de-pensiones",
-    "url": "https://www.sededgsfp.gob.es/es/paginas/login.aspx",
-    "wait": 8000,
-    "clicks": [
-      "img#imgClave"
-    ]
-  },
-  {
-    "name": "gran-canaria-sede-electronica",
-    "url": "https://sede.grancanaria.com/sede-privado/instancia-general?inicio",
-    "wait": 10000
-  },
-  {
-    "name": "gran-canaria-portal-institucional",
-    "url": "https://cabildo.grancanaria.com/",
-    "wait": 10000
-  },
-  {
-    "name": "age-acceda",
-    "url": "https://sede.administracionespublicas.gob.es/certificado/info/idp/82/ida/0/language/es_ES",
-    "wait": 8000
-  },
-  {
-    "name": "eivissa-portal-institucional",
-    "url": "https://www.conselldeivissa.es/",
-    "wait": 8000
   }
 ]
