@@ -1,45 +1,15 @@
 [
   {
-    "name": "wavef-dgoj-login-after-popup",
-    "url": "https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S",
-    "wait": 8000,
-    "cap": 240000,
-    "clicks": [
-      "form#plogin input#plogin_login_texto_iniciar_sesion[type=\"submit\"]",
-      "input#lanzarPeticionClave__[type=\"submit\"]",
-      "button.idp-button[onclick*=\"selectedIdP('AFIRMA')\"]"
-    ],
+    "name": "waveafail-cordoba-clave",
+    "url": "https://sede.dipucordoba.es/diputacion/tramites/procedimiento/8876/solicitud-generica",
+    "wait": 12000,
+    "cap": 140000,
     "net": true,
     "html": [
-      "h1",
-      "h2",
-      "input#plogin_login_texto_iniciar_sesion",
-      "input#lanzarPeticionClave__"
-    ]
-  },
-  {
-    "name": "wavef-tea-selector-after-popup",
-    "url": "https://sede.tea.hacienda.gob.es/static_files/common/html/selector_acceso/SelectorAccesos.html?rep=S&ref=%2Fwlpl%2FTEAC-TRAM%2FSedeTRAM%3Ftram%3D0&aut=CPE",
-    "wait": 9000,
-    "cap": 150000,
-    "clicks": [
-      "button[type=\"button\"][name^=\"autoriza-\"][data-link]:has-text(\"Certificado o DNI electrónico\")"
+      ".tramitoptions .tipoacceso"
     ],
-    "net": true,
-    "html": [
-      "h1",
-      "h2",
-      "button[type=\"button\"][name^=\"autoriza-\"][data-link]"
-    ]
-  },
-  {
-    "name": "clave-gestiona-segovia",
-    "url": "https://sede.dipsegovia.es/registro",
-    "wait": 6000,
-    "cap": 90000,
-    "net": true,
     "clicks": [
-      "a:has-text(\"Acceso con sistema Cl@ve\")"
+      "a.tipoacceso[href=\"www.dipucordoba.es\"]:has-text(\"Ir al trámite con Cl@ve\")"
     ]
   }
 ]
