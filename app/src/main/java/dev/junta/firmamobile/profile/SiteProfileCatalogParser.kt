@@ -706,6 +706,7 @@ object SiteProfileCatalogParser {
                         JCCM_REGISTRO_PROFILE_ID,
                         BURGOS_PROFILE_ID,
                         HUESCA_PROFILE_ID,
+                        MELILLA_PROFILE_ID,
                         TENERIFE_PROFILE_ID,
                         CAIB_PROFILE_ID,
                         REG_AGE_PROFILE_ID,
@@ -733,7 +734,8 @@ object SiteProfileCatalogParser {
                             p.profileId.value == SORIA_PROFILE_ID ||
                             p.profileId.value == AEAT_MIS_DATOS_PROFILE_ID ||
                             p.profileId.value == BURGOS_PROFILE_ID ||
-                            p.profileId.value == HUESCA_PROFILE_ID
+                            p.profileId.value == HUESCA_PROFILE_ID ||
+                            p.profileId.value == MELILLA_PROFILE_ID
                     )
                 }
                 require(policy.sourceUrls.all { source ->
@@ -1998,8 +2000,13 @@ object SiteProfileCatalogParser {
         require(profile.redirectOrigins.isEmpty())
         require(profile.trustedBrowseOrigins.isEmpty())
         require(profile.endpoints.isEmpty())
-        require(profile.capabilities == setOf(Capability.SIGN))
-        require(profile.clientAuthPolicy == null)
+        require(profile.capabilities == setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH))
+        validateStaCertificateClientAuth(
+            profile,
+            MELILLA_ORIGIN,
+            MELILLA_CLIENT_AUTH_SOURCE_URL,
+            mapOf("APP_CODE" to "STA", "PAGE_CODE" to "PTS2_HOME"),
+        )
         require(profile.certificateRules == CertificateFilterRules(setOf("RSA"), true))
         require(profile.evidence.isNotEmpty())
         require(profile.operationPolicies.keys == setOf(ProtocolOperation.SIGN))
@@ -2399,13 +2406,18 @@ object SiteProfileCatalogParser {
         )
     }
 
-    private fun validateStaCertificateClientAuth(profile: SiteProfile, origin: String, sourceUrl: String) {
+    private fun validateStaCertificateClientAuth(
+        profile: SiteProfile,
+        origin: String,
+        sourceUrl: String,
+        fixedQuery: Map<String, String> = STA_CLIENT_AUTH_FIXED_QUERY,
+    ) {
         val clientAuth = requireNotNull(profile.clientAuthPolicy)
         require(clientAuth.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE)
         require(clientAuth.requestOrigins == setOf(ExactOrigin.parse(origin)))
         require(clientAuth.sourceUrls == setOf(URI(sourceUrl)))
         require(clientAuth.requestPath == STA_CLIENT_AUTH_PATH)
-        require(clientAuth.fixedQueryParameters == STA_CLIENT_AUTH_FIXED_QUERY)
+        require(clientAuth.fixedQueryParameters == fixedQuery)
         require(clientAuth.requiredEphemeralQueryParameters.isEmpty())
         require(clientAuth.sourceFixedQueryParameters.isEmpty())
         require(clientAuth.sourceRequiredEphemeralQueryParameters.isEmpty())
@@ -4933,7 +4945,9 @@ object SiteProfileCatalogParser {
         CLAVE_IDENT_EVIDENCE_URL,
     )
     private const val MELILLA_PROFILE_ID = "melilla-sede"
-    private const val MELILLA_PROFILE_VERSION = 1
+    private const val MELILLA_PROFILE_VERSION = 2
+    private const val MELILLA_CLIENT_AUTH_SOURCE_URL =
+        "https://sede.melilla.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=PTS2_HOME"
     private const val MELILLA_DISPLAY_NAME = "Ciudad Autónoma de Melilla — Sede Electrónica"
     private const val MELILLA_START_URL =
         "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +

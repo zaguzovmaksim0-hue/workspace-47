@@ -297,7 +297,7 @@ class SiteProfileRegistryTest {
 
         val profile = BuiltInSiteProfiles.qaRegistry.profile(profileId)
         assertNotNull(profile)
-        assertEquals(1, profile?.profileVersion)
+        assertEquals(2, profile?.profileVersion)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
         assertEquals(

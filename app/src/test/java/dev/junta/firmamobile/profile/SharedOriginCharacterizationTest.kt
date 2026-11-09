@@ -500,6 +500,7 @@ class SharedOriginCharacterizationTest {
             Triple("la-rioja-oficina-electronica", "https://ias1.larioja.org", "/clientcertSSL/login"),
             Triple("diputacion-burgos-portal", "https://registro.diputaciondeburgos.es", "/sta/CarpetaPrivate/Certificate"),
             Triple("diputacion-huesca-portal", "https://ovc24.dphuesca.es", "/sta/CarpetaPrivate/Certificate"),
+            Triple("melilla-sede", "https://sede.melilla.es", "/sta/CarpetaPrivate/Certificate"),
         )
         expected.forEach { (id, origin, path) ->
             val policy = parse(listOf(profileJson(id))).profiles.single().clientAuthPolicy!!
@@ -534,6 +535,7 @@ class SharedOriginCharacterizationTest {
             Triple("diputacion-soria-sede-client-auth", "\"ssl\"", "\"other\""),
             Triple("diputacion-burgos-portal", "\"PAGE_CODE\":\"HOME\"", "\"PAGE_CODE\":\"OTHER\""),
             Triple("diputacion-huesca-portal", "\"PAGE_CODE\":\"HOME\"", "\"PAGE_CODE\":\"OTHER\""),
+            Triple("melilla-sede", "\"PAGE_CODE\":\"PTS2_HOME\"", "\"PAGE_CODE\":\"OTHER\""),
         )
         cases.forEach { (id, old, new) ->
             val block = profileJson(id)

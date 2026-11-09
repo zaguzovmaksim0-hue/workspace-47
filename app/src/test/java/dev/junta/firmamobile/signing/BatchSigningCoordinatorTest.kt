@@ -358,7 +358,7 @@ class BatchSigningCoordinatorTest {
         protocolId = protocolId,
         context = SigningContext(
             profileId = "melilla-sede",
-            profileVersion = 1,
+            profileVersion = 2,
             origin = MELILLA_ORIGIN,
             navigationId = NavigationId(DOCUMENT_ID.toString()),
             navigationEpoch = NAVIGATION_EPOCH,

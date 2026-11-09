@@ -481,7 +481,7 @@ class SiteProfileCatalogParserTest {
         val profileId = ProfileId("melilla-sede")
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
 
-        assertEquals(1, profile.profileVersion)
+        assertEquals(2, profile.profileVersion)
         assertEquals("Ciudad Autónoma de Melilla — Sede Electrónica", profile.displayName)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile.activation)
@@ -499,8 +499,10 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.redirectOrigins.isEmpty())
         assertTrue(profile.trustedBrowseOrigins.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
-        assertEquals(setOf(Capability.SIGN), profile.capabilities)
-        assertNull(profile.clientAuthPolicy)
+        assertEquals(setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH), profile.capabilities)
+        val clientAuth = checkNotNull(profile.clientAuthPolicy)
+        assertEquals("/sta/CarpetaPrivate/Certificate", clientAuth.requestPath)
+        assertEquals(mapOf("APP_CODE" to "STA", "PAGE_CODE" to "PTS2_HOME"), clientAuth.fixedQueryParameters)
         assertEquals(setOf("RSA"), profile.certificateRules.allowedKeyAlgorithms)
         assertTrue(profile.certificateRules.requireDigitalSignatureKeyUsage)
         assertTrue(profile.evidence.isNotEmpty())

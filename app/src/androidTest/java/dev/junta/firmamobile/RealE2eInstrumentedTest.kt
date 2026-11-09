@@ -260,6 +260,13 @@ class RealE2eInstrumentedTest {
                 expectedIdentifyHref = HUESCA_IDENTIFY_HREF,
                 expectedLoginUrl = HUESCA_LOGIN_URL,
             )
+            MELILLA_PORTAL_ID -> clickStaCertificateLogin(
+                scenario = scenario,
+                expectedEntryUrl = MELILLA_ENTRY_URL,
+                expectedIdentifyHref = MELILLA_LOGIN_URL,
+                expectedLoginUrl = MELILLA_LOGIN_URL,
+                certificateHref = MELILLA_CERTIFICATE_LINK_HREF,
+            )
             BADAJOZ_PORTAL_ID -> {
                 waitForBadajozEntryPageReady(scenario)
                 clickExactButton(
@@ -1548,6 +1555,7 @@ class RealE2eInstrumentedTest {
         expectedEntryUrl: String,
         expectedIdentifyHref: String,
         expectedLoginUrl: String,
+        certificateHref: String = STA_CERTIFICATE_LINK_HREF,
     ) {
         clickExactStaResponsiveIdentifyAnchor(
             scenario = scenario,
@@ -1558,7 +1566,7 @@ class RealE2eInstrumentedTest {
             scenario = scenario,
             expectedCurrentUrl = expectedLoginUrl,
             elementId = STA_CERTIFICATE_LINK_ID,
-            expectedHref = STA_CERTIFICATE_LINK_HREF,
+            expectedHref = certificateHref,
             waitForExpectedUrl = true,
         )
     }
@@ -3559,6 +3567,7 @@ class RealE2eInstrumentedTest {
             // STA batch signature registers the instancia: prove the certificate login only, never file.
             "diputacion-burgos-portal",
             "diputacion-huesca-portal",
+            "melilla-sede",
             // Cl@ve login before a MiniApplet/AutoScript signature that files: prove the login only, never file.
             "airef-instancia-general",
             "jccm-registro-generico",
@@ -3595,6 +3604,13 @@ class RealE2eInstrumentedTest {
         const val HUESCA_IDENTIFY_HREF =
             "https://ovc24.dphuesca.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=HOME"
         const val HUESCA_LOGIN_URL = HUESCA_IDENTIFY_HREF
+        const val MELILLA_PORTAL_ID = "melilla-sede"
+        const val MELILLA_ENTRY_URL =
+            "https://sede.melilla.es/sta/CarpetaPublic/doEvent?" +
+                "APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999"
+        const val MELILLA_LOGIN_URL =
+            "https://sede.melilla.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=PTS2_HOME"
+        const val MELILLA_CERTIFICATE_LINK_HREF = "/sta/CarpetaPrivate/Certificate?APP_CODE=STA&PAGE_CODE=PTS2_HOME"
         const val STA_IDENTIFY_LABEL = "Identificate"
         const val STA_IDENTIFY_ONCLICK =
             "if (jQuery(this).hasClass('disabled')) {return false;} else {;}"
