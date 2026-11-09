@@ -44,8 +44,8 @@ class LugoBatchProtocolAdapterTest {
         assertEquals(1, transport.calls.size)
         val first = transport.calls.single()
         assertEquals(PRE_URL, first.url.toString())
-        assertTrue(first.body.isEmpty())
-        val preFields = queryFields(checkNotNull(first.query))
+        assertEquals(null, first.query)
+        val preFields = queryFields(first.body.decodeToString())
         assertEquals(setOf("xml", "certs"), preFields.keys)
         assertEquals(
             identity.chain.joinToString(";") { Base64.getUrlEncoder().encodeToString(it.encoded) },
@@ -73,7 +73,8 @@ class LugoBatchProtocolAdapterTest {
         }
 
         assertEquals(2, transport.calls.size)
-        val postFields = queryFields(checkNotNull(transport.calls[1].query))
+        assertEquals(null, transport.calls[1].query)
+        val postFields = queryFields(transport.calls[1].body.decodeToString())
         assertEquals(setOf("xml", "certs", "tridata"), postFields.keys)
         assertEquals(preFields.getValue("xml"), postFields.getValue("xml"))
         assertEquals(preFields.getValue("certs"), postFields.getValue("certs"))
