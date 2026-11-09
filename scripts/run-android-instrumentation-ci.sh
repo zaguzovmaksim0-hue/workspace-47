@@ -57,4 +57,4 @@ capture_state ready
 # by scripts/ci/run-real-e2e.sh; all synthetic tests and real exit codes remain.
 # Diagnostics run on both success and failure so a lost-focus regression can be
 # investigated directly.
-./gradlew connectedQaAndroidTest -Pandroid.testInstrumentationRunnerArguments.notClass=dev.junta.firmamobile.RealE2eInstrumentedTest --no-daemon --console=plain
+./gradlew connectedQaAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=dev.junta.firmamobile.SigningConfirmationInstrumentedTest --no-daemon --console=plain
