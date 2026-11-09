@@ -1295,6 +1295,30 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun aragonSsLoginRedirectAuthorizesBalancedLogin2Endpoint() {
+        val aragon = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        aragon.observeTopLevelNavigation(ARAGON_TRAMITES_PROFILE, ARAGON_TRAMITES_INDEX, ARAGON_SSLOGIN_SOURCE, 880, true)
+        aragon.onTopLevelPageStarted(ARAGON_SSLOGIN_SOURCE, 881)
+        val authorized = aragon.observeTopLevelNavigation(
+            ARAGON_TRAMITES_PROFILE,
+            ARAGON_SSLOGIN_SOURCE,
+            ARAGON_SSLOGIN_TARGET.replace("login1.loginssl.aragon.es", "login2.loginssl.aragon.es"),
+            881,
+            true,
+        )
+        assertEquals("login2.loginssl.aragon.es", authorized?.target?.host)
+        assertNull(
+            aragon.observeTopLevelNavigation(
+                ARAGON_TRAMITES_PROFILE,
+                ARAGON_SSLOGIN_SOURCE,
+                ARAGON_SSLOGIN_TARGET.replace("login1.loginssl.aragon.es", "login3.loginssl.aragon.es"),
+                881,
+                true,
+            ),
+        )
+    }
+
+    @Test
     fun aragonSsLoginRedirectAuthorizesOnlyExactClientCertificateEndpoint() {
         val aragon = ClientAuthNavigationAuthorizer(
             BuiltInSiteProfiles.qaRegistry,

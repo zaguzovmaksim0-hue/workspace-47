@@ -166,6 +166,7 @@ class JuntaOriginPolicyTest {
             "aplicaciones.aragon.es",
             "login.loginssl.aragon.es",
             "login1.loginssl.aragon.es",
+            "login2.loginssl.aragon.es",
             "sede.agenciatributaria.gob.es",
             "sede.aemet.gob.es",
             "www1.agenciatributaria.gob.es",
