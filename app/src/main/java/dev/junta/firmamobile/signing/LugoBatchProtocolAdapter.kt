@@ -25,6 +25,8 @@ class LugoBatchProtocolAdapter internal constructor(
         HttpsProfileHttpTransport(SafeNetworkUrlPolicy(setOf(endpoint)))
     },
     private val urlPolicy: LugoBatchUrlPolicy = LugoBatchUrlPolicy(),
+    // Fixed stage tokens only (no payloads): REAL E2E 42530355693 ended PROTOCOL_FAILED with no hint where.
+    private val onStage: (String) -> Unit = {},
 ) : BatchSigningProtocolAdapter {
     override val id: SigningProtocolId = ID
 
@@ -45,11 +47,15 @@ class LugoBatchProtocolAdapter internal constructor(
         val query = "xml=$xml&certs=$certs"
         val result = post(pair.first.url, query, request.cancellation)
         return when (result) {
-            is ProfileHttpResult.Failure -> BatchProtocolPrepareResult.Failure(result.toSigningError())
+            is ProfileHttpResult.Failure -> {
+                onStage("PRESIGN_${result.code.name}")
+                BatchProtocolPrepareResult.Failure(result.toSigningError())
+            }
             is ProfileHttpResult.Success -> result.response.use { response ->
                 response.withBody { body ->
                     val parsed = parseTriData(body, request.documents.single().id)
                         ?: return@withBody BatchProtocolPrepareResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
+                            .also { onStage("PRESIGN_PARSE") }
                     val state = LugoPreSignState(
                         postUrl = pair.second.url,
                         expectedDocumentId = request.documents.single().id,
@@ -76,10 +82,12 @@ class LugoBatchProtocolAdapter internal constructor(
         }
         val state = preSign.consumeState(request, 1) as? LugoPreSignState
         if (state == null) {
+            onStage("POSTSIGN_STATE")
             localSignatures.forEach(LocalSignature::close)
             return BatchProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
         }
         val query = try { state.postQuery(localSignatures.single()) } catch (_: Exception) {
+            onStage("POSTSIGN_QUERY")
             state.close(); localSignatures.forEach(LocalSignature::close)
             return BatchProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
         } finally {
@@ -89,10 +97,14 @@ class LugoBatchProtocolAdapter internal constructor(
         val result = post(state.postUrl, query, request.cancellation)
         state.close()
         return when (result) {
-            is ProfileHttpResult.Failure -> BatchProtocolCompletionResult.Failure(result.toSigningError())
+            is ProfileHttpResult.Failure -> {
+                onStage("POSTSIGN_${result.code.name}")
+                BatchProtocolCompletionResult.Failure(result.toSigningError())
+            }
             is ProfileHttpResult.Success -> result.response.use { response ->
                 response.withBody { body ->
                     if (!isValidFinalResult(body, expectedDocumentId)) {
+                        onStage("POSTSIGN_RESULT")
                         BatchProtocolCompletionResult.Failure(SigningErrorCode.PROTOCOL_FAILED)
                     } else {
                         BatchProtocolCompletionResult.Success(BatchProtocolResponse(body.copyOf()))
