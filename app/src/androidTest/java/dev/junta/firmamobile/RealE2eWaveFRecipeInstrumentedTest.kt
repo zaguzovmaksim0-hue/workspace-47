@@ -305,7 +305,8 @@ class RealE2eWaveFRecipeInstrumentedTest {
                         loaded.countDown()
                     }
                 }
-                loadDataWithBaseURL(base, html, "text/html", "UTF-8", null)
+                // A null history URL makes WebView.url report about:blank, so URL-waiting recipes never match.
+                loadDataWithBaseURL(base, html, "text/html", "UTF-8", base)
             }
         }
         try {
