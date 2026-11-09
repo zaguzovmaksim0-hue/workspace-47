@@ -248,6 +248,9 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: bash scripts/run-android-instrumentation-ci.sh
+      - name: diag host OOM evidence
+        if: always()
+        run: sudo dmesg -T | grep -iE 'out of memory|killed process|oom' || true
       - name: Upload instrumentation failure report
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
