@@ -1293,7 +1293,10 @@ class SiteProfileCatalogParserTest {
         assertTrue(profile.operationPolicies.isEmpty())
         assertTrue(profile.endpoints.isEmpty())
         assertEquals(ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE, policy.transitionMode)
-        assertEquals(setOf(ExactOrigin.parse("https://login1.loginssl.aragon.es")), policy.requestOrigins)
+        assertEquals(
+            setOf(ExactOrigin.parse("https://login1.loginssl.aragon.es"), ExactOrigin.parse("https://login2.loginssl.aragon.es")),
+            policy.requestOrigins,
+        )
         assertEquals(setOf(URI("https://login.loginssl.aragon.es/sife_login/SSLOGIN")), policy.sourceUrls)
         assertEquals(mapOf("redirect.url" to consume), policy.sourceFixedQueryParameters)
         assertEquals("/sife_login/SSLOGIN/idByCert", policy.requestPath)

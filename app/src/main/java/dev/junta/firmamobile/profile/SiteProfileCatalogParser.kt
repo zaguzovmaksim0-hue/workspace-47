@@ -243,7 +243,8 @@ object SiteProfileCatalogParser {
             true
         }
         val transitionMode = enum<ClientAuthTransitionMode>(o.string("transitionMode"))
-        val requestOrigins = origins(o.array("requestOrigins")).also { require(it.size == 1) }
+        // Two only for load-balanced twins (Aragón login1/login2); each profile still pins its exact set.
+        val requestOrigins = origins(o.array("requestOrigins")).also { require(it.size in 1..2) }
         val sourceUrls = o.array("sourceUrls").map { strictHttpsUrl(it.string()) }.toSet()
             .also { require(it.isNotEmpty() && it.size == o.array("sourceUrls").size) }
         val requestPath = o.string("requestPath").also {
@@ -3037,7 +3038,7 @@ object SiteProfileCatalogParser {
         require(
             profile.clientAuthPolicy == ClientAuthPolicy(
                 transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
-                requestOrigins = setOf(ExactOrigin.parse(ARAGON_SSLOGIN_CLIENT_AUTH_ORIGIN)),
+                requestOrigins = ARAGON_SSLOGIN_CLIENT_AUTH_ORIGINS.mapTo(linkedSetOf(), ExactOrigin::parse),
                 sourceUrls = setOf(URI(ARAGON_SSLOGIN_SOURCE_URL)),
                 requestPath = ARAGON_SSLOGIN_REQUEST_PATH,
                 fixedQueryParameters = ARAGON_SSLOGIN_FIXED_QUERY,
@@ -3371,7 +3372,11 @@ object SiteProfileCatalogParser {
         "https://aplicaciones.aragon.es/tramitar/solicitud-general/identificacion"
     private const val ARAGON_TRAMITES_ORIGIN = "https://aplicaciones.aragon.es"
     private const val ARAGON_SSLOGIN_BROKER_ORIGIN = "https://login.loginssl.aragon.es"
-    private const val ARAGON_SSLOGIN_CLIENT_AUTH_ORIGIN = "https://login1.loginssl.aragon.es"
+    // REAL E2E 42472701298: the SSLOGIN broker balances idByCert across login1 and login2.
+    private val ARAGON_SSLOGIN_CLIENT_AUTH_ORIGINS = listOf(
+        "https://login1.loginssl.aragon.es",
+        "https://login2.loginssl.aragon.es",
+    )
     private const val ARAGON_SSLOGIN_SOURCE_URL =
         "https://login.loginssl.aragon.es/sife_login/SSLOGIN"
     private const val ARAGON_SSLOGIN_REQUEST_PATH = "/sife_login/SSLOGIN/idByCert"
