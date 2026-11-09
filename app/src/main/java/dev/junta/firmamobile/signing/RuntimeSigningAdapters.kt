@@ -54,13 +54,15 @@ internal object RuntimeSigningAdapters {
         idOf = SigningProtocolAdapter::id,
     )
 
-    fun batch(): SigningAdapterIndex<BatchSigningProtocolAdapter> = SigningAdapterIndex(
+    fun batch(
+        onLugoStage: (String) -> Unit = {},
+    ): SigningAdapterIndex<BatchSigningProtocolAdapter> = SigningAdapterIndex(
         adapters = listOf<BatchSigningProtocolAdapter>(
             MelillaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.MelillaBatchUrlPolicy()::validate)),
             ExtremaduraBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.ExtremaduraBatchUrlPolicy()::validate)),
             LaPalmaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.LaPalmaBatchUrlPolicy()::validate)),
             HuescaBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.HuescaBatchUrlPolicy()::validate)),
-            LugoBatchProtocolAdapter(),
+            LugoBatchProtocolAdapter(onStage = onLugoStage),
             CaibBatchProtocolAdapter(),
             BurgosBatchProtocolAdapter(transport = dev.junta.firmamobile.network.StaBatchHttpTransport(dev.junta.firmamobile.network.BurgosBatchUrlPolicy()::validate)),
         ),
