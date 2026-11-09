@@ -357,7 +357,8 @@ class HttpsProfileHttpTransport internal constructor(
 
     private fun String?.isAcceptedProtocolType(): Boolean {
         if (this == null) return false
-        return substringBefore(';').trim().equals(TEXT_PLAIN, ignoreCase = true)
+        // REAL E2E 42603787415: Lugo's clientsigner answers text/xml; each adapter still parses the body strictly.
+        return substringBefore(';').trim().lowercase() in setOf(TEXT_PLAIN, TEXT_XML)
     }
 
     internal companion object {
@@ -367,6 +368,7 @@ class HttpsProfileHttpTransport internal constructor(
         private const val DNS_TIMEOUT_MILLIS = 5_000L
         private const val TEXT_HTML = "text/html"
         private const val TEXT_PLAIN = "text/plain"
+        private const val TEXT_XML = "text/xml"
         private val DNS_EXECUTOR = ThreadPoolExecutor(
             0,
             2,
