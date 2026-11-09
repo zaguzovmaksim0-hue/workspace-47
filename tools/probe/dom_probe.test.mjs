@@ -74,9 +74,9 @@ assert.equal(controlSnapshot.html[1][1][0].href, null);
 assert.equal(controlSnapshot.html[0][1][0].onclick, null);
 
 const configured = JSON.parse(fs.readFileSync(new URL('./probes.json', import.meta.url)));
-assert.equal(configured.length, 1);
-assert.equal(configured[0].name, 'waved-dgsfp-login-structure');
-assert.deepEqual(configured[0].clicks, []);
+assert.equal(configured.length, 4);
+// Recon only: no probe may click anything.
+configured.forEach(probe => assert.deepEqual(probe.clicks, []));
 const probes = [{ name: 'wavef2-dgoj-login-clean-context',
   url: 'https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S',
   clicks: ['form#plogin input[type="submit"]'], net: true }];

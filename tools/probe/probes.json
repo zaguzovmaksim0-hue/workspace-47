@@ -1,14 +1,6 @@
 [
-  {
-    "name": "waved-dgsfp-login-structure",
-    "url": "https://www.sededgsfp.gob.es/es/paginas/login.aspx",
-    "wait": 10000,
-    "cap": 90000,
-    "clicks": [],
-    "net": true,
-    "html": [
-      "img#imgClave",
-      "a.text-center:has(> img#imgClave)"
-    ]
-  }
+  {"name": "itj-procedimientos-acceso", "url": "https://procedimientossede.transicionjusta.gob.es/vt/vtwebpresentacion/acceso.aspx?COD_TIPO_PROCEDIMIENTO=0", "wait": 10000, "cap": 90000, "clicks": [], "net": true},
+  {"name": "oepm-protegeo-inicio", "url": "https://sede.oepm.gob.es/ProtegeOWeb/inicio.html?tipoTramite=SOLIC_PROP_GEN_OEPM", "wait": 12000, "cap": 90000, "clicks": [], "net": true},
+  {"name": "jcyl-quju", "url": "https://presidencia.jcyl.es/QUJU?O=1", "wait": 10000, "cap": 90000, "clicks": [], "net": true},
+  {"name": "formentera-portal", "url": "https://www.consellinsulardeformentera.cat/", "wait": 10000, "cap": 90000, "clicks": [], "net": true}
 ]
