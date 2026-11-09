@@ -51,6 +51,9 @@ grep -q 'mWakefulness=Awake' "$state_dir/ready-power.txt" || {
 adb -e shell settings get system screen_off_timeout > "$state_dir/screen-off-timeout.txt"
 adb -e shell settings get global stay_on_while_plugged_in > "$state_dir/stay-on.txt"
 capture_state ready
+# Compose tests inject text through semantics; the soft keyboard is not under test.
+adb -e shell ime list -s > "$state_dir/ime-list.txt" 2>&1 || true
+while read -r ime; do adb -e shell ime disable "$ime" >/dev/null 2>&1 || true; done < <(tr -d '\r' < "$state_dir/ime-list.txt")
 
 # Do not mask the Gradle exit status. The sole synthetic-run exclusion is the
 # separate manual-only credential-gated RealE2eInstrumentedTest, which is run
