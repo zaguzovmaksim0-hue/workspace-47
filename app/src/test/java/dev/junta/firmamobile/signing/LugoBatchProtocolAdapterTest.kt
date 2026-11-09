@@ -127,6 +127,19 @@ class LugoBatchProtocolAdapterTest {
     }
 
     @Test
+    fun invalidFinalResultReportsPostSignStage() {
+        val request = request()
+        val stages = mutableListOf<String>()
+        val transport = RecordingTransport(triData("synthetic-pre".encodeToByteArray(), false), "not-xml".encodeToByteArray())
+        val adapter = LugoBatchProtocolAdapter(transportFactory = { transport }, onStage = { stages += it })
+        val prepared = (adapter.prepare(request, syntheticIdentity().chain) as BatchProtocolPrepareResult.Success).preSign
+        adapter.complete(request, prepared, listOf(LocalSignature("synthetic-pk1".encodeToByteArray())))
+        prepared.close()
+        request.close()
+        assertEquals(listOf("POSTSIGN_RESULT"), stages)
+    }
+
+    @Test
     fun mismatchedSessionAndForeignResultFailClosed() {
         val request = request(postSignerUrl = POST_URL.replace(SESSION, OTHER_SESSION))
         val transport = RecordingTransport(triData("pre".encodeToByteArray(), false))

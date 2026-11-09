@@ -60,14 +60,16 @@ internal class SigningModule(
         )
     }
 
+    @Suppress("LongParameterList") // Lugo stage sink is QA diagnostics, not another coordinator input.
     fun batch(
         currentOrigin: () -> TrustedOrigin?,
         currentNavigationEpoch: () -> Long,
         profileDisplayName: String,
         compatibilityStatus: CompatibilityStatus,
         profileRegistry: SiteProfileRegistry,
+        onLugoStage: (String) -> Unit = {},
     ): BatchSigningCoordinator {
-        val adapters = RuntimeSigningAdapters.batch()
+        val adapters = RuntimeSigningAdapters.batch(onLugoStage = onLugoStage)
         return BatchSigningCoordinator(
             certificateSession = certificateSession,
             adapter = checkNotNull(adapters.resolve(MelillaBatchProtocolAdapter.ID)),

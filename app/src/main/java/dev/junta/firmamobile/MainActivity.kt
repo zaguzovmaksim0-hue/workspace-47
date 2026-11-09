@@ -264,6 +264,7 @@ class MainActivity : ComponentActivity() {
             profileDisplayName = melillaProfile.displayName,
             compatibilityStatus = melillaProfile.compatibilityStatus,
             profileRegistry = BuiltInSiteProfiles.runtimeRegistry,
+            onLugoStage = ::recordLugoProtocolStage,
         )
         val signing = SigningOrchestrator(
             signingCoordinator = signingCoordinator,
@@ -892,6 +893,14 @@ class MainActivity : ComponentActivity() {
             algorithm = request.normalized.algorithm.name,
             format = request.normalized.format.name,
             errorCode = errorCode?.name,
+        )
+    }
+
+    private fun recordLugoProtocolStage(stage: String) {
+        if (!BuildConfig.ALLOW_QA_PROFILES) return
+        (application as JuntaFirmaApplication).sanitizedLogger.recordMiniAppletBridge(
+            stage = "LUGO_PROTOCOL_$stage",
+            originHost = "sede.deputacionlugo.org",
         )
     }
 
