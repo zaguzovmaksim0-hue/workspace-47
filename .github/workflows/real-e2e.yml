@@ -17,7 +17,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: real-e2e-${{ contains(inputs.portal_id, ',') && 'batch' || inputs.portal_id || 'catalog' }}
+  # Distinct small batches run side by side; an identical portal list still queues.
+  group: real-e2e-${{ inputs.portal_id || 'catalog' }}
   cancel-in-progress: false
 
 env:
