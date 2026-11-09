@@ -217,7 +217,7 @@
       "capabilities": ["CLIENT_TLS_AUTH"],
       "clientAuthPolicy": {
         "transitionMode": "REDIRECT_AFTER_SOURCE",
-        "requestOrigins": ["https://login1.loginssl.aragon.es"],
+        "requestOrigins": ["https://login1.loginssl.aragon.es", "https://login2.loginssl.aragon.es"],
         "sourceUrls": ["https://login.loginssl.aragon.es/sife_login/SSLOGIN"],
         "sourceFixedQueryParameters": {"redirect.url":"https://aplicaciones.aragon.es/mfe_core/rest/identification/TTO/aHR0cHM6Ly9hcGxpY2FjaW9uZXMuYXJhZ29uLmVzL3RyYW1pdGFyL3NvbGljaXR1ZC1nZW5lcmFsL2lkZW50aWZpY2FjaW9uL2lkZW50aWZpY2Fkbw==/SSLOGIN/consumeResponse"},
         "sourceRequiredEphemeralQueryParameters": [],
