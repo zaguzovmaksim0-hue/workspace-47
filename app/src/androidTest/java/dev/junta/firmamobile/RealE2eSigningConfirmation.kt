@@ -69,6 +69,9 @@ internal object RealE2eSigningConfirmation {
             } catch (_: Exception) {
                 null
             }
+            // A probe cut off by the deadline is a timeout: report the last observed state, not a query failure.
+            val timedOut = SystemClock.elapsedRealtime() >= deadline
+            if (timedOut && (next == null || next.result.outcome == SignConfirmationOutcome.UI_QUERY_FAILED)) break
             if (next == null) return last.result.copy(outcome = SignConfirmationOutcome.UI_QUERY_FAILED)
             last = next
             if (last.terminal) return last.result

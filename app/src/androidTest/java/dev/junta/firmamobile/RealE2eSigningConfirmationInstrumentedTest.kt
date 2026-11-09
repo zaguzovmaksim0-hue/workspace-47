@@ -134,15 +134,12 @@ class RealE2eSigningConfirmationInstrumentedTest {
                 }
             }
             assertTrue(composed.await(5, TimeUnit.SECONDS))
-            scenario.onActivity {
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                    when (case) {
-                        "expired" -> state.set(SigningUiState.Failed(requestId, SigningErrorCode.REQUEST_EXPIRED))
-                        "idle" -> state.set(SigningUiState.Idle)
-                        "request-changed" -> state.set(awaiting.copy(requestId = UUID.randomUUID()))
-                        "owner-changed" -> ownsRequest.set(false)
-                    }
-                }, 300)
+            // Changed before probing: a timed post raced the frame-clocked consent arming on slow emulators.
+            when (case) {
+                "expired" -> state.set(SigningUiState.Failed(requestId, SigningErrorCode.REQUEST_EXPIRED))
+                "idle" -> state.set(SigningUiState.Idle)
+                "request-changed" -> state.set(awaiting.copy(requestId = UUID.randomUUID()))
+                "owner-changed" -> ownsRequest.set(false)
             }
             var covering: android.app.AlertDialog? = null
             if (case == "covered") {
