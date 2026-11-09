@@ -74,9 +74,10 @@ assert.equal(controlSnapshot.html[1][1][0].href, null);
 assert.equal(controlSnapshot.html[0][1][0].onclick, null);
 
 const configured = JSON.parse(fs.readFileSync(new URL('./probes.json', import.meta.url)));
-assert.equal(configured.length, 3);
+assert.equal(configured.length, 1);
 // Recon only: no probe may click anything.
-configured.forEach(probe => assert.deepEqual(probe.clicks, []));
+// Login-entry clicks only: never a submit/filing control.
+configured.forEach(probe => assert.deepEqual(probe.clicks, ["#botonPorCertificado"]));
 const probes = [{ name: 'wavef2-dgoj-login-clean-context',
   url: 'https://sede.ordenacionjuego.gob.es/tramite/login/inicio.jjsp?iA=no&limpiarBusqueda=S',
   clicks: ['form#plogin input[type="submit"]'], net: true }];
