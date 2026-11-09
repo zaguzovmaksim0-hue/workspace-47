@@ -53,6 +53,23 @@ class SoriaClientAuthProfileTest {
     }
 
     @Test
+    fun singleEncodedRedirigeTargetIsAuthorized() {
+        val single = targetUrl.toString().replace("%253D", "%3D")
+        val grant = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+            .observeTopLevelNavigation(profileId, startUrl.toString(), single, currentEpoch = 5L, isModernMainFrameRequest = true)
+        assertEquals(URI(single), grant?.target)
+        assertNull(
+            ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry).observeTopLevelNavigation(
+                profileId,
+                startUrl.toString(),
+                targetUrl.toString().replace("%253D", "%3D%3D"),
+                currentEpoch = 6L,
+                isModernMainFrameRequest = true,
+            ),
+        )
+    }
+
+    @Test
     fun qaProfilePinsTheObservedDirectClientTlsTransition() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)

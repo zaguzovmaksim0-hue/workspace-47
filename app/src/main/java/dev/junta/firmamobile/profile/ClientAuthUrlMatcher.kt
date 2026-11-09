@@ -154,6 +154,10 @@ private fun URI.matchesClientAuthConstraint(constraint: ClientAuthUrlConstraint)
 
 private fun equivalentClientAuthFixedParameter(name: String, actual: String, expected: String): Boolean {
     if (actual == expected) return true
+    // Soria evidence shows redirige double-encoded; REAL E2E 42493232777 never matched, so accept one encoding less.
+    if (name == "redirige") {
+        return actual == runCatching { URLDecoder.decode(expected, StandardCharsets.UTF_8.name()) }.getOrNull()
+    }
     if (name != "comeBackURL") return false
     val actualDecoded = decodeStrictBase64(actual) ?: return false
     val expectedDecoded = decodeStrictBase64(expected) ?: return false
