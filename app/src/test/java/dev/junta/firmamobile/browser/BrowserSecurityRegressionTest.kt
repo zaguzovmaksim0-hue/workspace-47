@@ -871,7 +871,7 @@ class BrowserSecurityRegressionTest {
         assertTrue(
             "The batch coordinator must resolve its adapters and bind confirmation metadata to the active profile",
             moduleCoordinatorBlock.isNotEmpty() &&
-                "val adapters = RuntimeSigningAdapters.batch()" in moduleBatchBlock &&
+                "val adapters = RuntimeSigningAdapters.batch(onLugoStage = onLugoStage)" in moduleBatchBlock &&
                 "certificateSession = certificateSession" in moduleCoordinatorBlock &&
                 "adapter = checkNotNull(adapters.resolve(MelillaBatchProtocolAdapter.ID))" in moduleCoordinatorBlock &&
                 "adapterResolver = adapters::resolve" in moduleCoordinatorBlock &&
