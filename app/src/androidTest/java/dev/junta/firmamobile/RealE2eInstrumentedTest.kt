@@ -1181,7 +1181,8 @@ class RealE2eInstrumentedTest {
             GVA_PORTAL_ID -> clickExactLabeledAnchor(
                 scenario = scenario,
                 expectedCurrentUrl = GVA_LOGIN_URL,
-                expectedLabel = "Acceder con certificado",
+                // innerText applies the site's CSS text-transform: uppercase.
+                expectedLabel = "ACCEDER CON CERTIFICADO",
                 expectedHref = "javascript:;",
                 waitForExpectedUrl = true,
             )
@@ -2059,7 +2060,9 @@ class RealE2eInstrumentedTest {
                         if ($quotedExpectedElementId !== null && element.id !== $quotedExpectedElementId) return false;
                         if ($quotedCssClass !== null && !element.classList.contains($quotedCssClass)) return false;
                         if ($requireVisible && element.getClientRects().length === 0) return false;
-                        const label = (element.innerText || '').trim().replace(/\s+/g, ' ');
+                        // dnt-button slots its label from the light DOM, so the shadow anchor's own innerText is empty.
+                        const label = (element.innerText || element.getRootNode?.().host?.innerText || '')
+                          .trim().replace(/\s+/g, ' ');
                         // A first visit without cookies gets ;jsessionid=... rewritten into every href (CSN).
                         const href = (element.getAttribute('href') || '').replace(/;jsessionid=[^?#]*/i, '');
                         return label === $quotedExpectedLabel && href === $quotedExpectedHref &&
