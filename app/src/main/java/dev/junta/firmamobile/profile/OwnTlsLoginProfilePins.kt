@@ -40,7 +40,8 @@ internal fun validateOwnTlsLoginProfile(profile: SiteProfile) {
                 fixedQueryParameters = emptyMap(),
                 requiredEphemeralQueryParameters = emptySet(),
                 sourceRequiredEphemeralQueryParameters = setOf("id"),
-                allowEmptyIssuerList = false,
+                // gestiona2 sends an empty CA list (openssl, REAL E2E 42583828515).
+                allowEmptyIssuerList = true,
                 grantTtlSeconds = 15,
             )
         }
