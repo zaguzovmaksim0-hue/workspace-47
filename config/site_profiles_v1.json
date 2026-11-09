@@ -2313,7 +2313,7 @@
         "requestPath": "/auto_certificado/SelCertificado",
         "fixedQueryParameters": {},
         "requiredEphemeralQueryParameters": [],
-        "allowEmptyIssuerList": false,
+        "allowEmptyIssuerList": true,
         "grantTtlSeconds": 15,
         "requestMethod": "POST",
         "sourceRequiredEphemeralQueryParameters": [
