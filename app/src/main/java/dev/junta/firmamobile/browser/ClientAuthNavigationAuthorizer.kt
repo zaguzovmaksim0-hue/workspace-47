@@ -10,6 +10,7 @@ import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.profile.hasLinkedEphemeralParameters
 import dev.junta.firmamobile.profile.matchesRequestUrl
 import dev.junta.firmamobile.profile.matchesSourceUrl
+import dev.junta.firmamobile.profile.requestMismatchReason
 import dev.junta.firmamobile.profile.strictClientAuthHttpsUri
 import dev.junta.firmamobile.security.MonotonicSecurityTime
 import java.net.URI
@@ -316,6 +317,14 @@ class ClientAuthNavigationAuthorizer internal constructor(
         observedAtMonotonicNanos = observedAtMonotonicNanos,
         lifetimeNanos = lifetimeNanos,
     )
+
+    /** Why a navigation onto the profile's exact client-auth path got no grant; null for other paths. */
+    @Synchronized
+    fun declineReason(activeProfileId: ProfileId?, targetUrl: String): String? {
+        val policy = activeProfileId?.let(registry::profile)?.clientAuthPolicy
+        val target = strictClientAuthHttpsUri(targetUrl)?.takeIf { it.rawPath == policy?.requestPath }
+        return if (policy == null || target == null) null else policy.requestMismatchReason(target) ?: "source"
+    }
 
     @Synchronized
     fun onTopLevelPageStarted(url: String, currentEpoch: Long) {
