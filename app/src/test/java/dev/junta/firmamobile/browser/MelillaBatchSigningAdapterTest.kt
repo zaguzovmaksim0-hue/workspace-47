@@ -68,7 +68,7 @@ class MelillaBatchSigningAdapterTest {
         assertEquals(REQUEST_ID, normalized.requestId)
         assertEquals(MelillaBatchProtocolAdapter.ID, normalized.protocolId)
         assertEquals("melilla-sede", normalized.context.profileId)
-        assertEquals(1, normalized.context.profileVersion)
+        assertEquals(2, normalized.context.profileVersion)
         assertEquals(bridgeRequest.sourceOrigin, normalized.context.origin)
         assertEquals(DOCUMENT_ID.toString(), normalized.context.navigationId.value)
         assertEquals(7L, normalized.context.navigationEpoch)
