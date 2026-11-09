@@ -41,7 +41,11 @@ class BrowserUrlPolicy(
                 uri.toASCIIString() == selectedProfile.startUrl.toASCIIString()
             ) {
                 registry.resolveForProfile(selectedProfileId, uri)?.let { selectedStart ->
-                    return BrowserUrlResolution(uri, selectedStart, selectedStart.trustMode)
+                    // REAL E2E 42633168933: a start that is also the client-auth source must activate the profile.
+                    val start = registry.resolve(uri)?.takeIf {
+                        selectedStart.trustMode == TrustMode.TRUSTED_BROWSE && it.profile.profileId == selectedProfileId
+                    } ?: selectedStart
+                    return BrowserUrlResolution(uri, start, start.trustMode)
                 }
             }
         }
