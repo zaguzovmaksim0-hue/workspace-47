@@ -1776,6 +1776,7 @@ class RealE2ePolicyTest(unittest.TestCase):
             '"caib-portafib"',
             '"diputacion-burgos-portal"',
             '"diputacion-huesca-portal"',
+            '"melilla-sede"',
             '"airef-instancia-general"',
             '"jccm-registro-generico"',
         ):

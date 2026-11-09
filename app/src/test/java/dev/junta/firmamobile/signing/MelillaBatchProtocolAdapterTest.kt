@@ -226,7 +226,7 @@ class MelillaBatchProtocolAdapterTest {
         protocolId = SigningProtocolId("melilla-batch-autoscript-v1"),
         context = SigningContext(
             profileId = "melilla-sede",
-            profileVersion = 1,
+            profileVersion = 2,
             origin = TrustedOrigin("https", "sede.melilla.es", 443),
             navigationId = NavigationId("melilla-batch-test"),
             navigationEpoch = 7L,

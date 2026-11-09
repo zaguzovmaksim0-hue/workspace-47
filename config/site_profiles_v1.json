@@ -603,7 +603,7 @@
     },
     {
       "profileId": "melilla-sede",
-      "profileVersion": 1,
+      "profileVersion": 2,
       "displayName": "Ciudad Autónoma de Melilla — Sede Electrónica",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
@@ -630,13 +630,21 @@
           "allowedExtraProperties": []
         }
       ],
-      "capabilities": ["SIGN"],
-      "clientAuthPolicy": null,
+      "capabilities": ["SIGN", "CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {"transitionMode": "DIRECT_FROM_SOURCE","requestOrigins":["https://sede.melilla.es"],"sourceUrls":["https://sede.melilla.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=PTS2_HOME"],"requestPath":"/sta/CarpetaPrivate/Certificate","fixedQueryParameters":{"APP_CODE":"STA","PAGE_CODE":"PTS2_HOME"},"requiredEphemeralQueryParameters":[],"allowEmptyIssuerList":false,"grantTtlSeconds":15},
       "certificateRules": {
         "allowedKeyAlgorithms": ["RSA"],
         "requireDigitalSignatureKeyUsage": true
       },
       "evidence": [
+        {
+          "url": "https://sede.melilla.es/sta/CarpetaPrivate/Login?APP_CODE=STA&PAGE_CODE=PTS2_HOME",
+          "reviewedOn": "2026-11-09"
+        },
+        {
+          "url": "https://sede.melilla.es/sta/CarpetaPrivate/Certificate?APP_CODE=STA&PAGE_CODE=PTS2_HOME",
+          "reviewedOn": "2026-11-09"
+        },
         {
           "url": "https://sede.melilla.es/sta/CarpetaPublic/doEvent?APP_CODE=STA&PAGE_CODE=CATALOGO&DETALLE=6269000018479610199999",
           "reviewedOn": "2026-08-09"

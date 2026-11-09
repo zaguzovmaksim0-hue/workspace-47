@@ -26,6 +26,7 @@ internal object SameOriginDirectClientAuthContract {
         "diputacion-soria-sede-client-auth",
         "diputacion-burgos-portal",
         "diputacion-huesca-portal",
+        "melilla-sede",
     )
     private const val HTTPS_PORT = 443
 }

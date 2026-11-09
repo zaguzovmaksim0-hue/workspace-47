@@ -43,8 +43,9 @@ internal class MelillaBatchSigningAdapter(
         clock = clock,
         contract = StaBatchSigningContract(
             profileId = MelillaBatchBridgeAdapter.PROFILE_ID,
-            profileVersion = 1,
+            profileVersion = 2,
             protocolId = MelillaBatchProtocolAdapter.ID,
+            capabilities = setOf(Capability.SIGN, Capability.CLIENT_TLS_AUTH),
         ),
     )
 
