@@ -218,6 +218,9 @@ class JuntaWebViewClient(
                 onClientAuthTarget(authorized)
                 return true
             }
+            clientAuthAuthorizer?.declineReason(currentProfileId, targetUrl)?.let { reason ->
+                logger.recordPortalCallback("client-auth-decline-$reason", Uri.parse(targetUrl).host.orEmpty())
+            }
         }
         if (isModernMainFrame && isRedirect) {
             // shouldInterceptRequest is not called for redirect hops, so the next hop's origin is this target.
