@@ -74,7 +74,7 @@ assert.equal(controlSnapshot.html[1][1][0].href, null);
 assert.equal(controlSnapshot.html[0][1][0].onclick, null);
 
 const configured = JSON.parse(fs.readFileSync(new URL('./probes.json', import.meta.url)));
-assert.equal(configured.length, 2);
+assert.equal(configured.length, 3);
 // Recon only: no probe may click anything.
 configured.forEach(probe => assert.deepEqual(probe.clicks, []));
 const probes = [{ name: 'wavef2-dgoj-login-clean-context',

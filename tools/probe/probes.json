@@ -1,4 +1,5 @@
 [
-  {"name": "formentera-carpeta", "url": "https://ovac.conselldeformentera.cat/ovac/ConsBaseEMI/94F722B60CF149ADB4DD083A7A763853.asp", "wait": 12000, "cap": 90000, "clicks": [], "net": true},
-  {"name": "jcyl-carpeta", "url": "https://www.tramitacastillayleon.jcyl.es/web/es/carpeta-ciudadana-notificaciones-electronicas.html", "wait": 12000, "cap": 90000, "clicks": [], "net": true}
+  {"name": "formentera-carpeta", "url": "https://ovac.conselldeformentera.cat/ovac/catala/ConsBaseEMI/94F722B60CF149ADB4DD083A7A763853.asp", "wait": 12000, "cap": 90000, "clicks": [], "net": true},
+  {"name": "jcyl-cauce", "url": "https://portalcauce.ae.jcyl.es/", "wait": 12000, "cap": 90000, "clicks": [], "net": true},
+  {"name": "jcyl-carpetacyl", "url": "https://www.ae.jcyl.es/carpetacyl/", "wait": 12000, "cap": 90000, "clicks": [], "net": true}
 ]
