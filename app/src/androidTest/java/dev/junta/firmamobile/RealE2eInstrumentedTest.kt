@@ -792,6 +792,7 @@ class RealE2eInstrumentedTest {
             }
             // CSN: the hidden login-menu link starts Cl@ve with AFIRMA preselected; no provider choice follows.
             BOE_PORTAL_ID -> clickBoeCertificateAnchor(scenario)
+            FUNCIONA_PORTAL_ID -> clickFuncionaAutenticaLogin(scenario)
             CMT_PORTAL_ID -> {
                 clickExactLabeledAnchor(
                     scenario = scenario,
@@ -2584,6 +2585,66 @@ class RealE2eInstrumentedTest {
         error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
     }
 
+    // The Angular (click) handler sits on the dnt-button host; its shadow root holds no anchor or button.
+    private fun clickFuncionaAutenticaLogin(scenario: ActivityScenario<MainActivity>) {
+        val deadline = SystemClock.elapsedRealtime() + UI_TIMEOUT_MILLIS
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            val inspected = CountDownLatch(1)
+            var failure: String? = null
+            var clicked = false
+            scenario.onActivity { activity ->
+                val webView = MainActivity::class.java.getDeclaredField("currentWebView")
+                    .apply { isAccessible = true }.get(activity) as? WebView
+                if (webView == null) {
+                    failure = "REAL_E2E_RECIPE_WEBVIEW_MISSING"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                val currentUrl = webView.url
+                if (currentUrl != null && currentUrl != FUNCIONA_HOME_URL) {
+                    failure = "REAL_E2E_RECIPE_SOURCE_MISMATCH"
+                    inspected.countDown()
+                    return@onActivity
+                }
+                webView.evaluateJavascript(
+                    """
+                    (() => {
+                      if (location.href !== ${JSONObject.quote(FUNCIONA_HOME_URL)}) return 0;
+                      if (document.readyState !== 'complete') return 0;
+                      const hosts = Array.from(document.querySelectorAll('dnt-button')).filter(element =>
+                        element.getAttribute('title-text') === ${JSONObject.quote(FUNCIONA_LOGIN_TITLE)}
+                      );
+                      if (hosts.length !== 1) return hosts.length === 0 ? 0 : 2;
+                      if (hosts[0].getAttribute('is-disabled') !== 'false' || hosts[0].getAttribute('href') !== null ||
+                          hosts[0].getAttribute('onclick') !== null || hosts[0].closest('dnt-modal')) return 2;
+                      if (!hosts[0].classList.contains('hydrated') || hosts[0].getClientRects().length === 0) return 0;
+                      hosts[0].click();
+                      return 1;
+                    })()
+                    """.trimIndent(),
+                ) { recipeCode ->
+                    when (recipeCode) {
+                        "1" -> clicked = true
+                        "2" -> failure = "REAL_E2E_RECIPE_TARGET_MISMATCH"
+                    }
+                    inspected.countDown()
+                }
+            }
+            check(inspected.await(5, TimeUnit.SECONDS)) { "REAL_E2E_RECIPE_INSPECT_TIMEOUT" }
+            check(failure == null) { failure ?: "REAL_E2E_RECIPE_FAILED" }
+            if (clicked) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        val terminalFailureDeadline = SystemClock.elapsedRealtime() + RECIPE_TERMINAL_GRACE_MILLIS
+        while (SystemClock.elapsedRealtime() < terminalFailureDeadline) {
+            if (hasObservedTerminalNavigationFailure()) return
+            SystemClock.sleep(RECIPE_POLL_MILLIS)
+        }
+        if (hasObservedTerminalNavigationFailure()) return
+        error("REAL_E2E_RECIPE_TARGET_TIMEOUT")
+    }
+
     private fun clickExactAuthButton(
         scenario: ActivityScenario<MainActivity>,
         expectedCurrentUrl: String,
@@ -3854,6 +3915,9 @@ class RealE2eInstrumentedTest {
         const val CAIB_SEU_PORTAL_ID = "caib-seu-electronica"
         const val CAIB_REGISTRE_PORTAL_ID = "caib-registre-electronic"
         const val REG_AGE_PROFILE_ID = "reg-age-redsara"
+        const val FUNCIONA_PORTAL_ID = "age-portal-funciona"
+        const val FUNCIONA_HOME_URL = "https://sede.funciona.gob.es/es/home"
+        const val FUNCIONA_LOGIN_TITLE = "Acceder con Autentica"
         const val REC_HOME_URL = "https://reg.redsara.es/es/"
         const val REC_LOGIN_LABEL = "Iniciar sesión"
         const val TENERIFE_SEDE_PORTAL_ID = "tenerife-sede-electronica"
