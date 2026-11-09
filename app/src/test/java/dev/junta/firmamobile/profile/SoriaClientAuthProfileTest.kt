@@ -41,6 +41,18 @@ class SoriaClientAuthProfileTest {
     )
 
     @Test
+    fun declineReasonNamesTheFirstRequestMismatch() {
+        val policy = checkNotNull(BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }.clientAuthPolicy)
+        assertNull(policy.requestMismatchReason(targetUrl))
+        assertEquals("fixed-entidad", policy.requestMismatchReason(URI(targetUrl.toString().replace("entidad=SORIA", "entidad=EVIL"))))
+        assertEquals("query-keys-extra1-missing0", policy.requestMismatchReason(URI("$targetUrl&extra=1")))
+        assertEquals("query-missing", policy.requestMismatchReason(URI(targetUrl.toString().substringBefore('?'))))
+        val authorizer = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry)
+        assertEquals("source", authorizer.declineReason(profileId, targetUrl.toString()))
+        assertNull(authorizer.declineReason(profileId, startUrl.toString()))
+    }
+
+    @Test
     fun qaProfilePinsTheObservedDirectClientTlsTransition() {
         val profile = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }
         val policy = checkNotNull(profile.clientAuthPolicy)

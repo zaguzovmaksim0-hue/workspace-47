@@ -59,6 +59,33 @@ internal fun ClientAuthPolicy.matchesRequestUrl(uri: URI): Boolean {
     return requiredEphemeralQueryParameters.all { name -> validClientAuthEphemeral(name, parameters[name]) }
 }
 
+/** Sanitized first reason [matchesRequestUrl] rejects [uri]; site parameter names are only counted. */
+internal fun ClientAuthPolicy.requestMismatchReason(uri: URI): String? {
+    if (matchesRequestUrl(uri)) return null
+    val origin = runCatching { ExactOrigin.parse("https://${uri.host}") }.getOrNull()
+    val port = if (uri.port == -1) 443 else uri.port
+    return when {
+        uri.rawPath != requestPath || uri.rawFragment != null -> "path"
+        origin == null || origin !in requestOrigins || port != requestPort -> "origin"
+        else -> queryMismatchReason(uri.rawQuery)
+    }
+}
+
+private fun ClientAuthPolicy.queryMismatchReason(rawQuery: String?): String {
+    val expectedNames = fixedQueryParameters.keys + requiredEphemeralQueryParameters
+    val parameters = rawQuery?.let(::parseClientAuthQuery)
+    return when {
+        expectedNames.isEmpty() -> "query-unexpected"
+        rawQuery == null -> "query-missing"
+        parameters == null -> "query-invalid"
+        parameters.keys != expectedNames ->
+            "query-keys-extra${(parameters.keys - expectedNames).size}-missing${(expectedNames - parameters.keys).size}"
+        else -> fixedQueryParameters.keys.firstOrNull { name ->
+            !equivalentClientAuthFixedParameter(name, parameters.getValue(name), fixedQueryParameters.getValue(name))
+        }?.let { "fixed-$it" } ?: "ephemeral"
+    }
+}
+
 internal fun ClientAuthPolicy.matchesRequestContinuationUrl(uri: URI, requestUri: URI): Boolean {
     if (!matchesRequestUrl(requestUri)) return false
     val requestParameters = parseClientAuthQuery(requestUri.rawQuery ?: return false) ?: return false
