@@ -57,6 +57,7 @@ class SameOriginDirectClientAuthContractTest {
             "diputacion-soria-sede-client-auth",
             "diputacion-burgos-portal",
             "diputacion-huesca-portal",
+            "melilla-sede",
         )
     }
 }

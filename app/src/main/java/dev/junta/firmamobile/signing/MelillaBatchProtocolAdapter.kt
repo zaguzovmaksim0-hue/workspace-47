@@ -64,7 +64,7 @@ class MelillaBatchProtocolAdapter internal constructor(
     companion object {
         val ID = SigningProtocolId("melilla-batch-autoscript-v1")
         private const val PROFILE_ID = "melilla-sede"
-        private const val PROFILE_VERSION = 1
+        private const val PROFILE_VERSION = 2
     }
 }
 
