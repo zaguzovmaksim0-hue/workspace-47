@@ -234,6 +234,16 @@ class ProfileHttpTransportTest {
     }
 
     @Test
+    fun textXmlProtocolResponsesAreAccepted() {
+        val transport = HttpsProfileHttpTransport(
+            dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
+            executor = QueueExecutor(RawProfileHttpResponse(200, "text/xml;charset=UTF-8", null, "<xml/>".encodeToByteArray())),
+            dnsExecutor = directDnsExecutor,
+        )
+        assertTrue(post(transport) is ProfileHttpResult.Success)
+    }
+
+    @Test
     fun everyRepresentativeNonGlobalDnsRangeIsRejectedBeforeConnect() {
         val blockedAddresses = listOf(
             "0.1.2.3",
