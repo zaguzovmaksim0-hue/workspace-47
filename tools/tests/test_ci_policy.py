@@ -392,10 +392,13 @@ class CiPolicyTest(unittest.TestCase):
         self.assertNotIn('EXPOSED_PARAMETER_TYPE', source)
         self.assertNotIn('EXPOSED_PROPERTY_TYPE', source)
         self.assertNotIn('data class Failure', source)
-        self.assertIn(
-            'class Failure internal constructor(\n        internal val detail: ProfileHttpFailureDetail,\n    ) : ProfileHttpResult {',
+        signature = re.search(
+            r"class Failure internal constructor\((.*?)\)\s*:\s*ProfileHttpResult",
             source,
+            re.S,
         )
+        self.assertIsNotNone(signature)
+        self.assertRegex(signature.group(1), r"\binternal val detail: ProfileHttpFailureDetail\b")
         self.assertIn('val code: ProfileHttpFailure', source)
         self.assertIn('constructor(code: ProfileHttpFailure)', source)
 
