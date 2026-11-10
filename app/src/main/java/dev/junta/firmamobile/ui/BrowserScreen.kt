@@ -1240,60 +1240,35 @@ fun BrowserScreen(
         },
     ) { modifier ->
         Column(modifier = modifier) {
-            val dataNotice = browserDataNotice(siteClearResult, globalClearResult)
-            val notice = browserNotice(
-                compatibilityError = compatibilityError,
-                blockedReason = blockedReason,
-                browserError = browserError,
-                clientCertPreferenceState = clientCertPreferenceState,
-                dataNotice = dataNotice,
-            )
-            notice?.let { message ->
-                BrowserNoticeBanner(
-                    message = message,
-                    liveRegionMode = browserNoticeLiveRegionMode(
-                        compatibilityError = compatibilityError,
-                        blockedReason = blockedReason,
-                        browserError = browserError,
-                        clientCertPreferenceState = clientCertPreferenceState,
-                        globalClearResult = globalClearResult,
-                    ),
-                    onRetry = when {
-                        clientCertPreferenceState == ClientCertPreferenceBarrierState.FAILED ||
-                            browserError == BrowserErrorCode.CLIENT_CERT_PREFERENCES -> {
-                            { beginClientCertPreferenceRecovery() }
-                        }
-
-                        browserError != null -> {
-                            {
-                                onCancelSigning(SigningCancelReason.RELOAD, null)
-                                browserError = null
-                                pageLoading = true
-                                if (clientAuthGrant != null) {
-                                    val activeStartUrl = selectedServiceId?.let(BuiltInSiteProfiles.runtimeRegistry::profile)
-                                        ?.startUrl
-                                        ?.toASCIIString()
-                                        ?: validatedEntryUrl
-                                    pendingNormalUrl.set(activeStartUrl)
-                                    clientAuthGrant = null
-                                    abandonClientAuth()
-                                    advanceNavigationEpoch()
-                                } else {
-                                    webViewRef.get()?.reload()
-                                }
-                            }
-                        }
-
-                        else -> null
-                    },
-                )
-            }
-            BrowserLoadingIndicator(
-                visible = browserLoadingVisible(
+            browserPageStatus(
+                state = BrowserPageStatusState(
+                    compatibilityError = compatibilityError,
+                    blockedReason = blockedReason,
+                    browserError = browserError,
                     clientCertPreferenceState = clientCertPreferenceState,
+                    siteClearResult = siteClearResult,
+                    globalClearResult = globalClearResult,
                     clientAuthPreparing = clientAuthPreparing,
                     pageLoading = pageLoading,
                 ),
+                onRecoverClientCertPreferences = { beginClientCertPreferenceRecovery() },
+                onRetryBrowserError = {
+                    onCancelSigning(SigningCancelReason.RELOAD, null)
+                    browserError = null
+                    pageLoading = true
+                    if (clientAuthGrant != null) {
+                        val activeStartUrl = selectedServiceId?.let(BuiltInSiteProfiles.runtimeRegistry::profile)
+                            ?.startUrl
+                            ?.toASCIIString()
+                            ?: validatedEntryUrl
+                        pendingNormalUrl.set(activeStartUrl)
+                        clientAuthGrant = null
+                        abandonClientAuth()
+                        advanceNavigationEpoch()
+                    } else {
+                        webViewRef.get()?.reload()
+                    }
+                },
             )
             if (!clientCertPreferenceBlocked) key(
                 clientAuthGrant != null,
