@@ -27,24 +27,12 @@ class BrowserUrlPolicy(
     fun isActiveProfile(profileId: ProfileId): Boolean = registry.profile(profileId) != null
 
     fun resolve(rawUrl: String, activeProfileId: ProfileId? = null): BrowserUrlResolution {
-        if (rawUrl.isBlank() || rawUrl.length > MAX_URL_CHARS || rawUrl.any(Char::isISOControl)) {
-            return blocked()
-        }
-        val uri = runCatching { URI(rawUrl) }.getOrNull() ?: return blocked()
-        if (uri.isOpaque || !uri.scheme.equals("https", ignoreCase = true) || uri.host == null || uri.userInfo != null ||
-            uri.port !in setOf(-1, 443)
-        ) {
-            return blocked()
-        }
-        if (runCatching { ExactOrigin.parse("https://${uri.host}") }.isFailure) return blocked()
+        val uri = PublicBrowserAddress.parseNavigation(rawUrl) ?: return blocked()
 
-        if (selectedProfileId == null) {
+        if (selectedProfileId == null || uri.port !in setOf(-1, 443)) {
             // A public session never adopts a registered profile, even if the
-            // page redirects to a known signing host or supplies an active ID.
-            val admitted = PublicBrowserAddress.parse(rawUrl) ?: return blocked()
-            val origin = ExactOrigin.parse("https://${admitted.host}")
-            return BrowserUrlResolution(admitted, null,
-                if (origin in externalOnlyOrigins) TrustMode.EXTERNAL_ONLY else TrustMode.BROWSE_ONLY)
+            // page supplies an active ID. Other ports are different origins.
+            return browseOnly(uri)
         }
         val activeSelectedProfile = activeProfileId?.takeIf { it == selectedProfileId }
         if (activeProfileId == null) {
@@ -75,17 +63,15 @@ class BrowserUrlPolicy(
             return BrowserUrlResolution(uri, direct, direct.trustMode)
         }
 
-        val origin = ExactOrigin.parse("https://${uri.host}")
-        return BrowserUrlResolution(
-            uri,
-            null,
-            if (origin in externalOnlyOrigins) TrustMode.EXTERNAL_ONLY else TrustMode.BROWSE_ONLY,
-        )
+        return browseOnly(uri)
     }
 
     private fun blocked() = BrowserUrlResolution(null, null, TrustMode.BLOCKED)
 
-    private companion object {
-        const val MAX_URL_CHARS = 8_192
+    private fun browseOnly(uri: URI): BrowserUrlResolution {
+        val externalOnly = uri.port in setOf(-1, 443) &&
+            ExactOrigin.parse("https://${uri.host}") in externalOnlyOrigins
+        return BrowserUrlResolution(uri, null,
+            if (externalOnly) TrustMode.EXTERNAL_ONLY else TrustMode.BROWSE_ONLY)
     }
 }

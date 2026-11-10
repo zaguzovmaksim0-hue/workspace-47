@@ -236,6 +236,42 @@ class JuntaWebViewClientTest {
     }
 
     @Test
+    fun publicHttpMainFrameGetLoadsOnlyTheHttpsUpgrade() {
+        val publicClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(null),
+            currentPageUrl = { "https://public.example/" },
+        )
+        for ((target, expected) in mapOf(
+            "http://public.example:80/form?state=one#done" to "https://public.example/form?state=one#done",
+            "http://public.example:8443/" to "https://public.example:8443/",
+            "http://public.example:4443/" to "https://public.example:4443/",
+        )) {
+            assertTrue(publicClient.shouldOverrideUrlLoading(webView, request(target)))
+            assertEquals(expected, shadowOf(webView).lastLoadedUrl)
+        }
+        assertTrue(callbacks.events.isEmpty())
+    }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun publicHttpPostSubframeAndLegacyCallbacksCannotReloadAsHttps() {
+        val publicClient = JuntaWebViewClient(
+            callbacks = callbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(null),
+            currentPageUrl = { "https://public.example/" },
+        )
+        val target = "http://public.example:80/form?state=one"
+        assertTrue(publicClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
+        assertTrue(publicClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
+        assertTrue(publicClient.shouldOverrideUrlLoading(webView, target))
+        assertTrue(shadowOf(webView).lastLoadedUrl.isNullOrEmpty())
+        assertEquals(listOf("blocked:INSECURE_HTTP"), callbacks.events)
+    }
+
+    @Test
     @Suppress("DEPRECATION")
     fun subframeAndLegacyBlockedNavigationCannotReachApplicationCallback() {
         val frameCallbacks = RecordingBrowserCallbacks()

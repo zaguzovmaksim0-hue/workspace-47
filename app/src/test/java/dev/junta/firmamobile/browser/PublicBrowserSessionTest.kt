@@ -53,7 +53,7 @@ class PublicBrowserSessionTest {
     }
 
     @Test fun malformedOrLocalEntriesCannotExploitTheNullableProfilePath() {
-        for (raw in listOf("http://public.example", "https://user@public.example", "file:///secret", "https://localhost/", "https://127.0.0.1/", "https://public.example:444/", "https://host.local/")) {
+        for (raw in listOf("http://public.example", "https://user@public.example", "file:///secret", "https://localhost/", "https://127.0.0.1/", "https://public.example:0/", "https://host.local/")) {
             assertNull(raw, BrowserSessionStatePolicy.validatedEntryUrl(registry, null, URI(raw)))
             assertNull(raw, BrowserUrlPolicy(registry, null).resolve(raw).uri)
         }
@@ -80,7 +80,7 @@ class PublicBrowserSessionTest {
         for (url in listOf("https://identity.synthetic.example/login?state=a#b", registry.profile(known)!!.startUrl.toASCIIString())) {
             assertEquals(NavigationDecision.AllowInWebView, policy.decide(url, page))
         }
-        assertTrue(policy.decide("http://identity.synthetic.example/login", page) is NavigationDecision.Block)
+        assertTrue(policy.decide("http://identity.synthetic.example/login", page) is NavigationDecision.UpgradeToHttps)
         assertTrue(policy.decide("file:///private", page) is NavigationDecision.Block)
         // A public HTTPS page may use the universal AutoFirma bridge, but this
         // incomplete sign request lacks the required algorithm and format

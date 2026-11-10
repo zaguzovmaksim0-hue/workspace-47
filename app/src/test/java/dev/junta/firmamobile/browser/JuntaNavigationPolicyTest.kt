@@ -1,12 +1,15 @@
 package dev.junta.firmamobile.browser
 
+import android.net.Uri
 import dev.junta.firmamobile.afirma.AfirmaOperation
+import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
 import dev.junta.firmamobile.profile.ProfileId
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,6 +52,61 @@ class JuntaNavigationPolicyTest {
         val http = policy.decide("http://example.org/help", trustedPage)
             as NavigationDecision.Block
         assertEquals(NavigationBlockReason.INSECURE_HTTP, http.reason)
+    }
+
+    @Test
+    fun publicHttpNavigationOffersHttpsWithoutAnInsecureProbe() {
+        val publicPolicy = JuntaNavigationPolicy(null)
+        val addresses = mapOf(
+            "http://public.example/form?q=%2f%2F+a#section" to
+                "https://public.example/form?q=%2f%2F+a#section",
+            "HTTP://Public.Example:80/form?state=one#done" to
+                "https://Public.Example/form?state=one#done",
+            "http://public.example:8443/" to "https://public.example:8443/",
+            "http://public.example:4443/" to "https://public.example:4443/",
+        )
+        addresses.forEach { (http, https) ->
+            val decision = publicPolicy.decide(http, null) as NavigationDecision.UpgradeToHttps
+            assertEquals(https, decision.uri.toString())
+        }
+    }
+
+    @Test
+    fun publicHttpUpgradeRejectsUnsafeOrAmbiguousAddresses() {
+        val publicPolicy = JuntaNavigationPolicy(null)
+        listOf(
+            "http://localhost/",
+            "http://service.local:8443/",
+            "http://127.0.0.1/",
+            "http://192.0.2.1:4443/",
+            "http://[::1]/",
+            "http://user@public.example/",
+            "http://%70ublic.example/",
+            "http://public.example:/",
+            "http://public.example:080/",
+            "http://public.example:0/",
+            "http://public.example:65536/",
+            "http://public.example/%GG",
+            "http://public.example/a\\b",
+            "http://public.example/" + "a".repeat(8192),
+        ).forEach { target ->
+            assertEquals(target, NavigationDecision.Block(NavigationBlockReason.INSECURE_HTTP),
+                publicPolicy.decide(target, null))
+        }
+    }
+
+    @Test
+    fun nonDefaultPublicPortsCannotBorrowDefaultPortSigningAuthority() {
+        val publicPolicy = JuntaNavigationPolicy(null)
+        val request = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
+        for (port in listOf(8443, 4443)) {
+            val page = "https://www.juntadeandalucia.es:$port/"
+            assertEquals(NavigationDecision.AllowInWebView, publicPolicy.decide(page, null))
+            for (navigation in listOf(publicPolicy, policy)) {
+                assertEquals(NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN),
+                    navigation.decide(request, page))
+            }
+        }
     }
 
     @Test
@@ -249,7 +307,7 @@ class JuntaNavigationPolicyTest {
     private fun urlEncode(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8.name())
 
     @Test
-    fun exactOriginMatcherRequiresHttpsSchemeCanonicalHostAndEffectivePort() {
+    fun browsingDoesNotBroadenTheExactCertificateOriginMatcher() {
         val carneJovenPolicy = JuntaNavigationPolicy(ProfileId("carne-joven-andalucia"))
         val carneJovenPage = "https://ws104.juntadeandalucia.es/carneJoven/cjservlet/portal/index.jsp"
 
@@ -267,11 +325,8 @@ class JuntaNavigationPolicyTest {
 
         val portTarget = "https://ws235.juntadeandalucia.es:8443/authenticationFacade"
         val portDecision = carneJovenPolicy.decide(portTarget, carneJovenPage)
-        assertTrue(portDecision is NavigationDecision.Block)
-        assertEquals(
-            NavigationBlockReason.INVALID_URL,
-            (portDecision as NavigationDecision.Block).reason,
-        )
+        assertEquals(NavigationDecision.AllowInWebView, portDecision)
+        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse(portTarget), ProfileId("carne-joven-andalucia")))
 
         val userInfoTarget = "https://user:pass@ws235.juntadeandalucia.es/authenticationFacade"
         val userInfoDecision = carneJovenPolicy.decide(userInfoTarget, carneJovenPage)
