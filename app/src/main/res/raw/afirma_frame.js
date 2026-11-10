@@ -41,6 +41,25 @@
         enumerable: src.enumerable,
         configurable: src.configurable
     });
+    function hookAttributeNode(methodName) {
+        var original = prototype[methodName];
+        if (typeof original !== "function") return;
+        Object.defineProperty(prototype, methodName, {
+            value: function (attribute) {
+                if (attribute && attribute.namespaceURI == null &&
+                        typeof attribute.name === "string" && attribute.name.toLowerCase() === "src" &&
+                        (!attribute.ownerElement || attribute.ownerElement === this) &&
+                        forward(this, attribute.value)) {
+                    return this.getAttributeNode("src");
+                }
+                return original.call(this, attribute);
+            },
+            writable: true,
+            configurable: true
+        });
+    }
+    hookAttributeNode("setAttributeNode");
+    hookAttributeNode("setAttributeNodeNS");
     Object.defineProperty(prototype, "setAttribute", {
         value: function (name, value) {
             if (typeof name === "string" && name.toLowerCase() === "src" &&

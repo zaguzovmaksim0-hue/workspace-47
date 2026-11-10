@@ -16,14 +16,34 @@ function environment(options = {}) {
     const document = {};
     const messages = [];
     class Frame {
-        constructor(owner = document) { this.ownerDocument = owner; this.attributes = {}; }
+        constructor(owner = document) {
+            this.ownerDocument = owner; this.attributes = {}; this.attributeNodes = {};
+        }
         setAttribute(name, value) { this.attributes[String(name).toLowerCase()] = value; }
+        getAttributeNode(name) { return this.attributeNodes[name] || null; }
+        setAttributeNode(attribute) {
+            if (attribute.ownerElement && attribute.ownerElement !== this) throw new Error("InUseAttributeError");
+            const previous = this.getAttributeNode(attribute.name);
+            this.attributeNodes[attribute.name] = attribute;
+            this.attributes[attribute.name] = attribute.value;
+            attribute.ownerElement = this;
+            return previous;
+        }
+        setAttributeNodeNS(attribute) { return this.setAttributeNode(attribute); }
     }
     Object.defineProperty(Frame.prototype, "src", {
         get() { return this.originalSrc; },
         set(value) { this.originalSrc = value; },
         configurable: true, enumerable: true
     });
+    document.createElement = function (name) {
+        assert.equal(name, "iframe");
+        return new Frame();
+    };
+    document.createAttribute = function (name) {
+        return { name, value: "", namespaceURI: null, ownerElement: null };
+    };
+    document.documentElement = { appendChild(frame) { return frame; } };
     const window = {
         HTMLIFrameElement: Frame,
         crypto: { getRandomValues(array) { array.fill(23); return array; } }
@@ -96,7 +116,45 @@ for (const options of [{subframe:true}, {insecure:true}, {noBridge:true}]) {
     frame.src = request;
     assert.equal(frame.originalSrc, request);
 }
-process.stdout.write("9 document/frame scenarios passed\n");
+// Pinned official AutoScript creates a detached iframe and sets an Attr node.
+{
+    const e = environment();
+    const iframeElem = e.document.createElement("iframe");
+    const srcAttr = e.document.createAttribute("src");
+    srcAttr.value = request;
+    assert.equal(iframeElem.setAttributeNode(srcAttr), null);
+    e.document.documentElement.appendChild(iframeElem);
+    assert.equal(e.messages.length, 1);
+    assert.equal(iframeElem.attributes.src, undefined);
+}
+{
+    const e = environment(), frame = new e.Frame();
+    const attribute = e.document.createAttribute("src");
+    attribute.value = request;
+    assert.equal(frame.setAttributeNodeNS(attribute), null);
+    assert.equal(e.messages.length, 1);
+    assert.equal(frame.attributes.src, undefined);
+}
+{
+    const e = environment(), frame = new e.Frame({});
+    const attribute = e.document.createAttribute("src");
+    attribute.value = request;
+    frame.setAttributeNode(attribute);
+    assert.equal(frame.attributes.src, request);
+    assert.deepEqual(e.messages, []);
+}
+{
+    const e = environment(), frame = new e.Frame();
+    const attribute = e.document.createAttribute("src");
+    attribute.value = "https://portal.example/?atributo=one&atributo=two";
+    assert.equal(frame.setAttributeNode(attribute), null);
+    const replacement = e.document.createAttribute("src");
+    replacement.value = "https://portal.example/next";
+    assert.equal(frame.setAttributeNode(replacement), attribute);
+    assert.equal(frame.attributes.src, replacement.value);
+    assert.deepEqual(e.messages, []);
+}
+process.stdout.write("13 document/frame scenarios passed\n");
 """
 
 
