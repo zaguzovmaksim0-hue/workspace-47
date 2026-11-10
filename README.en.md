@@ -12,13 +12,13 @@ The project is experimental. Compatibility is recorded per exact profile and ope
 
 - [Installation and first steps (Spanish)](docs/instalacion.md)
 - [APK signing, verification and migration](docs/daily-apk-signing.md)
-- [Version 0.2.17 changes](CHANGELOG.md)
+- [Change history](CHANGELOG.md)
 - [Technical documentation](docs/README.md)
 - [Security policy](SECURITY.md)
 - [Privacy policy (Spanish)](docs/privacidad.md)
 - [Contributing](CONTRIBUTING.md)
 
-The visible name is **Firma Mobile** and the daily-use version is **0.2.17**.
+The visible name is **Firma Mobile**. This checkout's version is defined in [`version.properties`](version.properties); Android reports the installed version.
 The Android application ID remains `dev.junta.firmamobile` for update continuity.
 The internal `optimized` build-type name is not part of the visible version.
 

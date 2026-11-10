@@ -12,13 +12,13 @@ El proyecto es experimental. La compatibilidad se verifica por portal y operaci�
 
 - [Instalación y primeros pasos](docs/instalacion.md)
 - [Firma del APK y actualizaciones](docs/instalacion.md#firma-del-apk-y-actualizaciones)
-- [Cambios de la versión 0.2.17](CHANGELOG.md)
+- [Historial de cambios](CHANGELOG.md)
 - [Documentación técnica](docs/README.md)
 - [Política de seguridad](SECURITY.md)
 - [Política de privacidad](docs/privacidad.md)
 - [Cómo contribuir](CONTRIBUTING.md)
 
-El nombre visible es **Firma Mobile** y la versión de uso diario es **0.2.17**. El identificador Android se mantiene como `dev.junta.firmamobile` para conservar la continuidad de las actualizaciones. El tipo de compilación interno `optimized` no forma parte del nombre visible de la versión.
+El nombre visible es **Firma Mobile**. La versión de este código fuente se define en [`version.properties`](version.properties); la versión instalada se consulta en Android. El identificador Android se mantiene como `dev.junta.firmamobile` para conservar la continuidad de las actualizaciones. El tipo de compilación interno `optimized` no forma parte del nombre visible de la versión.
 
 ## APK diario y clave de firma
 

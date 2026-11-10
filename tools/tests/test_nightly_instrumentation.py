@@ -41,6 +41,18 @@ class NightlyInstrumentationTest(unittest.TestCase):
             self.assertEqual('${{ env.VERIFY_REF }}', checkout['with']['ref'])
             self.assertEqual('false', checkout['with']['persist-credentials'])
 
+    def test_qa_apks_compile_before_the_emulator_consumes_runner_memory(self):
+        steps = self.workflow['jobs']['android-instrumented']['steps']
+        emulator = next(i for i, step in enumerate(steps)
+                        if step.get('uses', '').startswith('ReactiveCircus/android-emulator-runner@'))
+        builds = [(i, step) for i, step in enumerate(steps)
+                  if 'assembleQa assembleQaAndroidTest' in step.get('run', '')]
+        self.assertEqual(1, len(builds))
+        index, step = builds[0]
+        self.assertLess(index, emulator)
+        self.assertNotIn('continue-on-error', step)
+        self.assertNotIn('connectedQaAndroidTest', step['run'])
+
 
 if __name__ == '__main__':
     unittest.main()

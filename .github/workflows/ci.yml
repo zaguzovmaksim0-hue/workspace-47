@@ -58,8 +58,108 @@ jobs:
           if-no-files-found: warn
           retention-days: 3
 
-  android:
-    name: Android unit, lint, APK
+  android-release:
+    name: Android release unit, lint, APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.VERIFY_REF }}
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      - name: Install Android API 36 toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +o pipefail
+          yes | sdkmanager --licenses >/dev/null
+          set -o pipefail
+          sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Raise CI Gradle heap
+        # Release unit-test compilation hit GC overhead at the project's 2 GB default; phone builds keep it.
+        shell: bash
+        run: |
+          set -euo pipefail
+          dir="${GRADLE_USER_HOME:-$HOME/.gradle}"
+          mkdir -p "$dir"
+          printf 'org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8\n' >> "$dir/gradle.properties"
+      - name: Verify dependency metadata and portable toolchain
+        run: ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon
+      - name: Collect locked runtime license evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p app/build/reports/runtime-licenses
+          ./gradlew :app:verifyRuntimeDependencyLocks --no-daemon
+          for variant in optimized release; do
+            ./gradlew :app:dependencies --configuration "${variant}RuntimeClasspath" --no-daemon > "app/build/reports/runtime-licenses/${variant}-graph.txt"
+            python3 tools/collect_runtime_license_evidence.py \
+              --cache "${GRADLE_USER_HOME:-$HOME/.gradle}/caches/modules-2/files-2.1" \
+              --configuration "${variant}RuntimeClasspath" \
+              --output "app/build/reports/runtime-licenses/${variant}"
+            python3 tools/verify_legal_bundle.py --inventory "app/build/reports/runtime-licenses/${variant}/inventory.json"
+          done
+      - name: Retain runtime license evidence (not release approval)
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: runtime-license-evidence-${{ env.VERIFY_REF }}
+          path: app/build/reports/runtime-licenses/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Verify release signing fails closed without secrets
+        run: scripts/ci/verify-release-fail-closed.sh
+      - name: Build and test actual release variant with a disposable CI-only signer
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JFM_RELEASE_STORE_FILE="$RUNNER_TEMP/ci-only-release.p12"
+          export JFM_RELEASE_STORE_PASSWORD=ci-only-not-a-production-secret
+          export JFM_RELEASE_KEY_PASSWORD=ci-only-not-a-production-secret
+          export JFM_RELEASE_KEY_ALIAS=ci-only
+          trap 'rm -f "$JFM_RELEASE_STORE_FILE"' EXIT
+          keytool -genkeypair -keystore "$JFM_RELEASE_STORE_FILE" -storetype PKCS12 -alias "$JFM_RELEASE_KEY_ALIAS" -keyalg RSA -keysize 3072 -validity 2 -dname "CN=CI ONLY NOT FOR DISTRIBUTION" -storepass:env JFM_RELEASE_STORE_PASSWORD -keypass:env JFM_RELEASE_KEY_PASSWORD -noprompt
+          ./gradlew testReleaseUnitTest lintRelease assembleRelease --no-daemon
+          python3 tools/verify_legal_bundle.py --apk app/build/outputs/apk/release/app-release.apk
+          printf '%s\n' "$VERIFY_REF" > app/build/outputs/apk/release/SOURCE_COMMIT.txt
+          printf '%s\n' 'CI-ONLY SIGNATURE. MUST BE VERIFIED AND RE-SIGNED PRIVATELY BEFORE DISTRIBUTION.' > app/build/outputs/apk/release/DO_NOT_DISTRIBUTE.txt
+          (cd app/build/outputs/apk/release && sha256sum app-release.apk > SHA256SUMS)
+      - name: Retain release candidate for private verification and signing
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: firmamobile-release-candidate-${{ env.VERIFY_REF }}
+          path: app/build/outputs/apk/release/
+          if-no-files-found: error
+          retention-days: 3
+      - name: Retain Android release unit and lint reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-release-unit-lint-${{ env.VERIFY_REF }}
+          path: |
+            app/build/test-results/testReleaseUnitTest/
+            app/build/test-results/consent-preview/
+            app/build/reports/lint-results-release.xml
+          if-no-files-found: warn
+          retention-days: 3
+
+  android-variants:
+    name: Android debug, QA and optimized checks
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -102,52 +202,6 @@ jobs:
         run: ./gradlew verifyResolvedCoreVersion verifyPortableAapt2Configuration --no-daemon
       - name: Build optimized daily-use APK
         run: ./gradlew assembleOptimized --no-daemon
-      - name: Collect locked runtime license evidence
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p app/build/reports/runtime-licenses
-          ./gradlew :app:verifyRuntimeDependencyLocks --no-daemon
-          for variant in optimized release; do
-            ./gradlew :app:dependencies --configuration "${variant}RuntimeClasspath" --no-daemon > "app/build/reports/runtime-licenses/${variant}-graph.txt"
-            python3 tools/collect_runtime_license_evidence.py \
-              --cache "${GRADLE_USER_HOME:-$HOME/.gradle}/caches/modules-2/files-2.1" \
-              --configuration "${variant}RuntimeClasspath" \
-              --output "app/build/reports/runtime-licenses/${variant}"
-            python3 tools/verify_legal_bundle.py --inventory "app/build/reports/runtime-licenses/${variant}/inventory.json"
-          done
-      - name: Retain runtime license evidence (not release approval)
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: runtime-license-evidence-${{ env.VERIFY_REF }}
-          path: app/build/reports/runtime-licenses/
-          if-no-files-found: warn
-          retention-days: 7
-      - name: Verify release signing fails closed without secrets
-        run: scripts/ci/verify-release-fail-closed.sh
-      - name: Build and test actual release variant with a disposable CI-only signer
-        shell: bash
-        run: |
-          set -euo pipefail
-          export JFM_RELEASE_STORE_FILE="$RUNNER_TEMP/ci-only-release.p12"
-          export JFM_RELEASE_STORE_PASSWORD=ci-only-not-a-production-secret
-          export JFM_RELEASE_KEY_PASSWORD=ci-only-not-a-production-secret
-          export JFM_RELEASE_KEY_ALIAS=ci-only
-          keytool -genkeypair -keystore "$JFM_RELEASE_STORE_FILE" -storetype PKCS12 -alias "$JFM_RELEASE_KEY_ALIAS" -keyalg RSA -keysize 3072 -validity 2 -dname "CN=CI ONLY NOT FOR DISTRIBUTION" -storepass:env JFM_RELEASE_STORE_PASSWORD -keypass:env JFM_RELEASE_KEY_PASSWORD -noprompt
-          ./gradlew testReleaseUnitTest lintRelease assembleRelease --no-daemon
-          python3 tools/verify_legal_bundle.py --apk app/build/outputs/apk/release/app-release.apk
-          printf '%s\n' "$VERIFY_REF" > app/build/outputs/apk/release/SOURCE_COMMIT.txt
-          printf '%s\n' 'CI-ONLY SIGNATURE. MUST BE VERIFIED AND RE-SIGNED PRIVATELY BEFORE DISTRIBUTION.' > app/build/outputs/apk/release/DO_NOT_DISTRIBUTE.txt
-          (cd app/build/outputs/apk/release && sha256sum app-release.apk > SHA256SUMS)
-          rm -f "$JFM_RELEASE_STORE_FILE"
-      - name: Retain release candidate for private verification and signing
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: firmamobile-release-candidate-${{ env.VERIFY_REF }}
-          path: app/build/outputs/apk/release/
-          if-no-files-found: error
-          retention-days: 3
       - name: Run Android lint
         run: ./gradlew lintDebug lintQa lintOptimized --no-daemon
       - name: Run Android unit tests
@@ -188,14 +242,30 @@ jobs:
             app/build/test-results/testDebugUnitTest/
             app/build/test-results/testQaUnitTest/
             app/build/test-results/testOptimizedUnitTest/
-            app/build/test-results/testReleaseUnitTest/
             app/build/test-results/consent-preview/
             app/build/reports/lint-results-debug.xml
             app/build/reports/lint-results-qa.xml
             app/build/reports/lint-results-optimized.xml
-            app/build/reports/lint-results-release.xml
           if-no-files-found: warn
           retention-days: 3
+
+  android:
+    # Preserve the required status check while independent builds run in parallel.
+    name: Android unit, lint, APK
+    needs: [android-variants, android-release]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every Android check to succeed
+        shell: bash
+        env:
+          ANDROID_VARIANTS_RESULT: ${{ needs.android-variants.result }}
+          ANDROID_RELEASE_RESULT: ${{ needs.android-release.result }}
+        run: |
+          set -euo pipefail
+          test "$ANDROID_VARIANTS_RESULT" = success
+          test "$ANDROID_RELEASE_RESULT" = success
 
   android-instrumented:
     name: Android emulator instrumentation
@@ -238,6 +308,10 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules >/dev/null
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      # Compile while the emulator is absent. This avoids competing compiler
+      # and emulator memory on a cold runner; the harness still installs/tests.
+      - name: Build QA APKs before starting emulator
+        run: ./gradlew assembleQa assembleQaAndroidTest --no-daemon --console=plain
       - name: Run QA instrumentation on Android 16 emulator
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
