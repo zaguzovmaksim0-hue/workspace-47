@@ -47,10 +47,11 @@ internal fun validateOwnTlsLoginProfile(profile: SiteProfile) {
         }
         "boe-sede-public-home" -> boeLoginPolicy(profile)
         "cmt-public-navigation" -> cmtLoginPolicy(profile)
+        "portal-funciona-public-home" -> funcionaLoginPolicy(profile)
         else -> return
     }
     val version = when (profile.profileId.value) {
-        "boe-sede-public-home", "cmt-public-navigation" -> 2
+        "boe-sede-public-home", "cmt-public-navigation", "portal-funciona-public-home" -> 2
         else -> 1
     }
     require(profile.profileVersion == version)
@@ -86,6 +87,37 @@ private fun boeLoginPolicy(profile: SiteProfile): ClientAuthPolicy {
         requiredEphemeralQueryParameters = emptySet(),
         allowEmptyIssuerList = true,
         grantTtlSeconds = 15,
+    )
+}
+
+// Keycloak brokers to Autentica with three server redirects; autentica.redsara.es then sends an empty-CA
+// CertificateRequest on its first handshake (curl -v, 2026-11-09). The broker hop is the exact source.
+private fun funcionaLoginPolicy(profile: SiteProfile): ClientAuthPolicy {
+    require(profile.displayName == "Portal Funciona — acceso con Autentica")
+    require(profile.startUrl == URI("https://sede.funciona.gob.es/es/home"))
+    require(profile.initiatorOrigins == setOf(ExactOrigin.parse("https://sede.funciona.gob.es")))
+    require(profile.redirectOrigins == setOf(ExactOrigin.parse("https://auth-api.redsara.es")))
+    require(profile.evidence.associate { it.url.toASCIIString() to it.reviewedOn.toString() } == mapOf(
+        "https://sede.funciona.gob.es/public/servicios" to "2026-08-17",
+        "https://sede.funciona.gob.es/es/home" to "2026-08-17",
+        "https://auth-api.redsara.es/auth/realms/sgad-appfactory/.well-known/openid-configuration" to "2026-11-09",
+        "https://autentica.redsara.es/Autentica/servlet/AutenticaServlet" to "2026-11-09",
+    ))
+    return ClientAuthPolicy(
+        transitionMode = ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE,
+        requestOrigins = setOf(ExactOrigin.parse("https://autentica.redsara.es")),
+        sourceUrls = setOf(URI("https://auth-api.redsara.es/auth/realms/sgad-appfactory/broker/autentica/login")),
+        requestPath = "/Autentica/servlet/AutenticaServlet",
+        fixedQueryParameters = mapOf(
+            "action" to "goToAutentica",
+            "appId" to "5524",
+            "SigAlg" to "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+        ),
+        requiredEphemeralQueryParameters = setOf("SAMLRequest", "RelayState", "Signature"),
+        allowEmptyIssuerList = true,
+        grantTtlSeconds = 15,
+        sourceFixedQueryParameters = mapOf("client_id" to "fe66bc25-ec04-41e4-8202-809dbded381a"),
+        sourceRequiredEphemeralQueryParameters = setOf("session_code", "tab_id"),
     )
 }
 

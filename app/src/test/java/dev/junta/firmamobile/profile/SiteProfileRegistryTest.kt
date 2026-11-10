@@ -409,7 +409,7 @@ class SiteProfileRegistryTest {
     }
 
     @Test
-    fun `Portal Funciona public home is browse-only trust in QA and external auth origins stay closed`() {
+    fun `Portal Funciona home is QA client TLS trust and external auth origins are never trusted`() {
         val profileId = ProfileId("portal-funciona-public-home")
         val start = URI("https://sede.funciona.gob.es/es/home")
 
@@ -419,10 +419,10 @@ class SiteProfileRegistryTest {
         assertNotNull(profile)
         assertEquals(CompatibilityStatus.VERIFIED_CONTRACT, profile?.compatibilityStatus)
         assertEquals(ProfileActivation.QA_ONLY, profile?.activation)
-        assertEquals(emptySet<Capability>(), profile?.capabilities)
-        assertEquals(TrustMode.TRUSTED_BROWSE, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://auth-api.redsara.es/auth/realms/sgad-appfactory/")))
-        assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://autentica.redsara.es/Autentica/")))
+        assertEquals(setOf(Capability.CLIENT_TLS_AUTH), profile?.capabilities)
+        assertEquals(TrustMode.TRUSTED_CLIENT_AUTH, BuiltInSiteProfiles.qaRegistry.resolve(start)?.trustMode)
+        listOf("https://auth-api.redsara.es/auth/realms/sgad-appfactory/", "https://autentica.redsara.es/Autentica/")
+            .forEach { assertEquals(TrustMode.BROWSE_ONLY, BuiltInSiteProfiles.qaRegistry.resolve(URI(it))?.trustMode) }
         assertNull(BuiltInSiteProfiles.qaRegistry.resolve(URI("https://sede.funciona.gob.es.evil.example/")))
     }
 

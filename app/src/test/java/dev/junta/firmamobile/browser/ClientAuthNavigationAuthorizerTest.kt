@@ -239,6 +239,32 @@ class ClientAuthNavigationAuthorizerTest {
     }
 
     @Test
+    fun funcionaArmsOnlyOnTheKeycloakBrokerHopAndGrantsTheNextAutenticaRedirect() {
+        // Funciona: sede stays committed while Keycloak's broker hop redirects to Autentica.
+        val profile = ProfileId("portal-funciona-public-home")
+        val home = "https://sede.funciona.gob.es/es/home"
+        val source = "https://auth-api.redsara.es/auth/realms/sgad-appfactory/broker/autentica/login" +
+            "?session_code=Fixture-SessionCode_0123456789&client_id=fe66bc25-ec04-41e4-8202-809dbded381a" +
+            "&tab_id=FixtureTab01"
+        val target = "https://autentica.redsara.es/Autentica/servlet/AutenticaServlet?action=goToAutentica" +
+            "&appId=5524&SAMLRequest=fZFBT8MwDIX%2FSuR7m6RFQ0Q0%3D&RelayState=Fixture-Relay" +
+            "&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256&Signature=QUJDRA%3D%3D"
+        val fresh = ClientAuthNavigationAuthorizer(BuiltInSiteProfiles.qaRegistry, monotonic::nowNanos)
+        assertNull(fresh.observeTopLevelNavigation(profile, home, target, 4, true))
+        val wrongClient = source.replace("client_id=fe66", "client_id=ee66")
+        assertNull(fresh.observeTopLevelNavigation(profile, home, wrongClient, 4, true))
+        assertNull(fresh.observeTopLevelNavigation(profile, home, target, 4, true))
+        assertNull(fresh.observeTopLevelNavigation(profile, home, source, 4, true))
+        val grant = fresh.observeTopLevelNavigation(profile, home, target, 4, true)
+        assertEquals(profile, grant?.profileId)
+        assertEquals(URI(source), grant?.source)
+        assertEquals(URI(target), grant?.target)
+        assertNull(fresh.observeTopLevelNavigation(profile, home, target, 4, true))
+        assertNull(fresh.observeTopLevelNavigation(profile, home, source, 4, true))
+        assertNull(fresh.observeTopLevelNavigation(profile, home, "$target&extra=1", 4, true))
+    }
+
+    @Test
     fun exactDirectSourceTransitionProducesOneBoundedAeatTarget() {
         val direct = aeatAuthorizer()
 

@@ -258,6 +258,8 @@ class JuntaOriginPolicyTest {
             "sede.gobiernodecanarias.org",
             "sede.oepm.gob.es",
             "sede.funciona.gob.es",
+            "auth-api.redsara.es",
+            "autentica.redsara.es",
             "digital.comunidad.madrid",
             "gestiona.comunidad.madrid",
             "sedejudicial.justicia.es",
@@ -473,7 +475,10 @@ class JuntaOriginPolicyTest {
         assertEquals(setOf("https://sede.xunta.gal"), JuntaOriginPolicy.webMessageOriginRules(xunta))
         assertEquals(setOf("sede.oepm.gob.es"), JuntaOriginPolicy.browserAllowedHosts(oepm))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(oepm).isEmpty())
-        assertEquals(setOf("sede.funciona.gob.es"), JuntaOriginPolicy.browserAllowedHosts(funciona))
+        assertEquals(
+            setOf("sede.funciona.gob.es", "auth-api.redsara.es"),
+            JuntaOriginPolicy.browserAllowedHosts(funciona),
+        )
         assertEquals(setOf("webpub2.igae.hacienda.gob.es", "pasarela.clave.gob.es"),
             JuntaOriginPolicy.browserAllowedHosts(fondosEuropeos))
         assertTrue(JuntaOriginPolicy.webMessageOriginRules(fondosEuropeos).isEmpty())
@@ -571,7 +576,7 @@ class JuntaOriginPolicyTest {
             ),
         )
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://izenpe.com/"), bizkaia))
-        assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
+        assertTrue(JuntaOriginPolicy.isAllowed(Uri.parse("https://auth-api.redsara.es/"), funciona))
         assertFalse(JuntaOriginPolicy.isAllowed(Uri.parse("https://autentica.redsara.es/"), funciona))
         assertEquals(
             setOf("digital.comunidad.madrid", "gestiona.comunidad.madrid"),

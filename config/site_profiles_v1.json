@@ -1416,22 +1416,41 @@
     },
     {
       "profileId": "portal-funciona-public-home",
-      "profileVersion": 1,
-      "displayName": "Portal Funciona — inicio público",
+      "profileVersion": 2,
+      "displayName": "Portal Funciona — acceso con Autentica",
       "compatibilityStatus": "VERIFIED_CONTRACT",
       "activation": "QA_ONLY",
       "startUrl": "https://sede.funciona.gob.es/es/home",
       "initiatorOrigins": ["https://sede.funciona.gob.es"],
-      "redirectOrigins": [],
+      "redirectOrigins": [
+        "https://auth-api.redsara.es"
+      ],
       "trustedBrowseOrigins": [],
       "endpoints": [],
       "operationPolicies": [],
-      "capabilities": [],
-      "clientAuthPolicy": null,
-      "certificateRules": {"allowedKeyAlgorithms":["RSA","EC"],"requireDigitalSignatureKeyUsage":false},
+      "capabilities": ["CLIENT_TLS_AUTH"],
+      "clientAuthPolicy": {
+        "transitionMode": "REDIRECT_AFTER_SOURCE",
+        "requestOrigins": ["https://autentica.redsara.es"],
+        "sourceUrls": ["https://auth-api.redsara.es/auth/realms/sgad-appfactory/broker/autentica/login"],
+        "sourceFixedQueryParameters": {"client_id": "fe66bc25-ec04-41e4-8202-809dbded381a"},
+        "sourceRequiredEphemeralQueryParameters": ["session_code", "tab_id"],
+        "requestPath": "/Autentica/servlet/AutenticaServlet",
+        "fixedQueryParameters": {"action": "goToAutentica", "appId": "5524", "SigAlg": "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"},
+        "requiredEphemeralQueryParameters": ["SAMLRequest", "RelayState", "Signature"],
+        "allowEmptyIssuerList": true,
+        "grantTtlSeconds": 15,
+        "requireOfferedKeyTypeMatch": true,
+        "requireTlsClientAuthExtendedKeyUsage": true,
+        "requestPort": 443,
+        "requestMethod": "GET"
+      },
+      "certificateRules": {"allowedKeyAlgorithms": ["RSA", "EC"], "requireDigitalSignatureKeyUsage": true},
       "evidence": [
-        {"url":"https://sede.funciona.gob.es/public/servicios","reviewedOn":"2026-08-17"},
-        {"url":"https://sede.funciona.gob.es/es/home","reviewedOn":"2026-08-17"}
+        {"url": "https://sede.funciona.gob.es/public/servicios", "reviewedOn": "2026-08-17"},
+        {"url": "https://sede.funciona.gob.es/es/home", "reviewedOn": "2026-08-17"},
+        {"url": "https://auth-api.redsara.es/auth/realms/sgad-appfactory/.well-known/openid-configuration", "reviewedOn": "2026-11-09"},
+        {"url": "https://autentica.redsara.es/Autentica/servlet/AutenticaServlet", "reviewedOn": "2026-11-09"}
       ]
     },
     {

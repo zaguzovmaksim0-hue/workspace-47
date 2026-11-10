@@ -775,7 +775,7 @@ object SiteProfileCatalogParser {
                         p.profileId.value == NAVARRA_PROFILE_ID &&
                             policy.transitionMode == ClientAuthTransitionMode.DIRECT_FROM_SOURCE &&
                             source.origin() in p.redirectOrigins ||
-                        p.profileId.value == ARAGON_TRAMITES_PROFILE_ID &&
+                        p.profileId.value in setOf(ARAGON_TRAMITES_PROFILE_ID, FUNCIONA_PROFILE_ID) &&
                             policy.transitionMode == ClientAuthTransitionMode.REDIRECT_AFTER_SOURCE &&
                             source.origin() in p.redirectOrigins) &&
                         (policy.sourceFixedQueryParameters.isEmpty() &&
@@ -3365,6 +3365,8 @@ object SiteProfileCatalogParser {
         value.length <= MAX_CONTENT_TYPE_CHARS && CONTENT_TYPE.matches(value)
 
     private const val ARAGON_TRAMITES_PROFILE_ID = "aragon-solicitud-general-client-auth"
+    // Keycloak broker hop on auth-api.redsara.es (a redirect origin) precedes the Autentica TLS target.
+    private const val FUNCIONA_PROFILE_ID = "portal-funciona-public-home"
     private const val ARAGON_TRAMITES_PROFILE_VERSION = 1
     private const val ARAGON_TRAMITES_DISPLAY_NAME =
         "Gobierno de Aragón — Solicitud de carácter general"

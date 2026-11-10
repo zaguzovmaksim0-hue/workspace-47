@@ -2258,7 +2258,7 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `Portal Funciona opens only exact public home in QA while authentication remains fail closed`() {
+    fun `Portal Funciona opens only exact public home in QA with Autentica client TLS login`() {
         val portalId = PortalId("age-portal-funciona")
         val profileId = ProfileId("portal-funciona-public-home")
         val publicHome = java.net.URI("https://sede.funciona.gob.es/es/home")
@@ -2267,7 +2267,7 @@ class PortalCatalogRepositoryTest {
         assertEquals(profileId, qaPortal.profileId)
         assertEquals(publicHome, qaPortal.entryUrl)
         assertEquals(PortalSupportStatus.IMPLEMENTED_NOT_E2E, qaPortal.supportStatus)
-        assertTrue(qaPortal.capabilities.isEmpty())
+        assertEquals(setOf(PortalServiceCapability.CERTIFICATE_ACCESS), qaPortal.capabilities)
         assertTrue(qaPortal.signatureFormats.isEmpty())
         assertTrue(qaPortal.isEnabled)
         assertEquals(PortalLaunchTarget(profileId, publicHome), qaRepository.resolveLaunch(qaPortal))
