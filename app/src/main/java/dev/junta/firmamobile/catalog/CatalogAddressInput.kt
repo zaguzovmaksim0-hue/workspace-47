@@ -19,7 +19,7 @@ internal class CatalogAddressInput private constructor(
         get() = if (opening || error == Error.TOO_LONG || error == Error.CLIPBOARD_EMPTY) null else parsedDestination
     val canSubmit: Boolean get() = !opening && text.isNotBlank() && error != Error.TOO_LONG && error != Error.CLIPBOARD_EMPTY
     val hostPreview: String? get() = destination?.let {
-        if (it.port in setOf(-1, 443)) it.host else "${it.host}:${it.port}"
+        if (it.port == -1 || it.port == HTTPS_PORT) it.host else "${it.host}:${it.port}"
     }
 
     fun edit(value: String): CatalogAddressInput = when {
@@ -57,6 +57,7 @@ internal class CatalogAddressInput private constructor(
 
     companion object {
         const val MAX_INPUT_CHARS = 8192
+        private const val HTTPS_PORT = 443
         private val explicitScheme = Regex("^[A-Za-z][A-Za-z0-9+.-]*://")
         fun empty() = CatalogAddressInput("", null, false)
         private fun candidate(raw: String): String {
