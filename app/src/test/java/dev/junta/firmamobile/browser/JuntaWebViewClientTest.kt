@@ -100,6 +100,11 @@ class JuntaWebViewClientTest {
         for (target in universalAfirmaTargets()) {
             assertTrue(universalClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
         }
+        assertEquals(
+            List(universalAfirmaTargets().size) { "blocked:UNSUPPORTED_AFIRMA_FRAME" },
+            callbacks.events,
+        )
+        callbacks.events.clear()
         active = false
         for (target in universalAfirmaTargets()) {
             assertTrue(universalClient.shouldOverrideUrlLoading(webView, request(target)))
@@ -472,7 +477,8 @@ class JuntaWebViewClientTest {
         val target = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=YWJj"
 
         assertTrue(sedessClient.shouldOverrideUrlLoading(webView, subframeRequest(target)))
-        assertEquals(emptyList<String>(), sedessCallbacks.events)
+        assertEquals(listOf("blocked:UNSUPPORTED_AFIRMA_FRAME"), sedessCallbacks.events)
+        sedessCallbacks.events.clear()
 
         assertTrue(sedessClient.shouldOverrideUrlLoading(webView, request(target, method = "POST")))
         assertEquals(
@@ -588,11 +594,54 @@ class JuntaWebViewClientTest {
             frameClient.shouldOverrideUrlLoading(webView, subframeRequest(embeddedIntent)),
         )
 
-        assertEquals(emptyList<String>(), frameCallbacks.events)
+        assertEquals(
+            listOf("blocked:UNSUPPORTED_AFIRMA_FRAME", "blocked:UNSUPPORTED_AFIRMA_FRAME"),
+            frameCallbacks.events,
+        )
         val exported = logger.exportText()
-        assertTrue(exported.contains("reason=UNTRUSTED_AFIRMA_ORIGIN"))
+        assertTrue(exported.contains("reason=UNSUPPORTED_AFIRMA_FRAME"))
         assertTrue(exported.contains("main_frame=false"))
         assertFalse(exported.contains("dat=abc"))
+    }
+
+    @Test
+    fun unprofiledSubframeReportsRefusalWithoutPreparingNativeSignature() {
+        val frameCallbacks = RecordingBrowserCallbacks()
+        var nativeInvocations = 0
+        val frameClient = JuntaWebViewClient(
+            callbacks = frameCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(null),
+            currentPageUrl = { "https://public.synthetic.example/" },
+            onNativeAfirmaInvocation = { _, _, _ -> nativeInvocations++; true },
+        )
+
+        assertTrue(frameClient.shouldOverrideUrlLoading(
+            webView,
+            subframeRequest("afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c2VjcmV0"),
+        ))
+
+        assertEquals(0, nativeInvocations)
+        assertEquals(listOf("blocked:UNSUPPORTED_AFIRMA_FRAME"), frameCallbacks.events)
+        assertFalse(logger.exportText().contains("c2VjcmV0"))
+    }
+
+    @Test
+    fun inactiveSubframeCannotDisplayRefusalInCurrentBrowser() {
+        val frameCallbacks = RecordingBrowserCallbacks()
+        val frameClient = JuntaWebViewClient(
+            callbacks = frameCallbacks,
+            logger = logger,
+            navigationPolicy = JuntaNavigationPolicy(null),
+            isActiveWebView = { false },
+        )
+
+        assertTrue(frameClient.shouldOverrideUrlLoading(
+            webView,
+            subframeRequest("afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=YWJj"),
+        ))
+
+        assertTrue(frameCallbacks.events.isEmpty())
     }
 
     @Test

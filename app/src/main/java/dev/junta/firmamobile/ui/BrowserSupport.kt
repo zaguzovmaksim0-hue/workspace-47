@@ -145,6 +145,8 @@ internal fun browserNotice(
     browserError != null -> stringResource(R.string.browser_load_error)
     blockedReason == NavigationBlockReason.PLAY_STORE_FALLBACK ->
         stringResource(R.string.browser_play_store_blocked)
+    blockedReason == NavigationBlockReason.UNSUPPORTED_AFIRMA_FRAME ->
+        stringResource(R.string.browser_afirma_frame_unsupported)
     blockedReason != null -> stringResource(R.string.browser_navigation_blocked)
     dataNotice != null -> dataNotice
     else -> null
