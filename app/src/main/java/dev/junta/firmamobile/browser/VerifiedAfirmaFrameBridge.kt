@@ -59,16 +59,17 @@ private class AfirmaFrameAttachment(
     }
 
     private fun receive(owner: WebView, message: WebMessageCompat, origin: Uri, isMainFrame: Boolean) {
-        if (closed || owner !== webView || !isCurrent(owner) || message.type != WebMessageCompat.TYPE_STRING) return
+        if (!ownsWebView(owner) || message.type != WebMessageCompat.TYPE_STRING) return
         val request = message.data?.let(VerifiedAfirmaFrameSource::parseMessage) ?: return
         val document = AfirmaFrameDocument(owner.url.orEmpty(), currentEpoch(), request.documentId)
-        if (!VerifiedAfirmaFrameSource.permitsSource(origin.toString(), isMainFrame, document)) return
-        val uri = NativeAfirmaNavigation.extract(request.uri)
-        if (uri == null || pending?.navigationEpoch == document.navigationEpoch) {
-            onRejected()
-            return
+        if (VerifiedAfirmaFrameSource.permitsSource(origin.toString(), isMainFrame, document)) {
+            val uri = NativeAfirmaNavigation.extract(request.uri)
+            if (uri == null || pending?.navigationEpoch == document.navigationEpoch) {
+                onRejected()
+            } else {
+                verifyCurrentDocument(document, uri)
+            }
         }
-        verifyCurrentDocument(document, uri)
     }
 
     private fun verifyCurrentDocument(document: AfirmaFrameDocument, uri: String) {
@@ -96,12 +97,16 @@ private class AfirmaFrameAttachment(
         if (pending !== document) return
         abandonVerification()
         if (!owns(document)) return
-        val id = VerifiedAfirmaFrameSource.documentIdFromJavascript(result) ?: return
-        val actual = AfirmaFrameDocument(webView.url.orEmpty(), currentEpoch(), id)
-        if (VerifiedAfirmaFrameSource.isCurrent(document, actual) &&
-            !onInvocation(webView, uri, document.pageUrl)
-        ) onRejected()
+        val id = VerifiedAfirmaFrameSource.documentIdFromJavascript(result)
+        if (id != null) {
+            val actual = AfirmaFrameDocument(webView.url.orEmpty(), currentEpoch(), id)
+            if (VerifiedAfirmaFrameSource.isCurrent(document, actual) &&
+                !onInvocation(webView, uri, document.pageUrl)
+            ) onRejected()
+        }
     }
+
+    private fun ownsWebView(owner: WebView): Boolean = !closed && owner === webView && isCurrent(owner)
 
     private fun owns(document: AfirmaFrameDocument): Boolean =
         !closed && isCurrent(webView) && currentEpoch() == document.navigationEpoch

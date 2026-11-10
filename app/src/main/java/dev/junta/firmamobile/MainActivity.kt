@@ -477,7 +477,9 @@ class MainActivity : ComponentActivity() {
                             onUserMessageShown = catalogViewModel::onUserMessageShown,
                             onOpenPublicWeb = { uri ->
                                 val accepted =
-                                    dev.junta.firmamobile.browser.PublicBrowserAddress.parseNavigation(uri.toASCIIString())
+                                    dev.junta.firmamobile.browser.PublicBrowserAddress.parseNavigation(
+                                        uri.toASCIIString(),
+                                    )
                                 if (accepted == null) catalogViewModel.onOpenFailed() else {
                                     cancelSigning(SigningCancelReason.NAVIGATION)
                                     currentWebView = null

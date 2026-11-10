@@ -92,7 +92,7 @@ class JuntaWebViewClient(
     ): Boolean {
         if (!isCurrentWebView(view)) return true
         val targetUrl = request.url.toString()
-        if (!request.isForMainFrame && NativeAfirmaNavigation.extract(targetUrl) != null) {
+        return if (!request.isForMainFrame && NativeAfirmaNavigation.extract(targetUrl) != null) {
             // WebResourceRequest does not identify the initiating frame's origin.
             // A trusted top-level page cannot authorize an embedded frame's request.
             logger.recordNavigationEvent(
@@ -103,9 +103,8 @@ class JuntaWebViewClient(
                 method = request.method,
             )
             callbacks.onNavigationBlocked(NavigationBlockReason.UNSUPPORTED_AFIRMA_FRAME)
-            return true
-        }
-        return handleNavigation(
+            true
+        } else handleNavigation(
             view,
             targetUrl,
             request.isForMainFrame,
