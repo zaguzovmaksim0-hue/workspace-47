@@ -214,9 +214,9 @@ inventory, API review and their own CI; verification was not disabled.
 The Spanish and English READMEs now point to the source of truth instead of the
 stale 0.2.17 claim. No version bump or APK signer re-verification is claimed.
 
-**Remaining.** Complete canonical GitHub Actions on the current published PR
-head; each source update requires checks on that exact commit. A release must
-use the existing trusted
+**Release acceptance.** The current published PR head must pass canonical
+GitHub Actions; each source update requires checks on that exact commit. The PR
+check rollup records the latest result. A release must use the existing trusted
 [main-only daily signing process](../daily-apk-signing.md) and original daily
 key. Installing over the existing app, preserving data and retaining access to
 stored certificates are separate acceptance checks that have not been run.
@@ -305,6 +305,15 @@ internal failure details remain internal; variant/release/detekt/Python/Go jobs
 are unconditional; the aggregate is always evaluated. The targeted policy run
 passed 28 tests, including execution of all 25 prerequisite-result combinations
 (`job_20261110_130441_7d7a60ce`). The original failure log is retained.
+
+The initial Android run also found two stale regression expectations: an
+inline-source check for busy flags that now live in the shared operation-admission
+helper, and a URL fixture treating valid HTTPS port `8443` as blocked. The release
+job ran 3771 tests and the debug job ran 3797; both reported these same two
+failures. The variant job stopped after debug tests, so this attempt provides no
+QA/optimized unit-test pass. Variant lint passed, and the required aggregate
+correctly failed after its prerequisites failed. Original job logs and JUnit XML
+were retained. Security, detekt and Go checks passed on the initial candidate.
 
 The PR check rollup for the latest head is the authoritative broad verification
 record. Passing results from a superseded head do not certify a newer candidate.
