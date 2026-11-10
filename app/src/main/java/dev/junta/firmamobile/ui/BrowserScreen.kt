@@ -1607,7 +1607,17 @@ fun BrowserScreen(
                                         store = afirmaRelayStore,
                                         currentEpoch = { navigationEpoch.longValue },
                                     ).attach(webView)
-                                    relayBridgeAttachmentLease.bind(webView, attachment)
+                                    val frameAttachment = dev.junta.firmamobile.browser.VerifiedAfirmaFrameBridge(
+                                        currentEpoch = { navigationEpoch.longValue },
+                                        isCurrent = { owner -> webViewRef.get() === owner },
+                                        onInvocation = ::offerPublicNativeAfirma,
+                                        onRejected = {
+                                            callbacks.onNavigationBlocked(NavigationBlockReason.UNSUPPORTED_AFIRMA_FRAME)
+                                        },
+                                    ).attach(webView)
+                                    relayBridgeAttachmentLease.bind(webView, AutoCloseable {
+                                        try { frameAttachment.close() } finally { attachment.close() }
+                                    })
                                 }
                             }
                         } else {
