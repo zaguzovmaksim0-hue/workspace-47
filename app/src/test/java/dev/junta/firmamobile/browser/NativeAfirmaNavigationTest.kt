@@ -146,6 +146,39 @@ class NativeAfirmaNavigationTest {
             is AfirmaServletParseResult.Invalid)
     }
 
+    @Test fun intentKeepsItsLegacyBudgetWhileEquallySizedDirectAfirmaIsRecognized() {
+        val legacyLimit = 1024 * 1024
+        val boundary = benignIntent(legacyLimit)
+        val expected = boundary.substringBefore("#Intent;").replaceFirst("intent:", "afirma:")
+        assertTrue("An Intent at the legacy boundary must still be recognized",
+            NativeAfirmaNavigation.extract(boundary) == expected)
+        val oversized = benignIntent(legacyLimit + 1)
+        assertTrue("An Intent above the legacy budget must be refused",
+            NativeAfirmaNavigation.extract(oversized) == null)
+        val prefix = "afirma://sign?dat="
+        val direct = prefix + "A".repeat(oversized.length - prefix.length)
+        assertEquals(oversized.length, direct.length)
+        assertTrue("A direct AutoFirma URI keeps the larger document budget",
+            NativeAfirmaNavigation.extract(direct) == direct)
+    }
+
+    @Test fun oversizedIntentCannotFallThroughIntoAnotherBrowserHandler() {
+        val oversized = benignIntent(1024 * 1024 + 1)
+        assertNull(ExternalAppLink.parse(oversized))
+        fixture { f ->
+            assertTrue(f.client.shouldOverrideUrlLoading(f.view, Request(oversized)))
+            assertTrue("No native request may be offered", f.invocations.isEmpty())
+            assertEquals(0, f.oldRequests)
+            assertTrue(NavigationBlockReason.INVALID_URL in f.blocks)
+        }
+    }
+
+    private fun benignIntent(length: Int): String {
+        val prefix = "intent://sign?dat="
+        val suffix = "#Intent;scheme=afirma;package=es.gob.afirma;end"
+        return prefix + "A".repeat(length - prefix.length - suffix.length) + suffix
+    }
+
     private class Fixture {
         val view = WebView(ApplicationProvider.getApplicationContext<Context>())
         var active = true; var accept = true; var oldRequests = 0

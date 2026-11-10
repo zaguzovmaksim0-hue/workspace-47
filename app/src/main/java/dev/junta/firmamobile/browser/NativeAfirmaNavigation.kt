@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import android.content.Intent
+import dev.junta.firmamobile.afirma.AfirmaUriParser
 import dev.junta.firmamobile.afirma.servlet.NativeAfirmaLimits
 import java.net.URI
 
@@ -13,6 +14,8 @@ internal object NativeAfirmaNavigation {
         val candidate = when {
             scheme.equals("afirma", true) -> raw
             scheme.equals("intent", true) -> {
+                // Keep the legacy wrapper budget before Android allocates parsed Intent metadata.
+                if (raw.length > AfirmaUriParser.MAX_URI_CHARS) return null
                 val intent = runCatching { Intent.parseUri(raw, Intent.URI_INTENT_SCHEME) }.getOrNull() ?: return null
                 if (intent.`package` != JuntaNavigationPolicy.AUTOFIRMA_PACKAGE || intent.component != null ||
                     intent.selector != null || intent.getStringExtra("browser_fallback_url") != null

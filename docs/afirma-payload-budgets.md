@@ -8,12 +8,16 @@ The local PAdES path accepts PDF input up to **8 MiB** and produces a signed PDF
 
 - Local PAdES input and consent preview: 8 MiB.
 - Signed PDF output, byte-range validation and prior-signature inspection: 10 MiB.
-- In-browser AutoFirma URI: 16 MiB of characters, including the base64 document and parameters.
+- Direct in-browser `afirma:` URI: 16 MiB of characters, including the base64 document and parameters.
 - Retrieved XML configuration and decrypted carrier plaintext: 12 MiB.
 - Retrieved encoded response: 17 MiB; WebMessage adds a separate 64 KiB envelope allowance.
 - Final result string: 16 MiB, including base64 and protocol separators.
 
-CAdES, XAdES, batch and remote/triphase input retain their existing smaller limits. The Android external-intent admission limit remains 1 MiB: large documents use the in-browser or explicitly authorized indirect configuration path, not an enlarged Binder transaction. Indirect retrieval does not grant signing consent. External `fileid` requests remain refused until their source can be authorized.
+CAdES, XAdES, batch and remote/triphase input retain their existing smaller limits.
+
+Browser `intent:` wrappers retain the legacy **1 MiB** character limit, checked before `Intent.parseUri` allocates Android Intent metadata. The 16 MiB allowance applies only to direct `afirma:` requests. Large inline documents therefore use direct `afirma:` or the existing explicitly authorized indirect configuration path; an inline `intent:` wrapper above 1 MiB is refused. This preserves the earlier wrapper admission boundary while keeping the verified large-document route available.
+
+Incoming Android external intents and outgoing handoff retain their existing 1 MiB admission limits. Binder transactions are not enlarged. Indirect retrieval does not grant signing consent. External `fileid` requests remain refused until their source can be authorized.
 
 ## Memory behavior
 
@@ -33,5 +37,6 @@ A standalone Kotlin overlay compiled the changed production classes with Kotlin 
 - The final focused suite passed **124/124** tests (job `job_20261110_111902_007f18b7`). It includes a synthetic eight-page PDF above 7 MiB: request parsing, consent preview, signing with a newly generated software test identity, independent signature verification, reopening all eight pages and result-wire roundtrip. Large legacy DES and AES carriers, oversized admission, configuration parsing, cancellation/one-shot ownership and existing PAdES/co-sign behavior are covered.
 - After extracting the validation and bounded-read helpers, the expanded focused suite passed **174/174** under the same 256 MiB heap (job `job_20261110_114601_63b83c60`), including TLS-chain completion, exact HTTPS-port scopes and catalog URL admission.
 - The JavaScript relay unit suite passed **21/21** tests (job `job_20261110_110118_d0fc4ab3`), including a result above the former relay cap and rejection above the new cap.
+- A separate focused browser navigation suite passed **12/12** Robolectric tests under `-Xmx768m` (job `job_20261110_131800_fdacdeac`). Benign boundary inputs confirm that a 1 MiB `intent:` is recognized, one additional character is refused before Android Intent parsing, an equally sized direct `afirma:` remains recognized, and the refused wrapper cannot reach another browser handler. The two new regressions failed against the earlier compiled implementation (job `job_20261110_131256_2d018659`).
 
 This is local unit and protocol verification, not REAL E2E, Android memory profiling, portal login, portal acceptance of a signature, or an installed APK update. Those checks were deliberately not run in this work.
