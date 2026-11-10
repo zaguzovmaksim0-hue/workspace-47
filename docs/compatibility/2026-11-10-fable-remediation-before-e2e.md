@@ -4,15 +4,16 @@
 
 This is the local implementation and verification record for the six-stage Firma
 Mobile remediation plan. Work starts from `c66be8288a17479911ea7d71381cd387a9e98392`
-and is assembled on `fix/fable-completion-integration-20261110`. The inspected
-production/test source is `819e0abe6900298fed398edbe1608b5db2fe3c71`.
-It passed the final targeted QA run; the following report update changes only
-documentation. Commit references below identify local changes, not published
-releases.
+and is assembled on `fix/fable-completion-integration-20261110`. The initial local
+production/test checkpoint is `819e0abe6900298fed398edbe1608b5db2fe3c71`.
+It passed the targeted QA run recorded below. Publication and subsequent CI
+corrections are recorded in the follow-up section. Commit references identify
+source changes, not published releases.
 
 The owner explicitly deferred E2E. No real-site E2E, emulator launch, personal
-certificate operation, APK installation, publication, PR merge or workspace
-cleanup was performed in this remediation session. A successful certificate
+certificate operation, APK installation, PR merge or workspace cleanup was
+performed in this remediation session. The owner subsequently authorized branch
+publication and ordinary CI, and draft PR #634 was opened. A successful certificate
 challenge or login is not evidence of a successful signature or result delivery.
 The intended outcome remains broad portal compatibility, not a guarantee for
 every Spanish public-administration website.
@@ -213,8 +214,9 @@ inventory, API review and their own CI; verification was not disabled.
 The Spanish and English READMEs now point to the source of truth instead of the
 stale 0.2.17 claim. No version bump or APK signer re-verification is claimed.
 
-**Remaining.** Run canonical GitHub Actions for the final published candidate
-once publication is authorized. A release must use the existing trusted
+**Remaining.** Complete canonical GitHub Actions on the current published PR
+head; each source update requires checks on that exact commit. A release must
+use the existing trusted
 [main-only daily signing process](../daily-apk-signing.md) and original daily
 key. Installing over the existing app, preserving data and retaining access to
 stored certificates are separate acceptance checks that have not been run.
@@ -279,6 +281,32 @@ unknown-field rejection. These corrections are `e6d41555` and `a917a7f4`.
 
 The final run includes those corrections and the additional WebSocket refusal
 regressions. Its source commit and XML summaries are retained with the original
-failure evidence. Canonical GitHub Actions has not run on the local integration
-head. None of these results replaces real portal E2E, installation/update
+failure evidence. These are the initial local results, separate from the
+subsequent GitHub Actions runs. None replaces real portal E2E, installation/update
 acceptance or an Android heap measurement.
+
+## Publication and ordinary CI follow-up
+
+The owner authorized publication on 2026-11-10. The clean candidate `abf39c8f`
+was pushed and [draft PR #634](https://github.com/zaguzovmaksim0-hue/workspace-47/pull/634)
+was opened against unchanged `main` at `c66be828`. The first
+[CI run](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42819730938)
+and [Security run](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42819730757)
+use the exact PR head. Ordinary PR triggers skip emulator instrumentation and
+release R8 startup smoke; REAL E2E and daily signing are not dispatched.
+
+The first Python job ran 596 tests and failed two stale source-policy assertions.
+One still required the old failure constructor without the numeric HTTP-status
+metadata. The other treated the new aggregate's unconditional `always()` guard
+as if it were a label-dependent skip and looked for build commands in that
+aggregate rather than its independent prerequisites. Commit `6587cbab` checks
+the actual privacy and job-admission boundaries without removing either policy:
+internal failure details remain internal; variant/release/detekt/Python/Go jobs
+are unconditional; the aggregate is always evaluated. The targeted policy run
+passed 28 tests, including execution of all 25 prerequisite-result combinations
+(`job_20261110_130441_7d7a60ce`). The original failure log is retained.
+
+The PR check rollup for the latest head is the authoritative broad verification
+record. Passing results from a superseded head do not certify a newer candidate.
+Release signing, installation and real portal acceptance remain outside this
+ordinary CI follow-up.
