@@ -315,6 +315,25 @@ QA/optimized unit-test pass. Variant lint passed, and the required aggregate
 correctly failed after its prerequisites failed. Original job logs and JUnit XML
 were retained. Security, detekt and Go checks passed on the initial candidate.
 
+The browser regression corrections in `a996f002` preserve the legacy-handler
+wiring checks and exercise the shared admission policy for all three pending
+phases. Separate alternate-port checks prove browse-only operation with no
+profile/site authority, including a port change from an active profile. The
+focused three-class suite passed 49/49 after recompiling its four production
+classes (`job_20261110_132301_c22e0a23`, Robolectric SDK 35 with QA runtime
+artifacts). Production behavior was unchanged by these assertion corrections;
+release/debug still require the canonical updated-head CI run.
+
+Follow-up review restored the browser `intent:` wrapper's legacy 1 MiB
+admission limit before Android parses Intent metadata (`0dc63ba8`, original
+`aec74140`). Direct in-browser `afirma:` requests retain the 16 MiB budget.
+The boundary and actual WebView-callback regressions in Robolectric passed 12/12
+(`job_20261110_131800_fdacdeac`), with the two new checks failing against the
+prior implementation. Focused detekt passed. The existing external handoff and
+legacy fallback limits were not enlarged; no Android crash or ANR was reproduced
+or claimed. The [document-budget notes](../afirma-payload-budgets.md) state the
+supported large direct-URI route and the smaller Intent-wrapper boundary.
+
 The PR check rollup for the latest head is the authoritative broad verification
 record. Passing results from a superseded head do not certify a newer candidate.
 Release signing, installation and real portal acceptance remain outside this
