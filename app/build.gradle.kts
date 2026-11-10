@@ -88,8 +88,8 @@ fun parseAndroidVersion(text: String): Pair<Int, String> {
         ).matchEntire(text),
     ) { "Expected canonical versionCode/versionName lines in version.properties" }
     val code = match.groupValues[1].toIntOrNull()
-    require(code != null && code in 13..2_100_000_000) {
-        "versionCode must be an integer from published floor 13 to 2100000000"
+    require(code != null && code in 24..2_100_000_000) {
+        "versionCode must be an integer from published floor 24 to 2100000000"
     }
     return code to match.groupValues[2]
 }

@@ -16,15 +16,15 @@ class AndroidVersionSourceTest(unittest.TestCase):
         source = (ROOT / 'app/build.gradle.kts').read_text()
         validator = re.search(r'fun parseAndroidVersion\(.*?\n\}', source, re.S)
         self.assertIsNotNone(validator, 'Build must validate before assigning Android versions')
-        valid = 'versionCode=13\nversionName=0.2.11\n'
-        invalid = [valid.replace('versionCode=13', 'versionCode=' + code)
-                   for code in ['12', '0', '-1', '013', '+13', '13.0', '١٣',
+        valid = 'versionCode=24\nversionName=0.2.11\n'
+        invalid = [valid.replace('versionCode=24', 'versionCode=' + code)
+                   for code in ['23', '0', '-1', '024', '+24', '24.0', '٢٤',
                                 '2100000001', '999999999999999999999999']]
-        invalid += ['', 'versionCode=13\n', valid + 'versionCode=14\n',
+        invalid += ['', 'versionCode=24\n', valid + 'versionCode=25\n',
                     valid.replace('0.2.11', '0.2.011'), valid + 'unknown=value\n',
                     valid.rstrip('\n') + '\r']
-        checks = [f'check(parseAndroidVersion({json.dumps(valid)}) == (13 to "0.2.11"))',
-                  'check(parseAndroidVersion("versionCode=14\\nversionName=0.2.12\\n") == (14 to "0.2.12"))',
+        checks = [f'check(parseAndroidVersion({json.dumps(valid)}) == (24 to "0.2.11"))',
+                  'check(parseAndroidVersion("versionCode=25\\nversionName=0.2.12\\n") == (25 to "0.2.12"))',
                   'check(parseAndroidVersion("versionCode=2100000000\\r\\nversionName=1.0.0\\r\\n") == (2100000000 to "1.0.0"))']
         checks += [f'check(runCatching {{ parseAndroidVersion({json.dumps(text)}) }}.isFailure)'
                    for text in invalid]
