@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import dev.junta.firmamobile.afirma.servlet.AfirmaRelayStore
+import dev.junta.firmamobile.afirma.servlet.NativeAfirmaLimits
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletInvocation
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletMetadata
 import dev.junta.firmamobile.afirma.servlet.AfirmaServletOperation
@@ -10,6 +11,7 @@ import java.net.URI
 import kotlinx.coroutines.test.runTest
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.ConscryptMode
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.SQLiteMode
 import org.json.JSONObject
@@ -20,6 +22,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @RunWith(RobolectricTestRunner::class)
+// Transport operations are faked here; host Conscrypt is outside this protocol test.
+@ConscryptMode(ConscryptMode.Mode.OFF)
 @GraphicsMode(GraphicsMode.Mode.LEGACY)
 @SQLiteMode(SQLiteMode.Mode.LEGACY)
 class UniversalAfirmaRelayBridgeTest {
@@ -47,9 +51,8 @@ class UniversalAfirmaRelayBridgeTest {
 
     @Test
     fun rejectsOversizedMessagesWithoutMarkingServlet() = runTest {
-        val extra = "x".repeat(8_389_700)
-        val message = "{\"v\":1,\"rid\":1,\"op\":\"check\",\"servlet\":\"$SERVLET\"," +
-            "\"extra\":\"$extra\"}"
+        // Whitespace keeps the JSON/protocol shape valid, isolating the size guard.
+        val message = checkMessage() + " ".repeat(NativeAfirmaLimits.RELAY_MESSAGE_BYTES)
         assertNull(handler.handle(message, PAGE_ORIGIN, true, PAGE_URL, epoch))
         assertFalse(operations.markBlockedCalled)
     }

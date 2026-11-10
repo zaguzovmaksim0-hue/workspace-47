@@ -118,11 +118,24 @@ class UniversalCatalogLaunchTest {
             assertEquals(entry.launchUrl, repo.resolveUniversalOpenTarget(item)!!.entryUrl)
         }
         val original = catalog.entries.first()
-        for (unsafe in listOf("http://source.synthetic.example/", "https://source.synthetic.example:444/", "https://127.0.0.1/")) {
+        for (unsafe in listOf("http://source.synthetic.example/", "https://source.synthetic.example:65536/", "https://127.0.0.1/")) {
             val data = catalog.copy(entries = listOf(original.copy(launchUrl = URI(unsafe))))
             val constrained = repository(BuildTrustPolicy.QA, data)
             assertNull(constrained.resolveUniversalOpenTarget(constrained.portals().single()))
             assertNull(constrained.resolveOpenTarget(constrained.portals().single()))
         }
     }
+    @Test fun publicPortAliasesStayUniversalWithoutActivatingAnUnrelatedProfile() {
+        val original = catalog.entries.first()
+        for (port in listOf(8443, 4443)) {
+            val destination = URI("https://source.synthetic.example:$port/")
+            val data = catalog.copy(entries = listOf(original.copy(launchUrl = destination)))
+            val repo = repository(BuildTrustPolicy.QA, data)
+            val item = repo.portals().single()
+            assertNull(repo.resolveLaunch(item))
+            assertEquals(PortalOpenTarget.PublicWeb(destination), repo.resolveUniversalOpenTarget(item))
+            assertEquals(PortalOpenTarget.PublicWeb(destination), repo.resolveOpenTarget(item))
+        }
+    }
+
 }
