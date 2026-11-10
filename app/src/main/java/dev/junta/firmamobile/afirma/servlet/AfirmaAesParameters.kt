@@ -25,13 +25,17 @@ internal class AfirmaAesParameters(key: ByteArray, iv: ByteArray) : Closeable {
     }
 
     @Synchronized fun decode(encoded: String): ByteArray {
-        val ciphertext = AfirmaServletInvocationParser.strictBase64(encoded, NativeAfirmaLimits.CONFIGURATION_BYTES + 16)
+        val ciphertext = AfirmaServletInvocationParser.strictBase64(
+            encoded, NativeAfirmaLimits.CONFIGURATION_BYTES + 16)
         return try {
             require(ciphertext.isNotEmpty() && ciphertext.size % 16 == 0)
             val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
             cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(checkNotNull(ownedKey), "AES"), IvParameterSpec(checkNotNull(ownedIv)))
             val plaintext = cipher.doFinal(ciphertext)
-            if (plaintext.size > NativeAfirmaLimits.CONFIGURATION_BYTES) { plaintext.fill(0); error("Payload exceeds limit") }
+            if (plaintext.size > NativeAfirmaLimits.CONFIGURATION_BYTES) {
+                plaintext.fill(0)
+                error("Payload exceeds limit")
+            }
             plaintext
         } finally { ciphertext.fill(0) }
     }

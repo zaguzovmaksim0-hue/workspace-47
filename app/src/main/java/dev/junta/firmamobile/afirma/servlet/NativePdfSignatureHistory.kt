@@ -97,7 +97,8 @@ internal object NativePdfSignatureHistory {
 
     private fun read(pdf: ByteArray, document: PDDocument, verifyCryptography: Boolean,
         requireCompleteCoverage: Boolean = true): List<NativePdfPriorSignature>? {
-        if (pdf.size !in 5..NativeAfirmaLimits.PDF_OUTPUT_BYTES || document.isEncrypted || document.numberOfPages !in 1..2_000 ||
+        if (pdf.size !in 5..NativeAfirmaLimits.PDF_OUTPUT_BYTES) return null
+        if (document.isEncrypted || document.numberOfPages !in 1..2_000 ||
             document.document.objects.size > 20_000) return null
         val catalog = document.documentCatalog.cosObject
         if (catalog.containsKey(COSName.PERMS)) return null

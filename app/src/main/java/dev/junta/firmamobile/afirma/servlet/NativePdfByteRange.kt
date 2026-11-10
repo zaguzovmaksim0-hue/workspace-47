@@ -21,20 +21,41 @@ internal object NativePdfByteRange {
     }
 
     private fun valid(document: ByteArray, range: IntArray, expectedOriginal: ByteArray): Boolean {
-        if (document.size !in 1..NativeAfirmaLimits.PDF_OUTPUT_BYTES ||
-            expectedOriginal.size !in 1..NativeAfirmaLimits.PDF_INPUT_BYTES ||
-            range.size != 4 || range[0] != 0 || document.size < expectedOriginal.size) return false
-        val start = range[1]; val end = range[2]; val remaining = range[3]
-        if (start < expectedOriginal.size || start < 1 || end.toLong() < start.toLong() + 4 ||
-            end > document.size || remaining < 0 || end.toLong() + remaining != document.size.toLong()) return false
-        if (document[start] != '<'.code.toByte() || document[end - 1] != '>'.code.toByte()) return false
-        val hexCount = end - start - 2
-        if (hexCount % 2 != 0) return false
-        for (i in expectedOriginal.indices) if (document[i] != expectedOriginal[i]) return false
-        for (i in start + 1 until end - 1) {
-            val c = document[i].toInt()
-            if (c !in 48..57 && c !in 65..70 && c !in 97..102) return false
-        }
+        if (!hasBoundedSizes(document, range, expectedOriginal)) return false
+        return hasBoundedRange(document.size, range, expectedOriginal.size) &&
+            hasHexGap(document, range[1], range[2]) &&
+            preservesOriginal(document, expectedOriginal)
+    }
+
+    private fun preservesOriginal(document: ByteArray, original: ByteArray): Boolean {
+        for (index in original.indices) if (document[index] != original[index]) return false
         return true
     }
+
+    private fun hasBoundedSizes(document: ByteArray, range: IntArray, original: ByteArray): Boolean =
+        document.size in 1..NativeAfirmaLimits.PDF_OUTPUT_BYTES &&
+            original.size in 1..NativeAfirmaLimits.PDF_INPUT_BYTES &&
+            range.size == RANGE_FIELDS && document.size >= original.size
+
+    private fun hasBoundedRange(documentSize: Int, range: IntArray, originalSize: Int): Boolean {
+        val start = range[1].toLong(); val end = range[2].toLong(); val remaining = range[3].toLong()
+        return range[0] == 0 && start >= originalSize && start >= 1 &&
+            end >= start + MIN_GAP_BYTES && end <= documentSize && remaining >= 0 &&
+            end + remaining == documentSize.toLong()
+    }
+
+    private fun hasHexGap(document: ByteArray, start: Int, end: Int): Boolean {
+        if (document[start] != '<'.code.toByte() || document[end - 1] != '>'.code.toByte() ||
+            (end - start - HEX_DELIMITERS) % HEX_PAIR_BYTES != 0) return false
+        return (start + 1 until end - 1).all { index ->
+            val character = document[index].toInt()
+            character in '0'.code..'9'.code || character in 'A'.code..'F'.code ||
+                character in 'a'.code..'f'.code
+        }
+    }
+
+    private const val RANGE_FIELDS = 4
+    private const val MIN_GAP_BYTES = 4
+    private const val HEX_DELIMITERS = 2
+    private const val HEX_PAIR_BYTES = 2
 }

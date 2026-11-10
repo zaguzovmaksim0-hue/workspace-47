@@ -113,7 +113,7 @@ internal object AfirmaConfigurationXml {
     }
 
     private fun formDecode(value: String): String {
-        if (value.none { it in "%+" || it.code !in 0x20..0x7e }) return value
+        if (value.none { it in "%+" || it !in ' '..'~' }) return value
         val output = java.io.ByteArrayOutputStream(value.length)
         var position = 0
         while (position < value.length) {

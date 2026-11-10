@@ -35,7 +35,10 @@ internal class NativePadesEngine(
         includeSigningTime = false,
     ),
 ) {
-    init { require(maxInputBytes in 1..NativeAfirmaLimits.PDF_INPUT_BYTES && maxOutputBytes in 1..NativeAfirmaLimits.PDF_OUTPUT_BYTES) }
+    init {
+        require(maxInputBytes in 1..NativeAfirmaLimits.PDF_INPUT_BYTES &&
+            maxOutputBytes in 1..NativeAfirmaLimits.PDF_OUTPUT_BYTES)
+    }
 
     fun sign(pdf: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
         options: NativePadesOptions = NativePadesOptions(), requireExistingSignature: Boolean = false): LocalSignatureResult {
@@ -151,25 +154,29 @@ internal class NativePadesEngine(
     private fun failure(code: LocalSignatureError = LocalSignatureError.SIGNATURE_FAILED) = LocalSignatureResult.Failure(code)
     private fun digestBounded(input: InputStream, limit: Int, algorithm: SigningAlgorithm): ByteArray {
         val digest = MessageDigest.getInstance(digestName(algorithm))
-        val buffer = ByteArray(16_384)
+        val buffer = ByteArray(STREAM_BUFFER_BYTES)
         var total = 0L
         return try {
-            while (true) {
-                val count = input.read(buffer)
-                if (count < 0) break
-                if (count == 0) {
-                    val value = input.read()
-                    if (value < 0) break
-                    if (++total > limit) throw LimitExceeded()
-                    digest.update(value.toByte())
-                } else {
-                    total += count
-                    if (total > limit) throw LimitExceeded()
-                    digest.update(buffer, 0, count)
-                }
+            var count = readProgress(input, buffer)
+            while (count >= 0) {
+                total += count
+                if (total > limit) throw LimitExceeded()
+                digest.update(buffer, 0, count)
+                count = readProgress(input, buffer)
             }
             digest.digest()
         } finally { buffer.fill(0) }
+    }
+
+    private fun readProgress(input: InputStream, buffer: ByteArray): Int {
+        val count = input.read(buffer)
+        return if (count != 0) count else {
+            val value = input.read()
+            if (value < 0) -1 else {
+                buffer[0] = value.toByte()
+                1
+            }
+        }
     }
 
     private fun digestName(algorithm: SigningAlgorithm): String = when (algorithm) {
@@ -200,5 +207,8 @@ internal class NativePadesEngine(
         }
         fun erase() { buf.fill(0); reset() }
     }
-    companion object { private const val SIGNATURE_SPACE = 65_536 }
+    companion object {
+        private const val SIGNATURE_SPACE = 65_536
+        private const val STREAM_BUFFER_BYTES = 16_384
+    }
 }

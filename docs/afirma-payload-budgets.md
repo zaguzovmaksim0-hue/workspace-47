@@ -31,6 +31,7 @@ A standalone Kotlin overlay compiled the changed production classes with Kotlin 
 
 - The original compiled admission path rejected an 8 MiB request with `invalid_uri_size_or_control` (job `job_20261110_105309_822578db`).
 - The final focused suite passed **124/124** tests (job `job_20261110_111902_007f18b7`). It includes a synthetic eight-page PDF above 7 MiB: request parsing, consent preview, signing with a newly generated software test identity, independent signature verification, reopening all eight pages and result-wire roundtrip. Large legacy DES and AES carriers, oversized admission, configuration parsing, cancellation/one-shot ownership and existing PAdES/co-sign behavior are covered.
+- After extracting the validation and bounded-read helpers, the expanded focused suite passed **174/174** under the same 256 MiB heap (job `job_20261110_114601_63b83c60`), including TLS-chain completion, exact HTTPS-port scopes and catalog URL admission.
 - The JavaScript relay unit suite passed **21/21** tests (job `job_20261110_110118_d0fc4ab3`), including a result above the former relay cap and rejection above the new cap.
 
 This is local unit and protocol verification, not REAL E2E, Android memory profiling, portal login, portal acceptance of a signature, or an installed APK update. Those checks were deliberately not run in this work.
