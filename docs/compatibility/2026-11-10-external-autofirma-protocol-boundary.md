@@ -29,8 +29,7 @@ constraints, attempts to suppress confirmation, busy/unavailable state, and a
 failed review. Unknown unsupported variants keep the existing generic refusal.
 A refused syntax/feature request reaches neither the identity provider nor
 operation preparation; it performs no signing, upload or automatic server CANCEL.
-The existing Boolean `receive` wrapper remains for callers that only need to know
-whether consent was offered.
+All callers consume the typed result directly.
 
 ## Indirect `fileid` retrieval
 

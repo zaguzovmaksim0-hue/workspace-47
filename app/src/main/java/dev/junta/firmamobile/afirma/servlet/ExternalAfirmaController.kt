@@ -36,13 +36,11 @@ internal class ExternalAfirmaController(
 
     val hasPending: Boolean get() = consent.hasPending
 
-    fun receive(rawUri: String): Boolean = receiveResult(rawUri) == ExternalAfirmaReceiveResult.OFFERED
-
-    fun receiveResult(rawUri: String): ExternalAfirmaReceiveResult {
-        if (closed) return ExternalAfirmaReceiveResult.UNAVAILABLE
-        if (consent.hasPending) return ExternalAfirmaReceiveResult.BUSY
-        if (!canRespond()) return ExternalAfirmaReceiveResult.UNAVAILABLE
-        return when (val parsed = AfirmaServletInvocationParser.parseExternal(rawUri)) {
+    fun receiveResult(rawUri: String): ExternalAfirmaReceiveResult = when {
+        closed -> ExternalAfirmaReceiveResult.UNAVAILABLE
+        consent.hasPending -> ExternalAfirmaReceiveResult.BUSY
+        !canRespond() -> ExternalAfirmaReceiveResult.UNAVAILABLE
+        else -> when (val parsed = AfirmaServletInvocationParser.parseExternal(rawUri)) {
             is AfirmaServletParseResult.Accepted -> if (offer(parsed.invocation)) {
                 ExternalAfirmaReceiveResult.OFFERED
             } else ExternalAfirmaReceiveResult.REVIEW_FAILED
