@@ -244,14 +244,14 @@ fun BrowserScreen(
             onNavigationEpochChanged(navigationEpoch.longValue)
         }
     }
+    LaunchedEffect(activePopup?.token, activePopup?.requiresConfirmation) {
+        // A pending native dialog leaves its parent visible; only an approved child takes over.
+        setBrowserPopupOwnerVisibility(webViewRef.get(), popupOpen = activePopup?.requiresConfirmation == false)
+    }
     LaunchedEffect(activePopup?.token) {
-        val popup = activePopup
-        // An entry-URL/profile change can reset the remembered popup without
-        // calling closePopup. Always restore the parent when no popup remains.
-        setBrowserPopupOwnerVisibility(webViewRef.get(), popupOpen = popup != null)
-        if (popup == null) return@LaunchedEffect
+        val token = activePopup?.token ?: return@LaunchedEffect
         delay(15_000)
-        if (activePopup === popup && !popup.transport.attached) closePopup(popup.token)
+        activePopup?.takeIf { it.token == token && !it.transport.attached }?.let { closePopup(it.token) }
     }
     DisposableEffect(popupLease) {
         onDispose { closePopup(restoreOwner = false); popupLease.invalidate() }
@@ -450,6 +450,21 @@ fun BrowserScreen(
     }
     LaunchedEffect(nativeRetrieval, nativeRetrievalPrompt?.token, nativeRetrievalPrompt?.loading) {
         while (nativeRetrievalPrompt?.loading == true) { delay(1_000); nativeRetrieval.tick() }
+    }
+
+    fun confirmScriptedPopup(token: UUID) {
+        val popup = activePopup?.takeIf { it.token == token && it.requiresConfirmation } ?: return
+        val owner = webViewRef.get()
+        // The native dialog owns window focus while the underlying WebView remains visible.
+        val foreground = owner?.isShown == true &&
+            lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        if (!foreground || operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.POPUP_CONFIRMATION) ||
+            !popupLease.confirm(token)
+        ) {
+            closePopup(token)
+            return
+        }
+        activePopup = BrowserPopupState(popup.token, popup.entryOrigin, popup.transport)
     }
 
     fun offerPublicNativeAfirma(owner: WebView, rawUri: String, page: String): Boolean {
@@ -970,6 +985,7 @@ fun BrowserScreen(
             webViewRecreationEpoch++
         }
         val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE && activePopup?.requiresConfirmation == true) closePopup()
             if (event == Lifecycle.Event.ON_STOP) {
                 wasBackgrounded = true
                 val expectedReturn = currentMayRetainExternalReturn()
@@ -1047,7 +1063,7 @@ fun BrowserScreen(
     }
     Box(Modifier.fillMaxSize()) {
     Box(Modifier.fillMaxSize().then(
-        if (activePopup != null) Modifier.alpha(0f).clearAndSetSemantics { } else Modifier,
+        if (activePopup?.requiresConfirmation == false) Modifier.alpha(0f).clearAndSetSemantics { } else Modifier,
     )) {
     BrowserLayout(
         publicBrowsing = selectedServiceId == null,
@@ -1307,30 +1323,31 @@ fun BrowserScreen(
                         )
                         webView.setPopupListeners(
                             create = popupRequest@{ owner, _, userGesture, message ->
-                                if (externalAfirmaActive()) return@popupRequest false
-                                if (popupTransport != null || !userGesture || owner !== webViewRef.get() ||
-                                    !owner.hasWindowFocus() || !owner.isShown || certificatePanelVisible ||
+                                if (popupTransport != null || owner !== webViewRef.get() ||
+                                    !owner.hasWindowFocus() || !owner.isShown ||
                                     !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) ||
-                                    activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending ||
-                                    nativeRetrieval.hasPending || interactivePrompt != null ||
-                                    pendingCertificateSelection != null || pendingRequest != null ||
-                                    pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
-                                    clientAuthPreparing || clientAuthGrant != null ||
-                                    currentClientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE ||
-                                    currentSigningState !is SigningUiState.Idle
+                                    operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.POPUP_REQUEST)
                                 ) return@popupRequest false
-                                val page = dev.junta.firmamobile.browser.PublicBrowserAddress.parse(owner.url ?: "")
+                                val page = dev.junta.firmamobile.browser.PublicBrowserAddress.parseNavigation(owner.url ?: "")
                                     ?: return@popupRequest false
-                                val token = popupLease.reserve(owner, navigationEpoch.longValue) ?: return@popupRequest false
+                                val token = popupLease.reserve(
+                                    owner, navigationEpoch.longValue, requiresConfirmation = !userGesture,
+                                ) ?: return@popupRequest false
                                 val transfer = BrowserPopupTransport.create(owner, message) {
-                                    activePopup?.token == token && popupLease.isCurrent(token) &&
+                                    activePopup?.token == token && activePopup?.requiresConfirmation == false &&
+                                        popupLease.canAttach(token) &&
+                                        !operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.POPUP_CONFIRMATION) &&
                                         lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
                                 }
                                 if (transfer == null) { popupLease.release(token); return@popupRequest false }
-                                activePopup = BrowserPopupState(token, URI("https://${page.host}"), transfer)
+                                activePopup = BrowserPopupState(
+                                    token, URI("https", null, page.host, page.port, null, null, null), transfer,
+                                    requiresConfirmation = !userGesture,
+                                )
                                 true
                             },
                             close = { window -> if (popupTransport != null && webViewRef.get() === window) onPopupWindowClose() },
+                            allowScriptedWindows = true,
                         )
                         webView.setPageProgressListener { progress ->
                             webView.post {
@@ -1951,7 +1968,13 @@ fun BrowserScreen(
         onDismiss = onDismissSigningState,
     )
     } // Retained parent content; no profile or native key authority is copied.
-    activePopup?.let { popup ->
+    activePopup?.takeIf { it.requiresConfirmation }?.let { popup ->
+        BrowserPopupConfirmationDialog(
+            onConfirm = { confirmScriptedPopup(popup.token) },
+            onCancel = { closePopup(popup.token) },
+        )
+    }
+    activePopup?.takeIf { !it.requiresConfirmation }?.let { popup ->
         key(popup.token) {
             androidx.compose.material3.Surface(Modifier.fillMaxSize().testTag("browser-popup-window")) {
                 Column(Modifier.fillMaxSize().browserPopupSafeInsets(BrowserWindowInsetsPolicy.current())) {

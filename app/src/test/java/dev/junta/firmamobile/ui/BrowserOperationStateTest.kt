@@ -39,9 +39,11 @@ class BrowserOperationStateTest {
         assertTrue(state(BrowserOperation.SIGNING).blocks(BrowserAdmission.INTERACTIVE_CLIENT_AUTH))
     }
 
-    @Test fun anExternalAppCannotInterruptAnyOwnedBrowserOperation() {
-        for (operation in BrowserOperation.entries) {
-            assertTrue(operation.name, state(operation).blocks(BrowserAdmission.EXTERNAL_APP))
+    @Test fun externalAppsAndNewWindowsCannotInterruptAnyOwnedBrowserOperation() {
+        for (admission in listOf(BrowserAdmission.EXTERNAL_APP, BrowserAdmission.POPUP_REQUEST)) {
+            for (operation in BrowserOperation.entries) {
+                assertTrue("$admission: $operation", state(operation).blocks(admission))
+            }
         }
     }
 
@@ -66,6 +68,13 @@ class BrowserOperationStateTest {
         val captured = BrowserOperationState(active)
         active.clear()
         assertTrue(captured.blocks(BrowserAdmission.NATIVE_REQUEST))
+    }
+
+    @Test fun popupConfirmationIgnoresOnlyItsOwnReservedWindow() {
+        assertFalse(state(BrowserOperation.POPUP).blocks(BrowserAdmission.POPUP_CONFIRMATION))
+        for (operation in BrowserOperation.entries.filter { it != BrowserOperation.POPUP }) {
+            assertTrue(operation.name, state(operation).blocks(BrowserAdmission.POPUP_CONFIRMATION))
+        }
     }
 
     private fun state(operation: BrowserOperation) = BrowserOperationState(setOf(operation))

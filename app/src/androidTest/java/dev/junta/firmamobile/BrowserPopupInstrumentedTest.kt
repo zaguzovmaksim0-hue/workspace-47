@@ -70,14 +70,18 @@ class BrowserPopupInstrumentedTest {
         }
     }
 
-    @Test fun programmaticWindowWithoutUserGestureDoesNotReplaceTheParent() {
+    @Test fun programmaticWindowWaitsForConfirmationAndCancellationPreservesTheParent() {
         withBrowser { scenario, views ->
             val parent = views.first()
-            assertEquals("true", evaluate(parent, "window.open('/child','unsolicited')===null"))
-            rule.waitForIdle()
+            evaluate(parent, "window.open('/child','unsolicited')")
+            rule.waitUntil(timeoutMillis = 5_000) {
+                runCatching { rule.onNodeWithTag("browser-popup-confirmation").assertIsDisplayed() }.isSuccess
+            }
             assertEquals(1, views.size)
             rule.onNodeWithTag("browser-popup-window").assertDoesNotExist()
-            scenario.onActivity { assertEquals("PARENT_READY", parent.title) }
+            rule.onNodeWithText("Cancelar").performClick()
+            rule.onNodeWithTag("browser-popup-confirmation").assertDoesNotExist()
+            scenario.onActivity { assertTrue(parent.isShown); assertEquals("PARENT_READY", parent.title) }
         }
     }
 

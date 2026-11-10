@@ -22,6 +22,8 @@ Una pulsación normal en el catálogo utiliza el perfil específico del portal c
 
 Para usar el modo universal de forma explícita en una sede con perfil, mantén pulsada su tarjeta y selecciona **Abrir en modo universal (sin perfil)**. Cada apertura crea una sesión con un modo fijo: seguir enlaces o recibir un error no cambia ese modo ni concede permisos de otro perfil. El modo universal solicita por separado la autorización que necesite para utilizar el certificado.
 
+Las ventanas solicitadas sin una pulsación directa requieren una confirmación nativa antes de abrirse. La solicitud caduca a los 15 segundos y se cancela si cambias de página o pasas la aplicación a segundo plano. La nueva ventana usa el modo universal; abrirla no autoriza el uso del certificado ni copia los permisos del perfil de la página anterior.
+
 ## Variantes y actualizaciones
 
 La versión visible de uso diario es **0.2.17**. `optimized` es una denominación interna de compilación; incluye perfiles experimentales, utiliza transporte directo y no habilita los controles de depuración. El paquete permanece `dev.junta.firmamobile`.

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_popup_confirmation_title">Voleu obrir una finestra nova?</string>
+    <string name="browser_popup_confirmation_message">Aquesta pàgina demana obrir una altra finestra sense una pulsació directa. El destí encara no està confirmat. Si ho accepteu, s’obrirà en mode universal, sense els permisos del perfil actual. Obrir-la no autoritza l’ús del vostre certificat.</string>
+    <string name="browser_popup_confirmation_open">Obre la finestra</string>
+    <string name="browser_popup_confirmation_cancel">Cancel·la</string>
+</resources>

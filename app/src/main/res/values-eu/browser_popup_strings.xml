@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_popup_confirmation_title">Beste leiho bat ireki?</string>
+    <string name="browser_popup_confirmation_message">Orri honek beste leiho bat irekitzea eskatzen du, zuzenean sakatu gabe. Helmuga ez dago oraindik baieztatuta. Onartzen baduzu, modu unibertsalean irekiko da, uneko profilaren baimenik gabe. Irekitzeak ez du zure ziurtagiria erabiltzeko baimenik ematen.</string>
+    <string name="browser_popup_confirmation_open">Ireki leihoa</string>
+    <string name="browser_popup_confirmation_cancel">Utzi</string>
+</resources>

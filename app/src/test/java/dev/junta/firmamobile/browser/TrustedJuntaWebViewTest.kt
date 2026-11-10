@@ -49,6 +49,23 @@ class TrustedJuntaWebViewTest {
     }
 
     @Test
+    fun scriptedWindowsRequireAnExplicitHostOptInAndAreDisabledWhenDetached() {
+        val webView = TrustedJuntaWebView(ApplicationProvider.getApplicationContext<Context>())
+        webView.setPopupListeners(create = { _, _, _, _ -> false }, close = null)
+        assertTrue(webView.settings.supportMultipleWindows())
+        assertFalse(webView.settings.javaScriptCanOpenWindowsAutomatically)
+
+        webView.setPopupListeners(create = { _, _, _, _ -> false }, close = null, allowScriptedWindows = true)
+        assertTrue(webView.settings.supportMultipleWindows())
+        assertTrue(webView.settings.javaScriptCanOpenWindowsAutomatically)
+
+        webView.setPopupListeners(create = null, close = null, allowScriptedWindows = true)
+        assertFalse(webView.settings.supportMultipleWindows())
+        assertFalse(webView.settings.javaScriptCanOpenWindowsAutomatically)
+        webView.destroy()
+    }
+
+    @Test
     fun reportsBoundedPageProgressWithoutReplacingTheHardenedChromeClient() {
         val webView = TrustedJuntaWebView(ApplicationProvider.getApplicationContext<Context>())
         var progress = -1

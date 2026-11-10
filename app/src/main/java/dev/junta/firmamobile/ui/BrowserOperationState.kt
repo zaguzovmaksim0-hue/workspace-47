@@ -27,6 +27,8 @@ internal enum class BrowserAdmission {
     EXTERNAL_APP,
     EXTERNAL_AFIRMA,
     NATIVE_SLOT,
+    POPUP_CONFIRMATION,
+    POPUP_REQUEST,
 }
 
 internal class BrowserOperationState(operations: Set<BrowserOperation>) {
@@ -38,10 +40,11 @@ internal class BrowserOperationState(operations: Set<BrowserOperation>) {
         BrowserAdmission.NATIVE_REQUEST -> NATIVE_REQUEST_BLOCKERS
         BrowserAdmission.PREPARED_NATIVE_REQUEST -> PREPARED_REQUEST_BLOCKERS
         BrowserAdmission.INTERACTIVE_CLIENT_AUTH -> INTERACTIVE_AUTH_BLOCKERS
-        BrowserAdmission.EXTERNAL_APP -> ALL_OPERATIONS
+        BrowserAdmission.EXTERNAL_APP, BrowserAdmission.POPUP_REQUEST -> ALL_OPERATIONS
         // SigningAdmission owns the external slot separately; this callback reports portal owners only.
         BrowserAdmission.EXTERNAL_AFIRMA -> PORTAL_OPERATIONS
         BrowserAdmission.NATIVE_SLOT -> NATIVE_SLOT_OWNERS
+        BrowserAdmission.POPUP_CONFIRMATION -> POPUP_CONFIRMATION_BLOCKERS
     }
 }
 
@@ -62,3 +65,4 @@ private val PREPARED_REQUEST_BLOCKERS = NATIVE_REQUEST_BLOCKERS - setOf(
 private val INTERACTIVE_AUTH_BLOCKERS = NATIVE_REQUEST_BLOCKERS - BrowserOperation.INTERACTIVE_CLIENT_AUTH
 private val ALL_OPERATIONS = BrowserOperation.entries.toSet()
 private val PORTAL_OPERATIONS = ALL_OPERATIONS - BrowserOperation.EXTERNAL_AFIRMA
+private val POPUP_CONFIRMATION_BLOCKERS = ALL_OPERATIONS - BrowserOperation.POPUP
