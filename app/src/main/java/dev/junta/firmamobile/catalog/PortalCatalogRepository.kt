@@ -83,7 +83,7 @@ class PortalCatalogRepository(
         val metadata = publicCatalog.entries.singleOrNull { it.portalId == item.portalId } ?: return null
         if (item.entryUrl.toASCIIString() != metadata.entryUrl.toASCIIString()) return null
         val destination = metadata.launchUrl ?: metadata.entryUrl
-        return PublicBrowserAddress.parse(destination.toASCIIString())?.let(PortalOpenTarget::PublicWeb)
+        return PublicBrowserAddress.parseNavigation(destination.toASCIIString())?.let(PortalOpenTarget::PublicWeb)
     }
 
     private fun resolve(metadata: PublicPortalEntry): PortalCatalogItem {
@@ -104,7 +104,7 @@ class PortalCatalogRepository(
             metadata.metadataSupportStatus()
         }
         val isOpenable = bindingMatches && isImplemented && supportStatus in OPENABLE_SUPPORT_STATUSES
-        val isPubliclyOpenable = PublicBrowserAddress.parse(metadata.entryUrl.toASCIIString()) != null
+        val isPubliclyOpenable = PublicBrowserAddress.parseNavigation(metadata.entryUrl.toASCIIString()) != null
 
         return PortalCatalogItem(
             portalId = metadata.portalId,

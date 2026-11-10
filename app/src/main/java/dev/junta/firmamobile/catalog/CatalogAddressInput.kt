@@ -18,7 +18,9 @@ internal class CatalogAddressInput private constructor(
     val destination: URI?
         get() = if (opening || error == Error.TOO_LONG || error == Error.CLIPBOARD_EMPTY) null else parsedDestination
     val canSubmit: Boolean get() = !opening && text.isNotBlank() && error != Error.TOO_LONG && error != Error.CLIPBOARD_EMPTY
-    val hostPreview: String? get() = destination?.host
+    val hostPreview: String? get() = destination?.let {
+        if (it.port in setOf(-1, 443)) it.host else "${it.host}:${it.port}"
+    }
 
     fun edit(value: String): CatalogAddressInput = when {
         opening -> this
@@ -65,10 +67,10 @@ internal class CatalogAddressInput private constructor(
         }
         private fun parse(raw: String): URI? {
             if (raw.isBlank() || raw.length > MAX_INPUT_CHARS) return null
-            val parsed = PublicBrowserAddress.parse(candidate(raw)) ?: return null
+            val parsed = PublicBrowserAddress.parseNavigation(candidate(raw)) ?: return null
             // MainActivity rechecks the ASCII request form. Do not consume an
             // input that would exceed its budget only after Unicode encoding.
-            return parsed.takeIf { PublicBrowserAddress.parse(it.toASCIIString()) != null }
+            return parsed.takeIf { PublicBrowserAddress.parseNavigation(it.toASCIIString()) != null }
         }
         private fun errorFor(raw: String) = when {
             raw.isBlank() -> Error.EMPTY
