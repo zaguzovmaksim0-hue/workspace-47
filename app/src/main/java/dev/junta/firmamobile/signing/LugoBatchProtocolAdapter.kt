@@ -25,7 +25,7 @@ class LugoBatchProtocolAdapter internal constructor(
         HttpsProfileHttpTransport(SafeNetworkUrlPolicy(setOf(endpoint)))
     },
     private val urlPolicy: LugoBatchUrlPolicy = LugoBatchUrlPolicy(),
-    // Fixed stage tokens only (no payloads): REAL E2E 42530355693 ended PROTOCOL_FAILED with no hint where.
+    // Fixed stage tokens and validated numeric status only; never URL, query, certificate or response data.
     private val onStage: (String) -> Unit = {},
 ) : BatchSigningProtocolAdapter {
     override val id: SigningProtocolId = ID
@@ -46,6 +46,7 @@ class LugoBatchProtocolAdapter internal constructor(
             ?: return BatchProtocolPrepareResult.Failure(SigningErrorCode.INVALID_REQUEST)
         val query = "xml=$xml&certs=$certs"
         val result = post(pair.first.url, query, request.cancellation)
+        result.httpStatusCode?.let { onStage("PRESIGN_HTTP_$it") }
         return when (result) {
             is ProfileHttpResult.Failure -> {
                 onStage("PRESIGN_${result.code.name}")
@@ -96,6 +97,7 @@ class LugoBatchProtocolAdapter internal constructor(
         val expectedDocumentId = state.expectedDocumentId
         val result = post(state.postUrl, query, request.cancellation)
         state.close()
+        result.httpStatusCode?.let { onStage("POSTSIGN_HTTP_$it") }
         return when (result) {
             is ProfileHttpResult.Failure -> {
                 onStage("POSTSIGN_${result.code.name}")

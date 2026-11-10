@@ -2,13 +2,20 @@ package dev.junta.firmamobile.signing
 
 import dev.junta.firmamobile.browser.LugoBatchBridgeAdapter
 import dev.junta.firmamobile.browser.NavigationId
+import dev.junta.firmamobile.network.DirectTestExecutorService
+import dev.junta.firmamobile.network.DnsResolver
+import dev.junta.firmamobile.network.HttpsProfileHttpTransport
 import dev.junta.firmamobile.network.ProfileHttpCancellation
+import dev.junta.firmamobile.network.ProfileHttpExecutor
+import dev.junta.firmamobile.network.RawProfileHttpResponse
+import dev.junta.firmamobile.network.SafeNetworkUrlPolicy
 import dev.junta.firmamobile.network.ProfileHttpFailure
 import dev.junta.firmamobile.network.ProfileHttpRequest
 import dev.junta.firmamobile.network.ProfileHttpResponse
 import dev.junta.firmamobile.network.ProfileHttpResult
 import dev.junta.firmamobile.network.ProfileHttpTransport
 import dev.junta.firmamobile.network.TrustedOrigin
+import java.net.InetAddress
 import java.net.URI
 import java.time.Instant
 import java.util.ArrayDeque
@@ -115,6 +122,100 @@ class LugoBatchProtocolAdapterTest {
         }
     }
 
+    @Test
+    fun rawPresignHttp502ReportsStatusWithoutServerData() {
+        val body = "private-response-must-not-appear".encodeToByteArray()
+        val stages = mutableListOf<String>()
+        val adapter = LugoBatchProtocolAdapter(
+            transportFactory = rawTransportFactory(RawProfileHttpResponse(502, "text/plain", null, body)),
+            onStage = { stages += it },
+        )
+        val request = request()
+        try {
+            val result = adapter.prepare(request, syntheticIdentity().chain) as BatchProtocolPrepareResult.Failure
+            assertEquals(SigningErrorCode.PROTOCOL_FAILED, result.code)
+            assertEquals(listOf("PRESIGN_HTTP_502", "PRESIGN_HTTP_ERROR"), stages)
+            assertTrue(body.all { it == 0.toByte() })
+        } finally { request.close() }
+    }
+
+    @Test
+    fun rawPostsignHttp401PreservesSessionExpiryAndReportsStatus() {
+        val body = "private-auth-response".encodeToByteArray()
+        val stages = mutableListOf<String>()
+        val adapter = LugoBatchProtocolAdapter(
+            transportFactory = rawTransportFactory(
+                RawProfileHttpResponse(200, "text/xml", null, triData("pre".encodeToByteArray(), false)),
+                RawProfileHttpResponse(401, "text/plain", null, body),
+            ),
+            onStage = { stages += it },
+        )
+        val request = request()
+        try {
+            val prepared = (adapter.prepare(request, syntheticIdentity().chain) as BatchProtocolPrepareResult.Success).preSign
+            try {
+                val result = adapter.complete(request, prepared, listOf(LocalSignature("pk1".encodeToByteArray())))
+                    as BatchProtocolCompletionResult.Failure
+                assertEquals(SigningErrorCode.SESSION_EXPIRED, result.code)
+                assertEquals(listOf("PRESIGN_HTTP_200", "POSTSIGN_HTTP_401", "POSTSIGN_SESSION_EXPIRED"), stages)
+                assertTrue(body.all { it == 0.toByte() })
+            } finally { prepared.close() }
+        } finally { request.close() }
+    }
+
+    @Test
+    fun rawPresignHttp200IsNotReportedAsSuccessfulBodyParsing() {
+        val body = "<unexpected>private-body</unexpected>".encodeToByteArray()
+        val stages = mutableListOf<String>()
+        val adapter = LugoBatchProtocolAdapter(
+            transportFactory = rawTransportFactory(RawProfileHttpResponse(200, "text/xml", null, body)),
+            onStage = { stages += it },
+        )
+        val request = request()
+        try {
+            val result = adapter.prepare(request, syntheticIdentity().chain) as BatchProtocolPrepareResult.Failure
+            assertEquals(SigningErrorCode.PROTOCOL_FAILED, result.code)
+            assertEquals(listOf("PRESIGN_HTTP_200", "PRESIGN_PARSE"), stages)
+            assertTrue(body.all { it == 0.toByte() })
+        } finally { request.close() }
+    }
+
+    @Test
+    fun rawPostsignHttp200StillRequiresAValidatedResult() {
+        val body = "<unexpected>private-body</unexpected>".encodeToByteArray()
+        val stages = mutableListOf<String>()
+        val adapter = LugoBatchProtocolAdapter(
+            transportFactory = rawTransportFactory(
+                RawProfileHttpResponse(200, "text/xml", null, triData("pre".encodeToByteArray(), false)),
+                RawProfileHttpResponse(200, "text/xml", null, body),
+            ),
+            onStage = { stages += it },
+        )
+        val request = request()
+        try {
+            val prepared = (adapter.prepare(request, syntheticIdentity().chain) as BatchProtocolPrepareResult.Success).preSign
+            try {
+                val result = adapter.complete(request, prepared, listOf(LocalSignature("pk1".encodeToByteArray())))
+                    as BatchProtocolCompletionResult.Failure
+                assertEquals(SigningErrorCode.PROTOCOL_FAILED, result.code)
+                assertEquals(listOf("PRESIGN_HTTP_200", "POSTSIGN_HTTP_200", "POSTSIGN_RESULT"), stages)
+                assertTrue(body.all { it == 0.toByte() })
+            } finally { prepared.close() }
+        } finally { request.close() }
+    }
+
+    private fun rawTransportFactory(vararg responses: RawProfileHttpResponse): (URI) -> ProfileHttpTransport {
+        val pending = ArrayDeque(responses.toList())
+        return { endpoint ->
+            HttpsProfileHttpTransport(
+                urlPolicy = SafeNetworkUrlPolicy(setOf(endpoint)),
+                dnsResolver = DnsResolver { listOf(InetAddress.getByName("93.184.216.34")) },
+                executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ -> pending.removeFirst() },
+                dnsExecutor = DirectTestExecutorService(),
+            )
+        }
+    }
+
     private fun executeWithFinal(raw: String): BatchProtocolCompletionResult {
         val request = request()
         val transport = RecordingTransport(triData("synthetic-pre".encodeToByteArray(), false), raw.encodeToByteArray())
@@ -136,7 +237,7 @@ class LugoBatchProtocolAdapterTest {
         adapter.complete(request, prepared, listOf(LocalSignature("synthetic-pk1".encodeToByteArray())))
         prepared.close()
         request.close()
-        assertEquals(listOf("POSTSIGN_RESULT"), stages)
+        assertEquals(listOf("PRESIGN_HTTP_200", "POSTSIGN_HTTP_200", "POSTSIGN_RESULT"), stages)
     }
 
     @Test
