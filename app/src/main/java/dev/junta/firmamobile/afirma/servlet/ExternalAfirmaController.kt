@@ -36,14 +36,25 @@ internal class ExternalAfirmaController(
 
     val hasPending: Boolean get() = consent.hasPending
 
-    fun receive(rawUri: String): Boolean {
-        if (closed || consent.hasPending) return false
-        return if (canRespond()) {
-            when (val parsed = AfirmaServletInvocationParser.parseExternal(rawUri)) {
-                is AfirmaServletParseResult.Accepted -> offer(parsed.invocation)
-                else -> false
+    fun receive(rawUri: String): Boolean = receiveResult(rawUri) == ExternalAfirmaReceiveResult.OFFERED
+
+    fun receiveResult(rawUri: String): ExternalAfirmaReceiveResult {
+        if (closed) return ExternalAfirmaReceiveResult.UNAVAILABLE
+        if (consent.hasPending) return ExternalAfirmaReceiveResult.BUSY
+        if (!canRespond()) return ExternalAfirmaReceiveResult.UNAVAILABLE
+        return when (val parsed = AfirmaServletInvocationParser.parseExternal(rawUri)) {
+            is AfirmaServletParseResult.Accepted -> if (offer(parsed.invocation)) {
+                ExternalAfirmaReceiveResult.OFFERED
+            } else ExternalAfirmaReceiveResult.REVIEW_FAILED
+            is AfirmaServletParseResult.Invalid -> ExternalAfirmaReceiveResult.INVALID_REQUEST
+            is AfirmaServletParseResult.Unsupported -> ExternalAfirmaReceiveResult.unsupported(parsed.reason)
+            is AfirmaServletParseResult.Deferred -> {
+                // External parsing currently rejects retrieval. Preserve fail-closed
+                // behavior and clear owned bytes if that parser contract changes.
+                parsed.invocation.close()
+                ExternalAfirmaReceiveResult.INDIRECT_RETRIEVAL_UNSUPPORTED
             }
-        } else false
+        }
     }
 
     private fun offer(invocation: AfirmaServletInvocation): Boolean {

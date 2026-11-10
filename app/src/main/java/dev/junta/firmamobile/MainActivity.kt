@@ -745,10 +745,13 @@ class MainActivity : ComponentActivity() {
             dev.junta.firmamobile.afirma.external.ExternalAfirmaDelivery.Stale -> R.string.external_afirma_expired
             is dev.junta.firmamobile.afirma.external.ExternalAfirmaDelivery.Fresh -> when {
                 busy || !app.signingAdmission.tryAcquireExternal(this) -> R.string.external_afirma_busy
-                externalAfirma?.receive(delivery.rawUri) == true -> null
                 else -> {
-                    app.signingAdmission.releaseExternal(this)
-                    R.string.external_afirma_rejected
+                    val result = externalAfirma?.receiveResult(delivery.rawUri)
+                        ?: dev.junta.firmamobile.afirma.servlet.ExternalAfirmaReceiveResult.UNAVAILABLE
+                    if (result != dev.junta.firmamobile.afirma.servlet.ExternalAfirmaReceiveResult.OFFERED) {
+                        app.signingAdmission.releaseExternal(this)
+                    }
+                    dev.junta.firmamobile.afirma.external.externalAfirmaMessage(result)
                 }
             }
         }

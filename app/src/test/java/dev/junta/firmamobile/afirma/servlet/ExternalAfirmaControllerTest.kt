@@ -205,6 +205,46 @@ class ExternalAfirmaControllerTest {
         f.controller.close()
     }
 
+    @Test fun unsupportedRequestsExplainTheReasonWithoutReadingAnIdentityOrPreparingEffects() {
+        val indirect = "afirma://sign?fileid=fixture&rtservlet=https%3A%2F%2Fretrieve.example%2Fget"
+        val filter = java.util.Base64.getEncoder().encodeToString("filters=issuer.rfc2254:CN=example".toByteArray())
+        val silent = java.util.Base64.getEncoder().encodeToString("headless=true".toByteArray())
+        val cases = mapOf(
+            indirect to ExternalAfirmaReceiveResult.INDIRECT_RETRIEVAL_UNSUPPORTED,
+            "afirma://websocket?ports=12345&idsession=fixture" to ExternalAfirmaReceiveResult.DESKTOP_WEBSOCKET_UNSUPPORTED,
+            "https://outside.example/afirma" to ExternalAfirmaReceiveResult.INVALID_REQUEST,
+            "afirma://sign?dat=%GG" to ExternalAfirmaReceiveResult.INVALID_REQUEST,
+            "$SELECT&properties=$filter" to ExternalAfirmaReceiveResult.CERTIFICATE_FILTER_UNSUPPORTED,
+            "$SELECT&properties=$silent" to ExternalAfirmaReceiveResult.CONFIRMATION_REQUIRED,
+            "$SELECT&minkeysize=4096" to ExternalAfirmaReceiveResult.REQUEST_CONSTRAINT_UNSUPPORTED,
+            "afirma://unknown-operation?id=fixture" to ExternalAfirmaReceiveResult.UNSUPPORTED_REQUEST,
+        )
+        for ((uri, expected) in cases) {
+            val f = Fixture()
+            assertNull(f.identity)
+            assertEquals(expected, f.controller.receiveResult(uri))
+            assertEquals(0, f.identityReads)
+            assertEquals(0, f.preparations)
+            assertEquals(0, f.executions)
+            assertEquals(0, f.effects)
+            assertEquals(0, f.serverCancellations)
+            assertNull(f.prompt)
+            f.controller.close()
+        }
+    }
+
+    @Test fun typedOutcomePreservesLockedConsentAndDoesNotReplaceAnExistingReview() {
+        val f = Fixture()
+        assertEquals(ExternalAfirmaReceiveResult.OFFERED, f.controller.receiveResult(f.raw))
+        assertEquals(AfirmaConsentProblem.LOCKED, f.prompt!!.problem)
+        val token = f.prompt!!.token
+        assertEquals(ExternalAfirmaReceiveResult.BUSY, f.controller.receiveResult(f.raw))
+        assertEquals(token, f.prompt!!.token)
+        assertEquals(0, f.effects)
+        f.controller.close()
+        assertEquals(ExternalAfirmaReceiveResult.UNAVAILABLE, f.controller.receiveResult(f.raw))
+    }
+
     private class Fixture(val raw: String = SELECT.replace("fixture", UUID.randomUUID().toString())) {
 
         var identity: UnlockedIdentity? = null
@@ -213,6 +253,7 @@ class ExternalAfirmaControllerTest {
         var foreground = true
         var busy = false
         var preparations = 0
+        var identityReads = 0
         var effects = 0
         var executions = 0
         var serverCancellations = 0
@@ -220,7 +261,7 @@ class ExternalAfirmaControllerTest {
         var prompt: AfirmaConsentPrompt? = null
         val controller = ExternalAfirmaController(
             scope = CoroutineScope(Dispatchers.Unconfined + Job()),
-            canRespond = { foreground && !busy }, identityProvider = { identity },
+            canRespond = { foreground && !busy }, identityProvider = { identityReads++; identity },
             onPrompt = { prompt = it }, monotonicNanos = { now },
             prepare = { invocation ->
                 preparations++

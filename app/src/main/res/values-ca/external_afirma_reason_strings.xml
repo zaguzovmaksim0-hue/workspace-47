@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_afirma_invalid_request">La petició externa té un format no vàlid. No s\'ha signat ni enviat res.</string>
+    <string name="external_afirma_indirect_unsupported">Aquesta petició externa necessita descarregar les dades de signatura, una funció que encara no s\'admet. Obre el web al navegador de Firma Mobile.</string>
+    <string name="external_afirma_websocket_unsupported">La petició utilitza el servei local d\'AutoFirma per a ordinador. Firma Mobile encara no admet aquest protocol.</string>
+    <string name="external_afirma_filter_unsupported">La petició exigeix filtres de certificat que aquesta versió no admet. No s\'ha utilitzat cap certificat.</string>
+    <string name="external_afirma_constraint_unsupported">La petició exigeix una versió d\'AutoFirma o una mida de clau que no es pot comprovar aquí. No s\'ha signat res.</string>
+    <string name="external_afirma_confirmation_required">La petició intenta ometre la confirmació de la signatura. Firma Mobile requereix confirmació explícita per a cada operació.</string>
+    <string name="external_afirma_unavailable">La petició no es pot revisar en aquest moment. Desbloqueja el dispositiu i torna a iniciar-la.</string>
+    <string name="external_afirma_review_failed">No s\'han pogut preparar o verificar les dades de la petició. No s\'ha signat ni enviat res.</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_afirma_invalid_request">Kanpoko eskaerak balio ez duen formatua du. Ez da ezer sinatu edo bidali.</string>
+    <string name="external_afirma_indirect_unsupported">Kanpoko eskaera honek sinatzeko datuak deskargatzea eskatzen du. Firma Mobile-k oraindik ez du hori onartzen. Ireki webgunea aplikazioaren nabigatzailean.</string>
+    <string name="external_afirma_websocket_unsupported">Eskaerak ordenagailurako AutoFirmaren tokiko zerbitzua erabiltzen du. Firma Mobile-k oraindik ez du protokolo hori onartzen.</string>
+    <string name="external_afirma_filter_unsupported">Eskaerak bertsio honek onartzen ez dituen ziurtagiri-iragazkiak behar ditu. Ez da ziurtagiririk erabili.</string>
+    <string name="external_afirma_constraint_unsupported">Eskaerak hemen egiaztatu ezin den AutoFirma bertsioa edo gako-tamaina eskatzen du. Ez da ezer sinatu.</string>
+    <string name="external_afirma_confirmation_required">Eskaerak sinaduraren berrespena saltatzea eskatzen du. Firma Mobile-k berrespen esplizitua behar du eragiketa bakoitzerako.</string>
+    <string name="external_afirma_unavailable">Une honetan ezin da eskaera berrikusi. Desblokeatu gailua eta hasi eskaera berriro.</string>
+    <string name="external_afirma_review_failed">Ez dira eskaeraren datuak prestatu edo egiaztatu ahal izan. Ez da ezer sinatu edo bidali.</string>
+</resources>

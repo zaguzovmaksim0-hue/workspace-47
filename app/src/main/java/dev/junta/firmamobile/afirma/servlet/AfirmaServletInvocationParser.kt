@@ -42,6 +42,7 @@ internal object AfirmaServletInvocationParser {
                 "countersign" -> AfirmaServletOperation.COUNTERSIGN
                 "batch" -> AfirmaServletOperation.BATCH
                 "selectcert" -> AfirmaServletOperation.SELECT_CERTIFICATE
+                "websocket" -> unsupported("desktop_websocket_not_implemented")
                 else -> unsupported("operation_not_implemented")
             }
             val values = parameters(uri.rawQuery ?: invalid("missing_parameters"))

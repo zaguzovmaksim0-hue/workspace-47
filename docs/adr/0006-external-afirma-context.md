@@ -88,3 +88,13 @@ consent dialog is dismissed or the Activity is destroyed.
 Robolectric covers cold and warm delivery, busy in both directions, background
 before confirmation, cancel, rejection and expiry. Physical interoperability
 with real callers remains unverified.
+
+## Refusal diagnostics (2026-11-10)
+
+The controller now returns typed, bounded refusal outcomes and MainActivity maps
+those outcomes to fixed localized messages. External indirect retrieval, the
+desktop WebSocket protocol, unsupported certificate constraints and malformed
+requests are distinguishable without reading an identity or preparing an
+operation. This does not expand the authorization above. The current limits and
+requirements for future retrieval/WebSocket work are recorded in the
+[external protocol boundary review](../compatibility/2026-11-10-external-autofirma-protocol-boundary.md).
