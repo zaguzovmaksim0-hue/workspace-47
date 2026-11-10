@@ -20,6 +20,7 @@ internal fun NativeAfirmaFallbackDialog(
     onClose: () -> Unit,
     onOpenOfficial: () -> Unit,
 ) {
+    val messageResource = nativeAfirmaFallbackMessageResource(prompt)
     val closeButton: @Composable () -> Unit = {
         TextButton(onClick = onClose) { Text(stringResource(R.string.native_afirma_close)) }
     }
@@ -29,12 +30,10 @@ internal fun NativeAfirmaFallbackDialog(
         text = {
             FilterObscuredTouches()
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(
-                        if (prompt.invalid) R.string.native_afirma_invalid else R.string.native_afirma_unsupported,
-                    ),
-                )
-                prompt.reason?.let { reason ->
+                Text(stringResource(messageResource))
+                prompt.reason?.takeUnless {
+                    messageResource == R.string.external_afirma_websocket_unsupported
+                }?.let { reason ->
                     Text(
                         stringResource(R.string.native_afirma_reason, reason),
                         style = MaterialTheme.typography.bodySmall,
@@ -50,4 +49,11 @@ internal fun NativeAfirmaFallbackDialog(
             }
         },
     )
+}
+
+/** Parser codes are exact closed identifiers; unknown codes retain their generic diagnostic. */
+internal fun nativeAfirmaFallbackMessageResource(prompt: AfirmaFallbackPrompt): Int = when {
+    prompt.invalid -> R.string.native_afirma_invalid
+    prompt.reason == "desktop_websocket_not_implemented" -> R.string.external_afirma_websocket_unsupported
+    else -> R.string.native_afirma_unsupported
 }

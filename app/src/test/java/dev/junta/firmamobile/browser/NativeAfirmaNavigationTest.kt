@@ -6,6 +6,8 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
+import dev.junta.firmamobile.afirma.servlet.AfirmaServletInvocationParser
+import dev.junta.firmamobile.afirma.servlet.AfirmaServletParseResult
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.security.SanitizedLogger
 import org.junit.Assert.*
@@ -106,6 +108,42 @@ class NativeAfirmaNavigationTest {
                 assertEquals(0, f.oldRequests)
             }
         }
+    }
+
+    @Test fun desktopWebsocketIsRecognizedOnlyForTheNativeUnsupportedResult() {
+        val target = "websocket?ports=63117&idsession=Session123"
+        val raw = "afirma://$target"
+        assertEquals(raw, NativeAfirmaNavigation.extract(raw))
+        assertEquals(raw, NativeAfirmaNavigation.extract(
+            "intent://$target#Intent;scheme=afirma;package=es.gob.afirma;end"))
+        val parsed = AfirmaServletInvocationParser.parse(raw, "https://unconfigured.example/form")
+        assertTrue(parsed.toString(), parsed is AfirmaServletParseResult.Unsupported)
+        assertEquals("desktop_websocket_not_implemented", (parsed as AfirmaServletParseResult.Unsupported).reason)
+        fixture { f ->
+            f.client.shouldOverrideUrlLoading(f.view, Request(raw, mainFrame = false))
+            f.client.shouldOverrideUrlLoading(f.view, Request(raw, method = "POST"))
+            assertTrue(f.invocations.isEmpty())
+            assertTrue(f.client.shouldOverrideUrlLoading(f.view, Request(raw)))
+            assertEquals(listOf(raw to "https://unconfigured.example/form"), f.invocations)
+            assertEquals(0, f.oldRequests)
+        }
+    }
+
+    @Test fun desktopRefusalDoesNotAdmitUnknownOperationsOrRelaxIntentAndUriGuards() {
+        val invalid = listOf(
+            "afirma://websocket2?ports=63117", "afirma://unknown?ports=63117",
+            "afirma://user@websocket?ports=63117", "afirma://websocket:443?ports=63117",
+            "afirma://websocket/path?ports=63117", "afirma://websocket?ports=63117#fragment",
+            "intent://websocket?ports=63117#Intent;scheme=afirma;package=other.app;end",
+            "intent://websocket?ports=63117#Intent;scheme=afirma;package=es.gob.afirma;component=es.gob.afirma/.Fake;end",
+            "intent://websocket?ports=63117#Intent;scheme=afirma;package=es.gob.afirma;S.browser_fallback_url=https%3A%2F%2Fother.example;end",
+        )
+        invalid.forEach { assertNull(it, NativeAfirmaNavigation.extract(it)) }
+        val unknown = AfirmaServletInvocationParser.parse("afirma://unknown?x=1", "https://unconfigured.example/")
+        assertTrue(unknown is AfirmaServletParseResult.Unsupported)
+        assertEquals("operation_not_implemented", (unknown as AfirmaServletParseResult.Unsupported).reason)
+        assertTrue(AfirmaServletInvocationParser.parse("afirma://websocket/path?x=1", "https://unconfigured.example/")
+            is AfirmaServletParseResult.Invalid)
     }
 
     private class Fixture {

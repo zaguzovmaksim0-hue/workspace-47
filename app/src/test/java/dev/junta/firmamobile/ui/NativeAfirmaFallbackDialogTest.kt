@@ -68,6 +68,36 @@ class NativeAfirmaFallbackDialogTest {
         }
     }
 
+    @Test
+    fun desktopWebsocketRefusalExplainsTheUnsupportedProtocolWithoutRawCode() {
+        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = false, reason = "desktop_websocket_not_implemented")
+        show()
+        rule.onNodeWithText(text(R.string.external_afirma_websocket_unsupported)).assertIsDisplayed()
+        rule.onAllNodesWithText(text(R.string.native_afirma_unsupported)).assertCountEquals(0)
+        rule.onAllNodesWithText(text(R.string.native_afirma_reason, prompt.reason!!)).assertCountEquals(0)
+        assertEquals(emptyList<String>(), events)
+        rule.onNodeWithText(text(R.string.native_afirma_close)).performClick()
+        assertEquals(listOf("close"), events)
+    }
+
+    @Test
+    fun similarlyNamedUnknownReasonKeepsTheGenericDiagnostic() {
+        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = false, reason = "desktop_websocket_not_implemented_extra")
+        show()
+        rule.onNodeWithText(text(R.string.native_afirma_unsupported)).assertIsDisplayed()
+        rule.onNodeWithText(text(R.string.native_afirma_reason, prompt.reason!!)).assertIsDisplayed()
+        rule.onAllNodesWithText(text(R.string.external_afirma_websocket_unsupported)).assertCountEquals(0)
+    }
+
+    @Test
+    fun invalidRequestKeepsItsErrorEvenIfAnUnsupportedReasonIsSupplied() {
+        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = true, reason = "desktop_websocket_not_implemented")
+        show()
+        rule.onNodeWithText(text(R.string.native_afirma_invalid)).assertIsDisplayed()
+        rule.onAllNodesWithText(text(R.string.external_afirma_websocket_unsupported)).assertCountEquals(0)
+        rule.onAllNodesWithText(text(R.string.native_afirma_official)).assertCountEquals(0)
+    }
+
     private fun show() {
         rule.setContent {
             JuntaFirmaTheme {
