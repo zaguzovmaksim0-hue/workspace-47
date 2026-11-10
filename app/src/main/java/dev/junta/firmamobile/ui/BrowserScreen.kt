@@ -1240,7 +1240,7 @@ fun BrowserScreen(
         },
     ) { modifier ->
         Column(modifier = modifier) {
-            browserPageStatus(
+            BrowserPageStatus(
                 state = BrowserPageStatusState(
                     compatibilityError = compatibilityError,
                     blockedReason = blockedReason,

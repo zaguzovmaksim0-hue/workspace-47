@@ -136,7 +136,7 @@ class BrowserPageStatusTest {
         rule.setContent {
             JuntaFirmaTheme {
                 Column {
-                    browserPageStatus(
+                    BrowserPageStatus(
                         state = state.value,
                         onRecoverClientCertPreferences = { events += "recover" },
                         onRetryBrowserError = { events += "reload" },

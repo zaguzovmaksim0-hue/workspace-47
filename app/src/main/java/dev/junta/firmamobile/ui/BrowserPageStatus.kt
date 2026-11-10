@@ -5,7 +5,7 @@ import dev.junta.firmamobile.browser.BrowserErrorCode
 import dev.junta.firmamobile.browser.ClientCertPreferenceBarrierState
 
 @Composable
-internal fun browserPageStatus(
+internal fun BrowserPageStatus(
     state: BrowserPageStatusState,
     onRecoverClientCertPreferences: () -> Unit,
     onRetryBrowserError: () -> Unit,
