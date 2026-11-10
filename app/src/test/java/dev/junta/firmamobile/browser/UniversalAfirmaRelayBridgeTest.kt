@@ -110,7 +110,7 @@ class UniversalAfirmaRelayBridgeTest {
 
     @Test
     fun oversizedPutRepliesPassWithoutCallingPutUpload() = runTest {
-        val oversized = "x".repeat(8 * 1024 * 1024 + 1)
+        val oversized = "x".repeat(dev.junta.firmamobile.afirma.servlet.NativeAfirmaLimits.RETRIEVAL_WIRE_BYTES + 1)
         val reply = JSONObject(handler.handle(putMessage(oversized), PAGE_ORIGIN, true, PAGE_URL, epoch)!!)
         assertTrue(operations.markBlockedCalled)
         assertFalse(operations.putUploadCalled)

@@ -4,7 +4,6 @@ import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.signing.LocalSignatureResult
 import dev.junta.firmamobile.signing.SigningAlgorithm
 import dev.junta.firmamobile.signing.PdfPreviewSource
-import dev.junta.firmamobile.signing.AccedaPadesAdapter
 import java.net.URI
 import java.time.Clock
 import java.security.MessageDigest
@@ -29,7 +28,7 @@ internal class NativeAfirmaOperation(
     private var closed = false
     private val invoked = AtomicBoolean(false)
     override val pdfPreviews: Map<Int, PdfPreviewSource?> = if (invocation.padesOptions != null) {
-        mapOf(0 to PdfPreviewSource(AccedaPadesAdapter.MAX_PDF_BYTES) {
+        mapOf(0 to PdfPreviewSource(NativeAfirmaLimits.PDF_INPUT_BYTES) {
             synchronized(lock) { check(!closed && !invoked.get()); invocation.payloadCopy() }
         })
     } else emptyMap()

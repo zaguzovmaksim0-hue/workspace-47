@@ -101,7 +101,7 @@ class AfirmaServletInvocationParserTest {
 
     @Test fun limitsAreCheckedBeforeDecodingUnboundedInput() {
         invalid(sign(mapOf("dat" to "A".repeat(800000))))
-        invalid("afirma://sign?x=" + "a".repeat(1048576))
+        invalid("afirma://sign?x=" + "a".repeat(NativeAfirmaLimits.URI_CHARS))
         invalid(sign() + (1..70).joinToString("") { "&field$it=x" })
     }
 

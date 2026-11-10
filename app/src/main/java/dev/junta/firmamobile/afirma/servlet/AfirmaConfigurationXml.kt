@@ -20,7 +20,7 @@ internal class AfirmaXmlParameters(val operation: AfirmaServletOperation, val va
  * syntax/entities are handled by a platform SAX parser, not by regex parsing.
  */
 internal object AfirmaConfigurationXml {
-    const val MAX_BYTES = 1_048_576
+    const val MAX_BYTES = NativeAfirmaLimits.CONFIGURATION_BYTES
 
     fun parse(bytes: ByteArray): AfirmaXmlParameters {
         require(bytes.isNotEmpty() && bytes.size <= MAX_BYTES) { "Invalid configuration size" }
@@ -113,6 +113,7 @@ internal object AfirmaConfigurationXml {
     }
 
     private fun formDecode(value: String): String {
+        if (value.none { it in "%+" || it.code !in 0x20..0x7e }) return value
         val output = java.io.ByteArrayOutputStream(value.length)
         var position = 0
         while (position < value.length) {

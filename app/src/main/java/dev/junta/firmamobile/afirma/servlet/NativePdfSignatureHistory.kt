@@ -41,7 +41,7 @@ internal object NativePdfSignatureHistory {
             if (entry.revisionEnd == pdf.size) continue
             val revision = pdf.copyOf(entry.revisionEnd)
             try {
-                PDDocument.load(ByteArrayInputStream(revision), memory()).use { previous ->
+                PDDocument.load(revision, "", null, null, memory()).use { previous ->
                     val historical = read(revision, previous, verifyCryptography = false) ?: return null
                     if (historical != current.take(index + 1)) return null
                 }
@@ -58,7 +58,7 @@ internal object NativePdfSignatureHistory {
         for ((index, entry) in entries.withIndex()) {
             val revision = pdf.copyOf(entry.revisionEnd)
             try {
-                PDDocument.load(ByteArrayInputStream(revision), memory()).use { previous ->
+                PDDocument.load(revision, "", null, null, memory()).use { previous ->
                     if (read(revision, previous, verifyCryptography = false) != entries.take(index + 1)) return null
                 }
             } finally { revision.fill(0) }
@@ -82,7 +82,7 @@ internal object NativePdfSignatureHistory {
             if (end == pdf.size) continue
             val prefix = pdf.copyOf(end)
             try {
-                PDDocument.load(ByteArrayInputStream(prefix), memory()).use { revision ->
+                PDDocument.load(prefix, "", null, null, memory()).use { revision ->
                     if (revision.document.startXref != offset) return false
                     val entries = read(prefix, revision, verifyCryptography = false, requireCompleteCoverage = false)
                         ?: return false
@@ -97,7 +97,7 @@ internal object NativePdfSignatureHistory {
 
     private fun read(pdf: ByteArray, document: PDDocument, verifyCryptography: Boolean,
         requireCompleteCoverage: Boolean = true): List<NativePdfPriorSignature>? {
-        if (pdf.size !in 5..2_097_152 || document.isEncrypted || document.numberOfPages !in 1..2_000 ||
+        if (pdf.size !in 5..NativeAfirmaLimits.PDF_OUTPUT_BYTES || document.isEncrypted || document.numberOfPages !in 1..2_000 ||
             document.document.objects.size > 20_000) return null
         val catalog = document.documentCatalog.cosObject
         if (catalog.containsKey(COSName.PERMS)) return null

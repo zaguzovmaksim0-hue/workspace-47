@@ -94,11 +94,11 @@ class NativePdfRevisionRangeTest {
         val (document, range) = pdf()
         rejected(ascii("%PDF"), range)
         for (i in 0..4) rejected(document.copyOf().apply { this[i] = 0 }, range)
-        val maximum = document.copyOf(2_097_152)
+        val maximum = document.copyOf(NativeAfirmaLimits.PDF_OUTPUT_BYTES)
         ascii("%%EOF").copyInto(maximum, maximum.size - 5)
         val maximumRange = range.copyOf().apply { this[3] = maximum.size - this[2] }
         assertEquals(maximum.size, NativePdfRevisionRange.revisionEnd(maximum, maximumRange))
-        rejected(maximum.copyOf(2_097_153), maximumRange)
+        rejected(maximum.copyOf(NativeAfirmaLimits.PDF_OUTPUT_BYTES + 1), maximumRange)
     }
 
     @Test fun extractReturnsAnIndependentCopy() {

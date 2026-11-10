@@ -1,12 +1,13 @@
 package dev.junta.firmamobile.browser
 
 import android.content.Intent
+import dev.junta.firmamobile.afirma.servlet.NativeAfirmaLimits
 import java.net.URI
 
 /** Extract a protocol request as data. Never execute the site's Intent object. */
 internal object NativeAfirmaNavigation {
     fun extract(raw: String): String? {
-        if (raw.isBlank() || raw.length > 1024 * 1024 || raw.any(Char::isISOControl)) return null
+        if (raw.isBlank() || raw.length > NativeAfirmaLimits.URI_CHARS || raw.any(Char::isISOControl)) return null
         val scheme = raw.substringBefore(':', "")
         val candidate = when {
             scheme.equals("afirma", true) -> raw

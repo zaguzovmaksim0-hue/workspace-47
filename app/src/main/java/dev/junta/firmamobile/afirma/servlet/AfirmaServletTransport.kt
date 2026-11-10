@@ -25,7 +25,7 @@ import okhttp3.RequestBody
 import okio.BufferedSink
 import okhttp3.Response
 
-internal const val AFIRMA_MAX_RESULT_CHARS = 6 * 1024 * 1024
+internal const val AFIRMA_MAX_RESULT_CHARS = NativeAfirmaLimits.RESULT_CHARS
 
 internal enum class AfirmaDeliveryResult {
     ACKNOWLEDGED,

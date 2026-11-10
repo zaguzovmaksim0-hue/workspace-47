@@ -1,6 +1,7 @@
 package dev.junta.firmamobile.browser
 
 import android.net.Uri
+import dev.junta.firmamobile.afirma.servlet.NativeAfirmaLimits
 import dev.junta.firmamobile.afirma.AfirmaOperation
 import dev.junta.firmamobile.afirma.AfirmaParameter
 import dev.junta.firmamobile.afirma.AfirmaParseErrorCode
@@ -185,7 +186,7 @@ class UniversalAfirmaUriParser {
     }
 
     private companion object {
-        const val MAX_URI_CHARS = 1024 * 1024
+        const val MAX_URI_CHARS = NativeAfirmaLimits.URI_CHARS
         const val MAX_PARAMETERS = 64
         const val AFIRMA_SCHEME = "afirma"
         val REQUIRED_SIGN_PARAMETERS = setOf("algorithm", "format")
