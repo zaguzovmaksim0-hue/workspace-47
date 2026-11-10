@@ -37,7 +37,8 @@ class PortalUnprofiledLaunchTest {
                 if (strict != null) {
                     assertEquals(PortalOpenTarget.InApp(strict), open)
                 } else {
-                    assertEquals(PortalOpenTarget.PublicWeb(item.entryUrl), open)
+                    val metadata = publicCatalog.entries.single { it.portalId == item.portalId }
+                    assertEquals(PortalOpenTarget.PublicWeb(metadata.launchUrl ?: metadata.entryUrl), open)
                     assertTrue(item.opensWithoutProfile)
                 }
             }
@@ -57,7 +58,7 @@ class PortalUnprofiledLaunchTest {
         )
         assertNull(release.resolveLaunch(item))
         assertNull(release.resolveLaunch(altered))
-        assertEquals(PortalOpenTarget.PublicWeb(item.entryUrl), release.resolveOpenTarget(altered))
+        assertEquals(release.resolveUniversalOpenTarget(item), release.resolveOpenTarget(altered))
     }
 
     @Test fun forgedUrlOrPortalIdIsRejected() {
@@ -80,6 +81,21 @@ class PortalUnprofiledLaunchTest {
         assertTrue(item.opensWithoutProfile)
         assertTrue(item.capabilities.isEmpty())
         assertTrue(item.signatureFormats.isEmpty())
+    }
+
+    @Test fun anUnprofiledAliasOpensItsPublishedLaunchInsteadOfTheInventoryUrl() {
+        val entry = publicCatalog.entries.first { it.launchUrl != null }.copy(
+            entryUrl = URI("https://inventory.synthetic.example/service"),
+            launchUrl = URI("https://login.synthetic.example/reviewed?service=1"),
+        )
+        for (build in listOf(BuildTrustPolicy.QA, BuildTrustPolicy.RELEASE)) {
+            val repository = PortalCatalogRepository(
+                SiteProfileRegistry(catalog, build), catalog, publicCatalog.copy(entries = listOf(entry)),
+            )
+            val item = repository.portals().single()
+            assertNull(repository.resolveLaunch(item))
+            assertEquals(PortalOpenTarget.PublicWeb(entry.launchUrl!!), repository.resolveOpenTarget(item))
+        }
     }
 
     @Test fun resolvingOpenTargetDoesNotMutateCatalogItems() {

@@ -42,7 +42,7 @@ class PortalCatalogRepositoryTest {
     }
 
     @Test
-    fun `wave F preserves inventory entries and binds exact QA login starts with an unprofiled primary route`() {
+    fun `wave F binds the ordinary QA launch and keeps release on the same public login URL`() {
         val routes = listOf(
             Triple("boe-sede-public-home", "https://www.boe.es/informacion/index.php",
                 "https://extranet.boe.es/anuncios/"),
@@ -70,12 +70,15 @@ class PortalCatalogRepositoryTest {
             assertEquals(java.net.URI(entry), metadata.entryUrl)
             assertEquals(if (entry == launch) null else java.net.URI(launch), metadata.launchUrl)
             assertEquals(PortalLaunchTarget(profileId, java.net.URI(launch)), qaRepository.resolveLaunch(portal))
+            assertEquals(PortalOpenTarget.InApp(PortalLaunchTarget(profileId, java.net.URI(launch))),
+                qaRepository.resolveOpenTarget(portal))
             assertEquals(
                 PortalOpenTarget.PublicWeb(java.net.URI(launch)),
                 qaRepository.resolveUniversalOpenTarget(portal),
             )
             val release = releaseRepository.portals().single { it.portalId == portal.portalId }
             assertNull(releaseRepository.resolveLaunch(release))
+            assertEquals(PortalOpenTarget.PublicWeb(java.net.URI(launch)), releaseRepository.resolveOpenTarget(release))
             assertEquals(
                 qaRepository.resolveUniversalOpenTarget(portal),
                 releaseRepository.resolveUniversalOpenTarget(release),
@@ -2894,7 +2897,8 @@ class PortalCatalogRepositoryTest {
         assertTrue(internal is PortalOpenTarget.InApp)
 
         val releaseItem = releaseRepository.portals().single { it.portalId == qaItem.portalId }
-        assertEquals(PortalOpenTarget.PublicWeb(releaseItem.entryUrl), releaseRepository.resolveOpenTarget(releaseItem))
+        val metadata = publicCatalog.entries.single { it.portalId == releaseItem.portalId }
+        assertEquals(PortalOpenTarget.PublicWeb(metadata.launchUrl ?: metadata.entryUrl), releaseRepository.resolveOpenTarget(releaseItem))
         assertFalse(releaseItem.isEnabled)
         assertTrue(releaseItem.opensWithoutProfile)
         assertTrue(releaseItem.canOpen)

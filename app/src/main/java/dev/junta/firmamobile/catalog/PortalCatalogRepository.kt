@@ -72,20 +72,13 @@ class PortalCatalogRepository(
         resolveLaunch(item.portalId, item.entryUrl)
 
     /**
-     * Prefer the exact active profile binding. Otherwise open the bundled public
-     * entry in ordinary browsing mode, without inheriting any profile authority.
+     * The ordinary catalog tap fixes the session to its exact active profile binding, if usable.
+     * Otherwise open the bundled public launch in a separate session without profile authority.
      */
-    fun resolveOpenTarget(item: PortalCatalogItem): PortalOpenTarget? {
-        val metadata = publicCatalog.entries.singleOrNull { it.portalId == item.portalId }
-            ?: return null
-        if (item.entryUrl.toASCIIString() != metadata.entryUrl.toASCIIString()) return null
-        resolveLaunch(item)?.let { return PortalOpenTarget.InApp(it) }
-        return PublicBrowserAddress.parse(metadata.entryUrl.toASCIIString())?.let(PortalOpenTarget::PublicWeb)
-    }
+    fun resolveOpenTarget(item: PortalCatalogItem): PortalOpenTarget? =
+        resolveLaunch(item)?.let(PortalOpenTarget::InApp) ?: resolveUniversalOpenTarget(item)
 
-    /** The primary catalog route uses the same ordinary AutoFirma engine for
-     * every entry, independently of technical-profile availability or build.
-     * A reviewed profile remains an explicit compatibility action. */
+    /** Explicit universal recovery launch; never carries or adopts a catalog profile. */
     fun resolveUniversalOpenTarget(item: PortalCatalogItem): PortalOpenTarget.PublicWeb? {
         val metadata = publicCatalog.entries.singleOrNull { it.portalId == item.portalId } ?: return null
         if (item.entryUrl.toASCIIString() != metadata.entryUrl.toASCIIString()) return null

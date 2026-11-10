@@ -52,11 +52,11 @@ class CatalogSimplicityTest {
         )
     }
     private val portal by lazy { repo.portals().first { it.isEnabled } }
-    private val opened = mutableListOf<PortalId>(); private val compatibility = mutableListOf<PortalId>()
+    private val opened = mutableListOf<PortalOpenTarget?>(); private val universal = mutableListOf<PortalOpenTarget?>()
     private val favorites = mutableListOf<PortalId>(); private var locations = 0
     private val state = mutableStateOf(PortalCatalogUiState())
 
-    @Test fun eachCardShowsExactlyOneOpenSiteActionAndDoesNotSelectCompatibility() {
+    @Test fun eachCardOpensItsActiveProfileThroughTheSinglePrimaryAction() {
         showOne()
         scrollToCard()
         rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag(cardTag())), useUnmergedTree = true)
@@ -65,19 +65,24 @@ class CatalogSimplicityTest {
         rule.onNodeWithTag("catalog-option-favorite").assertDoesNotExist()
         rule.onNodeWithTag("catalog-open-${portal.portalId.value}").performClick()
         rule.runOnIdle {
-            assertEquals(listOf(portal.portalId), opened)
-            assertTrue(compatibility.isEmpty())
+            assertEquals(listOf(PortalOpenTarget.InApp(checkNotNull(repo.resolveLaunch(portal)))), opened)
+            assertTrue(universal.isEmpty())
             assertTrue(favorites.isEmpty())
         }
     }
 
-    @Test fun longPressOffersExplicitCompatibilityWithoutOpeningOrSigningAutomatically() {
+    @Test fun longPressOffersExplicitUniversalRecoveryWithoutOpeningAutomatically() {
         showOne(); scrollToCard()
         rule.onNodeWithText(portal.displayName).performTouchInput { longClick() }
         rule.onNodeWithTag("catalog-site-options").assertIsDisplayed()
-        rule.runOnIdle { assertTrue(opened.isEmpty()); assertTrue(compatibility.isEmpty()) }
-        rule.onNodeWithTag("catalog-open-profile-${portal.portalId.value}").performClick()
-        rule.runOnIdle { assertTrue(opened.isEmpty()); assertEquals(listOf(portal.portalId), compatibility) }
+        rule.runOnIdle { assertTrue(opened.isEmpty()); assertTrue(universal.isEmpty()) }
+        rule.onNodeWithTag("catalog-open-profile-${portal.portalId.value}").assertDoesNotExist()
+        rule.onNodeWithText("Abrir en modo universal (sin perfil)").assertIsDisplayed()
+        rule.onNodeWithTag("catalog-open-universal-${portal.portalId.value}").performClick()
+        rule.runOnIdle {
+            assertTrue(opened.isEmpty())
+            assertEquals(listOf(PortalOpenTarget.PublicWeb(checkNotNull(repo.resolveLaunch(portal)).entryUrl)), universal)
+        }
         rule.onNodeWithTag("catalog-site-options").assertDoesNotExist()
     }
 
@@ -128,13 +133,13 @@ class CatalogSimplicityTest {
                 val density = LocalDensity.current
                 CompositionLocalProvider(LocalDensity provides Density(density.density, 1.8f)) {
                     Box(Modifier.width(280.dp).verticalScroll(rememberScrollState())) {
-                        CatalogPortalCard(portal, false, { opened += it.portalId }, {}, {})
+                        CatalogPortalCard(portal, false, { opened += repo.resolveOpenTarget(it) }, {}, {})
                     }
                 }
             }
         }
         rule.onNodeWithTag("catalog-open-${portal.portalId.value}").performScrollTo().assertIsDisplayed().performClick()
-        rule.runOnIdle { assertEquals(listOf(portal.portalId), opened) }
+        rule.runOnIdle { assertEquals(listOf(repo.resolveOpenTarget(portal)), opened) }
     }
 
     private fun text(resource: Int) =
@@ -153,8 +158,8 @@ class CatalogSimplicityTest {
         rule.setContent {
             JuntaFirmaTheme {
                 PortalCatalogScreen(state.value, {}, {}, { locations++ }, {}, {}, {}, { favorites += it },
-                    { opened += it.portalId }, {}, {},
-                    onOpenCompatibilityPortal = { compatibility += it.portalId })
+                    { opened += repo.resolveOpenTarget(it) }, {}, {},
+                    onOpenUniversalPortal = { universal += repo.resolveUniversalOpenTarget(it) })
             }
         }
     }

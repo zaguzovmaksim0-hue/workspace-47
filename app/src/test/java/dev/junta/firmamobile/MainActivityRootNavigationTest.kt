@@ -136,24 +136,55 @@ class MainActivityRootNavigationTest {
         assertLoadedUrl(PUBLIC_URL)
     }
 
-    @Test fun primaryPortalOpenRemainsPublicEvenForAProfileBoundPortal() {
-        findOvorion()
+    @Test fun primaryPortalOpenUsesTheActiveCatalogProfileWithoutACertificate() {
+        findPortal("Ovorion", "junta-andalucia-ovorion")
         rule.onNodeWithTag("catalog-open-junta-andalucia-ovorion").performClick()
+        awaitBrowser()
+        assertLoadedUrl(OVORION_URL)
+        assertPublicMode(false)
+        rule.onNodeWithText("Sin certificado desbloqueado").assertIsDisplayed()
+    }
+
+    @Test fun primaryAliasOpensItsBoundProfileAtThePublishedLaunchUrl() {
+        findPortal("Punto de Acceso General", "age-pag-reg")
+        rule.onNodeWithTag("catalog-open-age-pag-reg").performClick()
+        awaitBrowser()
+        assertLoadedUrl("https://reg.redsara.es/es/")
+        assertPublicMode(false)
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test fun explicitUniversalRecoveryOpensWithoutTheCatalogProfile() {
+        findPortal("Punto de Acceso General", "age-pag-reg")
+        rule.onNodeWithTag("catalog-card-age-pag-reg")
+            .performCustomAccessibilityActionWithLabel("Opciones del sitio")
+        rule.onNodeWithTag("catalog-open-universal-age-pag-reg").performClick()
+        awaitBrowser()
+        assertLoadedUrl("https://reg.redsara.es/es/")
+        assertPublicMode(true)
+        rule.onNodeWithText("Sin certificado desbloqueado").assertIsDisplayed()
+    }
+
+    @Test fun typingAProfileStartStillOpensASeparatePublicSession() {
+        openCatalog()
+        rule.onNodeWithTag("public-web-address").performTextReplacement(OVORION_URL)
+        rule.onNodeWithTag("public-web-open-confirm").performClick()
         awaitBrowser()
         assertLoadedUrl(OVORION_URL)
         assertPublicMode(true)
     }
 
-    @OptIn(ExperimentalTestApi::class)
-    @Test fun explicitCompatibilityOpenUsesProfileButStillAllowsNoCertificate() {
-        findOvorion()
-        rule.onNodeWithTag("catalog-card-junta-andalucia-ovorion")
-            .performCustomAccessibilityActionWithLabel("Opciones del sitio")
-        rule.onNodeWithTag("catalog-open-profile-junta-andalucia-ovorion").performClick()
-        awaitBrowser()
-        assertLoadedUrl(OVORION_URL)
-        assertPublicMode(false)
-        rule.onNodeWithText("Sin certificado desbloqueado").assertIsDisplayed()
+    @Test fun publicNavigationToAProfileStartKeepsTheSameUnprofiledSession() {
+        openPublicBrowser()
+        val original = currentBrowser()
+        scenario.onActivity {
+            original.loadUrl(OVORION_URL)
+            original.webViewClient.onPageStarted(original, OVORION_URL, null)
+            original.webViewClient.onPageFinished(original, OVORION_URL)
+        }
+        assertPublicMode(true)
+        scenario.onActivity { assertSame(original, browser(it)) }
+        rule.onNodeWithText("Modo específico del portal").assertDoesNotExist()
     }
 
     @Test fun browserToolbarBackWithoutHistoryExitsToCatalog() {
@@ -299,21 +330,21 @@ class MainActivityRootNavigationTest {
         rule.onNodeWithTag("catalog-list").assertDoesNotExist()
     }
 
-    private fun findOvorion() {
+    private fun findPortal(searchText: String, portalId: String) {
         openCatalog()
         rule.onNodeWithTag("catalog-list").performScrollToNode(hasTestTag("public-web-address"))
-        rule.onNodeWithTag("public-web-address").performTextReplacement("Ovorion")
+        rule.onNodeWithTag("public-web-address").performTextReplacement(searchText)
         rule.waitUntil(20_000) {
             // Search runs off the UI thread; wait for the actual card, including
             // lazy-list placement, rather than sleeping or assuming query completion.
             runCatching {
                 rule.onNodeWithTag("catalog-list").performScrollToNode(
-                    hasTestTag("catalog-card-junta-andalucia-ovorion"),
+                    hasTestTag("catalog-card-$portalId"),
                 )
             }.isSuccess
         }
         rule.onNodeWithTag("catalog-list")
-            .performScrollToNode(hasTestTag("catalog-open-junta-andalucia-ovorion"))
+            .performScrollToNode(hasTestTag("catalog-open-$portalId"))
     }
 
     private fun assertPublicMode(expected: Boolean) {

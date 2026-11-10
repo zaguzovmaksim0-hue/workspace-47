@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="catalog_open_universal_afirma">Obre amb AutoFirma</string>
+    <string name="catalog_open_universal_without_profile">Obre en mode universal (sense perfil)</string>
     <string name="catalog_open_profile_compatibility">Mode específic del portal</string>
     <string name="catalog_universal_afirma_copy">Només les seus marcades com a verificades s’han comprovat de principi a fi amb aquesta aplicació.</string>
     <string name="native_afirma_portal_mode_hint">Aquesta seu té un mode específic del portal a l’aplicació. S’obrirà de nou des de la seva pàgina d’entrada.</string>
