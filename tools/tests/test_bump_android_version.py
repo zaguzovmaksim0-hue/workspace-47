@@ -12,7 +12,7 @@ import unittest
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
-FIXTURE = b'versionCode=13\nversionName=0.2.11\n'
+FIXTURE = b'versionCode=24\nversionName=0.2.11\n'
 
 
 class AndroidVersionBumpTest(unittest.TestCase):
@@ -41,7 +41,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
         self.git('add', '--', 'version.properties')
         self.git('commit', '-qm', 'Synthetic version fixture')
 
-    def run_cli(self, *extra, code='13', name='0.2.11', next_name='0.2.12'):
+    def run_cli(self, *extra, code='24', name='0.2.11', next_name='0.2.12'):
         return subprocess.run(
             [sys.executable, str(self.tool), '--expected-code', code,
              '--expected-name', name, '--next-name', next_name, *extra],
@@ -56,7 +56,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
         before = self.target_state()
         result = self.run_cli()
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn('+versionCode=14\n', result.stdout)
+        self.assertIn('+versionCode=25\n', result.stdout)
         self.assertIn('+versionName=0.2.12\n', result.stdout)
         self.assertIn('dry-run', result.stdout.lower())
         self.assertEqual(before, self.target_state())
@@ -66,7 +66,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
         old_inode = self.target.stat().st_ino
         result = self.run_cli('--write')
         self.assertEqual(0, result.returncode, result.stderr)
-        expected = FIXTURE.replace(b'versionCode=13', b'versionCode=14').replace(
+        expected = FIXTURE.replace(b'versionCode=24', b'versionCode=25').replace(
             b'versionName=0.2.11', b'versionName=0.2.12')
         self.assertEqual(expected, self.target.read_bytes())
         self.assertEqual(0o640, stat.S_IMODE(self.target.stat().st_mode))
@@ -103,7 +103,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
         return result
 
     def test_stale_expectations_fail_without_modification(self):
-        for options in [dict(code='12'), dict(code='14'), dict(name='0.2.10'), dict(name='0.2.12')]:
+        for options in [dict(code='23'), dict(code='25'), dict(name='0.2.10'), dict(name='0.2.12')]:
             for arguments in [(), ('--write',)]:
                 with self.subTest(options=options, arguments=arguments):
                     self.assert_rejected_unchanged(*arguments, **options)
@@ -115,15 +115,23 @@ class AndroidVersionBumpTest(unittest.TestCase):
                 self.assert_rejected_unchanged('--write', next_name=name)
 
     def test_codes_are_canonical_positive_android_integers(self):
-        for code in ['0', '-1', '+13', '013', '13.0', '2_100_000_000', '2100000001', '١٣', '13\n']:
+        for code in ['0', '-1', '+24', '024', '24.0', '2_100_000_000', '2100000001', '٢٤', '24\n']:
             with self.subTest(code=code):
                 self.assert_rejected_unchanged('--write', code=code)
 
+    def test_published_floor_rejects_matching_stale_source(self):
+        self.target.write_bytes(FIXTURE.replace(b'versionCode=24', b'versionCode=23'))
+        self.commit_target()
+        for arguments in [(), ('--write',)]:
+            with self.subTest(arguments=arguments):
+                result = self.assert_rejected_unchanged(*arguments, code='23')
+                self.assertIn('published floor 24', result.stderr)
+
     def test_maximum_code_overflow_is_rejected_and_boundary_increment_is_allowed(self):
-        self.target.write_bytes(FIXTURE.replace(b'versionCode=13', b'versionCode=2100000000'))
+        self.target.write_bytes(FIXTURE.replace(b'versionCode=24', b'versionCode=2100000000'))
         self.commit_target()
         self.assert_rejected_unchanged('--write', code='2100000000')
-        self.target.write_bytes(FIXTURE.replace(b'versionCode=13', b'versionCode=2099999999'))
+        self.target.write_bytes(FIXTURE.replace(b'versionCode=24', b'versionCode=2099999999'))
         self.commit_target()
         result = self.run_cli('--write', code='2099999999')
         self.assertEqual(0, result.returncode, result.stderr)
@@ -134,7 +142,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
         self.commit_target()
         result = self.run_cli('--write', name='0.9.99', next_name='0.10.0')
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn(b'versionCode=14\n', self.target.read_bytes())
+        self.assertIn(b'versionCode=25\n', self.target.read_bytes())
         self.assertIn(b'versionName=0.10.0\n', self.target.read_bytes())
 
     def test_crlf_and_unrelated_bytes_are_preserved(self):
@@ -143,7 +151,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
         self.commit_target()
         result = self.run_cli('--write')
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(source.replace(b'versionCode=13', b'versionCode=14').replace(
+        self.assertEqual(source.replace(b'versionCode=24', b'versionCode=25').replace(
             b'versionName=0.2.11', b'versionName=0.2.12'), self.target.read_bytes())
 
     def test_staged_and_index_hidden_changes_are_rejected(self):
@@ -182,11 +190,11 @@ class AndroidVersionBumpTest(unittest.TestCase):
         self.commit_target()
         result = self.assert_rejected_unchanged('--write')
         self.assertIn('expected', result.stderr.lower())
-        self.assertIn(b'versionCode=14\n', self.target.read_bytes())
+        self.assertIn(b'versionCode=25\n', self.target.read_bytes())
 
     def test_required_arguments_cannot_be_omitted(self):
         before = self.target_state()
-        for arguments in [[], ['--write'], ['--expected-code', '13']]:
+        for arguments in [[], ['--write'], ['--expected-code', '24']]:
             result = subprocess.run([sys.executable, str(self.tool), *arguments],
                                     capture_output=True, text=True)
             self.assertNotEqual(0, result.returncode)
@@ -201,7 +209,7 @@ class AndroidVersionBumpTest(unittest.TestCase):
     def assert_write_error(self, module):
         errors = io.StringIO()
         with redirect_stderr(errors), self.assertRaises(SystemExit) as failure:
-            module.main(['--expected-code', '13', '--expected-name', '0.2.11',
+            module.main(['--expected-code', '24', '--expected-name', '0.2.11',
                          '--next-name', '0.2.12', '--write'])
         self.assertEqual(2, failure.exception.code)
         self.assertEqual([], list(self.root.glob('.android-version-*')))
@@ -271,12 +279,12 @@ class AndroidVersionBumpTest(unittest.TestCase):
         lock = self.root / name
         lock.write_bytes(b'Only protects the original worktree.\n')
         result = subprocess.run(
-            [sys.executable, str(linked_tool), '--expected-code', '13',
+            [sys.executable, str(linked_tool), '--expected-code', '24',
              '--expected-name', '0.2.11', '--next-name', '0.2.12', '--write'],
             cwd=worktree, capture_output=True, text=True,
         )
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn(b'versionCode=14\n', (worktree / 'version.properties').read_bytes())
+        self.assertIn(b'versionCode=25\n', (worktree / 'version.properties').read_bytes())
         self.assertEqual(FIXTURE, self.target.read_bytes())
         self.assertEqual(b'Only protects the original worktree.\n', lock.read_bytes())
 
@@ -287,18 +295,18 @@ class AndroidVersionBumpTest(unittest.TestCase):
 
     def test_code_only_bump_preserves_name_and_increments_exactly_once(self):
         result = subprocess.run(
-            [sys.executable, str(self.tool), '--expected-code', '13',
+            [sys.executable, str(self.tool), '--expected-code', '24',
              '--expected-name', '0.2.11', '--write'], capture_output=True, text=True)
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertEqual(b'versionCode=14\nversionName=0.2.11\n', self.target.read_bytes())
+        self.assertEqual(b'versionCode=25\nversionName=0.2.11\n', self.target.read_bytes())
 
     def test_invalid_source_fails_closed(self):
-        for source in [b'versionCode=12\nversionName=0.2.11\n',
+        for source in [b'versionCode=23\nversionName=0.2.11\n',
                        b'versionCode=0\nversionName=0.2.11\n',
-                       b'versionCode=013\nversionName=0.2.11\n',
+                       b'versionCode=024\nversionName=0.2.11\n',
                        b'versionCode=2100000001\nversionName=0.2.11\n',
                        b'versionName=0.2.11\n',
-                       FIXTURE + b'versionCode=14\n',
+                       FIXTURE + b'versionCode=25\n',
                        FIXTURE.replace(b'0.2.11', b'0.2.011'),
                        FIXTURE + b'unknown=value\n', FIXTURE + b'\xff',
                        FIXTURE.rstrip(b'\n') + b'\r']:

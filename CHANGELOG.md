@@ -2,6 +2,17 @@
 
 Cada versión es una actualización en desarrollo: consulta el resultado de CI del commit antes de instalar su APK. Los APK del canal diario se firman con la clave persistente `CN=Firma Mobile Daily APK` (SHA-256 `f1bcad77c90bab402ac9671b0ac6c034cc1d916d4561f65e480740021e5d6971`); consulta [la firma del APK y la migración desde otras firmas](docs/instalacion.md#firma-del-apk-y-actualizaciones).
 
+## 0.2.22 (24) — 2026-11-10
+
+- Catálogo: las sedes con un perfil activo y revisado se abren directamente en «Modo específico del portal». Las direcciones sin perfil y la navegación universal mantienen su modo durante toda la sesión.
+- HTTPS: se admiten los puertos públicos 8443 y 4443 y el paso seguro desde HTTP. El transporte nativo puede completar cadenas con intermediarios incluidos y revisados, conservando la validación de confianza y del nombre del servidor.
+- Firma PDF: límites explícitos de 8 MiB de entrada y 10 MiB de salida, con buffers y memoria temporal acotados. Las pruebas sintéticas no sustituyen la medición de memoria en el teléfono.
+- Solicitudes web: los iframe necesitan un origen y un propietario comprobados; las ventanas emergentes pasan por confirmación. Los protocolos externos no implementados muestran motivos concretos, sin atribuirles un perfil de confianza.
+- Compatibilidad: entrada de Soria corregida, transporte presign/postsign de Lugo con diagnóstico de estado HTTP sin datos sensibles y conservación de parámetros repetidos en ventanas emergentes. La devolución autenticada de Funciona sigue pendiente de evidencia del protocolo.
+- Mantenimiento: estado común de operaciones y separación del bloque visual de avisos/carga del navegador; actualización verificada a Gradle 9.8.2 conservando el bootstrap de Termux. CI separa las comprobaciones Android prolongadas y mantiene sus controles obligatorios.
+- Versión y distribución: fuente única 0.2.22 / código 24 y mínimo de compilación actualizado. El APK de uso diario requiere el proceso de firma persistente y CI/Security satisfactorios sobre el commit exacto.
+- Alcance de comprobación: los cambios se verifican con pruebas locales y CI. No se han ejecutado E2E reales de autenticación o firma en portales; no se declara compatibilidad universal.
+
 ## 0.2.21 (23) — 2026-11-04
 
 - AutoFirma en navegación general: si una sede del catálogo con modo específico revisado envía una solicitud que el motor universal no puede atender (por ejemplo, el acceso con certificado de la Oficina Virtual de la Junta de Andalucía, cuyo MiniApplet no indica dónde devolver la firma), el aviso ofrece «Modo específico del portal» y lo abre desde su página de entrada con el perfil del catálogo. El aviso muestra además el código técnico del rechazo.

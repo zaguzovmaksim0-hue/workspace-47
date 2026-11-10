@@ -16,12 +16,22 @@ class DetektPolicyTest(unittest.TestCase):
         self.assertRegex(script, r'DETEKT_SHA256=[0-9a-f]{64}')
         self.assertIn('sha256sum --check --status', script)
         self.assertIn('--max-issues 0', script)
+        self.assertIn('--build-upon-default-config', script)
+        self.assertIn('--config config/detekt/config.yml', script)
         self.assertIn('--input app/src/main/java', script)
         self.assertNotIn('|| true', script)
 
     def test_daily_and_release_source_sets_are_analyzed(self):
         script = (ROOT / 'scripts/ci/detekt.sh').read_text()
         self.assertIn('--input app/src/main/java,app/src/release/java', script)
+
+    def test_compose_naming_is_the_only_default_rule_override(self):
+        config = (ROOT / 'config/detekt/config.yml').read_text()
+        settings = [line.strip() for line in config.splitlines() if line.strip()]
+        self.assertEqual(
+            ['naming:', 'FunctionNaming:', "ignoreAnnotated: ['Composable']"],
+            settings,
+        )
 
     def test_corrupt_cached_jar_fails_before_execution(self):
         with tempfile.TemporaryDirectory() as cache:
@@ -43,6 +53,9 @@ class DetektPolicyTest(unittest.TestCase):
         self.assertIn('run: bash scripts/ci/detekt.sh', workflow)
         self.assertNotIn('--create-baseline', workflow)
         self.assertIn('app/build/reports/detekt/', workflow)
+        task_workflow = (ROOT / '.github/workflows/task-verify.yml').read_text()
+        self.assertIn('run: bash scripts/ci/detekt.sh', task_workflow)
+        self.assertNotIn('--create-baseline', task_workflow)
 
     def test_baseline_is_portable_and_has_no_manual_suppressions(self):
         baseline = ROOT / 'config/detekt/baseline.xml'

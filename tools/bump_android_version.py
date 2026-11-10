@@ -38,8 +38,8 @@ def plan(source, expected_code, expected_name, next_name):
         raise ValueError('Expected canonical versionCode/versionName lines in version.properties')
     current_code = version_code(match['code'])
     current_name = match['name']
-    if current_code < 13:
-        raise ValueError('Version code must not be below the published floor 13')
+    if current_code < 24:
+        raise ValueError('Version code must not be below the published floor 24')
     if (current_code, current_name) != (version_code(expected_code), expected_name):
         raise ValueError('Expected current code/name do not match the target')
     version_name(expected_name)

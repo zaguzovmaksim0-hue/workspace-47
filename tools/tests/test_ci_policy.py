@@ -506,12 +506,12 @@ class CiPolicyTest(unittest.TestCase):
 
     def test_gradle_wrapper_distribution_is_checksum_pinned(self) -> None:
         source = self.read(GRADLE_WRAPPER_PROPERTIES)
-        self.assertRegex(source, r"(?m)^distributionUrl=https\\://services\.gradle\.org/distributions/gradle-9\.7\.1-bin\.zip$")
-        self.assertRegex(source, r"(?m)^distributionSha256Sum=[0-9a-f]{64}$")
+        self.assertRegex(source, r"(?m)^distributionUrl=https\\://services\.gradle\.org/distributions/gradle-9\.8\.2-bin\.zip$")
+        self.assertRegex(source, r"(?m)^distributionSha256Sum=21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607$")
         wrapper_sha256 = hashlib.sha256(GRADLE_WRAPPER_JAR.read_bytes()).hexdigest()
         self.assertEqual(
             wrapper_sha256,
-            "7a9ce74cff467ca1bf60a4fcd9f05185acceda4d0f382434d393e17864262c5d",
+            "3b8a25775a69158b5ad2b1d17a80a88dc7b40a352a73eb27d06c612a7ce68e98",
         )
 
 
