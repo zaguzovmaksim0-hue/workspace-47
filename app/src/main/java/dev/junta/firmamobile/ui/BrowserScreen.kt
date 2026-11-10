@@ -389,6 +389,28 @@ fun BrowserScreen(
             activePopup == null && popupClearingCertificatePreferences == null &&
             (clientCertPreferenceState != ClientCertPreferenceBarrierState.IDLE || clientAuthPreparing)
 
+    fun operationState(retrievalPending: Boolean = false): BrowserOperationState = BrowserOperationState(
+        setOfNotNull(
+            BrowserOperation.EXTERNAL_AFIRMA.takeIf { externalAfirmaActive() },
+            BrowserOperation.POPUP.takeIf { activePopup != null },
+            BrowserOperation.CERTIFICATE_PANEL.takeIf { certificatePanelVisible },
+            BrowserOperation.IN_PLACE_CLIENT_AUTH.takeIf { pendingInPlaceClientAuth != null },
+            BrowserOperation.CLIENT_AUTH_TARGET.takeIf { pendingClientAuthTarget != null },
+            BrowserOperation.CERTIFICATE_SELECTION.takeIf { pendingCertificateSelection != null },
+            BrowserOperation.LEGACY_AFIRMA.takeIf { pendingRequest != null },
+            BrowserOperation.INTERACTIVE_CLIENT_AUTH.takeIf { interactivePrompt != null },
+            BrowserOperation.NATIVE_AFIRMA.takeIf { nativeAfirma.hasPending },
+            BrowserOperation.NATIVE_FALLBACK.takeIf { nativeFallback.hasPending },
+            BrowserOperation.RETRIEVAL.takeIf { retrievalPending },
+            BrowserOperation.CLIENT_AUTH_PREPARATION.takeIf { clientAuthPreparing },
+            BrowserOperation.CLIENT_AUTH_GRANT.takeIf { clientAuthGrant != null },
+            BrowserOperation.SIGNING.takeIf { currentSigningState !is SigningUiState.Idle },
+            BrowserOperation.CLIENT_CERT_PREFERENCES.takeIf {
+                clientCertPreferenceCoordinator.state.value != ClientCertPreferenceBarrierState.IDLE
+            },
+        ),
+    )
+
     var nativeRetrievalPrompt by remember(selectedServiceId, validatedEntryUrl) { mutableStateOf<AfirmaRetrievalPrompt?>(null) }
     val afirmaRelayStore = remember { AfirmaRelayStore() }
     val nativeRetrieval = remember(selectedServiceId, validatedEntryUrl, nativeAfirma) {
@@ -417,10 +439,7 @@ fun BrowserScreen(
             },
             onPrompt = { nativeRetrievalPrompt = it },
             onPrepared = { owner, epoch, operation ->
-                val busy = externalAfirmaActive() || pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
-                    pendingCertificateSelection != null || pendingRequest != null || interactivePrompt != null ||
-                    nativeAfirma.hasPending || nativeFallback.hasPending || clientAuthPreparing ||
-                    currentSigningState !is SigningUiState.Idle
+                val busy = operationState().blocks(BrowserAdmission.PREPARED_NATIVE_REQUEST)
                 if (busy) { operation.close(); false } else nativeAfirma.offer(owner, epoch, operation)
             },
         )
@@ -437,12 +456,7 @@ fun BrowserScreen(
         val isCurrentOwner = owner === webViewRef.get()
         val isForeground = owner.hasWindowFocus() && owner.isShown &&
             lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
-        val busy = externalAfirmaActive() || activePopup != null ||
-            pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
-            pendingCertificateSelection != null || pendingRequest != null ||
-            interactivePrompt != null || nativeAfirma.hasPending ||
-            nativeFallback.hasPending || nativeRetrieval.hasPending ||
-            clientAuthPreparing || currentSigningState !is SigningUiState.Idle
+        val busy = operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.NATIVE_REQUEST)
         if (!isCurrentOwner || !isForeground || busy) return false
         fun fallback(epoch: Long, rawUnsupportedUri: String?, reason: String) {
             nativeFallback.offer(owner, epoch, rawUnsupportedUri, reason)
@@ -771,26 +785,17 @@ fun BrowserScreen(
             dev.junta.firmamobile.network.JuntaOriginPolicy.originFor(Uri.parse(page)) == request.origin &&
             offerPublicNativeAfirma(owner, request.rawUri, page)
         if (!handledByPublicNativePath) {
-            val busy = externalAfirmaActive() || activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending ||
-                pendingRequest != null || pendingCertificateSelection != null || pendingInPlaceClientAuth != null ||
-                pendingClientAuthTarget != null || interactivePrompt != null || clientAuthPreparing ||
-                currentSigningState !is SigningUiState.Idle
+            val busy = operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.NATIVE_REQUEST)
             if (!busy) pendingRequest = request
         }
     }
     // The broadest local ownership check, shared so an external afirma delivery is refused while any of it holds.
     val portalBusyNow: () -> Boolean = {
-        activePopup != null || certificatePanelVisible || pendingInPlaceClientAuth != null ||
-            pendingClientAuthTarget != null || pendingCertificateSelection != null || pendingRequest != null ||
-            interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending ||
-            nativeRetrieval.hasPending || clientAuthPreparing || clientAuthGrant != null ||
-            currentSigningState !is SigningUiState.Idle ||
-            clientCertPreferenceCoordinator.state.value != ClientCertPreferenceBarrierState.IDLE
+        operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.EXTERNAL_AFIRMA)
     }
     val portalBusy = rememberUpdatedState(portalBusyNow)
     val nativeSlotBusy = {
-        externalAfirmaActive() || activePopup != null || nativeAfirma.hasPending || nativeFallback.hasPending ||
-            nativeRetrieval.hasPending
+        operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.NATIVE_SLOT)
     }
     DisposableEffect(signingAdmission) {
         val owner = Any()
@@ -1344,13 +1349,7 @@ fun BrowserScreen(
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
                                 onExternalAppRequest = { owner, target ->
-                                    val busy = externalAfirmaActive() || activePopup != null || certificatePanelVisible ||
-                                        pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
-                                        pendingCertificateSelection != null || pendingRequest != null ||
-                                        interactivePrompt != null || nativeAfirma.hasPending || nativeFallback.hasPending ||
-                                        nativeRetrieval.hasPending || clientAuthPreparing || clientAuthGrant != null ||
-                                        currentSigningState !is SigningUiState.Idle ||
-                                        clientCertPreferenceCoordinator.state.value != ClientCertPreferenceBarrierState.IDLE
+                                    val busy = operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.EXTERNAL_APP)
                                     !busy && owner === webViewRef.get() &&
                                         lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
                                         currentExternalAppRequest?.invoke(owner, target) == true
@@ -1362,10 +1361,8 @@ fun BrowserScreen(
                                     interactiveClientAuth.onServerTlsError(owner, navigationEpoch.longValue, failedUrl)
                                 },
                                 onInteractiveClientAuthChallenge = { owner, request ->
-                                    val busy = externalAfirmaActive() || activePopup != null || pendingInPlaceClientAuth != null || pendingClientAuthTarget != null ||
-                                        pendingCertificateSelection != null || pendingRequest != null ||
-                                        clientAuthPreparing || nativeAfirma.hasPending || nativeFallback.hasPending || nativeRetrieval.hasPending ||
-                                        currentSigningState !is SigningUiState.Idle
+                                    val busy = operationState(nativeRetrieval.hasPending)
+                                        .blocks(BrowserAdmission.INTERACTIVE_CLIENT_AUTH)
                                     if (busy) request.ignore() else {
                                         interactiveClientAuth.offer(
                                             owner, navigationEpoch.longValue,
