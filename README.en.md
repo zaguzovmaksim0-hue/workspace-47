@@ -47,6 +47,12 @@ Every signing operation requires confirmation. Tests use synthetic data; never
 commit real certificates, passwords, cookies, private documents or authenticated
 captures. See [test-fixture rules](docs/test-fixtures.md).
 
+## Browser modes
+
+A normal catalog tap opens the portal-specific mode when this build has an active profile with a valid catalog binding. Other catalog entries and manually typed addresses open in universal mode without acquiring a profile's authority.
+
+The selected mode remains fixed for the browser session. Long-press a supported catalog entry and choose **Open in universal mode (without profile)** to start a separate universal session. Navigation and signing failures never switch modes automatically. An active profile is not evidence that every operation passed E2E: authentication, signing and result delivery require separate verification.
+
 ## Security model
 
 Core design principles are fail-closed:

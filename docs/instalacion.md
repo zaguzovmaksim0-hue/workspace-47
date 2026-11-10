@@ -16,6 +16,12 @@ Para actualizar una instalación existente, el paquete y la firma deben coincidi
 
 Bloquear el certificado no elimina el archivo, no lo revoca ante su emisor y no garantiza cerrar las sesiones del servidor. Usa el cierre de sesión del propio portal cuando corresponda.
 
+## Elegir el modo de navegación
+
+Una pulsación normal en el catálogo utiliza el perfil específico del portal cuando está activo y validado para la compilación instalada. Si no existe un perfil disponible, la sede se abre en modo universal. Una dirección introducida manualmente siempre abre una sesión universal, incluso si coincide con una sede conocida.
+
+Para usar el modo universal de forma explícita en una sede con perfil, mantén pulsada su tarjeta y selecciona **Abrir en modo universal (sin perfil)**. Cada apertura crea una sesión con un modo fijo: seguir enlaces o recibir un error no cambia ese modo ni concede permisos de otro perfil. El modo universal solicita por separado la autorización que necesite para utilizar el certificado.
+
 ## Variantes y actualizaciones
 
 La versión visible de uso diario es **0.2.17**. `optimized` es una denominación interna de compilación; incluye perfiles experimentales, utiliza transporte directo y no habilita los controles de depuración. El paquete permanece `dev.junta.firmamobile`.

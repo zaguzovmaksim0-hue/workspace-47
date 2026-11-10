@@ -12,15 +12,13 @@ import androidx.compose.ui.unit.dp
 import dev.junta.firmamobile.R
 import dev.junta.firmamobile.afirma.servlet.AfirmaFallbackPrompt
 
-/** Ordinary-browsing AutoFirma request that the native engine refused before using the
- * certificate. When the catalog has a reviewed mode for the page, that mode is the main action. */
+/** An AutoFirma request refused before certificate use. The selected browser mode is preserved. */
 @Suppress("FunctionNaming") // Compose UI naming convention.
 @Composable
 internal fun NativeAfirmaFallbackDialog(
     prompt: AfirmaFallbackPrompt,
     onClose: () -> Unit,
     onOpenOfficial: () -> Unit,
-    onOpenPortalMode: () -> Unit,
 ) {
     val closeButton: @Composable () -> Unit = {
         TextButton(onClick = onClose) { Text(stringResource(R.string.native_afirma_close)) }
@@ -36,7 +34,6 @@ internal fun NativeAfirmaFallbackDialog(
                         if (prompt.invalid) R.string.native_afirma_invalid else R.string.native_afirma_unsupported,
                     ),
                 )
-                if (prompt.portalMode) Text(stringResource(R.string.native_afirma_portal_mode_hint))
                 prompt.reason?.let { reason ->
                     Text(
                         stringResource(R.string.native_afirma_reason, reason),
@@ -46,17 +43,8 @@ internal fun NativeAfirmaFallbackDialog(
                 }
             }
         },
-        confirmButton = {
-            if (prompt.portalMode) {
-                TextButton(onClick = onOpenPortalMode) {
-                    Text(stringResource(R.string.catalog_open_profile_compatibility))
-                }
-            } else {
-                closeButton()
-            }
-        },
+        confirmButton = closeButton,
         dismissButton = {
-            if (prompt.portalMode) closeButton()
             if (!prompt.invalid) {
                 TextButton(onClick = onOpenOfficial) { Text(stringResource(R.string.native_afirma_official)) }
             }

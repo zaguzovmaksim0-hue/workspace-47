@@ -29,6 +29,12 @@ El APK de uso diario se genera en GitHub Actions con **Signed daily APK** sobre 
 
 La clave privada no está en el repositorio ni en los artefactos: la custodia el mantenedor y GitHub guarda una copia como secretos del entorno `daily-signing`, que no se pueden descargar. Si Android indica que el paquete «entra en conflicto con un paquete existente», la aplicación instalada se firmó con otra clave (por ejemplo, la antigua `CN=Firma Mobile, OU=Release`): hay que desinstalarla una vez, lo que borra sus datos, e importar de nuevo el certificado. Consulta [los pasos de instalación y migración](docs/instalacion.md#firma-del-apk-y-actualizaciones) y [la referencia de claves, verificación y rotación](docs/daily-apk-signing.md).
 
+## Abrir un portal
+
+Al tocar una sede del catálogo, se abre directamente en su modo específico si tiene un perfil activo y una vinculación válida para esta compilación. Las demás sedes y las direcciones escritas manualmente se abren en modo universal, sin adoptar los permisos de ningún perfil.
+
+El modo queda fijado durante esa sesión. Para abrir una sede del catálogo en modo universal de forma explícita, mantén pulsada su tarjeta y selecciona **Abrir en modo universal (sin perfil)**. Esto inicia una sesión nueva; los errores de firma y los cambios de página no cambian el modo automáticamente. Un perfil activo no equivale a una prueba E2E de todas sus operaciones: identificación, firma y devolución del resultado se verifican por separado.
+
 ## Certificados y privacidad
 
 El certificado y su contraseña se procesan localmente. En cada desbloqueo manual se eligen 15 minutos (por defecto), 1 hora o 24 horas. En API 30+ la aplicación puede conservarlo mediante una caché cifrada sin renovar el vencimiento al restaurarlo; la opción de bloqueo del menú del certificado permite finalizarlo antes. Bloquear no elimina el archivo ni revoca el certificado ante su emisor, y no garantiza cerrar una sesión ya abierta en un portal.

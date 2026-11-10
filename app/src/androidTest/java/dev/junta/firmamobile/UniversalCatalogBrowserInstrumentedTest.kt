@@ -174,7 +174,7 @@ class UniversalCatalogBrowserInstrumentedTest {
                 rule.onNodeWithTag("browser-site-information-close").performClick()
                 offer(view, scenario, "afirma://unsupported")
                 rule.onNodeWithText(strings.getString(R.string.native_afirma_unsupported)).assertIsDisplayed()
-                rule.onNodeWithText(strings.getString(R.string.catalog_open_profile_compatibility)).assertDoesNotExist()
+                rule.onNodeWithText("Modo específico del portal").assertDoesNotExist()
                 scenario.onActivity { assertSame(view, findWebView(it.window.decorView)) }
                 return@use
             }

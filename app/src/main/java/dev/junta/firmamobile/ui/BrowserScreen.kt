@@ -178,9 +178,6 @@ fun BrowserScreen(
     val currentConsumeExternalReturn by rememberUpdatedState(consumeExternalReturn)
     val currentSigningState by rememberUpdatedState(signingState)
     val currentExternalAppRequest by rememberUpdatedState(onExternalAppRequest)
-    // Top-level ordinary browsing only: popups and portal sessions never offer a mode switch.
-    val portalModeActions = LocalPortalModeActions.current?.takeIf { popupTransport == null && profileId == null }
-    val currentPortalModeActions by rememberUpdatedState(portalModeActions)
     val clientCertPreferenceState by
         clientCertPreferenceCoordinator.state.collectAsState()
     val currentClientCertPreferenceState by rememberUpdatedState(clientCertPreferenceState)
@@ -447,10 +444,8 @@ fun BrowserScreen(
             nativeFallback.hasPending || nativeRetrieval.hasPending ||
             clientAuthPreparing || currentSigningState !is SigningUiState.Idle
         if (!isCurrentOwner || !isForeground || busy) return false
-        // The catalog may offer its reviewed portal mode for this exact page.
         fun fallback(epoch: Long, rawUnsupportedUri: String?, reason: String) {
-            val portalMode = currentPortalModeActions?.targetFor?.invoke(page) != null
-            nativeFallback.offer(owner, epoch, rawUnsupportedUri, reason, portalMode)
+            nativeFallback.offer(owner, epoch, rawUnsupportedUri, reason)
         }
         when (val parsed = AfirmaServletInvocationParser.parse(rawUri, page)) {
             is AfirmaServletParseResult.Accepted -> {
@@ -490,13 +485,6 @@ fun BrowserScreen(
             is AfirmaServletParseResult.Invalid -> fallback(navigationEpoch.longValue, null, parsed.reason)
         }
         return true
-    }
-
-    // The prompt only proves the choice is still current; the target is resolved again here.
-    fun openPortalModeFromFallback(token: UUID) {
-        val live = nativeFallback.consumePortalMode(token)
-        val actions = currentPortalModeActions?.takeIf { live } ?: return
-        webViewRef.get()?.url?.let(actions.targetFor)?.let(actions.open)
     }
 
     fun advanceNavigationEpoch() {
@@ -1832,7 +1820,6 @@ fun BrowserScreen(
                 onOpenOfficial = {
                     nativeFallback.consume(fallback.token)?.let { onOpenOfficialAutoFirma(Uri.parse(it)) }
                 },
-                onOpenPortalMode = { openPortalModeFromFallback(fallback.token) },
             )
         }
         interactivePrompt?.let { prompt ->
