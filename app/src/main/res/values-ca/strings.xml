@@ -87,6 +87,7 @@
     <string name="browser_client_cert_preferences_clearing">Preparant una sessió nova de certificat…</string>
     <string name="browser_play_store_blocked">S’ha bloquejat l’intent d’obrir AutoFirma o Google Play.</string>
     <string name="browser_navigation_blocked">S’ha bloquejat una navegació no permesa.</string>
+    <string name="browser_afirma_frame_unsupported">No es pot verificar l’origen de la sol·licitud de signatura dins d’un marc. Obre el tràmit a la pàgina principal i torna-ho a provar.</string>
     <string name="afirma_request_observed_title">Sol·licitud de signatura interceptada</string>
     <string name="afirma_request_site">Lloc: %1$s</string>
     <string name="afirma_request_certificate">Certificat: %1$s</string>

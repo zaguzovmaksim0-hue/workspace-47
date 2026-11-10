@@ -87,6 +87,7 @@
     <string name="browser_client_cert_preferences_clearing">Ziurtagiriaren saio berri bat prestatzen…</string>
     <string name="browser_play_store_blocked">AutoFirma edo Google Play irekitzeko saiakera blokeatu da.</string>
     <string name="browser_navigation_blocked">Baimendu gabeko nabigazio bat blokeatu da.</string>
+    <string name="browser_afirma_frame_unsupported">Ezin da egiaztatu marko txertatuaren barruko sinadura-eskaeraren jatorria. Ireki izapidea orri nagusian eta saiatu berriro.</string>
     <string name="afirma_request_observed_title">Atzemandako sinadura-eskaera</string>
     <string name="afirma_request_site">Gunea: %1$s</string>
     <string name="afirma_request_certificate">Ziurtagiria: %1$s</string>

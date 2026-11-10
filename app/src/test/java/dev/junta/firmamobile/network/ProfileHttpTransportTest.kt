@@ -105,6 +105,7 @@ class ProfileHttpTransportTest {
             transport.post(it, ProfileHttpCancellation())
         } as ProfileHttpResult.Success
 
+        assertEquals(200, result.httpStatusCode)
         result.response.use { response ->
             response.withBody { assertArrayEquals("synthetic-response".encodeToByteArray(), it) }
         }
@@ -113,6 +114,47 @@ class ProfileHttpTransportTest {
         assertEquals("op=pre&cop=sign", executor.bodies.single().decodeToString())
         assertEquals(listOf(InetAddress.getByName("217.12.21.226")), executor.resolvedAddresses.single())
         assertEquals(1, executor.calls.get())
+    }
+
+    @Test
+    fun rawFailureStatusesSurviveClassificationWithoutRetainingBodies() {
+        val cases = listOf(
+            Triple(502, "text/plain", ProfileHttpFailure.HTTP_ERROR),
+            Triple(401, "text/plain", ProfileHttpFailure.SESSION_EXPIRED),
+            Triple(200, "application/json", ProfileHttpFailure.CONTENT_TYPE_INVALID),
+        )
+        cases.forEach { (status, contentType, expectedFailure) ->
+            val body = "private-server-data".encodeToByteArray()
+            val transport = HttpsProfileHttpTransport(
+                dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
+                executor = QueueExecutor(RawProfileHttpResponse(status, contentType, null, body)),
+                dnsExecutor = directDnsExecutor,
+            )
+            val result = post(transport) as ProfileHttpResult.Failure
+            assertEquals(expectedFailure, result.code)
+            assertEquals(status, result.httpStatusCode)
+            assertTrue(body.all { it == 0.toByte() })
+        }
+    }
+
+    @Test
+    fun absentOrInvalidResponseStatusIsNeverInventedForDiagnostics() {
+        val transport = HttpsProfileHttpTransport(
+            dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
+            executor = ProfileHttpExecutor { _, _, _, _, _, _, _, _ -> throw IOException("synthetic") },
+            dnsExecutor = directDnsExecutor,
+        )
+        assertEquals(null, post(transport).httpStatusCode)
+        for (status in listOf(-1, 99, 600, Int.MAX_VALUE)) {
+            val invalid = HttpsProfileHttpTransport(
+                dnsResolver = DnsResolver { listOf(InetAddress.getByName("217.12.21.226")) },
+                executor = QueueExecutor(RawProfileHttpResponse(status, "text/plain", null, ByteArray(0))),
+                dnsExecutor = directDnsExecutor,
+            )
+            val result = post(invalid) as ProfileHttpResult.Failure
+            assertEquals(ProfileHttpFailure.HTTP_ERROR, result.code)
+            assertEquals(null, result.httpStatusCode)
+        }
     }
 
     @Test

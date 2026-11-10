@@ -87,6 +87,7 @@
     <string name="browser_client_cert_preferences_clearing">Preparando una sesión nueva de certificado…</string>
     <string name="browser_play_store_blocked">Se bloqueó el intento de abrir AutoFirma o Google Play.</string>
     <string name="browser_navigation_blocked">Se bloqueó una navegación no permitida.</string>
+    <string name="browser_afirma_frame_unsupported">No se puede verificar el origen de la solicitud de firma dentro de un marco. Abre el trámite en la página principal y vuelve a intentarlo.</string>
     <string name="afirma_request_observed_title">Solicitud de firma interceptada</string>
     <string name="afirma_request_site">Sitio: %1$s</string>
     <string name="afirma_request_certificate">Certificado: %1$s</string>

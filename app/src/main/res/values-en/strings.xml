@@ -87,6 +87,7 @@
     <string name="browser_client_cert_preferences_clearing">Preparing a new certificate session…</string>
     <string name="browser_play_store_blocked">The attempt to open AutoFirma or Google Play was blocked.</string>
     <string name="browser_navigation_blocked">A disallowed navigation was blocked.</string>
+    <string name="browser_afirma_frame_unsupported">The origin of the signing request inside an embedded frame cannot be verified. Open the procedure in the main page and try again.</string>
     <string name="afirma_request_observed_title">Signing request intercepted</string>
     <string name="afirma_request_site">Site: %1$s</string>
     <string name="afirma_request_certificate">Certificate: %1$s</string>

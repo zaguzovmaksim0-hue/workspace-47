@@ -13,9 +13,8 @@ import javax.crypto.spec.SecretKeySpec
  * see upstream autoscript-upstream.js decipherDES, lines 5536-5552.
  */
 internal object AfirmaIntermediateCipher {
-    private const val MAX_BYTES = 2_097_152
+    private const val MAX_BYTES = NativeAfirmaLimits.CONFIGURATION_BYTES
     private const val RESULT_TAIL_BYTES = 8
-    private val BASE64 = Regex("[A-Za-z0-9+/_-]*={0,2}")
 
     fun encode(data: ByteArray, key: String?): String {
         require(data.size <= MAX_BYTES) { "Payload exceeds wire budget" }
@@ -51,7 +50,7 @@ internal object AfirmaIntermediateCipher {
 
     fun decode(encoded: String, key: String?): ByteArray {
         require(encoded.length <= (MAX_BYTES + 7L + 2L) / 3L * 4L + 2L) { "Payload exceeds wire budget" }
-        if (key == null) return base64(encoded).also { require(it.size <= MAX_BYTES) }
+        if (key == null) return BoundedBase64.decode(encoded, MAX_BYTES)
         val keyBytes = keyBytes(key)
         var cipherBytes: ByteArray? = null
         var plain: ByteArray? = null
@@ -79,14 +78,6 @@ internal object AfirmaIntermediateCipher {
         return key.toByteArray(Charsets.US_ASCII)
     }
 
-    private fun base64(text: String): ByteArray {
-        require(BASE64.matches(text) && text.length % 4 != 1 && (!text.contains('=') || text.length % 4 == 0)) { "Invalid base64" }
-        require(!((text.contains('+') || text.contains('/')) && (text.contains('-') || text.contains('_')))) { "Mixed base64 alphabets" }
-        val normalized = text.replace('-', '+').replace('_', '/')
-        val bytes = Base64.getDecoder().decode(normalized)
-        if (Base64.getEncoder().withoutPadding().encodeToString(bytes) != normalized.trimEnd('=')) {
-            bytes.fill(0); throw IllegalArgumentException("Noncanonical base64")
-        }
-        return bytes
-    }
+    private fun base64(text: String): ByteArray =
+        BoundedBase64.decode(text, MAX_BYTES + 7)
 }

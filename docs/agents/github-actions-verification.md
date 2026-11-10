@@ -37,7 +37,9 @@ Do not invoke `$HOME/bin/w47-cloud`, `tools/w47-cloud`, or `codex cloud` unless 
 
 The current CI/security workflows provide the broad candidate gate:
 
-- **Android unit, lint, APK**
+- **Android unit, lint, APK** (required aggregate)
+  - independent `android-variants` (45 minutes) and `android-release` (35 minutes) jobs run in parallel; the existing required check succeeds only if both succeed
+  - a failure, cancellation or skipped prerequisite fails the aggregate; no test result is converted into a skip or retry
   - `verifyResolvedCoreVersion`
   - `verifyPortableAapt2Configuration`
   - `testDebugUnitTest`

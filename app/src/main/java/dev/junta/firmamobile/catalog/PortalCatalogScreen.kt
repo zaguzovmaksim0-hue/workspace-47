@@ -107,7 +107,7 @@ fun PortalCatalogScreen(
     onBackToCertificate: () -> Unit,
     onUserMessageShown: () -> Unit,
     onOpenPublicWeb: ((java.net.URI) -> Unit)? = null,
-    onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)? = null,
+    onOpenUniversalPortal: ((PortalCatalogItem) -> Unit)? = null,
 ) {
     var regionPickerVisible by rememberSaveable { mutableStateOf(false) }
     var portalOptions by remember { mutableStateOf<PortalCatalogItem?>(null) }
@@ -125,7 +125,7 @@ fun PortalCatalogScreen(
             state = state,
             onSearchTextChange = onSearchTextChange,
             onOpenPublicWeb = onOpenPublicWeb,
-            onOpenCompatibilityPortal = onOpenCompatibilityPortal,
+            onOpenUniversalPortal = onOpenUniversalPortal,
             onToggleFavorite = onToggleFavorite,
             onOpenPortal = onOpenPortal,
             onBackToCertificate = onBackToCertificate,
@@ -145,7 +145,7 @@ fun PortalCatalogScreen(
         onSelectRegion = onSelectRegion,
         onUseLocation = onUseLocation,
         onToggleFavorite = onToggleFavorite,
-        onOpenCompatibilityPortal = onOpenCompatibilityPortal,
+        onOpenUniversalPortal = onOpenUniversalPortal,
         onDismissRegionPicker = { regionPickerVisible = false },
         onDismissPortalOptions = { portalOptions = null },
     )
@@ -177,7 +177,7 @@ private fun CatalogOverlays(
     onSelectRegion: (PortalRegionCode) -> Unit,
     onUseLocation: () -> Unit,
     onToggleFavorite: (PortalId) -> Unit,
-    onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)?,
+    onOpenUniversalPortal: ((PortalCatalogItem) -> Unit)?,
     onDismissRegionPicker: () -> Unit,
     onDismissPortalOptions: () -> Unit,
 ) {
@@ -198,10 +198,10 @@ private fun CatalogOverlays(
         PortalOptionsDialog(
             portal = portal,
             isFavorite = portal.portalId in state.favoritePortalIds,
-            canOpenCompatibilityPortal = onOpenCompatibilityPortal != null && portal.isEnabled,
+            canOpenUniversalPortal = onOpenUniversalPortal != null && portal.isEnabled,
             onDismiss = onDismissPortalOptions,
             onToggleFavorite = onToggleFavorite,
-            onOpenCompatibilityPortal = onOpenCompatibilityPortal,
+            onOpenUniversalPortal = onOpenUniversalPortal,
         )
     }
 
@@ -497,7 +497,7 @@ private fun CatalogScreenContent(
     state: PortalCatalogUiState,
     onSearchTextChange: (String) -> Unit,
     onOpenPublicWeb: ((java.net.URI) -> Unit)?,
-    onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)?,
+    onOpenUniversalPortal: ((PortalCatalogItem) -> Unit)?,
     onToggleFavorite: (PortalId) -> Unit,
     onOpenPortal: (PortalCatalogItem) -> Unit,
     onBackToCertificate: () -> Unit,
@@ -551,7 +551,7 @@ private fun CatalogScreenContent(
                 onOpenPortal = onOpenPortal,
                 onShowPortalOptions = onShowPortalOptions,
             ),
-            showFooterCopy = onOpenCompatibilityPortal != null,
+            showFooterCopy = onOpenUniversalPortal != null,
         )
     }
 }
@@ -1104,10 +1104,10 @@ private fun CatalogOpenAddressButton(onClick: () -> Unit) {
 private fun PortalOptionsDialog(
     portal: PortalCatalogItem,
     isFavorite: Boolean,
-    canOpenCompatibilityPortal: Boolean,
+    canOpenUniversalPortal: Boolean,
     onDismiss: () -> Unit,
     onToggleFavorite: (PortalId) -> Unit,
-    onOpenCompatibilityPortal: ((PortalCatalogItem) -> Unit)?,
+    onOpenUniversalPortal: ((PortalCatalogItem) -> Unit)?,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1127,15 +1127,15 @@ private fun PortalOptionsDialog(
                         onToggleFavorite(portal.portalId)
                     },
                 )
-                if (canOpenCompatibilityPortal && onOpenCompatibilityPortal != null) {
+                if (canOpenUniversalPortal && onOpenUniversalPortal != null) {
                     PortalOptionRow(
                         iconRes = R.drawable.ic_ui_shield,
                         tone = JuntaTone.VIOLET,
-                        text = stringResource(R.string.catalog_open_profile_compatibility),
-                        modifier = Modifier.testTag("catalog-open-profile-${portal.portalId.value}"),
+                        text = stringResource(R.string.catalog_open_universal_without_profile),
+                        modifier = Modifier.testTag("catalog-open-universal-${portal.portalId.value}"),
                         onClick = {
                             onDismiss()
-                            onOpenCompatibilityPortal(portal)
+                            onOpenUniversalPortal(portal)
                         },
                     )
                 }

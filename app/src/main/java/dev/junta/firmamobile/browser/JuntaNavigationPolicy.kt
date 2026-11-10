@@ -8,7 +8,6 @@ import dev.junta.firmamobile.afirma.AfirmaUriParser
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TrustedOrigin
 import dev.junta.firmamobile.profile.BuiltInSiteProfiles
-import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import java.util.Locale
@@ -16,6 +15,7 @@ import java.util.Locale
 enum class NavigationBlockReason {
     INVALID_URL,
     UNTRUSTED_AFIRMA_ORIGIN,
+    UNSUPPORTED_AFIRMA_FRAME,
     UNTRUSTED_EXTERNAL_NAVIGATION,
     INVALID_AFIRMA_URI,
     PLAY_STORE_FALLBACK,
@@ -61,8 +61,8 @@ class JuntaNavigationPolicy(
             return NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
         return when (target.scheme?.lowercase(Locale.ROOT)) {
-            "https" -> decideHttpsUrl(target, targetUrl, currentPageUrl)
-            "http" -> decideLegacyHttpUpgrade(target, currentPageUrl)
+            "https" -> decideHttpsUrl(target, targetUrl)
+            "http" -> decideHttpUrl(target, targetUrl, currentPageUrl)
             "afirma" -> if (selectedProfileId == SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID) {
                 decideOfficialAutoFirmaUri(targetUrl, currentPageUrl)
             } else {
@@ -82,26 +82,18 @@ class JuntaNavigationPolicy(
         }
     }
 
-    private fun decideHttpsUrl(target: Uri, rawUrl: String, currentPageUrl: String?): NavigationDecision {
+    private fun decideHttpUrl(target: Uri, rawUrl: String, currentPageUrl: String?): NavigationDecision =
+        if (selectedProfileId == null) {
+            PublicBrowserAddress.upgradeHttp(rawUrl)?.let { upgraded ->
+                NavigationDecision.UpgradeToHttps(Uri.parse(upgraded.toString()))
+            } ?: NavigationDecision.Block(NavigationBlockReason.INSECURE_HTTP)
+        } else {
+            decideLegacyHttpUpgrade(target, currentPageUrl)
+        }
+
+    private fun decideHttpsUrl(target: Uri, rawUrl: String): NavigationDecision {
         if (isAutoFirmaPlayStoreUrl(target, rawUrl)) {
             return NavigationDecision.Block(NavigationBlockReason.PLAY_STORE_FALLBACK)
-        }
-        if (BrowserUrlPolicy(registry, selectedProfileId).resolve(rawUrl).uri == null) {
-            return NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
-        }
-        if (selectedProfileId == null) return NavigationDecision.AllowInWebView
-        val targetUri = runCatching { java.net.URI(rawUrl) }.getOrNull()
-        if (targetUri != null && registry.isClientAuthBrowseUrl(selectedProfileId, targetUri)) {
-            return NavigationDecision.AllowInWebView
-        }
-        val currentUri = currentPageUrl?.let { runCatching { java.net.URI(it) }.getOrNull() }
-        if (targetUri != null && currentUri != null &&
-            registry.isInPlaceClientAuthTransition(selectedProfileId, currentUri, targetUri)
-        ) {
-            return NavigationDecision.AllowInWebView
-        }
-        if (JuntaOriginPolicy.isAllowed(target, selectedProfileId)) {
-            return NavigationDecision.AllowInWebView
         }
         // Browser permissions and key permissions are independent. All admitted
         // public HTTPS pages can load, including IdP redirects and POST targets;
@@ -112,33 +104,6 @@ class JuntaNavigationPolicy(
         } else {
             NavigationDecision.Block(NavigationBlockReason.INVALID_URL)
         }
-    }
-
-    private fun isClientAuthRequestOrigin(target: Uri): Boolean {
-        val profile = selectedProfileId?.let(registry::profile) ?: return false
-        val requestOrigins = profile.clientAuthPolicy?.requestOrigins ?: return false
-        if (requestOrigins.isEmpty()) return false
-        val targetOrigin = exactOriginOf(target) ?: return false
-        return targetOrigin in requestOrigins
-    }
-
-    private fun exactOriginOf(target: Uri): ExactOrigin? {
-        if (target.isOpaque || !target.scheme.equals("https", ignoreCase = true)) return null
-        if (target.encodedUserInfo != null) return null
-        val rawHost = target.host ?: return null
-        if (rawHost.isBlank()) return null
-        val port = try {
-            target.port.takeIf { it != -1 } ?: 443
-        } catch (_: Exception) {
-            return null
-        }
-        if (port != 443) return null
-        val canonicalHost = try {
-            java.net.IDN.toASCII(rawHost, java.net.IDN.USE_STD3_ASCII_RULES).lowercase(Locale.ROOT)
-        } catch (_: Exception) {
-            return null
-        }
-        return runCatching { ExactOrigin.parse("https://$canonicalHost") }.getOrNull()
     }
 
     private fun decideLegacyHttpUpgrade(
@@ -422,9 +387,11 @@ class JuntaNavigationPolicy(
         // separate from destination endpoint validation: a public page cannot
         // authorize a private signer endpoint, and a public endpoint cannot
         // make a loopback/intranet source page trusted.
-        val uri = rawUrl?.let { runCatching { PublicBrowserAddress.parse(it) }.getOrNull() }
-        val host = uri?.host?.lowercase(Locale.ROOT)
-        return host?.let { TrustedOrigin("https", it, DEFAULT_HTTPS_PORT) }
+        val uri = rawUrl?.let(PublicBrowserAddress::parseNavigation)
+        return uri?.let {
+            val port = if (it.port == -1) DEFAULT_HTTPS_PORT else it.port
+            TrustedOrigin("https", it.host.lowercase(Locale.ROOT), port)
+        }
     }
 
     private fun isSafeExternalHttpsUrl(uri: Uri): Boolean =

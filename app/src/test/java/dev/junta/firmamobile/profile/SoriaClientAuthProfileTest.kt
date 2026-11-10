@@ -1,7 +1,10 @@
 package dev.junta.firmamobile.profile
 
 import android.net.Uri
+import dev.junta.firmamobile.browser.BrowserTrustController
+import dev.junta.firmamobile.browser.BrowserUrlPolicy
 import dev.junta.firmamobile.browser.ClientAuthNavigationAuthorizer
+import dev.junta.firmamobile.browser.SensitiveFlowInvalidator
 import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalId
 import dev.junta.firmamobile.catalog.PortalInventoryStatus
@@ -39,6 +42,17 @@ class SoriaClientAuthProfileTest {
     private val targetUrl = URI(
         "https://portaltramitador.dipsoria.es/web/inicioWebcCert.do?opcion=ssl&entidad=SORIA&redirige=L2NhcmdhTWVudVdlYi5kbz9vcGNpb249bm9yZWc%253D&idioma=1",
     )
+
+    @Test
+    fun launchingTheExactSourceStartUrlActivatesTheSelectedProfile() {
+        // REAL E2E 42633168933: startUrl == sourceUrl left no active profile, so the cert click got no grant.
+        val controller = BrowserTrustController(
+            BrowserUrlPolicy(BuiltInSiteProfiles.qaRegistry, profileId),
+            SensitiveFlowInvalidator {},
+        )
+        assertEquals(profileId, controller.navigate(startUrl.toASCIIString()).activeProfileId)
+        assertEquals(profileId, controller.navigate(startUrl.toASCIIString()).activeProfileId)
+    }
 
     @Test
     fun declineReasonNamesTheFirstRequestMismatch() {

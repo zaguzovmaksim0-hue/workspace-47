@@ -43,7 +43,6 @@ import dev.junta.firmamobile.catalog.PortalCatalogRepository
 import dev.junta.firmamobile.catalog.PortalCatalogScreen
 import dev.junta.firmamobile.catalog.PortalOpenTarget
 import dev.junta.firmamobile.catalog.PublicPortalCatalogParser
-import dev.junta.firmamobile.catalog.resolvePortalModeForPage
 import dev.junta.firmamobile.certificate.CertificateRepository
 import dev.junta.firmamobile.network.JuntaOriginPolicy
 import dev.junta.firmamobile.network.TunnelRouteEvent
@@ -62,8 +61,6 @@ import dev.junta.firmamobile.ui.AppRoot
 import dev.junta.firmamobile.ui.CertificateEntryChoiceActions
 import dev.junta.firmamobile.ui.LocalCertificateEntryChoice
 import dev.junta.firmamobile.ui.LocalSavedCertificates
-import dev.junta.firmamobile.ui.LocalPortalModeActions
-import dev.junta.firmamobile.ui.PortalModeActions
 import dev.junta.firmamobile.ui.SavedCertificatesActions
 import dev.junta.firmamobile.ui.BrowserScreen
 import dev.junta.firmamobile.ui.CertificateUiState
@@ -358,20 +355,9 @@ class MainActivity : ComponentActivity() {
                 onChoose = certificateViewModel::chooseCertificate,
                 onCancel = certificateViewModel::cancelCertificateChoice,
             )
-            val portalModeActions = remember {
-                PortalModeActions(
-                    targetFor = { page -> catalogRepository.resolvePortalModeForPage(page) },
-                    open = { target ->
-                        cancelSigning(SigningCancelReason.NAVIGATION)
-                        currentWebView = null
-                        navigation.openBrowser(profileId = target.profileId, entryUrl = target.entryUrl)
-                    },
-                )
-            }
             CompositionLocalProvider(
                 LocalSavedCertificates provides savedCertificateActions,
                 LocalCertificateEntryChoice provides entryChoiceActions,
-                LocalPortalModeActions provides portalModeActions,
             ) { JuntaFirmaTheme {
                 val unlocked = certificateState.value as? CertificateUiState.Unlocked
                 val app = application as JuntaFirmaApplication
@@ -460,15 +446,6 @@ class MainActivity : ComponentActivity() {
                             onToggleFavorite = catalogViewModel::toggleFavorite,
                             onBackToCertificate = { navigation.showCertificate() },
                             onOpenPortal = { item ->
-                                val target = catalogRepository.resolveUniversalOpenTarget(item)
-                                if (target == null) catalogViewModel.onOpenFailed() else {
-                                    cancelSigning(SigningCancelReason.NAVIGATION)
-                                    currentWebView = null
-                                    catalogViewModel.recordOpened(item.portalId)
-                                    navigation.openBrowser(profileId = null, entryUrl = target.entryUrl)
-                                }
-                            },
-                            onOpenCompatibilityPortal = { item ->
                                 when (val target = catalogRepository.resolveOpenTarget(item)) {
                                     is PortalOpenTarget.InApp -> {
                                         cancelSigning(SigningCancelReason.NAVIGATION)
@@ -488,10 +465,21 @@ class MainActivity : ComponentActivity() {
                                     null -> catalogViewModel.onOpenFailed()
                                 }
                             },
+                            onOpenUniversalPortal = { item ->
+                                val target = catalogRepository.resolveUniversalOpenTarget(item)
+                                if (target == null) catalogViewModel.onOpenFailed() else {
+                                    cancelSigning(SigningCancelReason.NAVIGATION)
+                                    currentWebView = null
+                                    catalogViewModel.recordOpened(item.portalId)
+                                    navigation.openBrowser(profileId = null, entryUrl = target.entryUrl)
+                                }
+                            },
                             onUserMessageShown = catalogViewModel::onUserMessageShown,
                             onOpenPublicWeb = { uri ->
                                 val accepted =
-                                    dev.junta.firmamobile.browser.PublicBrowserAddress.parse(uri.toASCIIString())
+                                    dev.junta.firmamobile.browser.PublicBrowserAddress.parseNavigation(
+                                        uri.toASCIIString(),
+                                    )
                                 if (accepted == null) catalogViewModel.onOpenFailed() else {
                                     cancelSigning(SigningCancelReason.NAVIGATION)
                                     currentWebView = null
@@ -759,10 +747,13 @@ class MainActivity : ComponentActivity() {
             dev.junta.firmamobile.afirma.external.ExternalAfirmaDelivery.Stale -> R.string.external_afirma_expired
             is dev.junta.firmamobile.afirma.external.ExternalAfirmaDelivery.Fresh -> when {
                 busy || !app.signingAdmission.tryAcquireExternal(this) -> R.string.external_afirma_busy
-                externalAfirma?.receive(delivery.rawUri) == true -> null
                 else -> {
-                    app.signingAdmission.releaseExternal(this)
-                    R.string.external_afirma_rejected
+                    val result = externalAfirma?.receiveResult(delivery.rawUri)
+                        ?: dev.junta.firmamobile.afirma.servlet.ExternalAfirmaReceiveResult.UNAVAILABLE
+                    if (result != dev.junta.firmamobile.afirma.servlet.ExternalAfirmaReceiveResult.OFFERED) {
+                        app.signingAdmission.releaseExternal(this)
+                    }
+                    dev.junta.firmamobile.afirma.external.externalAfirmaMessage(result)
                 }
             }
         }

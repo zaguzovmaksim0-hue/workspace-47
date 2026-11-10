@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_afirma_invalid_request">La petición externa tiene un formato no válido. No se ha firmado ni enviado nada.</string>
+    <string name="external_afirma_indirect_unsupported">Esta petición externa necesita descargar los datos de firma, una función que aún no se admite. Abre la web en el navegador de Firma Mobile.</string>
+    <string name="external_afirma_websocket_unsupported">La petición usa el servicio local de AutoFirma para ordenador. Firma Mobile aún no admite ese protocolo.</string>
+    <string name="external_afirma_filter_unsupported">La petición exige filtros de certificado que esta versión no admite. No se ha utilizado ningún certificado.</string>
+    <string name="external_afirma_constraint_unsupported">La petición exige una versión de AutoFirma o un tamaño de clave que no se puede comprobar aquí. No se ha firmado nada.</string>
+    <string name="external_afirma_confirmation_required">La petición intenta omitir la confirmación de la firma. Firma Mobile requiere confirmación explícita para cada operación.</string>
+    <string name="external_afirma_unavailable">La petición no se puede revisar en este momento. Desbloquea el dispositivo y vuelve a iniciarla.</string>
+    <string name="external_afirma_review_failed">No se han podido preparar o verificar los datos de la petición. No se ha firmado ni enviado nada.</string>
+</resources>

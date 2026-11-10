@@ -12,13 +12,13 @@ El proyecto es experimental. La compatibilidad se verifica por portal y operaci�
 
 - [Instalación y primeros pasos](docs/instalacion.md)
 - [Firma del APK y actualizaciones](docs/instalacion.md#firma-del-apk-y-actualizaciones)
-- [Cambios de la versión 0.2.17](CHANGELOG.md)
+- [Historial de cambios](CHANGELOG.md)
 - [Documentación técnica](docs/README.md)
 - [Política de seguridad](SECURITY.md)
 - [Política de privacidad](docs/privacidad.md)
 - [Cómo contribuir](CONTRIBUTING.md)
 
-El nombre visible es **Firma Mobile** y la versión de uso diario es **0.2.17**. El identificador Android se mantiene como `dev.junta.firmamobile` para conservar la continuidad de las actualizaciones. El tipo de compilación interno `optimized` no forma parte del nombre visible de la versión.
+El nombre visible es **Firma Mobile**. La versión de este código fuente se define en [`version.properties`](version.properties); la versión instalada se consulta en Android. El identificador Android se mantiene como `dev.junta.firmamobile` para conservar la continuidad de las actualizaciones. El tipo de compilación interno `optimized` no forma parte del nombre visible de la versión.
 
 ## APK diario y clave de firma
 
@@ -28,6 +28,12 @@ El APK de uso diario se genera en GitHub Actions con **Signed daily APK** sobre 
 - SHA-256 `f1bcad77c90bab402ac9671b0ac6c034cc1d916d4561f65e480740021e5d6971`, fijado en `config/signing/daily-cert-sha256.txt`.
 
 La clave privada no está en el repositorio ni en los artefactos: la custodia el mantenedor y GitHub guarda una copia como secretos del entorno `daily-signing`, que no se pueden descargar. Si Android indica que el paquete «entra en conflicto con un paquete existente», la aplicación instalada se firmó con otra clave (por ejemplo, la antigua `CN=Firma Mobile, OU=Release`): hay que desinstalarla una vez, lo que borra sus datos, e importar de nuevo el certificado. Consulta [los pasos de instalación y migración](docs/instalacion.md#firma-del-apk-y-actualizaciones) y [la referencia de claves, verificación y rotación](docs/daily-apk-signing.md).
+
+## Abrir un portal
+
+Al tocar una sede del catálogo, se abre directamente en su modo específico si tiene un perfil activo y una vinculación válida para esta compilación. Las demás sedes y las direcciones escritas manualmente se abren en modo universal, sin adoptar los permisos de ningún perfil.
+
+El modo queda fijado durante esa sesión. Para abrir una sede del catálogo en modo universal de forma explícita, mantén pulsada su tarjeta y selecciona **Abrir en modo universal (sin perfil)**. Esto inicia una sesión nueva; los errores de firma y los cambios de página no cambian el modo automáticamente. Un perfil activo no equivale a una prueba E2E de todas sus operaciones: identificación, firma y devolución del resultado se verifican por separado.
 
 ## Certificados y privacidad
 

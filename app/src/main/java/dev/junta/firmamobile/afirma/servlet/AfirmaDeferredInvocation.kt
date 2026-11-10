@@ -35,6 +35,7 @@ internal class AfirmaDeferredInvocation(
         if (cipher == null && legacyKey == null) {
             // The explicit no-cipher variant is raw XML. Do not guess Base64
             // or fall back to plaintext after a configured cipher fails.
+            require(encoded.size <= NativeAfirmaLimits.CONFIGURATION_BYTES) { "Configuration exceeds budget" }
             return encoded.copyOf()
         }
         require(encoded.all { (it.toInt() and 255) < 128 }) { "Cipher response is not ASCII" }
@@ -45,7 +46,7 @@ internal class AfirmaDeferredInvocation(
 
     @Synchronized override fun close() { closed = true; ownedCipher?.close(); ownedCipher = null }
     override fun toString(): String = "AfirmaDeferredInvocation(operation=$operation)"
-    companion object { const val MAX_WIRE_BYTES = 2_097_152 }
+    companion object { const val MAX_WIRE_BYTES = NativeAfirmaLimits.RETRIEVAL_WIRE_BYTES }
 }
 
 /** A cancellable HTTP callback transfers this owned buffer once. Losing the

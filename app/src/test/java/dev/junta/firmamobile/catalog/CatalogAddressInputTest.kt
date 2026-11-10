@@ -6,6 +6,16 @@ import org.junit.Test
 
 /** Pure input/action tests: no browser, clipboard service or E2E. */
 class CatalogAddressInputTest {
+    @Test fun publicHttpsPortsSurviveTypingPastingAndSubmit() {
+        for (port in listOf(8443, 4443)) {
+            val raw = "https://portal.example:$port/form?state=a%2Bb#section"
+            val typed = CatalogAddressInput.empty().edit(raw).submit()
+            assertEquals(raw, typed.destination?.toASCIIString())
+            val pasted = CatalogAddressInput.empty().paste(raw.removePrefix("https://")).submit()
+            assertEquals(raw, pasted.destination?.toASCIIString())
+        }
+    }
+
     @Test fun blankDraftCannotNavigate() {
         val empty = CatalogAddressInput.empty()
         assertEquals("", empty.text); assertFalse(empty.canSubmit); assertNull(empty.destination)
@@ -31,7 +41,7 @@ class CatalogAddressInputTest {
     @Test fun unsafeAndMalformedAddressesAreNeverSubmitted() {
         for (value in listOf("http://portal.example", "ftp://portal.example", "file:///tmp/a", "javascript:alert(1)",
             "afirma://sign?id=one", "https:portal.example", "//portal.example", "user:secret@portal.example",
-            "https://user@portal.example", "127.0.0.1", "localhost", "local.example:444", "printer.local",
+            "https://user@portal.example", "127.0.0.1", "localhost", "local.example:65536", "printer.local",
             "https://[::1]", "portal.example/%GG", "portal.example/a b", "portal.example/a\\b", "words to search")) {
             val result = CatalogAddressInput.empty().edit(value).submit()
             assertNull(value, result.destination)

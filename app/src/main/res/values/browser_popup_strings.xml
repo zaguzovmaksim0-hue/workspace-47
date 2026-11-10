@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_popup_confirmation_title">¿Abrir una ventana nueva?</string>
+    <string name="browser_popup_confirmation_message">Esta página solicita abrir otra ventana sin una pulsación directa. El destino todavía no está confirmado. Si aceptas, se abrirá en modo universal, sin los permisos del perfil actual. Abrirla no autoriza el uso de tu certificado.</string>
+    <string name="browser_popup_confirmation_open">Abrir ventana</string>
+    <string name="browser_popup_confirmation_cancel">Cancelar</string>
+</resources>

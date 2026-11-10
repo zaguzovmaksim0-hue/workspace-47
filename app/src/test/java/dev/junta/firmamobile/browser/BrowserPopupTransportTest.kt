@@ -65,6 +65,26 @@ class BrowserPopupTransportTest {
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals(1, f.deliveries); assertNull(f.deliveredChild)
     }
+    @Test fun aScriptedHandoffWaitsForConfirmationAndSendsTheChildOnlyOnce() = withFixture { f ->
+        val lease = PopupOwnerLease<WebView>({ owner, epoch -> owner === f.parent && epoch == 1L })
+        val token = checkNotNull(lease.reserve(f.parent, 1L, requiresConfirmation = true))
+        val transfer = checkNotNull(BrowserPopupTransport.create(f.parent, f.message) { lease.canAttach(token) })
+        assertFalse(transfer.attach(f.child)); assertEquals(0, f.deliveries)
+        assertTrue(lease.confirm(token)); assertTrue(transfer.attach(f.child)); assertTrue(lease.markAttached(token))
+        transfer.cancel(); assertFalse(transfer.attach(f.child))
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(1, f.deliveries); assertSame(f.child, f.deliveredChild)
+    }
+    @Test fun aNewOperationAfterConfirmationCancelsTheNativeMessageWithoutAChild() = withFixture { f ->
+        val lease = PopupOwnerLease<WebView>({ owner, epoch -> owner === f.parent && epoch == 1L })
+        val token = checkNotNull(lease.reserve(f.parent, 1L, requiresConfirmation = true))
+        var canRespond = true
+        val transfer = checkNotNull(BrowserPopupTransport.create(f.parent, f.message) { canRespond && lease.canAttach(token) })
+        assertTrue(lease.confirm(token)); canRespond = false
+        assertFalse(transfer.attach(f.child)); transfer.cancel(); transfer.cancel()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(1, f.deliveries); assertNull(f.deliveredChild); assertFalse(transfer.attached)
+    }
     private class Fixture(val activity: Activity) {
         val parent = WebView(activity)
         val child = WebView(activity).also { activity.setContentView(it) }

@@ -28,14 +28,17 @@ import org.bouncycastle.asn1.ASN1InputStream
  * before it is eligible for the existing explicit one-shot upload. */
 internal class NativePadesEngine(
     private val clock: Clock = Clock.systemUTC(),
-    private val maxInputBytes: Int = 524_288,
-    private val maxOutputBytes: Int = 2_097_152,
+    private val maxInputBytes: Int = NativeAfirmaLimits.PDF_INPUT_BYTES,
+    private val maxOutputBytes: Int = NativeAfirmaLimits.PDF_OUTPUT_BYTES,
     private val cms: NativeCadesEngine = NativeCadesEngine(
         maxInputBytes = maxOutputBytes, maxOutputBytes = SIGNATURE_SPACE, clock = clock,
         includeSigningTime = false,
     ),
 ) {
-    init { require(maxInputBytes in 1..524_288 && maxOutputBytes in 1..2_097_152) }
+    init {
+        require(maxInputBytes in 1..NativeAfirmaLimits.PDF_INPUT_BYTES &&
+            maxOutputBytes in 1..NativeAfirmaLimits.PDF_OUTPUT_BYTES)
+    }
 
     fun sign(pdf: ByteArray, identity: UnlockedIdentity, algorithm: SigningAlgorithm,
         options: NativePadesOptions = NativePadesOptions(), requireExistingSignature: Boolean = false): LocalSignatureResult {
@@ -70,8 +73,8 @@ internal class NativePadesEngine(
                     document.addSignature(signature, size)
                     val external = document.saveIncrementalForExternalSigning(output)
                     // The document cannot be mutated after this call.
-                    range = external.content.use { readBounded(it, maxOutputBytes) }
-                    val signed = cms.signWithPolicy(checkNotNull(range), identity, algorithm, true, options.policy)
+                    range = external.content.use { digestBounded(it, maxOutputBytes, algorithm) }
+                    val signed = cms.signDigestWithPolicy(checkNotNull(range), identity, algorithm, options.policy)
                     when (signed) {
                         is LocalSignatureResult.Failure -> return signed
                         is LocalSignatureResult.Success -> signed.signature.use { result ->
@@ -123,7 +126,7 @@ internal class NativePadesEngine(
                 if (value !in 0..Int.MAX_VALUE.toLong()) return false
                 range[index] = value.toInt()
             }
-            val content = NativePdfByteRange.extract(signedPdf, range, original) ?: return false
+            val content = NativePdfByteRange.digest(signedPdf, range, original, digestName(algorithm)) ?: return false
             var rawCms: ByteArray? = null
             var cmsBytes: ByteArray? = null
             try {
@@ -137,31 +140,75 @@ internal class NativePadesEngine(
                 val consumed = rawCms.size - input.available()
                 if (consumed <= 0 || consumed > SIGNATURE_SPACE || rawCms.drop(consumed).any { it != 0.toByte() }) return false
                 cmsBytes = rawCms.copyOf(consumed)
-                cms.verifyWithPolicy(cmsBytes, content, certificate, algorithm, true, options.policy)
+                cms.verifyDigestWithPolicy(cmsBytes, content, certificate, algorithm, options.policy)
             } finally { content.fill(0); rawCms?.fill(0); cmsBytes?.fill(0) }
         }
     }.getOrDefault(false)
 
+    // The byte-array overload reuses the owned input as its random-access source.
+    // The InputStream overload also copied the entire PDF into the scratch budget.
     private fun load(bytes: ByteArray): PDDocument = PDDocument.load(
-        ByteArrayInputStream(bytes), MemoryUsageSetting.setupMainMemoryOnly(16L * 1024 * 1024))
+        bytes, "", null, null, MemoryUsageSetting.setupMainMemoryOnly(16L * 1024 * 1024))
     private fun pdfHeader(bytes: ByteArray) = bytes.size >= 5 &&
         bytes[0] == 37.toByte() && bytes[1] == 80.toByte() && bytes[2] == 68.toByte() && bytes[3] == 70.toByte() && bytes[4] == 45.toByte()
     private fun failure(code: LocalSignatureError = LocalSignatureError.SIGNATURE_FAILED) = LocalSignatureResult.Failure(code)
-    private fun readBounded(input: InputStream, limit: Int): ByteArray {
-        val out = ClearingOutput(limit); val buffer = ByteArray(16_384)
+    private fun digestBounded(input: InputStream, limit: Int, algorithm: SigningAlgorithm): ByteArray {
+        val digest = MessageDigest.getInstance(digestName(algorithm))
+        val buffer = ByteArray(STREAM_BUFFER_BYTES)
+        var total = 0L
         return try {
-            while (true) { val count = input.read(buffer); if (count < 0) break; if (count > 0) out.write(buffer, 0, count) }
-            out.toByteArray()
-        } finally { buffer.fill(0); out.erase() }
+            var count = readProgress(input, buffer)
+            while (count >= 0) {
+                total += count
+                if (total > limit) throw LimitExceeded()
+                digest.update(buffer, 0, count)
+                count = readProgress(input, buffer)
+            }
+            digest.digest()
+        } finally { buffer.fill(0) }
     }
+
+    private fun readProgress(input: InputStream, buffer: ByteArray): Int {
+        val count = input.read(buffer)
+        return if (count != 0) count else {
+            val value = input.read()
+            if (value < 0) -1 else {
+                buffer[0] = value.toByte()
+                1
+            }
+        }
+    }
+
+    private fun digestName(algorithm: SigningAlgorithm): String = when (algorithm) {
+        SigningAlgorithm.SHA1_WITH_RSA -> "SHA-1"
+        SigningAlgorithm.SHA256_WITH_RSA -> "SHA-256"
+        SigningAlgorithm.SHA384_WITH_RSA -> "SHA-384"
+        SigningAlgorithm.SHA512_WITH_RSA -> "SHA-512"
+    }
+
     private class LimitExceeded : IOException("PDF output exceeds supported budget")
     private class ClearingOutput(private val limit: Int) : ByteArrayOutputStream() {
-        override fun write(value: Int) { if (count >= limit) throw LimitExceeded(); super.write(value) }
+        override fun write(value: Int) {
+            if (count >= limit) throw LimitExceeded()
+            reserve(count + 1)
+            super.write(value)
+        }
         override fun write(bytes: ByteArray, off: Int, len: Int) {
             if (len < 0 || count.toLong() + len > limit) throw LimitExceeded()
+            reserve(count + len)
             super.write(bytes, off, len)
+        }
+        private fun reserve(required: Int) {
+            if (required <= buf.size) return
+            val next = maxOf(required, minOf(limit.toLong(), buf.size.toLong() * 2).toInt())
+            val previous = buf
+            buf = previous.copyOf(next)
+            previous.fill(0)
         }
         fun erase() { buf.fill(0); reset() }
     }
-    companion object { private const val SIGNATURE_SPACE = 65_536 }
+    companion object {
+        private const val SIGNATURE_SPACE = 65_536
+        private const val STREAM_BUFFER_BYTES = 16_384
+    }
 }

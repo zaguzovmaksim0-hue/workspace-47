@@ -9,6 +9,7 @@ import dev.junta.firmamobile.profile.ExactOrigin
 import dev.junta.firmamobile.profile.ProfileId
 import dev.junta.firmamobile.profile.SiteProfileRegistry
 import dev.junta.firmamobile.profile.TrustMode
+import java.net.URI
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -166,11 +167,41 @@ class BrowserTrustControllerTest {
     }
 
     @Test
+    fun publicHttpsPortsRemainBrowseOnlyWithoutProfileTrust() {
+        for (port in listOf(8443, 4443)) {
+            val rawUrl = "https://example.org:$port/path?q=1#step-2"
+            val result = controller.navigate(rawUrl)
+            assertEquals(rawUrl, TrustMode.BROWSE_ONLY, result.resolution.trustMode)
+            assertNull(result.activeProfileId)
+            assertNull(result.resolution.site)
+            assertEquals(rawUrl, result.resolution.uri?.toASCIIString())
+        }
+    }
+
+    @Test
+    fun anotherHttpsPortClearsAnActiveProfileEvenOnItsStartHost() {
+        val profileId = ProfileId("junta-andalucia")
+        val startUrl = BuiltInSiteProfiles.catalog.profiles.single { it.profileId == profileId }.startUrl
+        for (port in listOf(8443, 4443)) {
+            assertEquals(profileId, controller.navigate(startUrl.toASCIIString()).activeProfileId)
+            val otherOrigin = URI(
+                startUrl.scheme, null, startUrl.host, port, startUrl.path, startUrl.query, startUrl.fragment,
+            )
+            val result = controller.navigate(otherOrigin.toASCIIString())
+            assertEquals(otherOrigin.toString(), TrustMode.BROWSE_ONLY, result.resolution.trustMode)
+            assertNull(result.activeProfileId)
+            assertNull(result.resolution.site)
+            assertEquals(otherOrigin, result.resolution.uri)
+        }
+    }
+
+    @Test
     fun unknownHttpsIsBrowseOnlyAndUnsafeSchemesOrAuthoritiesAreBlocked() {
         assertEquals(TrustMode.BROWSE_ONLY, controller.navigate("https://example.org/path?q=1").resolution.trustMode)
         listOf(
             "http://example.org", "file:///tmp/a", "data:text/plain,a", "javascript:alert(1)",
-            "https://user@example.org", "https://127.0.0.1", "https://example.org:8443",
+            "https://user@example.org", "https://127.0.0.1", "https://example.org:0",
+            "https://example.org:65536", "https://example.org:invalid", "https://example.org:",
         ).forEach { raw -> assertEquals(raw, TrustMode.BLOCKED, controller.navigate(raw).resolution.trustMode) }
     }
 

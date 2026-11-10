@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_popup_confirmation_title">Abrir unha ventá nova?</string>
+    <string name="browser_popup_confirmation_message">Esta páxina solicita abrir outra ventá sen unha pulsación directa. O destino aínda non está confirmado. Se aceptas, abrirase en modo universal, sen os permisos do perfil actual. Abrila non autoriza o uso do teu certificado.</string>
+    <string name="browser_popup_confirmation_open">Abrir ventá</string>
+    <string name="browser_popup_confirmation_cancel">Cancelar</string>
+</resources>

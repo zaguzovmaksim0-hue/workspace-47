@@ -104,7 +104,9 @@ class AfirmaDeferredResolverTest {
         for (plain in listOf("<!DOCTYPE sign SYSTEM 'https://never.example/xxe'><sign/>", "<sign><e k='id' v='A'/><e k='id' v='B'/></sign>", "ERR-06", "<sign>")) {
             assertProblem(AfirmaRetrievalProblem.INVALID, wire(plain))
         }
-        assertProblem(AfirmaRetrievalProblem.INVALID, wire(" ".repeat(AfirmaConfigurationXml.MAX_BYTES + 1)))
+        // Build hostile wire data directly: the legitimate encoder now refuses it.
+        val oversized = xml().padEnd(AfirmaConfigurationXml.MAX_BYTES + 1, ' ').toByteArray()
+        assertProblem(AfirmaRetrievalProblem.INVALID, oversized, deferred(withKey = false))
     }
 
     @Test fun optionalOuterHintsDoNotInventMissingInnerRequiredParameters() = runBlocking {

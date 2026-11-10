@@ -20,6 +20,39 @@ class PublicBrowserAddressTest {
     }
 
     @Test
+    fun credentialBearingLegacyCallersRemainConfinedToDefaultHttpsPorts() {
+        assertRejected(
+            "https://public.example:8443/form?step=one#section",
+            "https://public.example:4443/",
+            "https://public.example:80/",
+            "https://public.example:444/",
+            "https://public.example:1/",
+            "https://public.example:65535/",
+        )
+    }
+
+    @Test
+    fun nonDefaultPortsStillRejectUnsafeHostsAndAmbiguousAuthorities() {
+        assertRejected(
+            "https://localhost:8443/",
+            "https://service.local:4443/",
+            "https://service.localhost:8443/",
+            "https://127.0.0.1:8443/",
+            "https://10.0.0.1:4443/",
+            "https://192.0.2.1:8443/",
+            "https://[::1]:8443/",
+            "https://user:password@public.example:4443/",
+            "https://%70ublic.example:8443/",
+            "https://public.example:/",
+            "https://public.example:0443/",
+            "https://public.example:0008443/",
+            "https://public.example:+8443/",
+            "https://public.example:%38%34%34%33/",
+            "https://public.example:8443/a\\b",
+        )
+    }
+
+    @Test
     fun preservesOriginalSpellingAndEncodedComponentBytes() {
         val path = "/a/../%E2%82%AC%2fpart%2Fend"
         val query = "q=a+b&escaped=%252F&slash=%2f%2F&space=%20&bytes=%00%09%0A&utf8=%D0%AF"
@@ -47,6 +80,8 @@ class PublicBrowserAddressTest {
             "https://@example.com/",
             "https://example.com:80/",
             "https://example.com:444/",
+            "https://example.com:0/",
+            "https://example.com:65536/",
             "https://example.com:abc/",
             "https://example.com/%",
             "https://example.com/%0",

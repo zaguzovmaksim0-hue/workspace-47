@@ -129,6 +129,7 @@ internal class BrowserPopupState(
     val token: UUID,
     val entryOrigin: URI,
     val transport: BrowserPopupTransport,
+    val requiresConfirmation: Boolean = false,
 ) {
     var child: WebView? = null
 }

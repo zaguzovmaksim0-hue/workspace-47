@@ -36,8 +36,8 @@ class NativePdfByteRangeTest {
     @Test fun budgetsAndEmptyInputsAreExplicit() {
         assertNull(NativePdfByteRange.extract(byteArrayOf(), range(), original))
         assertNull(NativePdfByteRange.extract(bytes(), range(), byteArrayOf()))
-        assertNull(NativePdfByteRange.extract(ByteArray(2_097_153), range(), original))
-        assertNull(NativePdfByteRange.extract(ByteArray(524_300), range(), ByteArray(524_289)))
+        assertNull(NativePdfByteRange.extract(ByteArray(NativeAfirmaLimits.PDF_OUTPUT_BYTES + 1), range(), original))
+        assertNull(NativePdfByteRange.extract(ByteArray(NativeAfirmaLimits.PDF_INPUT_BYTES + 12), range(), ByteArray(NativeAfirmaLimits.PDF_INPUT_BYTES + 1)))
         val prefix = ByteArray(524_288) { 1 }; val document = prefix + "<00>".toByteArray()
         assertArrayEquals(prefix, NativePdfByteRange.extract(document, intArrayOf(0, prefix.size, document.size, 0), prefix))
     }

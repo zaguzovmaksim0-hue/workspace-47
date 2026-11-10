@@ -52,10 +52,13 @@ class TrustedJuntaWebView(context: Context) : WebView(context) {
     fun setPopupListeners(
         create: ((WebView, Boolean, Boolean, android.os.Message) -> Boolean)?,
         close: ((WebView) -> Unit)?,
+        allowScriptedWindows: Boolean = false,
     ) {
         chrome.createWindow = create
         chrome.closeWindow = close
         settings.setSupportMultipleWindows(create != null)
+        // The caller must supply a native confirmation gate for non-gesture requests.
+        settings.javaScriptCanOpenWindowsAutomatically = create != null && allowScriptedWindows
     }
 
     fun setDocumentDownloadLauncher(canRespond: () -> Boolean, launch: ((WebView, android.content.Intent) -> Boolean)?) {

@@ -78,7 +78,7 @@ class NativePadesEngineTest {
             PDDocument().use { doc -> doc.addPage(PDPage()); doc.protect(StandardProtectionPolicy("owner-test", "user-test", AccessPermission())); doc.save(out) }
             out.toByteArray()
         }
-        for (input in listOf(byteArrayOf(), "not a PDF".toByteArray(), "%PDF-1.7 broken".toByteArray(), encrypted, ByteArray(524_289))) {
+        for (input in listOf(byteArrayOf(), "not a PDF".toByteArray(), "%PDF-1.7 broken".toByteArray(), encrypted, ByteArray(NativeAfirmaLimits.PDF_INPUT_BYTES + 1))) {
             assertTrue(engine.sign(input, identity, SigningAlgorithm.SHA256_WITH_RSA) is LocalSignatureResult.Failure)
         }
     }

@@ -1,5 +1,6 @@
 package dev.junta.firmamobile.browser
 
+import dev.junta.firmamobile.afirma.servlet.NativeAfirmaLimits
 import android.webkit.WebView
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.ScriptHandler
@@ -206,8 +207,8 @@ internal class UniversalAfirmaRelayHandler(
         const val PROTOCOL_VERSION = 1
         const val MIN_RID = 1L
         const val MAX_RID = 9_007_199_254_740_991L
-        const val MAX_MESSAGE_BYTES = 8L * 1024L * 1024L + 1024L
-        const val MAX_DATA_BYTES = 8L * 1024L * 1024L
+        const val MAX_MESSAGE_BYTES = 1L * NativeAfirmaLimits.RELAY_MESSAGE_BYTES
+        const val MAX_DATA_BYTES = 1L * NativeAfirmaLimits.RETRIEVAL_WIRE_BYTES
         const val DEFAULT_HTTPS_PORT = 443
         const val MIN_PORT = 1
         const val MAX_PORT = 65535

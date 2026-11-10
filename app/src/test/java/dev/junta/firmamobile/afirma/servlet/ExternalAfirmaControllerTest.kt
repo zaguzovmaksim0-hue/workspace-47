@@ -1,5 +1,9 @@
 package dev.junta.firmamobile.afirma.servlet
 
+import dev.junta.firmamobile.afirma.servlet.ExternalAfirmaReceiveResult.BUSY
+import dev.junta.firmamobile.afirma.servlet.ExternalAfirmaReceiveResult.OFFERED
+import dev.junta.firmamobile.afirma.servlet.ExternalAfirmaReceiveResult.REVIEW_FAILED
+import dev.junta.firmamobile.afirma.servlet.ExternalAfirmaReceiveResult.UNAVAILABLE
 import dev.junta.firmamobile.certificate.UnlockedIdentity
 import dev.junta.firmamobile.certificate.CertificateSummary
 import dev.junta.firmamobile.certificate.TestCertificateFactory
@@ -27,16 +31,16 @@ class ExternalAfirmaControllerTest {
     @Test fun admissionRequiresForegroundAndIdleWithoutPreparingOrReplacingAnything() {
         val f = Fixture()
         f.foreground = false
-        assertFalse(f.controller.receive(SELECT))
+        assertEquals(UNAVAILABLE, f.controller.receiveResult(SELECT))
         f.foreground = true; f.busy = true
-        assertFalse(f.controller.receive(SELECT))
+        assertEquals(UNAVAILABLE, f.controller.receiveResult(SELECT))
         assertEquals(0, f.preparations)
         f.busy = false
-        assertTrue(f.controller.receive(SELECT))
+        assertEquals(OFFERED, f.controller.receiveResult(SELECT))
         val token = f.prompt!!.token
         assertEquals(AfirmaConsentProblem.LOCKED, f.prompt!!.problem)
         assertFalse(f.controller.confirm(token))
-        assertFalse(f.controller.receive(SELECT.replace("fixture", "other")))
+        assertEquals(BUSY, f.controller.receiveResult(SELECT.replace("fixture", "other")))
         assertEquals(token, f.prompt!!.token)
         assertEquals(1, f.preparations)
         assertEquals(0, f.effects)
@@ -46,7 +50,7 @@ class ExternalAfirmaControllerTest {
     @Test fun aReviewCannotDisplayAQueryOrDifferentPayloadThanTheApprovedRequest() {
         val f = Fixture()
         f.unsafeReview = true
-        assertFalse(f.controller.receive(SELECT))
+        assertEquals(REVIEW_FAILED, f.controller.receiveResult(SELECT))
         assertNull(f.prompt)
         assertEquals(0, f.effects)
         f.controller.close()
@@ -54,7 +58,7 @@ class ExternalAfirmaControllerTest {
 
     @Test fun losingForegroundAtTheConfirmButtonInvalidatesTheToken() {
         val f = Fixture(); f.identity = identity()
-        assertTrue(f.controller.receive(f.raw))
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw))
         val token = f.prompt!!.token
         f.foreground = false
         assertFalse(f.controller.confirm(token))
@@ -65,7 +69,7 @@ class ExternalAfirmaControllerTest {
     }
 
     @Test fun unlockRefreshesReviewButNeverConfirmsAndOldTokenCannotBeUsed() {
-        val f = Fixture(); assertTrue(f.controller.receive(f.raw))
+        val f = Fixture(); assertEquals(OFFERED, f.controller.receiveResult(f.raw))
         val old = f.prompt!!.token
         f.identity = identity(); f.controller.refreshIdentity()
         assertNotEquals(old, f.prompt!!.token)
@@ -79,26 +83,26 @@ class ExternalAfirmaControllerTest {
 
     @Test fun oneConfirmationConsumesAuthorityAndProcessLocalReplayIsRejected() {
         val f = Fixture(); f.identity = identity()
-        assertTrue(f.controller.receive(f.raw)); val token = f.prompt!!.token
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw)); val token = f.prompt!!.token
         assertEquals("https://storage.example/store", f.prompt!!.details.destination)
         assertFalse(f.prompt!!.details.destination.contains("private"))
         assertTrue(f.controller.confirm(token)); assertFalse(f.controller.confirm(token))
         assertEquals(1, f.effects)
         f.controller.dismiss(token)
         val next = Fixture(f.raw); next.identity = f.identity
-        assertFalse(next.controller.receive(next.raw))
+        assertEquals(REVIEW_FAILED, next.controller.receiveResult(next.raw))
         assertEquals(0, next.preparations)
         f.controller.close(); next.controller.close()
     }
 
     @Test fun cancelledDeliveryCanOnlyBeReviewedAgainWithAFreshToken() {
         val f = Fixture(); f.identity = identity()
-        assertTrue(f.controller.receive(f.raw)); val old = f.prompt!!.token
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw)); val old = f.prompt!!.token
         f.controller.cancel(old)
         assertFalse(f.controller.confirm(old)); assertEquals(0, f.effects)
         assertEquals(0, f.serverCancellations)
         f.controller.dismiss(old)
-        assertTrue(f.controller.receive(f.raw)); assertNotEquals(old, f.prompt!!.token)
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw)); assertNotEquals(old, f.prompt!!.token)
         assertFalse(f.controller.confirm(old)); assertEquals(0, f.effects)
         assertTrue(f.controller.confirm(f.prompt!!.token)); assertEquals(1, f.effects)
         f.controller.close()
@@ -106,9 +110,9 @@ class ExternalAfirmaControllerTest {
 
     @Test fun newDeliveryDuringExecutionDoesNotReplaceOrCancelTheActiveOperation() {
         val f = Fixture(); f.identity = identity(); f.beforeUpload = CompletableDeferred()
-        assertTrue(f.controller.receive(f.raw)); val token = f.prompt!!.token
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw)); val token = f.prompt!!.token
         assertTrue(f.controller.confirm(token)); assertEquals(1, f.executions)
-        assertFalse(f.controller.receive(f.raw.replace("private", "changed")))
+        assertEquals(BUSY, f.controller.receiveResult(f.raw.replace("private", "changed")))
         assertEquals(token, f.prompt!!.token)
         assertEquals(AfirmaConsentPhase.WORKING, f.prompt!!.phase)
         f.beforeUpload!!.complete(Unit)
@@ -119,7 +123,7 @@ class ExternalAfirmaControllerTest {
     @Test fun backgroundAndLockRevokeReviewAndInFlightUploadPermissionWithoutResumeReplay() {
         for (executing in listOf(false, true)) {
             val f = Fixture(); f.identity = identity(); f.beforeUpload = CompletableDeferred()
-            assertTrue(f.controller.receive(f.raw)); val token = f.prompt!!.token
+            assertEquals(OFFERED, f.controller.receiveResult(f.raw)); val token = f.prompt!!.token
             if (executing) assertTrue(f.controller.confirm(token))
             f.foreground = false; f.controller.onBackground()
             f.identity = null; f.foreground = true; f.controller.onForeground()
@@ -134,7 +138,7 @@ class ExternalAfirmaControllerTest {
 
     @Test fun certificateChangedAtClickRequiresFreshConsentWithoutBurningAnUnusedRequest() {
         val f = Fixture(); f.identity = identity()
-        assertTrue(f.controller.receive(f.raw)); val old = f.prompt!!.token
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw)); val old = f.prompt!!.token
         f.identity = identity(TestCertificateFactory.nonRepudiationCertificate())
         assertFalse(f.controller.confirm(old)); assertNotEquals(old, f.prompt!!.token)
         assertEquals(0, f.effects)
@@ -144,7 +148,7 @@ class ExternalAfirmaControllerTest {
 
     @Test fun certificateReplacementBeforeUploadStopsDisclosure() {
         val f = Fixture(); f.identity = identity(); f.beforeUpload = CompletableDeferred()
-        assertTrue(f.controller.receive(f.raw))
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw))
         assertTrue(f.controller.confirm(f.prompt!!.token))
         f.identity = identity(TestCertificateFactory.nonRepudiationCertificate())
         f.beforeUpload!!.complete(Unit)
@@ -156,7 +160,7 @@ class ExternalAfirmaControllerTest {
     @Test fun exactTwoMinuteExpiryAndClockRollbackDenyConfirmation() {
         for (time in listOf(120_000_000_001L, 0L)) {
             val f = Fixture(); f.identity = identity()
-            assertTrue(f.controller.receive(f.raw)); val token = f.prompt!!.token
+            assertEquals(OFFERED, f.controller.receiveResult(f.raw)); val token = f.prompt!!.token
             f.now = time
             assertFalse(f.controller.confirm(token)); assertEquals(0, f.effects)
             assertEquals(AfirmaConsentProblem.EXPIRED, f.prompt!!.problem)
@@ -166,20 +170,20 @@ class ExternalAfirmaControllerTest {
 
     @Test fun dismissalAndReceiverReplacementNeverTransferConsent() {
         val f = Fixture(); f.identity = identity()
-        assertTrue(f.controller.receive(f.raw)); val token = f.prompt!!.token
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw)); val token = f.prompt!!.token
         f.controller.dismiss(token)
         assertNull(f.prompt); assertFalse(f.controller.confirm(token)); assertEquals(0, f.effects)
-        assertTrue(f.controller.receive(f.raw)); val replacement = f.prompt!!.token
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw)); val replacement = f.prompt!!.token
         f.controller.close()
         val next = Fixture(f.raw); next.identity = f.identity
-        assertTrue(next.controller.receive(next.raw))
+        assertEquals(OFFERED, next.controller.receiveResult(next.raw))
         assertFalse(next.controller.confirm(replacement)); assertEquals(0, next.effects)
         next.controller.close()
     }
 
     @Test fun reviewBindsPublicCertificateEvidenceToTheCurrentIdentity() {
         val f = Fixture(); f.identity = identity()
-        assertTrue(f.controller.receive(f.raw))
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw))
         val bytes = f.identity!!.certificate.encoded
         val evidence = f.prompt!!.certificateEvidence!!
         assertEquals(bytes.size, evidence.bytes)
@@ -193,7 +197,7 @@ class ExternalAfirmaControllerTest {
 
     @Test fun reviewKeepsPdfPreviewAndCertificateEvidenceTogetherWithoutReusingConsent() {
         val f = Fixture(); f.identity = identity()
-        assertTrue(f.controller.receive(f.raw))
+        assertEquals(OFFERED, f.controller.receiveResult(f.raw))
         val review = f.prompt!!
         assertNotNull(review.details.externalContext)
         assertNotNull(review.certificateEvidence)
@@ -205,6 +209,46 @@ class ExternalAfirmaControllerTest {
         f.controller.close()
     }
 
+    @Test fun unsupportedRequestsExplainTheReasonWithoutReadingAnIdentityOrPreparingEffects() {
+        val indirect = "afirma://sign?fileid=fixture&rtservlet=https%3A%2F%2Fretrieve.example%2Fget"
+        val filter = java.util.Base64.getEncoder().encodeToString("filters=issuer.rfc2254:CN=example".toByteArray())
+        val silent = java.util.Base64.getEncoder().encodeToString("headless=true".toByteArray())
+        val cases = mapOf(
+            indirect to ExternalAfirmaReceiveResult.INDIRECT_RETRIEVAL_UNSUPPORTED,
+            "afirma://websocket?ports=12345&idsession=fixture" to ExternalAfirmaReceiveResult.DESKTOP_WEBSOCKET_UNSUPPORTED,
+            "https://outside.example/afirma" to ExternalAfirmaReceiveResult.INVALID_REQUEST,
+            "afirma://sign?dat=%GG" to ExternalAfirmaReceiveResult.INVALID_REQUEST,
+            "$SELECT&properties=$filter" to ExternalAfirmaReceiveResult.CERTIFICATE_FILTER_UNSUPPORTED,
+            "$SELECT&properties=$silent" to ExternalAfirmaReceiveResult.CONFIRMATION_REQUIRED,
+            "$SELECT&minkeysize=4096" to ExternalAfirmaReceiveResult.REQUEST_CONSTRAINT_UNSUPPORTED,
+            "afirma://unknown-operation?id=fixture" to ExternalAfirmaReceiveResult.UNSUPPORTED_REQUEST,
+        )
+        for ((uri, expected) in cases) {
+            val f = Fixture()
+            assertNull(f.identity)
+            assertEquals(expected, f.controller.receiveResult(uri))
+            assertEquals(0, f.identityReads)
+            assertEquals(0, f.preparations)
+            assertEquals(0, f.executions)
+            assertEquals(0, f.effects)
+            assertEquals(0, f.serverCancellations)
+            assertNull(f.prompt)
+            f.controller.close()
+        }
+    }
+
+    @Test fun typedOutcomePreservesLockedConsentAndDoesNotReplaceAnExistingReview() {
+        val f = Fixture()
+        assertEquals(ExternalAfirmaReceiveResult.OFFERED, f.controller.receiveResult(f.raw))
+        assertEquals(AfirmaConsentProblem.LOCKED, f.prompt!!.problem)
+        val token = f.prompt!!.token
+        assertEquals(ExternalAfirmaReceiveResult.BUSY, f.controller.receiveResult(f.raw))
+        assertEquals(token, f.prompt!!.token)
+        assertEquals(0, f.effects)
+        f.controller.close()
+        assertEquals(ExternalAfirmaReceiveResult.UNAVAILABLE, f.controller.receiveResult(f.raw))
+    }
+
     private class Fixture(val raw: String = SELECT.replace("fixture", UUID.randomUUID().toString())) {
 
         var identity: UnlockedIdentity? = null
@@ -213,6 +257,7 @@ class ExternalAfirmaControllerTest {
         var foreground = true
         var busy = false
         var preparations = 0
+        var identityReads = 0
         var effects = 0
         var executions = 0
         var serverCancellations = 0
@@ -220,7 +265,7 @@ class ExternalAfirmaControllerTest {
         var prompt: AfirmaConsentPrompt? = null
         val controller = ExternalAfirmaController(
             scope = CoroutineScope(Dispatchers.Unconfined + Job()),
-            canRespond = { foreground && !busy }, identityProvider = { identity },
+            canRespond = { foreground && !busy }, identityProvider = { identityReads++; identity },
             onPrompt = { prompt = it }, monotonicNanos = { now },
             prepare = { invocation ->
                 preparations++

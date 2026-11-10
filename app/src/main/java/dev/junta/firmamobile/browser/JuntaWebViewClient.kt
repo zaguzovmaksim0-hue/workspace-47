@@ -89,14 +89,30 @@ class JuntaWebViewClient(
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest,
-    ): Boolean = handleNavigation(
+    ): Boolean {
+        if (!isCurrentWebView(view)) return true
+        val targetUrl = request.url.toString()
+        return if (!request.isForMainFrame && NativeAfirmaNavigation.extract(targetUrl) != null) {
+            // WebResourceRequest does not identify the initiating frame's origin.
+            // A trusted top-level page cannot authorize an embedded frame's request.
+            logger.recordNavigationEvent(
+                code = DiagnosticEventCode.NAVIGATION_BLOCKED,
+                rawUrl = targetUrl,
+                reason = NavigationBlockReason.UNSUPPORTED_AFIRMA_FRAME.name,
+                isMainFrame = false,
+                method = request.method,
+            )
+            callbacks.onNavigationBlocked(NavigationBlockReason.UNSUPPORTED_AFIRMA_FRAME)
+            true
+        } else handleNavigation(
             view,
-            request.url.toString(),
+            targetUrl,
             request.isForMainFrame,
             request.method,
             request.hasGesture() && !request.isRedirect,
             request.isRedirect,
         )
+    }
 
     @Deprecated("Legacy callback retained for old WebView implementations")
     override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean =

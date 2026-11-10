@@ -132,6 +132,23 @@ class MainActivityExternalAfirmaTest {
         assertFalse(app.signingAdmission.externalActive)
     }
 
+    @Test fun refusedProtocolsShowDistinctMessagesWithoutUnlockingOrKeepingAdmission() {
+        launch()
+        val requests = listOf(
+            "afirma://sign?fileid=fixture&rtservlet=https%3A%2F%2Fretrieve.example%2Fget" to
+                R.string.external_afirma_indirect_unsupported,
+            "afirma://websocket?ports=12345&idsession=fixture" to R.string.external_afirma_websocket_unsupported,
+            "afirma://sign?dat=%GG" to R.string.external_afirma_invalid_request,
+        )
+        for ((uri, message) in requests) {
+            deliverWarm(uri)
+            assertEquals(app.getString(message), ShadowToast.getTextOfLatestToast())
+            rule.onNodeWithTag("native-afirma-consent").assertDoesNotExist()
+            assertFalse(app.signingAdmission.externalActive)
+            assertSame(ExternalAfirmaDelivery.None, app.externalAfirmaInbox.take())
+        }
+    }
+
     @Test fun aStaleDeliveryOnAnOrdinaryLaunchOnlyReportsExpiry() {
         assertTrue(app.externalAfirmaInbox.put(SELECT))
         shadowOf(Looper.getMainLooper()).idleFor(Duration.ofSeconds(31))

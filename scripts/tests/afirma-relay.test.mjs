@@ -253,9 +253,19 @@ test('put success returns OK and forwards data unchanged', () => {
   assert.deepEqual(seen, [[200, 'OK']]);
 });
 
-test('put over 8 MiB bypasses the bridge, including original status 0', () => {
+test('a large PDF result fits the native relay wire budget', () => {
   const page = createPage();
-  const dat = 'A'.repeat(8 * 1024 * 1024 + 1);
+  const dat = 'A'.repeat(13 * 1024 * 1024);
+  const { seen } = blocked(page, 'POST', 'op=put&v=1_0&id=largePdf&dat=' + dat);
+  assert.equal(page.sent.length, 1);
+  assert.equal(page.sent[0].dat, dat);
+  page.answer(1, 'ok');
+  assert.deepEqual(seen, [[200, 'OK']]);
+});
+
+test('put over the 17 MiB wire budget bypasses the bridge, including original status 0', () => {
+  const page = createPage();
+  const dat = 'A'.repeat(17 * 1024 * 1024 + 1);
   const { seen } = blocked(page, 'POST', 'op=put&v=1_0&id=s1&dat=' + dat);
   assert.deepEqual(seen, [[0, '']]);
   assert.equal(page.sent.length, 0);

@@ -35,41 +35,67 @@ class NativeAfirmaFallbackDialogTest {
     private var prompt by mutableStateOf(AfirmaFallbackPrompt(UUID.randomUUID(), invalid = true))
 
     @Test
-    fun incompleteRequestOnAReviewedPortalOffersItsModeAndNoOfficialPayload() {
-        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = true, reason = "missing_storage_url", portalMode = true)
+    fun incompleteRequestShowsItsReasonAndOnlyClosesThePrompt() {
+        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = true, reason = "missing_storage_url")
         show()
         rule.onNodeWithText(text(R.string.native_afirma_invalid)).assertIsDisplayed()
-        rule.onNodeWithText(text(R.string.native_afirma_portal_mode_hint)).assertIsDisplayed()
         rule.onNodeWithText(text(R.string.native_afirma_reason, "missing_storage_url")).assertIsDisplayed()
         rule.onAllNodesWithText(text(R.string.native_afirma_official)).assertCountEquals(0)
-        rule.onNodeWithText(text(R.string.catalog_open_profile_compatibility)).performClick()
         rule.onNodeWithText(text(R.string.native_afirma_close)).performClick()
-        assertEquals(listOf("portal", "close"), events)
+        assertEquals(listOf("close"), events)
     }
 
     @Test
-    fun unsupportedRequestOnAReviewedPortalKeepsTheOfficialAppAsSecondaryChoice() {
-        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = false, portalMode = true)
+    fun unsupportedRequestOffersOnlyTheSeparateOfficialApp() {
+        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = false)
         show()
         rule.onNodeWithText(text(R.string.native_afirma_unsupported)).assertIsDisplayed()
         rule.onNodeWithText(text(R.string.native_afirma_official)).performClick()
-        rule.onNodeWithText(text(R.string.catalog_open_profile_compatibility)).performClick()
-        assertEquals(listOf("official", "portal"), events)
+        assertEquals(listOf("official"), events)
     }
 
     @Test
-    fun withoutAReviewedModeTheDialogKeepsItsPreviousActions() {
+    fun fallbackNeverOffersToSwitchTheCurrentBrowserMode() {
         for (invalid in listOf(false, true)) {
             events.clear()
             prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = invalid)
             if (!invalid) show()
-            rule.onAllNodesWithText(text(R.string.catalog_open_profile_compatibility)).assertCountEquals(0)
-            rule.onAllNodesWithText(text(R.string.native_afirma_portal_mode_hint)).assertCountEquals(0)
+            rule.onAllNodesWithText("Modo específico del portal").assertCountEquals(0)
             rule.onAllNodesWithText(text(R.string.native_afirma_reason, "").trim(), substring = true).assertCountEquals(0)
             rule.onAllNodesWithText(text(R.string.native_afirma_official)).assertCountEquals(if (invalid) 0 else 1)
             rule.onNodeWithText(text(R.string.native_afirma_close)).performClick()
             assertEquals(listOf("close"), events)
         }
+    }
+
+    @Test
+    fun desktopWebsocketRefusalExplainsTheUnsupportedProtocolWithoutRawCode() {
+        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = false, reason = "desktop_websocket_not_implemented")
+        show()
+        rule.onNodeWithText(text(R.string.external_afirma_websocket_unsupported)).assertIsDisplayed()
+        rule.onAllNodesWithText(text(R.string.native_afirma_unsupported)).assertCountEquals(0)
+        rule.onAllNodesWithText(text(R.string.native_afirma_reason, prompt.reason!!)).assertCountEquals(0)
+        assertEquals(emptyList<String>(), events)
+        rule.onNodeWithText(text(R.string.native_afirma_close)).performClick()
+        assertEquals(listOf("close"), events)
+    }
+
+    @Test
+    fun similarlyNamedUnknownReasonKeepsTheGenericDiagnostic() {
+        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = false, reason = "desktop_websocket_not_implemented_extra")
+        show()
+        rule.onNodeWithText(text(R.string.native_afirma_unsupported)).assertIsDisplayed()
+        rule.onNodeWithText(text(R.string.native_afirma_reason, prompt.reason!!)).assertIsDisplayed()
+        rule.onAllNodesWithText(text(R.string.external_afirma_websocket_unsupported)).assertCountEquals(0)
+    }
+
+    @Test
+    fun invalidRequestKeepsItsErrorEvenIfAnUnsupportedReasonIsSupplied() {
+        prompt = AfirmaFallbackPrompt(UUID.randomUUID(), invalid = true, reason = "desktop_websocket_not_implemented")
+        show()
+        rule.onNodeWithText(text(R.string.native_afirma_invalid)).assertIsDisplayed()
+        rule.onAllNodesWithText(text(R.string.external_afirma_websocket_unsupported)).assertCountEquals(0)
+        rule.onAllNodesWithText(text(R.string.native_afirma_official)).assertCountEquals(0)
     }
 
     private fun show() {
@@ -79,7 +105,6 @@ class NativeAfirmaFallbackDialogTest {
                     prompt = prompt,
                     onClose = { events += "close" },
                     onOpenOfficial = { events += "official" },
-                    onOpenPortalMode = { events += "portal" },
                 )
             }
         }

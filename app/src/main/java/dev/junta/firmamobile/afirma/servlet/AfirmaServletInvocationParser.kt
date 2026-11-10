@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
-import java.util.Base64
 import java.util.Locale
 
 /** Pure syntax normalization, never origin authorization or network access.
@@ -13,6 +12,7 @@ import java.util.Locale
  * autoscript/UrlParameters and CAdESParameters. Default mode is EXPLICIT.
  */
 internal object AfirmaServletInvocationParser {
+    private const val HTTPS_PORT = 443
     fun parse(rawUri: String, pageUrl: String): AfirmaServletParseResult = safely {
             if (rawUri.length > MAX_URI || rawUri.any(Char::isISOControl)) invalid("invalid_uri_size_or_control")
             val page = URI(pageUrl)
@@ -22,31 +22,37 @@ internal object AfirmaServletInvocationParser {
                 invalid("invalid_source_page")
             }
             val source = URI("https", null, page.host.lowercase(Locale.ROOT),
-                page.port, null, null, null).toASCIIString()
+                if (page.port == HTTPS_PORT) -1 else page.port, null, null, null).toASCIIString()
             parseUri(rawUri, source, null)
     }
 
     /** External delivery syntax has no page URL and grants no execution authority. */
     fun parseExternal(rawUri: String): AfirmaServletParseResult = safely {
-        if (rawUri.length > MAX_URI || rawUri.any(Char::isISOControl)) invalid("invalid_uri_size_or_control")
+        if (rawUri.length > MAX_EXTERNAL_URI || rawUri.any(Char::isISOControl)) invalid("invalid_uri_size_or_control")
         parseUri(rawUri, null, ExternalAfirmaContext.from(rawUri))
     }
 
     private fun parseUri(rawUri: String, source: String?, external: ExternalAfirmaContext?): AfirmaServletParseResult {
             val uri = URI(rawUri)
-            if (!uri.scheme.equals("afirma", true) || uri.isOpaque || uri.rawUserInfo != null || uri.port != -1 ||
-                uri.rawFragment != null || uri.rawPath !in setOf("", "/")) invalid("invalid_protocol_uri")
+            if (!hasProtocolAuthority(uri) || !hasProtocolPath(uri)) invalid("invalid_protocol_uri")
             val op = when (uri.host?.lowercase(Locale.ROOT)) {
                 "sign" -> AfirmaServletOperation.SIGN
                 "cosign" -> AfirmaServletOperation.COSIGN
                 "countersign" -> AfirmaServletOperation.COUNTERSIGN
                 "batch" -> AfirmaServletOperation.BATCH
                 "selectcert" -> AfirmaServletOperation.SELECT_CERTIFICATE
+                "websocket" -> unsupported("desktop_websocket_not_implemented")
                 else -> unsupported("operation_not_implemented")
             }
             val values = parameters(uri.rawQuery ?: invalid("missing_parameters"))
             return build(op, source, values, allowIndirect = external == null, external = external)
     }
+
+    private fun hasProtocolAuthority(uri: URI): Boolean =
+        uri.scheme.equals("afirma", true) && !uri.isOpaque && uri.rawUserInfo == null && uri.port == -1
+
+    private fun hasProtocolPath(uri: URI): Boolean =
+        uri.rawFragment == null && uri.rawPath in setOf("", "/")
 
     /** XML values have already been form-decoded exactly once. Do not run them
      * through a synthetic URI and accidentally interpret '%' or '+' twice. */
@@ -373,7 +379,8 @@ internal object AfirmaServletInvocationParser {
     private fun InvocationBuildState.readSignatureData(pdf: Boolean, remote: Boolean, format: String) {
         val encoded = values["dat"] ?: unsupported("interactive_file_selection_required")
         if (encoded.startsWith("http:", true) || encoded.startsWith("https:", true)) unsupported("remote_data")
-        val bytes = strictBase64(encoded, MAX_PAYLOAD)
+        val limit = if (pdf && !remote) NativeAfirmaLimits.PDF_INPUT_BYTES else MAX_PAYLOAD
+        val bytes = strictBase64(encoded, limit)
         payload = bytes
         // Like AutoFirma, an expPolicy CAdES request without mode is implicit below 1 MiB.
         if (cadesModeFromPolicy) detached = bytes.size >= NativeSignaturePolicyExpansion.CADES_IMPLICIT_LIMIT_BYTES
@@ -432,15 +439,18 @@ internal object AfirmaServletInvocationParser {
     }
 
     private fun parameters(query: String): Map<String, String> {
-        val segments = query.split('&')
-        if (segments.size > 64) invalid("too_many_parameters")
         val values = linkedMapOf<String, String>()
-        for (part in segments) {
-            if (part.isEmpty()) invalid("empty_parameter")
-            val key = decodeComponent(part.substringBefore('='))
+        var position = 0
+        while (position <= query.length) {
+            if (values.size >= 64) invalid("too_many_parameters")
+            val end = query.indexOf('&', position).let { if (it < 0) query.length else it }
+            if (position == end) invalid("empty_parameter")
+            val separator = query.indexOf('=', position).takeIf { it in position until end } ?: end
+            val key = decodeComponent(query.substring(position, separator))
             if (!NAME.matches(key)) invalid("invalid_parameter_name")
-            val value = decodeComponent(part.substringAfter('=', ""))
+            val value = if (separator == end) "" else decodeComponent(query.substring(separator + 1, end))
             if (values.put(key, value) != null) invalid("duplicate_parameter")
+            position = end + 1
         }
         return values
     }
@@ -460,6 +470,7 @@ internal object AfirmaServletInvocationParser {
     }
 
     private fun decodeComponent(value: String): String {
+        if (value.none { it == '%' || it.code !in 0x20..0x7e }) return value
         val bytes = ByteArrayOutputStream(value.length)
         var index = 0
         while (index < value.length) {
@@ -478,18 +489,10 @@ internal object AfirmaServletInvocationParser {
         finally { content.fill(0) }
     }
 
-    internal fun strictBase64(value: String, maxBytes: Int): ByteArray {
-        if (value.length > ((maxBytes + 2L) / 3L * 4L) || !BASE64.matches(value) || value.length % 4 == 1 ||
-            (value.contains('=') && value.length % 4 != 0) ||
-            ((value.contains('+') || value.contains('/')) && (value.contains('-') || value.contains('_')))
-        ) invalid("invalid_base64")
-        val canonical = value.replace('-', '+').replace('_', '/')
-        val bytes = Base64.getDecoder().decode(canonical)
-        if (bytes.size > maxBytes ||
-            Base64.getEncoder().withoutPadding().encodeToString(bytes) != canonical.trimEnd('=')) {
-            bytes.fill(0); invalid("invalid_base64")
-        }
-        return bytes
+    internal fun strictBase64(value: String, maxBytes: Int): ByteArray = try {
+        BoundedBase64.decode(value, maxBytes)
+    } catch (_: Exception) {
+        invalid("invalid_base64")
     }
 
     private fun decodeUtf8(bytes: ByteArray): String = Charsets.UTF_8.newDecoder()
@@ -505,11 +508,11 @@ internal object AfirmaServletInvocationParser {
     private const val AES_IV_BYTES = 16
     private const val HEX_RADIX = 16
     private const val PERCENT_ESCAPE_CHARS = 3
-    private const val MAX_URI = 1_048_576
+    private const val MAX_URI = NativeAfirmaLimits.URI_CHARS
     private const val MAX_PAYLOAD = 524_288
+    private const val MAX_EXTERNAL_URI = 1_048_576
     private val NAME = Regex("[A-Za-z][A-Za-z0-9_-]{0,63}")
     internal val SESSION_ID = Regex("[A-Za-z0-9_-]{1,128}")
-    private val BASE64 = Regex("[A-Za-z0-9+/_-]*={0,2}")
     private val CONSENT_SUPPRESSION_FLAGS = setOf("headless", "silent", "autosign", "sticky", "stickycert",
         "resetsticky", "skipconsent", "suppressconsent")
     private val KNOWN_PARAMETERS = setOf("id", "key", "dat", "properties", "algorithm", "format", "stservlet",

@@ -28,7 +28,7 @@ import java.net.URI
 @Composable
 internal fun PublicWebOpenDialog(onOpen: (URI) -> Unit, onDismiss: () -> Unit) {
     var address by remember { mutableStateOf("https://") }
-    val admitted = remember(address) { PublicBrowserAddress.parse(address.trim()) }
+    val admitted = remember(address) { PublicBrowserAddress.parseNavigation(address.trim()) }
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag("public-web-open-dialog"),

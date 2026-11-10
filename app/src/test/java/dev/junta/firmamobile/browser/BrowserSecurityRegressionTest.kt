@@ -10,6 +10,9 @@ import dev.junta.firmamobile.profile.TrustMode
 import dev.junta.firmamobile.signing.LocalSignature
 import dev.junta.firmamobile.signing.SigningContext
 import dev.junta.firmamobile.signing.SigningErrorCode
+import dev.junta.firmamobile.ui.BrowserAdmission
+import dev.junta.firmamobile.ui.BrowserOperation
+import dev.junta.firmamobile.ui.BrowserOperationState
 import java.io.File
 import java.time.Instant
 import java.util.Base64
@@ -488,10 +491,29 @@ class BrowserSecurityRegressionTest {
     @Test
     fun legacyUriBridgeCannotBypassTheNativePreparationInterlock() {
         val source = projectSource("app/src/main/java/dev/junta/firmamobile/ui/BrowserScreen.kt")
-        val handler = source.substringAfter("val handleAfirmaRequest: (AfirmaRequest) -> Unit =")
-            .substringBefore("val callbacks = remember(")
-        for (flag in listOf("nativeAfirma.hasPending", "nativeFallback.hasPending", "nativeRetrieval.hasPending")) {
-            assertTrue("Legacy URI notifications must respect $flag", flag in handler)
+        val handler = source.substringAfter(
+            "val handleAfirmaRequest: (AfirmaRequest) -> Unit =", missingDelimiterValue = "",
+        ).substringBefore("val portalBusyNow: () -> Boolean =")
+        assertTrue(
+            "Legacy URI notifications must use the current native admission state",
+            "operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.NATIVE_REQUEST)" in handler,
+        )
+        val stateCollector = source.substringAfter("fun operationState(", missingDelimiterValue = "")
+            .substringBefore("var nativeRetrievalPrompt")
+        val pendingOperations = listOf(
+            BrowserOperation.NATIVE_AFIRMA to "nativeAfirma.hasPending",
+            BrowserOperation.NATIVE_FALLBACK to "nativeFallback.hasPending",
+            BrowserOperation.RETRIEVAL to "retrievalPending",
+        )
+        for ((operation, flag) in pendingOperations) {
+            assertTrue(
+                "The admission state must sample $flag",
+                "BrowserOperation.${operation.name}.takeIf { $flag }" in stateCollector,
+            )
+            assertTrue(
+                "A pending $operation must block legacy URI admission",
+                BrowserOperationState(setOf(operation)).blocks(BrowserAdmission.NATIVE_REQUEST),
+            )
         }
         assertTrue("Pending URI dialog assignment must be guarded", "if (!busy) pendingRequest = request" in handler)
         assertTrue("The validated WebMessageBridge URI path must use the guarded handler", "onAfirmaRequest = handleAfirmaRequest" in source)

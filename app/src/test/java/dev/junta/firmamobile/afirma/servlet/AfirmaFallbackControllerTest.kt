@@ -55,27 +55,22 @@ class AfirmaFallbackControllerTest {
             assertEquals(reason.toString(), expected, f.prompt!!.reason)
         }
         val f = Fixture(); f.controller.offer(f.owner, f.epoch, "afirma://sign?id=A", "a".repeat(64))
-        assertEquals("a".repeat(64), f.prompt!!.reason); assertFalse(f.prompt!!.portalMode)
+        assertEquals("a".repeat(64), f.prompt!!.reason)
     }
-    @Test fun portalModeIsOfferedOnlyForTheSameLiveDocumentAndAlwaysEndsThePrompt() {
-        val f = Fixture(); f.offerPortal(); val token = f.prompt!!.token; assertTrue(f.prompt!!.portalMode)
-        assertTrue(f.controller.consumePortalMode(token)); assertNull(f.prompt)
-        assertFalse(f.controller.consumePortalMode(token)); assertNull(f.controller.consume(token))
-        val plain = Fixture(); plain.offer("afirma://sign?id=A"); assertFalse(plain.prompt!!.portalMode)
-        assertFalse(plain.controller.consumePortalMode(plain.prompt!!.token)); assertNull(plain.prompt)
+    @Test fun inactiveOrStaleDocumentsCannotConsumeAnOfficialAppPayload() {
         val stale: List<Fixture.() -> Unit> = listOf(
             { epoch++ }, { currentOwner = Any() }, { foreground = false },
             { now += Duration.ofMinutes(5).toNanos() }, { now -= 1 }, { observer = { if (it == null) epoch++ } },
         )
         for (change in stale) {
-            val s = Fixture(); s.offerPortal(); val captured = s.prompt!!.token; s.change()
-            assertFalse(s.controller.consumePortalMode(captured)); assertNull(s.prompt)
+            val f = Fixture(); f.offer("afirma://sign?id=A"); val token = f.prompt!!.token; f.change()
+            assertNull(f.controller.consume(token)); assertNull(f.prompt)
         }
     }
-    @Test fun anOldPortalModeButtonCannotConsumeANewerFallback() {
-        val f = Fixture(); f.offerPortal(); val old = f.prompt!!.token; f.controller.dismiss(old)
+    @Test fun capturedFallbackButtonCannotConsumeANewerRequest() {
+        val f = Fixture(); f.offer("afirma://sign?id=A"); val old = f.prompt!!.token; f.controller.dismiss(old)
         f.offer("afirma://sign?id=B"); val latest = f.prompt!!.token
-        assertFalse(f.controller.consumePortalMode(old)); assertEquals(latest, f.prompt!!.token)
+        assertNull(f.controller.consume(old)); assertEquals(latest, f.prompt!!.token)
         assertEquals("afirma://sign?id=B", f.controller.consume(latest))
     }
     private class Fixture {
@@ -86,6 +81,5 @@ class AfirmaFallbackControllerTest {
             canRespond = { foreground }, onPrompt = { prompt = it; observer(it) }, monotonicNanos = { now },
         )
         fun offer(raw: String?) = controller.offer(owner, epoch, raw)
-        fun offerPortal() = assertTrue(controller.offer(owner, epoch, null, "missing_storage_url", portalMode = true))
     }
 }

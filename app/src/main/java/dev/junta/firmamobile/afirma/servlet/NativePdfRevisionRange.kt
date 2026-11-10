@@ -6,7 +6,7 @@ internal object NativePdfRevisionRange {
     private val eof = byteArrayOf(37, 37, 69, 79, 70)
 
     fun revisionEnd(document: ByteArray, range: IntArray): Int? {
-        if (document.size !in 5..2_097_152 || range.size != 4) return null
+        if (document.size !in 5..NativeAfirmaLimits.PDF_OUTPUT_BYTES || range.size != 4) return null
         for (i in header.indices) if (document[i] != header[i]) return null
         val start = range[1].toLong()
         val end = range[2].toLong()

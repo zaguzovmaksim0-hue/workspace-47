@@ -13,7 +13,7 @@
   const requests = new WeakMap();
   const listeners = new WeakSet();
   const pending = new Map();
-  const MAX_DATA_LENGTH = 8 * 1024 * 1024;
+  const MAX_DATA_LENGTH = 17 * 1024 * 1024;
   const MAX_PENDING = 8;
   const REPLY_TIMEOUT = 15000;
   let nextRid = 0;

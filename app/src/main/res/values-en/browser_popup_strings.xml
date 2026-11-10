@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_popup_confirmation_title">Open a new window?</string>
+    <string name="browser_popup_confirmation_message">This page requests another window without a direct tap. The destination is not confirmed yet. If you allow it, the window opens in universal mode without the current profile permissions. Opening it does not authorize use of your certificate.</string>
+    <string name="browser_popup_confirmation_open">Open window</string>
+    <string name="browser_popup_confirmation_cancel">Cancel</string>
+</resources>

@@ -114,13 +114,23 @@ enum class ProfileHttpFailure {
 }
 
 sealed interface ProfileHttpResult {
-    data class Success(val response: ProfileHttpResponse) : ProfileHttpResult
+    /** Numeric response metadata only; null when no valid HTTP status was observed. */
+    val httpStatusCode: Int?
+
+    data class Success(val response: ProfileHttpResponse) : ProfileHttpResult {
+        // This transport admits protocol responses only for HTTP 200.
+        override val httpStatusCode: Int = HttpURLConnection.HTTP_OK
+    }
 
     class Failure internal constructor(
         internal val detail: ProfileHttpFailureDetail,
+        httpStatusCode: Int?,
     ) : ProfileHttpResult {
+        override val httpStatusCode: Int? = httpStatusCode?.takeIf { it in MIN_HTTP_STATUS..MAX_HTTP_STATUS }
         val code: ProfileHttpFailure
             get() = detail.code
+
+        internal constructor(detail: ProfileHttpFailureDetail) : this(detail, null)
 
         constructor(code: ProfileHttpFailure) : this(
             ProfileHttpFailureDetail(
@@ -129,6 +139,11 @@ sealed interface ProfileHttpResult {
                 httpWriteStarted = true,
             ),
         )
+
+        private companion object {
+            const val MIN_HTTP_STATUS = 100
+            const val MAX_HTTP_STATUS = 599
+        }
     }
 }
 
@@ -292,7 +307,7 @@ class HttpsProfileHttpTransport internal constructor(
         fun fail(code: ProfileHttpFailure): ProfileHttpResult.Failure {
             raw.body.fill(0)
             tracker.responseHeadersObserved()
-            return ProfileHttpResult.Failure(tracker.failure(code))
+            return ProfileHttpResult.Failure(tracker.failure(code), raw.statusCode)
         }
 
         return when {

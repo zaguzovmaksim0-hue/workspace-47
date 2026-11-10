@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="external_afirma_invalid_request">The external request has an invalid format. Nothing was signed or sent.</string>
+    <string name="external_afirma_indirect_unsupported">This external request needs to download signing data, which is not supported yet. Open the website in the Firma Mobile browser.</string>
+    <string name="external_afirma_websocket_unsupported">The request uses the local AutoFirma desktop service. Firma Mobile does not support that protocol yet.</string>
+    <string name="external_afirma_filter_unsupported">The request requires certificate filters this version does not support. No certificate was used.</string>
+    <string name="external_afirma_constraint_unsupported">The request requires an AutoFirma version or key size that cannot be verified here. Nothing was signed.</string>
+    <string name="external_afirma_confirmation_required">The request attempts to skip signing confirmation. Firma Mobile requires explicit confirmation for each operation.</string>
+    <string name="external_afirma_unavailable">The request cannot be reviewed right now. Unlock the device and start it again.</string>
+    <string name="external_afirma_review_failed">The request data could not be prepared or verified. Nothing was signed or sent.</string>
+</resources>

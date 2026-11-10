@@ -171,6 +171,20 @@ class InteractiveClientAuthControllerTest {
         assertTrue(f.controller.confirm(f.prompt!!.token))
     }
 
+    @Test fun changingOnlyThePortStillRequiresFreshClientCertificateConfirmation() {
+        val f = Fixture(); f.offer()
+        assertTrue(f.controller.confirm(f.prompt!!.token))
+        for (port in listOf(8443, 4443)) {
+            val request = RecordingRequest().apply { serverPort = port }
+            f.controller.offer(f.owner, f.epoch, "https://portal.example:$port/form", request)
+            assertEquals("https://portal.example:$port", f.prompt!!.pageOrigin)
+            assertEquals("auth.new-provider.example:$port", f.prompt!!.server)
+            assertEquals(0, request.proceeds)
+            assertTrue(f.controller.confirm(f.prompt!!.token))
+            assertEquals(1, request.proceeds)
+        }
+    }
+
     @Test fun malformedHostsCannotBecomeConsentLabels() {
         val f = Fixture()
         for (host in listOf("user@auth.example", "auth.example/path", "auth.example\n", "localhost", "a.localhost", "a.local", "127.0.0.1", "[::1]", "*.example", "example.", "аuth.example")) {

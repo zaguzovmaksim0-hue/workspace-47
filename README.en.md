@@ -12,13 +12,13 @@ The project is experimental. Compatibility is recorded per exact profile and ope
 
 - [Installation and first steps (Spanish)](docs/instalacion.md)
 - [APK signing, verification and migration](docs/daily-apk-signing.md)
-- [Version 0.2.17 changes](CHANGELOG.md)
+- [Change history](CHANGELOG.md)
 - [Technical documentation](docs/README.md)
 - [Security policy](SECURITY.md)
 - [Privacy policy (Spanish)](docs/privacidad.md)
 - [Contributing](CONTRIBUTING.md)
 
-The visible name is **Firma Mobile** and the daily-use version is **0.2.17**.
+The visible name is **Firma Mobile**. This checkout's version is defined in [`version.properties`](version.properties); Android reports the installed version.
 The Android application ID remains `dev.junta.firmamobile` for update continuity.
 The internal `optimized` build-type name is not part of the visible version.
 
@@ -46,6 +46,12 @@ has been imported as a non-exportable AndroidKeyStore/StrongBox key.
 Every signing operation requires confirmation. Tests use synthetic data; never
 commit real certificates, passwords, cookies, private documents or authenticated
 captures. See [test-fixture rules](docs/test-fixtures.md).
+
+## Browser modes
+
+A normal catalog tap opens the portal-specific mode when this build has an active profile with a valid catalog binding. Other catalog entries and manually typed addresses open in universal mode without acquiring a profile's authority.
+
+The selected mode remains fixed for the browser session. Long-press a supported catalog entry and choose **Open in universal mode (without profile)** to start a separate universal session. Navigation and signing failures never switch modes automatically. An active profile is not evidence that every operation passed E2E: authentication, signing and result delivery require separate verification.
 
 ## Security model
 
