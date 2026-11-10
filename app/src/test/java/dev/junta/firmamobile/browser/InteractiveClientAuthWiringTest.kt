@@ -7,6 +7,7 @@ import android.net.http.SslError
 import android.webkit.ClientCertRequest
 import android.webkit.SslErrorHandler
 import android.webkit.WebView
+import android.webkit.WebResourceRequest
 import androidx.test.core.app.ApplicationProvider
 import dev.junta.firmamobile.afirma.AfirmaRequest
 import dev.junta.firmamobile.profile.ProfileId
@@ -43,6 +44,35 @@ class InteractiveClientAuthWiringTest {
         assertEquals(0, f.synthetic.encodedReads.get())
         assertNull(f.view.url)
         f.view.destroy()
+    }
+
+    @Test fun postAndXhrRequestsReachOnlyTheActualTlsCallbackConsentWithoutReplay() {
+        for (mainFrame in listOf(false, true)) {
+            val f = Fixture()
+            try {
+                val post = object : WebResourceRequest {
+                    override fun getUrl() = Uri.parse("https://auth.unknown.example/continue")
+                    override fun getMethod() = "POST"
+                    override fun isForMainFrame() = mainFrame
+                    override fun isRedirect() = false
+                    override fun hasGesture() = false
+                    override fun getRequestHeaders(): Map<String, String> = emptyMap()
+                }
+                assertNull(f.client.shouldInterceptRequest(f.view, post))
+                assertNull(f.prompt)
+                assertEquals(0, f.request.proceeds)
+
+                f.client.onReceivedClientCertRequest(f.view, f.request)
+                assertNotNull(f.prompt)
+                assertEquals("auth.unknown.example", f.prompt!!.server)
+                assertEquals(0, f.request.proceeds)
+                assertTrue(f.controller.confirm(f.prompt!!.token))
+                assertEquals(1, f.request.proceeds)
+                assertNull(f.activeProfile)
+                assertNull(f.view.url)
+                assertEquals(0, f.synthetic.encodedReads.get())
+            } finally { f.controller.close(); f.view.destroy() }
+        }
     }
 
     @Test fun aClientWithoutInteractiveDelegateStillDeniesUnknownRequests() {
