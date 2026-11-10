@@ -96,16 +96,32 @@ class JuntaNavigationPolicyTest {
     }
 
     @Test
-    fun nonDefaultPublicPortsCannotBorrowDefaultPortSigningAuthority() {
+    fun nonDefaultPublicPortsUseUniversalDispatchWithoutProfileSigningAuthority() {
         val publicPolicy = JuntaNavigationPolicy(null)
         val request = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&dat=c3ludGhldGlj"
         for (port in listOf(8443, 4443)) {
             val page = "https://www.juntadeandalucia.es:$port/"
             assertEquals(NavigationDecision.AllowInWebView, publicPolicy.decide(page, null))
-            for (navigation in listOf(publicPolicy, policy)) {
-                assertEquals(NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN),
-                    navigation.decide(request, page))
-            }
+            // Universal requests stay on the native consent path, never HandleAfirma.
+            assertEquals(NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME),
+                publicPolicy.decide(request, page))
+            assertEquals(NavigationDecision.Block(NavigationBlockReason.UNTRUSTED_AFIRMA_ORIGIN),
+                policy.decide(request, page))
+        }
+    }
+
+    @Test
+    fun universalRetrievalOriginRetainsTheActualPublicPort() {
+        val publicPolicy = JuntaNavigationPolicy(null)
+        val request = "afirma://sign?algorithm=SHA256withRSA&format=CAdES&fileid=synthetic"
+        for (port in listOf(8443, 4443)) {
+            val page = "https://public.example:$port/form"
+            val sameOrigin = Uri.encode("https://public.example:$port/retrieve")
+            val differentOrigin = Uri.encode("https://public.example/retrieve")
+            assertEquals(NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME),
+                publicPolicy.decide("$request&rtservlet=$sameOrigin", page))
+            assertEquals(NavigationDecision.Block(NavigationBlockReason.INVALID_AFIRMA_URI),
+                publicPolicy.decide("$request&rtservlet=$differentOrigin", page))
         }
     }
 

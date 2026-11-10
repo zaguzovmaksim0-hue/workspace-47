@@ -1615,7 +1615,9 @@ fun BrowserScreen(
                                         isCurrent = { owner -> webViewRef.get() === owner },
                                         onInvocation = ::offerPublicNativeAfirma,
                                         onRejected = {
-                                            callbacks.onNavigationBlocked(NavigationBlockReason.UNSUPPORTED_AFIRMA_FRAME)
+                                            callbacks.onNavigationBlocked(
+                                                NavigationBlockReason.UNSUPPORTED_AFIRMA_FRAME,
+                                            )
                                         },
                                     ).attach(webView)
                                     relayBridgeAttachmentLease.bind(webView, AutoCloseable {

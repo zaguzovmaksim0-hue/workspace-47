@@ -62,13 +62,7 @@ class JuntaNavigationPolicy(
         }
         return when (target.scheme?.lowercase(Locale.ROOT)) {
             "https" -> decideHttpsUrl(target, targetUrl)
-            "http" -> if (selectedProfileId == null) {
-                PublicBrowserAddress.upgradeHttp(targetUrl)?.let { upgraded ->
-                    NavigationDecision.UpgradeToHttps(Uri.parse(upgraded.toString()))
-                } ?: NavigationDecision.Block(NavigationBlockReason.INSECURE_HTTP)
-            } else {
-                decideLegacyHttpUpgrade(target, currentPageUrl)
-            }
+            "http" -> decideHttpUrl(target, targetUrl, currentPageUrl)
             "afirma" -> if (selectedProfileId == SEGURIDAD_SOCIAL_AUTOFIRMA_PROFILE_ID) {
                 decideOfficialAutoFirmaUri(targetUrl, currentPageUrl)
             } else {
@@ -87,6 +81,15 @@ class JuntaNavigationPolicy(
             else -> NavigationDecision.Block(NavigationBlockReason.UNSUPPORTED_SCHEME)
         }
     }
+
+    private fun decideHttpUrl(target: Uri, rawUrl: String, currentPageUrl: String?): NavigationDecision =
+        if (selectedProfileId == null) {
+            PublicBrowserAddress.upgradeHttp(rawUrl)?.let { upgraded ->
+                NavigationDecision.UpgradeToHttps(Uri.parse(upgraded.toString()))
+            } ?: NavigationDecision.Block(NavigationBlockReason.INSECURE_HTTP)
+        } else {
+            decideLegacyHttpUpgrade(target, currentPageUrl)
+        }
 
     private fun decideHttpsUrl(target: Uri, rawUrl: String): NavigationDecision {
         if (isAutoFirmaPlayStoreUrl(target, rawUrl)) {
@@ -384,9 +387,11 @@ class JuntaNavigationPolicy(
         // separate from destination endpoint validation: a public page cannot
         // authorize a private signer endpoint, and a public endpoint cannot
         // make a loopback/intranet source page trusted.
-        val uri = rawUrl?.let { runCatching { PublicBrowserAddress.parse(it) }.getOrNull() }
-        val host = uri?.host?.lowercase(Locale.ROOT)
-        return host?.let { TrustedOrigin("https", it, DEFAULT_HTTPS_PORT) }
+        val uri = rawUrl?.let(PublicBrowserAddress::parseNavigation)
+        return uri?.let {
+            val port = if (it.port == -1) DEFAULT_HTTPS_PORT else it.port
+            TrustedOrigin("https", it.host.lowercase(Locale.ROOT), port)
+        }
     }
 
     private fun isSafeExternalHttpsUrl(uri: Uri): Boolean =
