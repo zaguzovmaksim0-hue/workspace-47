@@ -90,6 +90,22 @@ class AfirmaServletInvocationParserTest {
         }
     }
 
+    @Test fun sourceAndServletPortsRemainDistinctInConsentDetails() {
+        for (port in listOf(8443, 4443)) {
+            val parsed = AfirmaServletInvocationParser.parse(
+                sign(mapOf("stservlet" to "https://storage.example:$port/store")),
+                "https://unknown.example:$port/form?private=value#section")
+            assertTrue(parsed.toString(), parsed is AfirmaServletParseResult.Accepted)
+            (parsed as AfirmaServletParseResult.Accepted).invocation.use {
+                assertEquals("https://unknown.example:$port", it.sourceOrigin)
+                assertEquals(port, it.storageUrl.port)
+            }
+        }
+        val standard = AfirmaServletInvocationParser.parse(sign(), "https://unknown.example:443/form")
+            as AfirmaServletParseResult.Accepted
+        standard.invocation.use { assertEquals("https://unknown.example", it.sourceOrigin) }
+    }
+
     @Test fun malformedEncodingAndAmbiguousProtocolParametersAreInvalid() {
         for (suffix in listOf("&id=%ZZ", "&appname=%C3%28", "&appname=%0A", "&appname=%", "&=x", "&")) invalid(sign() + suffix)
         for (data in listOf("?", "a", "Zh==", "a===", "a b", "ab-_+/")) invalid(sign(mapOf("dat" to data)))

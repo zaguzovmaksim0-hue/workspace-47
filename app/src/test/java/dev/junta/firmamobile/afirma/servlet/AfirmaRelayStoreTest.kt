@@ -42,6 +42,22 @@ class AfirmaRelayStoreTest {
     }
 
     @Test
+    fun sameHostPortsHaveSeparateResultAndUploadScopes() = runBlocking {
+        val standard = AfirmaRelayStore.Scope(1L, "https://page.example")
+        val alternate = AfirmaRelayStore.Scope(1L, "https://page.example:8443")
+        val another = AfirmaRelayStore.Scope(1L, "https://page.example:4443")
+        assertTrue(store.expectResult(alternate, "session-port"))
+        assertNotNull(store.offerResult(alternate, "session-port", "result"))
+        assertEquals(AfirmaRelayStore.PollResult.Pass, store.poll(standard, "session-port"))
+        assertEquals(AfirmaRelayStore.PollResult.Pass, store.poll(another, "session-port"))
+        assertTrue(store.putUpload(alternate, "file-port", "upload"))
+        assertNull(store.takeUpload(standard, "file-port"))
+        assertNull(store.takeUpload(another, "file-port"))
+        assertEquals("upload", store.takeUpload(alternate, "file-port"))
+        assertEquals(AfirmaRelayStore.PollResult.Ready("result"), store.poll(alternate, "session-port"))
+    }
+
+    @Test
     fun resultIsReadExactlyOnce() = runBlocking {
         val scope = AfirmaRelayStore.Scope(1L, "https://page.example")
         assertTrue(store.expectResult(scope, "session-1"))

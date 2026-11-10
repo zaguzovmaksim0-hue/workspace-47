@@ -14,9 +14,6 @@ private const val PERCENT_SINGLE_CHARACTER_STEP = 1
 private const val PERCENT_SEQUENCE_LENGTH = 3
 private const val PERCENT_HEX_RADIX = 16
 private val PARAMETER_NAME = Regex("[a-z][a-z0-9_-]{0,63}")
-private const val RETRIEVAL_HTTPS_PORT = 443
-private val RETRIEVAL_HTTPS_PORTS = setOf(-1, RETRIEVAL_HTTPS_PORT)
-private const val OFFICIAL_AFIRMA_RETRIEVAL_HOST = "afirma.redsara.es"
 
 // A portal page may use a separate public HTTPS AutoFirma storage/retrieval
 // service. Syntax-level admission is deliberately generic, but remains
@@ -40,20 +37,6 @@ private fun hasValidPercentEncoding(value: String): Boolean {
         index += PERCENT_SEQUENCE_LENGTH
     }
     return true
-}
-
-private fun hasSafeRetrievalTransport(endpoint: java.net.URI): Boolean =
-    endpoint.scheme.equals("https", true) &&
-        endpoint.rawUserInfo == null &&
-        endpoint.rawFragment == null
-
-private fun hasAllowedRetrievalPort(endpoint: java.net.URI): Boolean =
-    endpoint.port in RETRIEVAL_HTTPS_PORTS
-
-private fun isAllowedRetrievalHost(endpoint: java.net.URI, origin: TrustedOrigin): Boolean {
-    val host = endpoint.host?.lowercase(java.util.Locale.ROOT) ?: return false
-    return host == origin.host.lowercase(java.util.Locale.ROOT) ||
-        host == OFFICIAL_AFIRMA_RETRIEVAL_HOST
 }
 
 private fun parseParameter(segment: String): Pair<String, AfirmaParameter>? {
@@ -159,9 +142,7 @@ class UniversalAfirmaUriParser {
     // page origin, except for the official public AutoFirma retrieval service.
     private fun isAllowedRetrievalEndpoint(endpoint: java.net.URI?, origin: TrustedOrigin): Boolean {
         if (endpoint == null) return false
-        return hasSafeRetrievalTransport(endpoint) &&
-            hasAllowedRetrievalPort(endpoint) &&
-            isAllowedRetrievalHost(endpoint, origin)
+        return UniversalAfirmaRetrievalPolicy.accepts(endpoint, origin)
     }
 
     private fun parseParameters(encodedQuery: String?): ParameterParseResult = when {

@@ -12,6 +12,7 @@ import java.util.Locale
  * autoscript/UrlParameters and CAdESParameters. Default mode is EXPLICIT.
  */
 internal object AfirmaServletInvocationParser {
+    private const val HTTPS_PORT = 443
     fun parse(rawUri: String, pageUrl: String): AfirmaServletParseResult = safely {
             if (rawUri.length > MAX_URI || rawUri.any(Char::isISOControl)) invalid("invalid_uri_size_or_control")
             val page = URI(pageUrl)
@@ -21,7 +22,7 @@ internal object AfirmaServletInvocationParser {
                 invalid("invalid_source_page")
             }
             val source = URI("https", null, page.host.lowercase(Locale.ROOT),
-                page.port, null, null, null).toASCIIString()
+                if (page.port == HTTPS_PORT) -1 else page.port, null, null, null).toASCIIString()
             parseUri(rawUri, source, null)
     }
 
@@ -33,8 +34,7 @@ internal object AfirmaServletInvocationParser {
 
     private fun parseUri(rawUri: String, source: String?, external: ExternalAfirmaContext?): AfirmaServletParseResult {
             val uri = URI(rawUri)
-            if (!uri.scheme.equals("afirma", true) || uri.isOpaque || uri.rawUserInfo != null || uri.port != -1 ||
-                uri.rawFragment != null || uri.rawPath !in setOf("", "/")) invalid("invalid_protocol_uri")
+            if (!hasProtocolAuthority(uri) || !hasProtocolPath(uri)) invalid("invalid_protocol_uri")
             val op = when (uri.host?.lowercase(Locale.ROOT)) {
                 "sign" -> AfirmaServletOperation.SIGN
                 "cosign" -> AfirmaServletOperation.COSIGN
@@ -47,6 +47,12 @@ internal object AfirmaServletInvocationParser {
             val values = parameters(uri.rawQuery ?: invalid("missing_parameters"))
             return build(op, source, values, allowIndirect = external == null, external = external)
     }
+
+    private fun hasProtocolAuthority(uri: URI): Boolean =
+        uri.scheme.equals("afirma", true) && !uri.isOpaque && uri.rawUserInfo == null && uri.port == -1
+
+    private fun hasProtocolPath(uri: URI): Boolean =
+        uri.rawFragment == null && uri.rawPath in setOf("", "/")
 
     /** XML values have already been form-decoded exactly once. Do not run them
      * through a synthetic URI and accidentally interpret '%' or '+' twice. */
