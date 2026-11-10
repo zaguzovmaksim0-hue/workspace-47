@@ -127,6 +127,33 @@ class ChainCompletingTrustManagerTest {
         assertSame(original, thrown)
     }
 
+    @Test
+    fun `missing upper intermediate is completed after the supplied issuer`() {
+        val pki = Pki()
+        manager(pki, listOf(pki.intermediate)).checkServerTrusted(
+            arrayOf(pki.deepLeaf, pki.lowerIntermediate), "RSA",
+        )
+    }
+
+    @Test
+    fun `multiple missing intermediates are completed in issuer order`() {
+        val pki = Pki()
+        val manager = manager(pki, listOf(pki.intermediate, pki.lowerIntermediate))
+        assertEquals(listOf(pki.deepLeaf, pki.lowerIntermediate, pki.intermediate),
+            manager.checkServerTrusted(arrayOf(pki.deepLeaf), "RSA", "portal.example"))
+    }
+
+    @Test
+    fun `bundled chain never becomes an independent trust anchor`() {
+        val pki = Pki()
+        val other = Pki()
+        val manager = ChainCompletingTrustManager(delegate(other.root),
+            listOf(pki.lowerIntermediate, pki.intermediate, pki.root), clock)
+        assertThrows(CertificateException::class.java) {
+            manager.checkServerTrusted(arrayOf(pki.deepLeaf), "RSA")
+        }
+    }
+
     private fun manager(pki: Pki, bundled: List<X509Certificate>): ChainCompletingTrustManager =
         ChainCompletingTrustManager(delegate(pki.root), bundled, clock)
 
@@ -176,6 +203,7 @@ class ChainCompletingTrustManagerTest {
         val rootKey = keyPair()
         val intermediateKey = keyPair()
         val leafKey = keyPair()
+        val lowerIntermediateKey = keyPair()
         val impostorKey = keyPair()
         val rootName = X500Name("CN=Test Root,O=Chain Tests,C=ES")
         val intermediateName = X500Name("CN=Test Intermediate,O=Chain Tests,C=ES")
@@ -184,6 +212,9 @@ class ChainCompletingTrustManagerTest {
         val root = certificate(rootName, rootKey, rootName, rootKey, ca = true)
         val intermediate = certificate(intermediateName, intermediateKey, rootName, rootKey, ca = true)
         val leaf = certificate(leafName, leafKey, intermediateName, intermediateKey, ca = false)
+        val lowerName = X500Name("CN=Lower Intermediate,O=Chain Tests,C=ES")
+        val lowerIntermediate = certificate(lowerName, lowerIntermediateKey, intermediateName, intermediateKey, ca = true)
+        val deepLeaf = certificate(leafName, leafKey, lowerName, lowerIntermediateKey, ca = false)
 
         fun impostorIntermediate(): X509Certificate =
             certificate(intermediateName, impostorKey, rootName, rootKey, ca = true)
