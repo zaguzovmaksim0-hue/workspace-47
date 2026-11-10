@@ -1323,9 +1323,10 @@ fun BrowserScreen(
                         )
                         webView.setPopupListeners(
                             create = popupRequest@{ owner, _, userGesture, message ->
-                                if (popupTransport != null || owner !== webViewRef.get() ||
-                                    !owner.hasWindowFocus() || !owner.isShown ||
-                                    !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) ||
+                                val isForegroundOwner = owner === webViewRef.get() &&
+                                    owner.hasWindowFocus() && owner.isShown &&
+                                    lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+                                if (popupTransport != null || !isForegroundOwner ||
                                     operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.POPUP_REQUEST)
                                 ) return@popupRequest false
                                 val page = dev.junta.firmamobile.browser.PublicBrowserAddress.parseNavigation(owner.url ?: "")
@@ -1336,7 +1337,8 @@ fun BrowserScreen(
                                 val transfer = BrowserPopupTransport.create(owner, message) {
                                     activePopup?.token == token && activePopup?.requiresConfirmation == false &&
                                         popupLease.canAttach(token) &&
-                                        !operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.POPUP_CONFIRMATION) &&
+                                        !operationState(nativeRetrieval.hasPending)
+                                            .blocks(BrowserAdmission.POPUP_CONFIRMATION) &&
                                         lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
                                 }
                                 if (transfer == null) { popupLease.release(token); return@popupRequest false }
@@ -1366,7 +1368,8 @@ fun BrowserScreen(
                                 currentNavigationEpoch = { navigationEpoch.longValue },
                                 isActiveWebView = { candidate -> webViewRef.get() === candidate },
                                 onExternalAppRequest = { owner, target ->
-                                    val busy = operationState(nativeRetrieval.hasPending).blocks(BrowserAdmission.EXTERNAL_APP)
+                                    val busy = operationState(nativeRetrieval.hasPending)
+                                        .blocks(BrowserAdmission.EXTERNAL_APP)
                                     !busy && owner === webViewRef.get() &&
                                         lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) &&
                                         currentExternalAppRequest?.invoke(owner, target) == true

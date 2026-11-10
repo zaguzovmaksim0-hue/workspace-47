@@ -15,9 +15,9 @@ internal class PopupOwnerLease<Owner : Any>(
     val hasWindow: Boolean get() = slot != null
     fun reserve(owner: Owner, epoch: Long, requiresConfirmation: Boolean = false): UUID? {
         if (slot != null || !runCatching { isCurrent(owner, epoch) }.getOrDefault(false)) return null
-        val born = runCatching(nowNanos).getOrNull() ?: return null
-        if (slot != null) return null
-        return Slot(owner, epoch, born, confirmed = !requiresConfirmation).also { slot = it }.token
+        return runCatching(nowNanos).getOrNull()?.takeIf { slot == null }?.let { born ->
+            Slot(owner, epoch, born, confirmed = !requiresConfirmation).also { slot = it }.token
+        }
     }
     fun isCurrent(token: UUID): Boolean {
         val current = slot?.takeIf { it.token == token } ?: return false
@@ -30,9 +30,12 @@ internal class PopupOwnerLease<Owner : Any>(
     /** Confirm only the same live request; confirmation never renews the attachment deadline. */
     fun confirm(token: UUID): Boolean {
         val current = slot?.takeIf { it.token == token && !it.confirmed && !it.attached } ?: return false
-        if (!isCurrent(token) || slot !== current) return false
-        current.confirmed = true
-        return true
+        return if (isCurrent(token) && slot === current) {
+            current.confirmed = true
+            true
+        } else {
+            false
+        }
     }
     fun canAttach(token: UUID): Boolean {
         val current = slot?.takeIf { it.token == token && it.confirmed && !it.attached } ?: return false
