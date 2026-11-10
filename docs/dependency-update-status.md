@@ -117,3 +117,95 @@ out of five tests), then passed with the candidate. Fourteen focused policy,
 legal-bundle and collector tests pass locally. Full Gradle unit/lint/build,
 strict verification, resolved license evidence and security gates belong to
 exact-head canonical CI before integration.
+
+## Gradle 9.8.2 candidate and remaining dependency audit (2026-11-10)
+
+This bounded replacement for #572 starts from main
+`0afc34a1094a37b6bda6bd5d680f226ce1fa6726`, after #634. The original
+Dependabot head is `078705285a287ed9b81cd209ec6fc2ee8d79647a`.
+Its [CI run](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42244083103)
+and [Security run](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42244083377)
+stopped at four unreviewed Kotlin 2.4.10 build-classpath artifacts. Its Python
+wrapper policy still expected 9.7.1. The original Unix wrapper diff also removed
+the project's Termux AAPT2/JDK bootstrap.
+
+The candidate updates the wrapper JAR, distribution URL/checksum and generated
+Windows launcher. The Unix `gradlew`, including the Termux bootstrap, is preserved
+byte-for-byte. The Windows launcher was compared with the official v9.8.2 source,
+retaining the project's standard generated JVM options and CRLF checkout.
+
+The distribution pin matches Gradle's published SHA-256:
+`21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607`.
+The downloaded wrapper JAR matches Gradle's published SHA-256:
+`3b8a25775a69158b5ad2b1d17a80a88dc7b40a352a73eb27d06c612a7ce68e98`.
+The policy test binds both exact checksums and the exact version. The distribution
+archive itself is verified when the wrapper downloads it in canonical CI.
+
+Five Kotlin 2.4.10 files were downloaded independently from Maven Central and
+hashed: `kotlin-reflect` JAR/POM and `kotlin-stdlib` JAR/module/POM.
+The stdlib JAR hash also matches its published Gradle module metadata. These five
+SHA-256 entries are additive; all 1,603 existing artifact checksum entries and
+the verification configuration are preserved. Runtime locks and the legal
+bundle are unchanged; the app's locked Kotlin stdlib remains 2.4.21.
+
+Upstream compatibility supports the existing toolchain: Gradle 9.8.2 embeds
+Kotlin 2.4.10, supports Java 17 through 27, and reports testing with AGP 9.0 through
+9.5.0-alpha02. AGP 9.4 requires Gradle 9.6.0 or newer. The release notes include
+security and dependency-resolution fixes.
+
+Primary sources reviewed:
+
+- [Gradle 9.8.2 release notes](https://docs.gradle.org/9.8.2/release-notes.html)
+  and [compatibility](https://docs.gradle.org/9.8.2/userguide/compatibility.html).
+- [AGP 9.4 compatibility](https://developer.android.com/build/releases/agp-9-4-0-release-notes).
+- [Distribution checksum](https://services.gradle.org/distributions/gradle-9.8.2-bin.zip.sha256)
+  and [wrapper checksum](https://services.gradle.org/distributions/gradle-9.8.2-wrapper.jar.sha256).
+- [Official Windows wrapper source](https://github.com/gradle/gradle/blob/v9.8.2/gradlew.bat).
+- Maven Central [kotlin-reflect 2.4.10](https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.4.10/)
+  and [kotlin-stdlib 2.4.10](https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.4.10/).
+
+Focused verification: the updated wrapper policy failed on the old wrapper,
+then all 27 CI-policy and legal-bundle tests passed on the candidate. Shell syntax,
+additive checksum preservation and `git diff --check` passed. The owned worktree
+has no project-local Termux AAPT2 provision or local.properties file, so no local
+Gradle execution or Windows execution is claimed. Exact-head ordinary CI and
+Security checks remain required before integration. E2E and permanent-key
+signing are outside this dependency candidate.
+
+### Other open dependency PRs: observed blockers, unchanged by this candidate
+
+The following snapshot was inspected on 2026-11-10. Each listed Security run
+stops during strict Gradle verification, before the OSV scan can establish a
+result for its new dependency graph.
+
+- **#569, WebKit 1.18.0** — head
+  `75d4c372740af4f9f82cdbe9566f347cb2bbf612`.
+  [CI](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42242853214):
+  two missing verification artifacts (AAR/module), stale legal inventory, and
+  the policy still bound to 1.17.1.
+  [Security](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42242853163)
+  stops on the same two artifacts.
+- **#570, AGP 9.5.0** — head
+  `d4632efa40f3f07a5b742417ea4ce738189761de`.
+  [CI](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42243257265)
+  and [Security](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42243257341)
+  stop at the unreviewed plugin-marker POM. That first failure does not establish
+  the complete new plugin dependency graph.
+- **#571, OkHttp 5.5.1** — head
+  `087a19dec355451920d1f53127ecdb3ee9920b43`.
+  [CI](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42243667326):
+  three missing runtime verification artifacts (OkHttp module, Android module
+  and AAR) plus a stale legal inventory.
+  [Security](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42243667259)
+  stops on the same three artifacts.
+- **#573, DataStore 1.3.0** — head
+  `dd09406c04fa53feac55fb2a29dd71d783c60e93`.
+  [CI](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42244503947):
+  25 missing verification artifacts across DataStore, AtomicFU and Tracing,
+  plus a stale legal inventory.
+  [Security](https://github.com/zaguzovmaksim0-hue/workspace-47/actions/runs/42244503853)
+  stops on the same artifact set.
+
+These four updates require separately reviewed artifact provenance, resolved
+graphs, corresponding license evidence and exact-head CI. Their branches,
+versions, policy tests and review status are unchanged here.
