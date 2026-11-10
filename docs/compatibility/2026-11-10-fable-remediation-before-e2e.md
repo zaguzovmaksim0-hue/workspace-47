@@ -5,8 +5,10 @@
 This is the local implementation and verification record for the six-stage Firma
 Mobile remediation plan. Work starts from `c66be8288a17479911ea7d71381cd387a9e98392`
 and is assembled on `fix/fable-completion-integration-20261110`. The inspected
-integration includes `33dbdb9a`; the report itself is a separate documentation
-commit. Commit references below identify local changes, not published releases.
+production/test source is `819e0abe6900298fed398edbe1608b5db2fe3c71`.
+It passed the final targeted QA run; the following report update changes only
+documentation. Commit references below identify local changes, not published
+releases.
 
 The owner explicitly deferred E2E. No real-site E2E, emulator launch, personal
 certificate operation, APK installation, publication, PR merge or workspace
@@ -28,8 +30,9 @@ session mode or borrow another profile. These changes are in `4662cdf3` and
 **Verified locally.** Source and independent review confirm that launch authority
 comes from the registry and bundled binding, not mutable catalog presentation
 flags. Universal sessions do not adopt a profile merely because the destination
-matches one. Local test evidence is listed below; the Android UI acceptance claim
-is still limited by the pending QA run at report creation.
+matches one. The final QA/Robolectric run includes the catalog, MainActivity root
+navigation and browser-session regressions. This is local UI/controller evidence;
+it does not establish acceptance by a live portal.
 
 **Deferred acceptance.** Real E2E must exercise the ordinary profiled launch and
 explicit universal launch separately. Each result must distinguish authorization,
@@ -77,7 +80,10 @@ malformed requests, and attempts to suppress confirmation. No fake browser
 origin is created. External `fileid` and a desktop loopback service remain
 disabled. The [external protocol boundary review](2026-11-10-external-autofirma-protocol-boundary.md)
 records the separate authorization and protocol work required before enabling
-those paths (`e414ec37`, `cbd968e5`).
+those paths (`e414ec37`, `cbd968e5`). Browser-delivered desktop WebSocket
+requests also reach a precise localized refusal (`819e0abe`, original
+`260272df`). Recognition of this known protocol creates no signing operation and
+starts no loopback listener; unknown and malformed requests keep their guards.
 
 **Verified locally.** The final engine suite passes 174/174 under a 256 MiB JVM
 heap. It includes a synthetic eight-page PDF above 7 MiB: parsing, preview-byte
@@ -154,6 +160,8 @@ introduced detekt findings were addressed in code rather than added to the
 baseline.
 
 **Verified locally.** The baseline count and zero-addition diff were checked.
+Full standalone detekt against the final production source completed with exit 0
+and no new findings (`job_20261110_122121_ad0f3273`).
 `AppNavigationState`, `AppNavigationRoutes` and the browser-session registry are
 used by current MainActivity navigation, so they and their guards are retained.
 The original review's suggestion of unused navigation code does not justify
@@ -213,8 +221,10 @@ stored certificates are separate acceptance checks that have not been run.
 
 ## 6. Inventory and preserve the workspace
 
-**Completed.** A saved inventory snapshot records 94 worktrees and 394 local
-branches, including the active remediation workers. Dirty work was identified.
+**Completed.** The initial saved inventory records 94 worktrees and 394 local
+branches, including the active remediation workers. A final count records
+94 worktrees and 395 branches after the separate WebSocket-refusal branch was
+created; the original engine branch was preserved. Dirty work was identified.
 Important `w47-fixsign` material was copied without changing the original tree:
 the local WebKit JAR was hash-checked after copying, and committed/working patches
 and a manifest were retained. A conservative candidate list for later cleanup
@@ -230,6 +240,15 @@ outside tracked Git content; this report does not replace those preserved files.
 These are separate scoped runs, not additive totals. Some suites overlap, and
 smaller earlier runs must not be added to later expanded runs.
 
+- Final targeted QA Gradle/Robolectric run: **532/532 in 40 classes**, with
+  zero failures, errors or skipped tests (`job_20261110_122132_e7adf28a`). The
+  command was `:app:testQaUnitTest` with an explicit class filter for the changed
+  JVM-test files, `--no-daemon --console=plain --max-workers=2`. All 40 requested
+  classes produced JUnit XML. Main QA and JVM-test source compilation succeeded;
+  this task did not run Android instrumentation or build/install a release APK.
+  Included examples are MainActivity external-entry 9/9, root navigation 20/20,
+  WebView client 69/69, large-PDF 4/4, catalog default launch 8/8 and Lugo adapter
+  8/8. These examples are part of the 532 total, not additional tests.
 - Final engine suite: **174/174**, 256 MiB JVM heap, retained run
   `job_20261110_114601_63b83c60`; this supersedes the earlier 124-test engine run
   for reporting scope. No live endpoint or personal certificate was used.
@@ -246,7 +265,20 @@ smaller earlier runs must not be added to later expanded runs.
 - Locale checks: **50/50**; all five new external-refusal resource XML files
   also compiled with the verified local `aapt2`.
 
-The targeted QA Gradle/Robolectric execution was still pending when this report
-was prepared; no PASS result is attributed to it here. Canonical GitHub Actions
-has not run on this local integration head. None of the results above replaces
-real portal E2E, installation/update acceptance or an Android heap measurement.
+The initial integration QA run at `33dbdb9a` executed 505 tests: 490 passed
+and 15 failed. Fourteen relay tests failed before their bodies because host
+Conscrypt required glibc's `libpthread.so.0`, unavailable in Termux. The relay and
+URL-policy tests now explicitly disable that optional host provider; their
+transport is fake or no TLS connection is involved. Production TLS settings are
+unchanged. The other failure was an obsolete catalog fixture classifying valid
+HTTPS port 444 as unsafe. The corrected fixture checks out-of-range port 65536
+and separately proves that 8443/4443 aliases stay universal without activating an
+unrelated profile. The relay size regression now uses otherwise valid JSON plus
+whitespace to test the actual shared message limit, avoiding an unrelated
+unknown-field rejection. These corrections are `e6d41555` and `a917a7f4`.
+
+The final run includes those corrections and the additional WebSocket refusal
+regressions. Its source commit and XML summaries are retained with the original
+failure evidence. Canonical GitHub Actions has not run on the local integration
+head. None of these results replaces real portal E2E, installation/update
+acceptance or an Android heap measurement.
